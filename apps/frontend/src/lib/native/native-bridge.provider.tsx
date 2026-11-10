@@ -110,6 +110,17 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
       resumeHandle = await App.addListener('resume', () => {
         const now = Date.now();
 
+        // Continue pack file GC / deferred asset materialize even when other
+        // resume work is throttled.
+        void import('@/lib/offline/learning-pack.service')
+          .then(({ learningPackService }) => Promise.all([
+            learningPackService.drainPackGcQueue(),
+            learningPackService.drainPackAssetMaterializeQueue(),
+          ]))
+          .catch((err) => {
+            console.warn('[NativeBridge] Resume pack GC/materialize drain failed:', err)
+          })
+
         // Subscription changes made in iOS Settings/Customer Center do not
         // necessarily trigger the SDK listener while the app is backgrounded.
         // Keep this independent from OTA's resume throttle (and dev:host's

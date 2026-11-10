@@ -2068,6 +2068,8 @@ const en = {
       noContent: 'No practice content available for today',
       fetchingPlan: 'Fetching learning plan',
       fetchingPlanHint: 'Today tasks will be arranged automatically after restoring the pack.',
+      restoringProgress: 'Syncing your learning progress',
+      restoringProgressHint: 'Today’s tasks will load after sync so unsynced practice is not overwritten.',
       practiceRecords: 'Practice Records',
       todayReview: 'Today Review',
       expireOverdue: 'Due/Overdue {{count}} questions',

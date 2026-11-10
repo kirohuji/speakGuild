@@ -35,37 +35,22 @@ const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   standard: Crown,
 }
 
-const FALLBACK_BENEFITS: MemberBenefit[] = [
-  { benefitId: '1', name: 'AI 每轮评价', freeSupport: '5 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },
-  { benefitId: '2', name: 'AI 完成复盘', freeSupport: '1 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },
-  { benefitId: '3', name: '剧本模式', freeSupport: '体验剧集', standardSupport: '完整开放', advancedSupport: '完整开放' },
-  { benefitId: '4', name: '主题化练习', freeSupport: '基础主题', standardSupport: '更多主题', advancedSupport: '更多主题' },
-  { benefitId: '5', name: '完成后自由练习', freeSupport: false, standardSupport: true, advancedSupport: true },
-  { benefitId: '6', name: '表达库容量', freeSupport: '基础容量', standardSupport: '更多收纳', advancedSupport: '更多收纳' },
-]
-
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation()
-  const fallbackBenefits: MemberBenefit[] = [
-    { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
-    { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
-    { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
-    { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.moreTopics'), advancedSupport: t('member.moreTopics') },
-    { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: false, standardSupport: true, advancedSupport: true },
-    { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: t('member.fallbackFree6'), standardSupport: t('member.moreStorage'), advancedSupport: t('member.moreStorage') },
-  ]
   const navigate = useNavigate()
+  const setCachedMembership = useUserStore((s) => s.setMembership)
+  const cachedMembership = useUserStore((s) => s.membership)
   const [plans, setPlans] = useState<MemberPlan[]>([])
-  const [current, setCurrent] = useState<CurrentMembership | null>(null)
+  const [current, setCurrent] = useState<CurrentMembership | null>(cachedMembership)
   const [benefits, setBenefits] = useState<MemberBenefit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
   const [purchasePage, setPurchasePage] = useState(1)
+  const [purchaseRefreshToken, setPurchaseRefreshToken] = useState(0)
   const [purchaseRecords, setPurchaseRecords] = useState<{ list: MembershipPurchase[]; total: number; pageSize: number } | null>(null)
   const [purchaseListLoading, setPurchaseListLoading] = useState(true)
-  const setCachedMembership = useUserStore((s) => s.setMembership)
   const { session } = useAuth()
   const purchaseInFlightRef = useRef(false)
   const revenueCatState = useRevenueCat()
@@ -121,9 +106,10 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       .catch(() => { if (!cancelled) setPurchaseRecords({ list: [], total: 0, pageSize: 6 }) })
       .finally(() => { if (!cancelled) setPurchaseListLoading(false) })
     return () => { cancelled = true }
-  }, [purchasePage, current?.isActive])
+  }, [purchasePage, purchaseRefreshToken])
 
   useEffect(() => {
+    let cancelled = false
     Promise.allSettled([
       getMemberPlans(),
       getCurrentMembership(),
@@ -131,6 +117,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       // pointsApi.getBalance(), // 积分抵扣（暂时停用）
     ]).then(
       ([plansRes, curRes, benRes]) => {
+        if (cancelled) return
         if (plansRes.status === 'fulfilled') setPlans(plansRes.value)
         if (curRes.status === 'fulfilled') {
           setCurrent(curRes.value)
@@ -140,11 +127,21 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
           setBenefits(benRes.value)
         } else {
-          setBenefits(fallbackBenefits)
+          setBenefits([
+            { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
+            { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
+            { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
+            { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.moreTopics'), advancedSupport: t('member.moreTopics') },
+            { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: false, standardSupport: true, advancedSupport: true },
+            { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: t('member.fallbackFree6'), standardSupport: t('member.moreStorage'), advancedSupport: t('member.moreStorage') },
+          ])
         }
         setIsLoading(false)
       }
     )
+    return () => { cancelled = true }
+    // Mount-only bootstrap; reopen keeps the drawer content mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCachedMembership])
 
   const refreshMembership = useCallback(async (retryUntilActive = false) => {
@@ -159,6 +156,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       await new Promise((resolve) => setTimeout(resolve, 1200))
     }
 
+    setPurchaseRefreshToken((token) => token + 1)
     return latest
   }, [setCachedMembership])
 
@@ -178,6 +176,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         const synced = await syncRevenueCatMembership()
         setCurrent(synced)
         setCachedMembership(synced)
+        setPurchaseRefreshToken((token) => token + 1)
         if (!synced.isActive) {
           toast.message(t('member.purchasePending'))
           return
@@ -215,6 +214,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       const synced = await syncRevenueCatMembership()
       setCurrent(synced)
       setCachedMembership(synced)
+      setPurchaseRefreshToken((token) => token + 1)
       if (restoredActive && synced.isActive) toast.success(t('member.purchaseRestored'))
       else if (restoredActive) toast.message(t('member.purchasePending'))
       else toast.message(t('member.noPurchaseRestored'))

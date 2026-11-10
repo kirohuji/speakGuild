@@ -258,6 +258,8 @@ export function TodayTaskPage() {
   const [pendingTodayUpdateCheck, setPendingTodayUpdateCheck] = useState<string | null>(null)
   // 任意一次同步完成（登录 / 自动 / 手动 / 其他页面）都会更新该时间戳。
   const lastSyncedAt = useOfflineSyncStore((s) => s.lastSyncedAt)
+  // 登录后后台恢复未完成前，不创建新的今日 run，避免覆盖云端进度。
+  const loginRestorePending = useOfflineSyncStore((s) => s.loginRestorePending)
   // 只有 pull 实际带回当前 run，才有资格被视为“今日任务更新”。
   const lastPulledDailyPracticeRunIds = useOfflineSyncStore((s) => s.lastPulledDailyPracticeRunIds)
   const todayState = useTodayPracticeStore()
@@ -348,6 +350,7 @@ export function TodayTaskPage() {
   const displayedReviewDebtCount = reviewDebtCount ?? plan?.availableReviewCount ?? 0
 
   useEffect(() => {
+    if (loginRestorePending) return
     if (currentPlanReusable) return
     clearWarmupSession()
     setReviewRunNonce(0)
@@ -355,7 +358,7 @@ export function TodayTaskPage() {
     loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
       .then(() => { if (cancelled) return })
     return () => { cancelled = true }
-  }, [clearWarmupSession, currentPlanReusable, loadToday, targetPackId, targetDate, planMode, planRunSeed])
+  }, [clearWarmupSession, currentPlanReusable, loadToday, loginRestorePending, targetPackId, targetDate, planMode, planRunSeed])
 
   // 「稍后再练」只应在当前练习 run 内隐藏提示；路由切换后也要保持这一选择。
   useEffect(() => {
@@ -1196,8 +1199,8 @@ export function TodayTaskPage() {
     return () => window.clearTimeout(timer)
   }, [activeSteps, autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext, setMachineCurrentStep])
 
-  // ── 加载态：仅在无缓存数据时展示 ──
-  if (loading && !plan) {
+  // ── 加载态：登录恢复中，或无缓存数据时展示 ──
+  if ((loginRestorePending || loading) && !plan) {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
         <div className="rounded-lg bg-muted/30 px-5 py-6">
@@ -1207,10 +1210,10 @@ export function TodayTaskPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground">
-                {t('todayTask.fetchingPlan')}
+                {loginRestorePending ? t('todayTask.restoringProgress') : t('todayTask.fetchingPlan')}
               </p>
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                {t('todayTask.fetchingPlanHint')}
+                {loginRestorePending ? t('todayTask.restoringProgressHint') : t('todayTask.fetchingPlanHint')}
               </p>
             </div>
           </div>
@@ -1220,7 +1223,7 @@ export function TodayTaskPage() {
   }
 
   // ── 空态 ──
-  if (error || (!loading && !plan)) {
+  if (error || (!loading && !loginRestorePending && !plan)) {
     return (
       <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
         <div className="flex flex-col items-center justify-center py-16 text-center">

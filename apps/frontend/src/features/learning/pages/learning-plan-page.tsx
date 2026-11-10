@@ -27,6 +27,7 @@ import { MyLearningView } from '../components/my-learning-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { TopicSessionReadonlyReviewDrawer } from '../components/topic-session-readonly-review-drawer'
+import { MembershipPurchaseDrawer } from '@/features/membership/components/membership-purchase-drawer'
 
 const LazyConfigDataTable = lazy(() =>
   import('@/components/common/config-datatable').then((m) => ({ default: m.ConfigDataTable })),
@@ -43,9 +44,6 @@ const WarmupRecordDetailDialog = lazy(() =>
 )
 const VnPlayer = lazy(() =>
   import('@/features/vn-engine/vn-player').then((m) => ({ default: m.VnPlayer })),
-)
-const MemberPage = lazy(() =>
-  import('@/features/membership/pages/member-page').then((m) => ({ default: m.MemberPage })),
 )
 const ShopView = lazy(() =>
   import('../components/shop-view').then((m) => ({ default: m.ShopView })),
@@ -175,20 +173,7 @@ export function LearningPlanPage() {
           </DrawerContent>
         </Drawer>
 
-        <Drawer open={memberOpen} onOpenChange={setMemberOpen}>
-          <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
-            <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-              <DrawerTitle className="text-base font-semibold">{t('member.title')}</DrawerTitle>
-            </DrawerHeader>
-            <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-              {memberOpen && (
-                <Suspense fallback={<MobilePageLoading rows={4} />}>
-                  <MemberPage compact />
-                </Suspense>
-              )}
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <MembershipPurchaseDrawer open={memberOpen} onOpenChange={setMemberOpen} />
     </div>
   )
 }

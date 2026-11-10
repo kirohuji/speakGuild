@@ -16,6 +16,12 @@ export interface OfflineSyncLogEntry {
 
 interface OfflineSyncState {
   isSyncing: boolean
+  /**
+   * Login/session restore is flushing outbox + pulling remote progress in the
+   * background. Today-task must not create a new local run until this clears.
+   * Memory-only; not persisted.
+   */
+  loginRestorePending: boolean
   currentLogId: string | null
   lastSyncedAt: string | null
   /** 当前这次成功 pull 实际包含的今日任务 run；仅内存态，用于避免把无关同步当成任务更新。 */
@@ -30,6 +36,7 @@ interface OfflineSyncState {
     error?: unknown
     pulledDailyPracticeRunIds?: string[]
   }) => void
+  setLoginRestorePending: (pending: boolean) => void
   clearLogs: () => void
   reset: () => void
 }
@@ -52,6 +59,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
   persist(
     (set) => ({
       isSyncing: false,
+      loginRestorePending: false,
       currentLogId: null,
       lastSyncedAt: null,
       lastPulledDailyPracticeRunIds: [],
@@ -99,6 +107,10 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
         }))
       },
 
+      setLoginRestorePending(pending) {
+        set({ loginRestorePending: pending })
+      },
+
       clearLogs() {
         set({ logs: [], lastError: null })
       },
@@ -106,6 +118,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
       reset() {
         set({
           isSyncing: false,
+          loginRestorePending: false,
           currentLogId: null,
           lastSyncedAt: null,
           lastPulledDailyPracticeRunIds: [],

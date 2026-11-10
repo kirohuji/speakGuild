@@ -532,19 +532,35 @@ export const learningRepository = {
 
   /** 清空某学习包在前端本地的练习/复习进度（重新学习时调用，与服务端 restart 对齐）。 */
   async clearPackPracticeProgress(packId: string) {
-    const runs = await localDb.list<any>('daily_practice_runs')
-    const removedRunIds = new Set(runs
-      .filter((item) => Array.isArray(item.packIds) && item.packIds.includes(packId))
-      .map((item) => item.id))
     await localDb.deleteByIndex('daily_practice_items', 'pack_id', packId)
     await localDb.deleteByIndex('daily_practice_attempts', 'pack_id', packId)
-    await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
-      Array.isArray((item as any).packIds) && (item as any).packIds.includes(packId))
-    // 删除指向已删 run 的日期/mode 指针，以及已退出包的当前练习包指针。
-    // 否则 Today 页面会从这些指针恢复一个已经不存在的旧计划。
-    await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
-      (typeof (item as any).runId === 'string' && removedRunIds.has((item as any).runId))
-      || ((item as any).id === 'daily:active-pack' && (item as any).packId === packId))
+
+    // Common case: single-pack runs are indexed by pack_ids === packId.
+    const exactRuns = await localDb.findByIndex<any>('daily_practice_runs', 'pack_ids', packId)
+    const removedRunIds = new Set(exactRuns.map((item) => String(item.id)))
+    if (exactRuns.length > 0) {
+      await localDb.deleteByIndex('daily_practice_runs', 'pack_ids', packId)
+    }
+
+    // One remaining scan for multi-pack runs + pointer rows (avoids list + 2× deleteWhere).
+    const multiPackRemoved = new Set<string>()
+    await localDb.deleteWhere<any>('daily_practice_runs', (item) => {
+      const row = item as any
+      if (Array.isArray(row.packIds) && row.packIds.includes(packId)) {
+        multiPackRemoved.add(String(row.id))
+        removedRunIds.add(String(row.id))
+        return true
+      }
+      if (row.id === 'daily:active-pack' && row.packId === packId) return true
+      if (typeof row.runId === 'string' && removedRunIds.has(row.runId)) return true
+      return false
+    })
+    // Pointers that appeared before their multi-pack run in the scan need a second pass.
+    if (multiPackRemoved.size > 0) {
+      await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
+        typeof (item as any).runId === 'string' && multiPackRemoved.has((item as any).runId))
+    }
+
     await localDb.delete('user_progress', `novel:${packId}`)
     const packProgress = await localDb.findByIndex<LocalTeachingReadingProgress>('user_progress', 'scene_id', packId)
     for (const record of packProgress) {

@@ -397,8 +397,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       await learningRepository.clearPackPracticeProgress(unitId)
       useDailyPracticeStore.getState().invalidatePlans()
       await learningRepository.quitUnit(unitId)
-      updateUninstallProgress(35, 'removing_assets', packTaskStepLabel('removing_assets', 'uninstall'))
-      await learningPackService.uninstall(unitId)
+      updateUninstallProgress(55, 'removing_assets', packTaskStepLabel('removing_assets', 'uninstall'))
+      // Metadata removal is the UI-blocking path; file GC continues in background.
+      await learningPackService.uninstallMetadata(unitId)
+      void learningPackService.drainPackGcQueue()
       updateUninstallProgress(82, 'refreshing', packTaskStepLabel('refreshing', 'uninstall'))
       await getState().syncPackStateAfterLocalChange(unitId)
       set((current) => ({
@@ -489,7 +491,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async uninstallUnitPack(unitId) {
-    await learningPackService.uninstall(unitId)
+    await learningPackService.uninstallMetadata(unitId)
+    void learningPackService.drainPackGcQueue()
     // 单纯卸载保留进度，以便将来重新下载；但不能继续把已卸载包作为 Today
     // 的内存计划展示。重新加载时会按仍安装的学习包重新解析。
     useDailyPracticeStore.getState().invalidatePlans()
@@ -588,8 +591,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   async clearAllOfflineData() {
     const packs = await learningPackService.listInstalled()
     for (const pack of packs) {
-      await learningPackService.uninstall(pack.packId)
+      await learningPackService.uninstallMetadata(pack.packId)
     }
+    await learningPackService.drainPackGcQueue()
     useDailyPracticeStore.getState().invalidatePlans()
     await getState().syncPackStateAfterLocalChange()
     set({
@@ -685,8 +689,11 @@ async function processDownloadQueue() {
     if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
       await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal)
     } else {
+      // Native install returns after content+deferred index (installed); asset
+      // files continue in drainPackAssetMaterializeQueue inside installUnit.
       await learningPackService.installUnit(next.packId, onProgress, controller.signal)
     }
+    void learningPackService.drainPackAssetMaterializeQueue(next.packId)
 
     // 先跳到 100% 进度，短暂停留让用户感知完成
     useLearningStore.setState((s) => ({
@@ -796,6 +803,8 @@ useLearningStore.subscribe((state) => {
 export async function startupPackSync() {
   const store = useLearningStore.getState()
   await learningPackService.recoverInterruptedOperations()
+  void learningPackService.drainPackGcQueue()
+  void learningPackService.drainPackAssetMaterializeQueue()
   await store.fetchDownloadedPacks()
   await store.checkPackUpdates(true)
 }

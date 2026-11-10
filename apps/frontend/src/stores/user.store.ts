@@ -25,6 +25,8 @@ export const USER_PROFILE_KV_PREFIX = 'user_profile:'
 export interface PersistedUserData {
   profile: UserProfile | null
   avatarUrl: string | null
+  /** Stable file-asset id for the App avatar; survives signed-URL refresh. */
+  avatarAssetId: string | null
   linkedAccounts: LinkedAccount[]
   membership: CurrentMembership | null
   pointsBalance: number
@@ -101,6 +103,7 @@ function persistSnapshot() {
   void persistUserData(s.currentUserId, {
     profile: s.profile,
     avatarUrl: s.avatarUrl,
+    avatarAssetId: s.avatarAssetId,
     linkedAccounts: s.linkedAccounts,
     membership: s.membership,
     pointsBalance: s.pointsBalance,
@@ -111,6 +114,7 @@ function persistSnapshot() {
 export const useUserStore = create<UserStoreState>()((set, get) => ({
   profile: null,
   avatarUrl: null,
+  avatarAssetId: null,
   linkedAccounts: [],
   membership: null,
   pointsBalance: 0,
@@ -132,6 +136,7 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
       hydrated: true,
       profile: saved?.profile ?? null,
       avatarUrl: saved?.avatarUrl ?? null,
+      avatarAssetId: saved?.avatarAssetId ?? null,
       linkedAccounts: saved?.linkedAccounts ?? [],
       membership: saved?.membership ?? null,
       pointsBalance: saved?.pointsBalance ?? 0,
@@ -156,7 +161,10 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
       ])
       const patch: Partial<PersistedUserData> = { fetchedAt: Date.now() }
       if (profile.status === 'fulfilled') patch.profile = profile.value
-      if (avatar.status === 'fulfilled') patch.avatarUrl = avatar.value?.url ?? null
+      if (avatar.status === 'fulfilled') {
+        patch.avatarUrl = avatar.value?.url ?? null
+        patch.avatarAssetId = avatar.value?.assetId ?? null
+      }
       if (accounts.status === 'fulfilled') patch.linkedAccounts = accounts.value
       if (membership.status === 'fulfilled') patch.membership = membership.value
       if (points.status === 'fulfilled') patch.pointsBalance = points.value.points
@@ -202,7 +210,11 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'avatar' })
       const current = await setCurrentAvatar(asset.id)
-      set({ avatarUrl: current?.url ?? null, avatarUploading: false })
+      set({
+        avatarUrl: current?.url ?? null,
+        avatarAssetId: current?.assetId ?? asset.id,
+        avatarUploading: false,
+      })
       persistSnapshot()
     } catch (error) {
       set({ avatarUploading: false })
@@ -242,7 +254,10 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
       }
       try {
         const avatar = await getCurrentAvatar()
-        set({ avatarUrl: avatar?.url ?? null })
+        set({
+          avatarUrl: avatar?.url ?? null,
+          avatarAssetId: avatar?.assetId ?? null,
+        })
       } catch (error) {
         console.warn('[user-store] refresh avatar after link failed:', error)
       }
@@ -277,6 +292,7 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
     set({
       profile: null,
       avatarUrl: null,
+      avatarAssetId: null,
       linkedAccounts: [],
       membership: null,
       pointsBalance: 0,

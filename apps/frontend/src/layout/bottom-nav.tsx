@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { BookOpen, Clapperboard, Home, Library, ListChecks, Lock } from 'lucide-react'
@@ -7,12 +7,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { useUserStore } from '@/stores/user.store'
 import { useAuth } from '@/providers/auth-provider'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { MobilePageLoading } from '@/components/common/mobile-page-loading'
-
-const MemberPage = lazy(() =>
-  import('@/features/membership/pages/member-page').then((m) => ({ default: m.MemberPage })),
-)
+import { MembershipPurchaseDrawer } from '@/features/membership/components/membership-purchase-drawer'
 
 export function BottomNav() {
   const { t } = useTranslation()
@@ -93,20 +88,7 @@ export function BottomNav() {
         </div>
       </nav>
 
-      <Drawer open={memberOpen} onOpenChange={setMemberOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="text-base font-semibold">{t('member.title')}</DrawerTitle>
-          </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            {memberOpen && (
-              <Suspense fallback={<MobilePageLoading rows={4} />}>
-                <MemberPage compact />
-              </Suspense>
-            )}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <MembershipPurchaseDrawer open={memberOpen} onOpenChange={setMemberOpen} />
     </>
   )
 }

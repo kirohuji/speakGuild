@@ -113,13 +113,13 @@ export function getFileAssetPrivateUrl(assetId: string): Promise<{ url: string; 
   return get(`/file-assets/${assetId}/private-url`)
 }
 
-/** 获取当前头像 */
-export function getCurrentAvatar(): Promise<{ url: string } | null> {
+/** 获取当前头像（URL 会过期；长期身份用 assetId） */
+export function getCurrentAvatar(): Promise<{ url: string; assetId?: string } | null> {
   return get('/file-assets/avatar/current')
 }
 
 /** 设置当前头像 */
-export function setCurrentAvatar(assetId: string): Promise<{ url: string }> {
+export function setCurrentAvatar(assetId: string): Promise<{ url: string; assetId?: string }> {
   return post('/file-assets/avatar/current', { assetId })
 }
 

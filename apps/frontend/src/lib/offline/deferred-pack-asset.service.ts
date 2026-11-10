@@ -227,6 +227,51 @@ const thisService = {
     )))
   },
 
+  /**
+   * Background drain: materialize deferred pack assets from retained zips.
+   * Processes one pack at a time so a single ZipReader stays hot in memory.
+   */
+  async materializePending(packId?: string): Promise<void> {
+    if (!isNative()) return
+    const concurrency = 2
+    for (;;) {
+      const pending = packId
+        ? (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId))
+          .filter((row) => row.status === 'deferred')
+        : (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'status', 'deferred'))
+      if (pending.length === 0) return
+
+      const byPack = new Map<string, DeferredPackAsset[]>()
+      for (const row of pending) {
+        const list = byPack.get(row.packId) ?? []
+        list.push(row)
+        byPack.set(row.packId, list)
+      }
+
+      let progressed = false
+      for (const [currentPackId, rows] of byPack) {
+        const pack = await localDb.get<{ status?: string }>('downloaded_packs', currentPackId)
+        if (pack?.status !== 'installed') continue
+        for (let i = 0; i < rows.length; i += concurrency) {
+          const batch = rows.slice(i, i + concurrency)
+          const results = await Promise.all(batch.map(async (asset) => {
+            const existing = materializations.get(asset.id)
+            const work = existing ?? materialize(asset)
+            materializations.set(asset.id, work)
+            try {
+              return await work
+            } finally {
+              materializations.delete(asset.id)
+            }
+          }))
+          if (results.some((value) => value != null)) progressed = true
+        }
+      }
+      // Avoid a tight loop when every row is invalid / pack uninstalled.
+      if (!progressed) return
+    }
+  },
+
   async clearOpenZips() {
     for (const open of openZips.values()) await open.reader.close().catch(() => undefined)
     openZips.clear()

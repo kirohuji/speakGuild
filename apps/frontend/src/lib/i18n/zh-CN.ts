@@ -2068,6 +2068,8 @@ const zhCN = {
       noContent: '今日要练习的学习包暂无可练习内容',
       fetchingPlan: '正在拉取学习计划',
       fetchingPlanHint: '恢复学习包后会自动安排今日任务。',
+      restoringProgress: '正在同步学习进度',
+      restoringProgressHint: '同步完成后再安排今日任务，避免覆盖未同步的练习。',
       practiceRecords: '练习记录',
       todayReview: '今日复习',
       expireOverdue: '到期/逾期 {{count}} 题',

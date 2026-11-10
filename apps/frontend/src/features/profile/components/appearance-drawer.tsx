@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft, Lock,
 } from 'lucide-react';
@@ -8,7 +8,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MobilePageLoading } from '@/components/common/mobile-page-loading';
 import { cn } from '@/lib/cn';
 import { useThemePreset } from '@/providers/theme-preset-provider';
 import { useThemePresetStore } from '@/stores/theme-preset.store';
@@ -16,10 +15,7 @@ import { usePreferencesStore } from '@/stores/preferences.store';
 import { useUserStore } from '@/stores/user.store';
 import { useAuth } from '@/providers/auth-provider';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
-
-const MemberPage = lazy(() =>
-  import('@/features/membership/pages/member-page').then((m) => ({ default: m.MemberPage })),
-);
+import { MembershipPurchaseDrawer } from '@/features/membership/components/membership-purchase-drawer';
 
 /** 普通用户可用：默认主题、深海梦境。其余主题走会员解锁。 */
 const FREE_THEME_IDS = new Set(['theme-default', 'theme-deepsea']);
@@ -202,20 +198,7 @@ export function AppearanceContent() {
         </div>
       </section>
 
-      <Drawer open={memberOpen} onOpenChange={setMemberOpen}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="text-base font-semibold">{t('member.title')}</DrawerTitle>
-          </DrawerHeader>
-          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            {memberOpen && (
-              <Suspense fallback={<MobilePageLoading rows={4} />}>
-                <MemberPage compact />
-              </Suspense>
-            )}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <MembershipPurchaseDrawer open={memberOpen} onOpenChange={setMemberOpen} />
 
     </div>
   );

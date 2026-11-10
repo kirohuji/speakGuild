@@ -162,12 +162,6 @@ function isAssetPath(path: string) {
   return normalizeZipPath(path).startsWith('assets/')
 }
 
-const DEFERRED_ASSET_ROLES = new Set(['vocabulary_pronunciation_us', 'vocabulary_pronunciation_uk'])
-
-function isDeferredAsset(asset: AssetRef) {
-  return DEFERRED_ASSET_ROLES.has(asset.role ?? '')
-}
-
 /** Preserve the persisted asset:// URL (including a possible suffix) that UI playback uses. */
 function collectContentAssetUrls(value: unknown, output = new Map<string, string>()): Map<string, string> {
   if (typeof value === 'string') {
@@ -454,6 +448,172 @@ function operationJournalId(packId: string) {
   return `learning-pack-operation:${packId}`
 }
 
+const PACK_GC_ID_PREFIX = 'learning-pack-gc:'
+
+type PackGcJobStatus = 'pending' | 'running'
+
+interface PackGcJob {
+  id: string
+  packId: string
+  filesToRemove: string[]
+  version?: number
+  title?: string
+  createdAt: string
+  status: PackGcJobStatus
+}
+
+function packGcJobId(packId: string) {
+  return `${PACK_GC_ID_PREFIX}${packId}`
+}
+
+async function listPackGcJobs(): Promise<PackGcJob[]> {
+  return (await localDb.list<PackGcJob>('kv'))
+    .filter((item) => typeof item?.id === 'string' && item.id.startsWith(PACK_GC_ID_PREFIX))
+}
+
+async function putPackGcJob(job: PackGcJob): Promise<void> {
+  await localDb.put('kv', job)
+}
+
+async function deletePackGcJob(packId: string): Promise<void> {
+  await localDb.delete('kv', packGcJobId(packId))
+}
+
+async function getPackGcJob(packId: string): Promise<PackGcJob | null> {
+  return (await localDb.get<PackGcJob>('kv', packGcJobId(packId))) ?? null
+}
+
+let packGcDrainPromise: Promise<void> | null = null
+
+async function runPackGcJob(job: PackGcJob): Promise<void> {
+  const timer = createTimer(`learning-pack:gc:${job.packId}`)
+  logger.info(`[gc:${job.packId}] start`, {
+    files: job.filesToRemove.length,
+    status: job.status,
+    title: job.title,
+    version: job.version,
+  })
+  await putPackGcJob({ ...job, status: 'running' })
+
+  await deferredPackAssetService.discardPack(job.packId)
+  let deletedFiles = 0
+  for (const shaBatch of chunkArray([...new Set(job.filesToRemove)], 8)) {
+    const results = await Promise.allSettled(shaBatch.map((sha256) => assetCacheService.remove(sha256)))
+    for (const result of results) {
+      if (result.status === 'fulfilled') deletedFiles++
+      else logger.warn('asset garbage collection failed', result.reason)
+    }
+  }
+  if (Capacitor.isNativePlatform()) {
+    await Filesystem.rmdir({
+      path: `learning-packs/${job.packId}`,
+      directory: Directory.Data,
+      recursive: true,
+    }).catch(() => undefined)
+  }
+  timer.lap('delete asset files', { deletedFiles, queued: job.filesToRemove.length })
+
+  await finishPackOperation(job.packId)
+  await deletePackGcJob(job.packId)
+  await recordPackAudit({
+    packId: job.packId,
+    action: 'uninstall',
+    version: job.version ?? null,
+    previousVersion: job.version ?? null,
+    title: job.title,
+  })
+  timer.done({ packId: job.packId, title: job.title, version: job.version })
+  logger.info(`🗑️ 已完成后台 GC: ${job.packId}`)
+}
+
+/** Ensure prior uninstall GC finished before reusing the same packId directory. */
+async function awaitPackGcBeforeInstall(packId: string): Promise<void> {
+  const hasBlockingState = async () => {
+    const job = await getPackGcJob(packId)
+    if (job) return true
+    const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
+    return Boolean(journal && journal.kind === 'uninstall' && journal.phase === 'committing')
+  }
+
+  if (!(await hasBlockingState())) return
+
+  logger.info(`[install:${packId}] waiting for pending pack GC`)
+  await drainPackGcQueueInternal()
+  if (await hasBlockingState()) {
+    // Force one more pass in case a job was enqueued mid-drain.
+    await drainPackGcQueueInternal()
+  }
+  if (await hasBlockingState()) {
+    throw new Error('正在清理旧学习包数据，请稍后再试')
+  }
+}
+
+async function drainPackGcQueueInternal(): Promise<void> {
+  if (packGcDrainPromise) return packGcDrainPromise
+  packGcDrainPromise = (async () => {
+    try {
+      // Loop until empty so jobs enqueued while a drain is running still finish.
+      for (;;) {
+        const jobs = await listPackGcJobs()
+        if (jobs.length === 0) return
+        logger.info(`[gc] draining ${jobs.length} pack GC job(s)`)
+        let hadFailure = false
+        for (const job of jobs) {
+          try {
+            await runPackGcJob(job)
+          } catch (error) {
+            hadFailure = true
+            logger.warn(`[gc:${job.packId}] failed; will retry later`, debugError(error))
+            await putPackGcJob({ ...job, status: 'pending' }).catch(() => undefined)
+          }
+        }
+        if (hadFailure) return
+      }
+    } finally {
+      packGcDrainPromise = null
+    }
+  })()
+  return packGcDrainPromise
+}
+
+let packAssetMaterializePromise: Promise<void> | null = null
+
+async function hasDeferredPackAssets(packId?: string): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false
+  if (packId) {
+    const rows = await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId)
+    return rows.some((row) => row.status === 'deferred')
+  }
+  const rows = await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'status', 'deferred')
+  return rows.length > 0
+}
+
+async function drainPackAssetMaterializeQueueInternal(packId?: string): Promise<void> {
+  // Wait out an in-flight drain, then start another pass if new deferred rows
+  // were enqueued while it was already finishing (install raced with recover).
+  if (packAssetMaterializePromise) await packAssetMaterializePromise
+  if (!(await hasDeferredPackAssets(packId))) return
+  if (packAssetMaterializePromise) return drainPackAssetMaterializeQueueInternal(packId)
+
+  packAssetMaterializePromise = (async () => {
+    try {
+      // Never extract into a pack directory that GC still owns.
+      await drainPackGcQueueInternal()
+      if (!Capacitor.isNativePlatform()) return
+      logger.info('[materialize] draining deferred pack assets', { packId: packId ?? 'all' })
+      await deferredPackAssetService.materializePending(packId)
+    } catch (error) {
+      logger.warn('[materialize] drain failed; will retry later', debugError(error))
+    } finally {
+      packAssetMaterializePromise = null
+    }
+  })()
+  await packAssetMaterializePromise
+  if (await hasDeferredPackAssets(packId)) {
+    await drainPackAssetMaterializeQueueInternal(packId)
+  }
+}
+
 async function snapshotPackState(packId: string): Promise<PackStateSnapshot> {
   const [pack, indexedDetails, rootDetail, inkScripts, contentRefs, assetRefs, deferredAssets] = await Promise.all([
     localDb.get<InstalledLearningPack>('downloaded_packs', packId),
@@ -546,9 +706,23 @@ export const learningPackService = {
       )
       if (committed) {
         await restoreReferencedPreviousPackZips(journal.packId)
-        if (journal.kind === 'uninstall' && Capacitor.isNativePlatform()) {
-          await deferredPackAssetService.discardPack(journal.packId)
-          await Filesystem.rmdir({ path: `learning-packs/${journal.packId}`, directory: Directory.Data, recursive: true }).catch(() => undefined)
+        if (journal.kind === 'uninstall') {
+          // Metadata already committed; ensure a durable GC job exists so
+          // drainPackGcQueue can finish file cleanup + journal removal.
+          const existingJob = await getPackGcJob(journal.packId)
+          if (!existingJob) {
+            const now = new Date().toISOString()
+            await putPackGcJob({
+              id: packGcJobId(journal.packId),
+              packId: journal.packId,
+              filesToRemove: [],
+              version: journal.snapshot.pack?.version,
+              title: journal.snapshot.pack?.title,
+              createdAt: now,
+              status: 'pending',
+            })
+          }
+          continue
         }
         await finishPackOperation(journal.packId)
       } else {
@@ -562,6 +736,18 @@ export const learningPackService = {
       await restoreReferencedPreviousPackZips(pack.packId)
       await pruneUnreferencedPackZips(pack.packId)
     }
+    await drainPackGcQueueInternal()
+    void drainPackAssetMaterializeQueueInternal()
+  },
+
+  /** Drain persisted pack file GC jobs (safe to call repeatedly). */
+  drainPackGcQueue(): Promise<void> {
+    return drainPackGcQueueInternal()
+  },
+
+  /** Drain deferred pack asset materialization (safe to call repeatedly). */
+  drainPackAssetMaterializeQueue(packId?: string): Promise<void> {
+    return drainPackAssetMaterializeQueueInternal(packId)
   },
 
   async buildManifestFromUnit(unitId: string): Promise<{ manifest: LearningPackManifest; unitDetail: any; topicDetails: any[] }> {
@@ -634,6 +820,8 @@ export const learningPackService = {
       platform: Capacitor.getPlatform(),
       isNative: Capacitor.isNativePlatform(),
     })
+    await awaitPackGcBeforeInstall(unitId)
+    throwIfAborted(signal)
     const previous = await localDb.get<InstalledLearningPack>('downloaded_packs', unitId)
     await beginPackOperation(unitId, previous ? 'update' : 'install')
     try {
@@ -657,6 +845,8 @@ export const learningPackService = {
         title: installed.title,
         updateMode: previous ? 'full' : undefined,
       })
+      // Native packs are installed with deferred asset rows; materialize off the UI path.
+      void drainPackAssetMaterializeQueueInternal(unitId)
       return installed
     } catch (error) {
       logger.error('install failed, rolling back partial data', { unitId, error: debugError(error) })
@@ -837,252 +1027,295 @@ export const learningPackService = {
         throw error
       }
       logger.info('✅ ⑧ 索引表写入完成')
-      const deferredAssets = Capacitor.isNativePlatform()
-        ? (manifest.assets ?? []).filter(isDeferredAsset)
-        : []
-      const eagerAssets = (manifest.assets ?? []).filter((asset) => !deferredAssets.includes(asset))
-      report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: eagerAssets.length })
 
-      logger.info(`⏳ ⑨ 提取资源文件 (${eagerAssets.length} 个，${deferredAssets.length} 个发音延迟物化)...`)
-      const totalAssets = eagerAssets.length
-
-      // 一次性加载所有 asset_refs 到内存 Map，避免每个资产全表扫描
-      const declaredAssetShas = eagerAssets
-        .map((asset) => asset.sha256)
-        .filter((sha256): sha256 is string => Boolean(sha256))
-      const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
-      const refsBySha256 = new Map<string, any>()
-      for (const ref of allRefsList) {
-        if (ref.sha256) refsBySha256.set(ref.sha256, ref)
-      }
-      logger.info(`asset_refs 预加载: ${refsBySha256.size} 条`)
-
-      // ── 阶段 A：并行读取 ZIP + 计算 SHA-256（CPU 密集型，可并行）──
-      // Keep the proven iOS limit to protect WKWebView memory. Desktop browsers
-      // have more headroom and benefit from a wider batch when a pack contains
-      // thousands of small audio assets.
-      const ASSET_CONCURRENCY = Capacitor.isNativePlatform() ? 2 : 20
-      const assetTasks: Array<{
-        asset: any
-        entry: ReturnType<typeof entries.get>
-        index: number
-      }> = []
-
-      for (let i = 0; i < totalAssets; i++) {
-        const asset = eagerAssets[i]
-        if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
-        const entry = entries.get(normalizeZipPath(asset.path))
-        if (!entry) throw new Error(`Pack asset file is missing: ${asset.path}`)
-        assetTasks.push({ asset, entry, index: i })
-      }
-      const progressForAssetRead = (done: number, label: string, currentItem?: string) => {
-        const total = Math.max(assetTasks.length, 1)
-        const pct = 40 + (done / total) * 35
-        report('extracting_assets', pct, {
-          label,
-          current: Math.min(done, assetTasks.length),
-          total: assetTasks.length,
-          currentItem,
-        })
-      }
-      const progressForAssetWrite = (done: number, totalToWrite: number, currentItem?: string) => {
-        const total = Math.max(totalToWrite, 1)
-        const pct = 75 + (done / total) * 20
-        report('extracting_assets', pct, {
-          label: '写入本地资源',
-          current: Math.min(done, totalToWrite),
-          total: totalToWrite,
-          currentItem,
-        })
-      }
-
-      type AssetResult =
-        | { ok: true; asset: any; sha256: string; buffer: ArrayBuffer | null; index: number; staged?: boolean }
-        | { ok: false; asset: any; error: string; index: number }
-
-      const assetResults: AssetResult[] = []
-      const scheduledAssetShas = new Set<string>()
-      for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
-        throwIfAborted(signal)
-        const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
-        progressForAssetRead(i, '读取资源文件', batch[0]?.asset?.path ?? batch[0]?.asset?.url)
-        const batchResults = await Promise.all(
-          batch.map(async ({ asset, entry, index }): Promise<AssetResult> => {
-            try {
-              const buffer = await readEntryBuffer(entry!)
-              const actualSha256 = await digest(buffer)
-              // digest() already falls back to the pure-JS implementation in
-              // live-reload/non-secure contexts. Never turn integrity checking
-              // off there: a bad hash must not become a reusable cache entry.
-              if (asset.sha256 && actualSha256.toLowerCase() !== asset.sha256.toLowerCase()) {
-                return { ok: false, asset, error: `SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`, index }
-              }
-              return { ok: true, asset, sha256: actualSha256, buffer, index }
-            } catch (e) {
-              return { ok: false, asset, error: debugErrorMessage(e), index }
-            }
-          }),
-        )
-        const failedBatch = batchResults.filter((result): result is Extract<AssetResult, { ok: false }> => !result.ok)
-        if (failedBatch.length > 0) {
-          throw new Error(`Pack asset validation failed: ${failedBatch.map((item) => `${item.asset.path}: ${item.error}`).join('; ')}`)
-        }
-
-        // Persist this small batch immediately, then release its ArrayBuffers.
-        // Hashing happens in sha256.worker.ts and writes never exceed the same
-        // bounded concurrency as extraction.
-        await Promise.all(batchResults.map(async (result) => {
-          if (!result.ok || !result.buffer) return
-          const existingRef = refsBySha256.get(result.sha256)
-          const ready = scheduledAssetShas.has(result.sha256)
-            || (Boolean(existingRef) && await assetCacheService.isReady(result.sha256))
-          if (!ready) {
-            // Reserve before the asynchronous write so duplicate SHA entries in
-            // the same batch cannot race and write the same physical file twice.
-            scheduledAssetShas.add(result.sha256)
-            await assetCacheService.saveFromBufferWithSha256(
-              { ...result.asset, sha256: result.sha256 },
-              result.buffer,
-              result.sha256,
-            )
-            result.staged = true
-            refsBySha256.set(result.sha256, {
-              sha256: result.sha256,
-              ext: extensionFrom(result.asset.path ?? result.asset.url, result.asset.mimeType),
-            })
-          }
-          result.buffer = null
-        }))
-        assetResults.push(...batchResults)
-        progressForAssetRead(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
-      }
-
-      const failedAssets = assetResults.filter((result): result is Extract<AssetResult, { ok: false }> => !result.ok)
-      if (failedAssets.length > 0) {
-        throw new Error(`Pack asset validation failed: ${failedAssets.map((item) => `${item.asset.path}: ${item.error}`).join('; ')}`)
-      }
-
-      // ── 阶段 B：批量写入文件系统 + SQLite ──
-      const assetRefsToWrite: any[] = []
-      const filesToSave: Array<{ asset: any; sha256: string; buffer: ArrayBuffer }> = []
+      const manifestAssets = manifest.assets ?? []
       let assetOk = 0
       let assetDeduped = 0
-      let assetFail = 0
+      let assetDeferred = 0
 
-      for (const result of assetResults) {
-        if (result.ok === false) {
-          assetFail++
-          logger.warn('asset extract failed', { path: result.asset.path, error: result.error })
-          continue
-        }
-
-        const { asset, sha256: actualSha256, buffer } = result
-        const existingRef = refsBySha256.get(actualSha256)
-        // asset_refs is metadata, not proof that a file still exists. This
-        // guards clear/interrupted-install recovery: stale refs must not cause
-        // the installer to skip writing a missing local resource.
-        const alreadyInPool = Boolean(result.staged) || scheduledAssetShas.has(actualSha256)
-          || (Boolean(existingRef) && await assetCacheService.isReady(actualSha256))
-
-        if (existingRef && !alreadyInPool) {
-          logger.warn('stale asset_ref recovered by re-saving file', {
-            packId: manifest.packId,
-            sha256: actualSha256,
-            path: asset.path,
-          })
-        }
-
-        if (!alreadyInPool && buffer) {
-          filesToSave.push({ asset, sha256: actualSha256, buffer })
-          scheduledAssetShas.add(actualSha256)
-        } else if (!result.staged) {
-          assetDeduped++
-        }
-
-        const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
-        const nowIso = new Date().toISOString()
-        assetRefsToWrite.push({
-          id: `${manifest.packId}:${actualSha256}`,
-          sha256: actualSha256,
-          packId: manifest.packId,
-          logicalPath: asset.path ?? asset.url ?? '',
-          ext,
-          updatedAt: nowIso,
-          data: JSON.stringify({ role: asset.role }),
+      if (Capacitor.isNativePlatform()) {
+        // Native: index every asset as deferred (or reuse a ready shared file),
+        // mark installed immediately, and materialize from the retained zip later.
+        report('extracting_assets', 55, {
+          label: '索引离线资源',
+          current: 0,
+          total: manifestAssets.length,
         })
+        logger.info(`⏳ ⑨ Native 延迟物化索引 (${manifestAssets.length} 个资源)...`)
 
-        if (!alreadyInPool) {
-          refsBySha256.set(actualSha256, { sha256: actualSha256, ext })
+        for (let i = 0; i < manifestAssets.length; i++) {
+          const asset = manifestAssets[i]
+          if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
+          if (!asset.sha256) throw new Error(`Pack asset is missing sha256: ${asset.path}`)
+          if (!entries.get(normalizeZipPath(asset.path))) {
+            throw new Error(`Pack asset file is missing: ${asset.path}`)
+          }
         }
-        assetOk++
-      }
 
-      // 并行写文件 + 批量写 SQLite 引用
-      let savedFiles = 0
-      progressForAssetWrite(0, filesToSave.length, filesToSave[0]?.asset?.path ?? filesToSave[0]?.asset?.url)
-      for (const fileBatch of chunkArray(filesToSave, 2)) {
-        await Promise.all(fileBatch.map(async ({ asset, sha256, buffer }) => {
-          progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
-          const saved = await assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256)
-          savedFiles++
-          progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
-          return saved
-        }))
-      }
-      if (assetRefsToWrite.length > 0) {
-        await localDb.putMany('asset_refs', assetRefsToWrite)
-      }
+        const declaredAssetShas = manifestAssets
+          .map((asset) => asset.sha256)
+          .filter((sha256): sha256 is string => Boolean(sha256))
+        const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
+        const refsBySha256 = new Map<string, any>()
+        for (const ref of allRefsList) {
+          if (ref.sha256) refsBySha256.set(ref.sha256, ref)
+        }
 
-      // A deferred row is keyed by the identity the player actually holds
-      // (normally asset://fileAssetId), never by the manifest's signed URL.
-      // Multiple vocabulary entries may share an audio file; upserting the
-      // same lookup identity is intentional and keeps one materialization.
-      if (Capacitor.isNativePlatform()) await deferredPackAssetService.withPackLock(manifest.packId, async () => {
-        await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', manifest.packId)
-        if (deferredAssets.length === 0) return
+        const assetRefsToWrite: any[] = []
+        const aliasJobs: Array<{ sha256: string; asset: AssetRef }> = []
+        const deferredRows: DeferredPackAsset[] = []
+        const seenLookup = new Set<string>()
+        const readyShaCache = new Map<string, boolean>()
         const nowIso = new Date().toISOString()
-        const deferredRows = deferredAssets.flatMap((asset): DeferredPackAsset[] => {
-          if (!asset.path || !asset.sha256) return []
+
+        for (const asset of manifestAssets) {
+          throwIfAborted(signal)
+          const sha256 = asset.sha256!
           const contentUrl = asset.fileAssetId
             ? (contentUrlsByFileAssetId.get(asset.fileAssetId) ?? createFileAssetReference(asset.fileAssetId))
             : asset.url
-          const lookupKey = deferredLookupKeys(contentUrl, asset.fileAssetId)[0]
-          if (!lookupKey) return []
-          return [{
-            id: `${manifest.packId}:${manifest.version}:${lookupKey}`,
-            packId: manifest.packId,
-            lookupKey,
-            fileAssetId: asset.fileAssetId ?? null,
-            sourceZipVersion: manifest.version,
-            contentUrl,
-            signedUrl: asset.url,
-            zipPath: asset.path!,
-            sha256: asset.sha256!,
-            mimeType: asset.mimeType,
-            size: asset.size,
-            role: asset.role ?? 'vocabulary_pronunciation_us',
-            status: 'deferred',
-            createdAt: nowIso,
-            updatedAt: nowIso,
-          }]
+          let ready = readyShaCache.get(sha256)
+          if (ready === undefined) {
+            ready = Boolean(refsBySha256.get(sha256)) && await assetCacheService.isReady(sha256)
+            readyShaCache.set(sha256, ready)
+          }
+
+          if (ready) {
+            const existingRef = refsBySha256.get(sha256)
+            const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
+            assetRefsToWrite.push({
+              id: `${manifest.packId}:${sha256}`,
+              sha256,
+              packId: manifest.packId,
+              logicalPath: asset.path ?? asset.url ?? '',
+              ext,
+              updatedAt: nowIso,
+              data: JSON.stringify({ role: asset.role }),
+            })
+            aliasJobs.push({ sha256, asset: { ...asset, sha256, url: contentUrl || asset.url } })
+            assetDeduped++
+            assetOk++
+            continue
+          }
+
+          const lookupKey = deferredLookupKeys(contentUrl || asset.url || '', asset.fileAssetId)[0]
+          if (!lookupKey) {
+            throw new Error(`Pack asset is missing lookup identity: ${asset.path}`)
+          }
+          if (!seenLookup.has(lookupKey)) {
+            seenLookup.add(lookupKey)
+            deferredRows.push({
+              id: `${manifest.packId}:${manifest.version}:${lookupKey}`,
+              packId: manifest.packId,
+              lookupKey,
+              fileAssetId: asset.fileAssetId ?? null,
+              sourceZipVersion: manifest.version,
+              contentUrl: contentUrl || asset.url,
+              signedUrl: asset.url,
+              zipPath: asset.path!,
+              sha256,
+              mimeType: asset.mimeType,
+              size: asset.size,
+              role: asset.role ?? 'asset',
+              status: 'deferred',
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            })
+            assetDeferred++
+          }
+          assetOk++
+        }
+
+        await deferredPackAssetService.withPackLock(manifest.packId, async () => {
+          await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', manifest.packId)
+          if (deferredRows.length > 0) await localDb.putMany('deferred_pack_assets', deferredRows)
         })
-        await localDb.putMany('deferred_pack_assets', deferredRows)
-      })
+        if (assetRefsToWrite.length > 0) await localDb.putMany('asset_refs', assetRefsToWrite)
+        await Promise.all(aliasJobs.map(({ sha256, asset }) => assetCacheService.addAliases(sha256, asset)))
 
-      // Newly staged files already persisted their aliases inside
-      // saveFromBufferWithSha256(). Only backfill aliases for references that
-      // reused an existing/same-SHA file; otherwise every fresh asset would
-      // repeat one lookup plus several SQLite upserts across the native bridge.
-      await Promise.all(assetResults
-        .filter((result): result is Extract<AssetResult, { ok: true }> => result.ok)
-        .filter((result) => !result.staged)
-        .map((result) => assetCacheService.addAliases(result.sha256, {
-          ...result.asset,
-          sha256: result.sha256,
-        })))
+        report('extracting_assets', 90, {
+          label: '索引离线资源',
+          current: manifestAssets.length,
+          total: manifestAssets.length,
+        })
+        logger.info(`✅ ⑨ Native 资源索引完成: ${assetOk} 项 (${assetDeduped} 复用, ${assetDeferred} 延迟物化)`)
+      } else {
+        // Web: keep eager extract — there is no retained zip for deferred materialize.
+        const eagerAssets = manifestAssets
+        report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: eagerAssets.length })
+        logger.info(`⏳ ⑨ 提取资源文件 (${eagerAssets.length} 个)...`)
+        const totalAssets = eagerAssets.length
 
-      const assetSkip = totalAssets - assetTasks.length
-      logger.info(`✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
+        const declaredAssetShas = eagerAssets
+          .map((asset) => asset.sha256)
+          .filter((sha256): sha256 is string => Boolean(sha256))
+        const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
+        const refsBySha256 = new Map<string, any>()
+        for (const ref of allRefsList) {
+          if (ref.sha256) refsBySha256.set(ref.sha256, ref)
+        }
+        logger.info(`asset_refs 预加载: ${refsBySha256.size} 条`)
+
+        const ASSET_CONCURRENCY = 20
+        const assetTasks: Array<{
+          asset: any
+          entry: ReturnType<typeof entries.get>
+          index: number
+        }> = []
+
+        for (let i = 0; i < totalAssets; i++) {
+          const asset = eagerAssets[i]
+          if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
+          const entry = entries.get(normalizeZipPath(asset.path))
+          if (!entry) throw new Error(`Pack asset file is missing: ${asset.path}`)
+          assetTasks.push({ asset, entry, index: i })
+        }
+        const progressForAssetRead = (done: number, label: string, currentItem?: string) => {
+          const total = Math.max(assetTasks.length, 1)
+          const pct = 40 + (done / total) * 35
+          report('extracting_assets', pct, {
+            label,
+            current: Math.min(done, assetTasks.length),
+            total: assetTasks.length,
+            currentItem,
+          })
+        }
+        const progressForAssetWrite = (done: number, totalToWrite: number, currentItem?: string) => {
+          const total = Math.max(totalToWrite, 1)
+          const pct = 75 + (done / total) * 20
+          report('extracting_assets', pct, {
+            label: '写入本地资源',
+            current: Math.min(done, totalToWrite),
+            total: totalToWrite,
+            currentItem,
+          })
+        }
+
+        type AssetResult =
+          | { ok: true; asset: any; sha256: string; buffer: ArrayBuffer | null; index: number; staged?: boolean }
+          | { ok: false; asset: any; error: string; index: number }
+
+        const assetResults: AssetResult[] = []
+        const scheduledAssetShas = new Set<string>()
+        for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
+          throwIfAborted(signal)
+          const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
+          progressForAssetRead(i, '读取资源文件', batch[0]?.asset?.path ?? batch[0]?.asset?.url)
+          const batchResults = await Promise.all(
+            batch.map(async ({ asset, entry, index }): Promise<AssetResult> => {
+              try {
+                const buffer = await readEntryBuffer(entry!)
+                const actualSha256 = await digest(buffer)
+                if (asset.sha256 && actualSha256.toLowerCase() !== asset.sha256.toLowerCase()) {
+                  return { ok: false, asset, error: `SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`, index }
+                }
+                return { ok: true, asset, sha256: actualSha256, buffer, index }
+              } catch (e) {
+                return { ok: false, asset, error: debugErrorMessage(e), index }
+              }
+            }),
+          )
+          const failedBatch = batchResults.filter((result): result is Extract<AssetResult, { ok: false }> => !result.ok)
+          if (failedBatch.length > 0) {
+            throw new Error(`Pack asset validation failed: ${failedBatch.map((item) => `${item.asset.path}: ${item.error}`).join('; ')}`)
+          }
+
+          await Promise.all(batchResults.map(async (result) => {
+            if (!result.ok || !result.buffer) return
+            const existingRef = refsBySha256.get(result.sha256)
+            const ready = scheduledAssetShas.has(result.sha256)
+              || (Boolean(existingRef) && await assetCacheService.isReady(result.sha256))
+            if (!ready) {
+              scheduledAssetShas.add(result.sha256)
+              await assetCacheService.saveFromBufferWithSha256(
+                { ...result.asset, sha256: result.sha256 },
+                result.buffer,
+                result.sha256,
+              )
+              result.staged = true
+              refsBySha256.set(result.sha256, {
+                sha256: result.sha256,
+                ext: extensionFrom(result.asset.path ?? result.asset.url, result.asset.mimeType),
+              })
+            }
+            result.buffer = null
+          }))
+          assetResults.push(...batchResults)
+          progressForAssetRead(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
+        }
+
+        const failedAssets = assetResults.filter((result): result is Extract<AssetResult, { ok: false }> => !result.ok)
+        if (failedAssets.length > 0) {
+          throw new Error(`Pack asset validation failed: ${failedAssets.map((item) => `${item.asset.path}: ${item.error}`).join('; ')}`)
+        }
+
+        const assetRefsToWrite: any[] = []
+        const filesToSave: Array<{ asset: any; sha256: string; buffer: ArrayBuffer }> = []
+        let assetFail = 0
+
+        for (const result of assetResults) {
+          if (result.ok === false) {
+            assetFail++
+            logger.warn('asset extract failed', { path: result.asset.path, error: result.error })
+            continue
+          }
+
+          const { asset, sha256: actualSha256, buffer } = result
+          const existingRef = refsBySha256.get(actualSha256)
+          const alreadyInPool = Boolean(result.staged) || scheduledAssetShas.has(actualSha256)
+            || (Boolean(existingRef) && await assetCacheService.isReady(actualSha256))
+
+          if (!alreadyInPool && buffer) {
+            filesToSave.push({ asset, sha256: actualSha256, buffer })
+            scheduledAssetShas.add(actualSha256)
+          } else if (!result.staged) {
+            assetDeduped++
+          }
+
+          const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
+          const nowIso = new Date().toISOString()
+          assetRefsToWrite.push({
+            id: `${manifest.packId}:${actualSha256}`,
+            sha256: actualSha256,
+            packId: manifest.packId,
+            logicalPath: asset.path ?? asset.url ?? '',
+            ext,
+            updatedAt: nowIso,
+            data: JSON.stringify({ role: asset.role }),
+          })
+
+          if (!alreadyInPool) {
+            refsBySha256.set(actualSha256, { sha256: actualSha256, ext })
+          }
+          assetOk++
+        }
+
+        let savedFiles = 0
+        progressForAssetWrite(0, filesToSave.length, filesToSave[0]?.asset?.path ?? filesToSave[0]?.asset?.url)
+        for (const fileBatch of chunkArray(filesToSave, 2)) {
+          await Promise.all(fileBatch.map(async ({ asset, sha256, buffer }) => {
+            progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
+            const saved = await assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256)
+            savedFiles++
+            progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
+            return saved
+          }))
+        }
+        if (assetRefsToWrite.length > 0) {
+          await localDb.putMany('asset_refs', assetRefsToWrite)
+        }
+
+        await Promise.all(assetResults
+          .filter((result): result is Extract<AssetResult, { ok: true }> => result.ok)
+          .filter((result) => !result.staged)
+          .map((result) => assetCacheService.addAliases(result.sha256, {
+            ...result.asset,
+            sha256: result.sha256,
+          })))
+
+        logger.info(`✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetFail} 失败`)
+      }
+
       report('finishing', 99, { label: '完成安装' })
 
       await markPackOperationCommitting(unitId)
@@ -1094,6 +1327,7 @@ export const learningPackService = {
         version: manifest.version,
         topics: topicDetails.length,
         assets: assetOk,
+        deferred: assetDeferred,
       })
       return result
     } finally {
@@ -1316,19 +1550,25 @@ export const learningPackService = {
     }
   },
 
-  async uninstall(packId: string): Promise<void> {
-    const timer = createTimer(`learning-pack:uninstall:${packId}`)
-    logger.info(`[uninstall:${packId}] start`)
+  /**
+   * Fast path: remove pack from SQLite indexes and enqueue file GC.
+   * UI can treat the pack as uninstalled as soon as this resolves.
+   */
+  async uninstallMetadata(packId: string): Promise<void> {
+    const timer = createTimer(`learning-pack:uninstall-metadata:${packId}`)
+    logger.info(`[uninstall:${packId}] metadata start`)
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
     timer.lap('load pack record', { found: Boolean(pack) })
-    if (!pack) return
+    if (!pack) {
+      // Pack row already gone — still try to finish any leftover GC.
+      void drainPackGcQueueInternal()
+      return
+    }
     await beginPackOperation(packId, 'uninstall')
 
-    // 清理 asset_refs（引用计数保护）
     const myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
     timer.lap('load asset refs', { packRefs: myRefs.length })
 
-    // 预计算每个 sha256 的总引用数（排除当前包，O(n) 一次扫描）
     const refCountBySha = new Map<string, number>()
     for (const shaBatch of chunkArray([...new Set(myRefs.map((ref) => String(ref.sha256)))], 8)) {
       const results = await Promise.all(shaBatch.map(async (sha256) => ({
@@ -1342,7 +1582,6 @@ export const learningPackService = {
     }
     timer.lap('compute shared asset refs', { sharedAssetCount: refCountBySha.size })
 
-    // 并行删除未被其他包引用的文件
     let deletedFiles = 0
     let keptFiles = 0
     const filesToRemove: string[] = []
@@ -1354,6 +1593,7 @@ export const learningPackService = {
         keptFiles++
       }
     }
+
     // Keep SQLite cleanup sequential. The web adapter is much happier when
     // large deletes do not compete on the same connection.
     try {
@@ -1377,32 +1617,28 @@ export const learningPackService = {
       throw error
     }
 
-    // Delete physical files only after SQLite no longer advertises the pack as
-    // installed. A database failure therefore leaves a fully usable old pack.
+    // After SQLite no longer advertises the pack, enqueue durable file GC and
+    // return. Physical deletes run in drainPackGcQueue (crash-safe).
     await markPackOperationCommitting(packId)
-    await deferredPackAssetService.discardPack(packId)
-    for (const shaBatch of chunkArray([...new Set(filesToRemove)], 3)) {
-      const results = await Promise.allSettled(shaBatch.map((sha256) => assetCacheService.remove(sha256)))
-      for (const result of results) {
-        if (result.status === 'rejected') logger.warn('asset garbage collection failed', result.reason)
-      }
-    }
-    if (Capacitor.isNativePlatform()) {
-      await Filesystem.rmdir({ path: `learning-packs/${packId}`, directory: Directory.Data, recursive: true }).catch(() => undefined)
-    }
-    timer.lap('delete asset files', { deletedFiles, keptFiles })
-    logger.info(`🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
-    await finishPackOperation(packId)
-
-    logger.info(`🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
-    await recordPackAudit({
+    const now = new Date().toISOString()
+    await putPackGcJob({
+      id: packGcJobId(packId),
       packId,
-      action: 'uninstall',
+      filesToRemove: [...new Set(filesToRemove)],
       version: pack.version,
-      previousVersion: pack.version,
       title: pack.title,
+      createdAt: now,
+      status: 'pending',
     })
+    timer.lap('enqueue gc job', { deletedFiles, keptFiles })
+    logger.info(`🗑️ 已标记卸载: ${packId} (${pack.title} v${pack.version}); GC queued (${deletedFiles} files, ${keptFiles} retained)`)
     timer.done({ packId, title: pack.title, version: pack.version })
+  },
+
+  /** Compatible uninstall: metadata fast path + background file GC. */
+  async uninstall(packId: string): Promise<void> {
+    await this.uninstallMetadata(packId)
+    void drainPackGcQueueInternal()
   },
 
   listInstalled(): Promise<InstalledLearningPack[]> {

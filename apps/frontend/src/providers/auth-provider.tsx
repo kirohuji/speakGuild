@@ -169,6 +169,23 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
   })
 }
 
+function startBackgroundLoginRestore(userId: string) {
+  useOfflineSyncStore.getState().setLoginRestorePending(true)
+  void offlineSyncService.sync(userId)
+    .catch((error) => {
+      console.warn('[auth] background offline restore failed; retained local data:', error)
+    })
+    .finally(() => {
+      useOfflineSyncStore.getState().setLoginRestorePending(false)
+    })
+  void Promise.all([
+    scriptRepository.refreshMyRecords(),
+    scriptRepository.refreshMyWorks(),
+  ]).catch((error) => {
+    console.warn('[auth] script cache refresh failed; will retry on page open:', error)
+  })
+}
+
 async function prepareOfflineDataForUser(userId: string) {
   const ownerId = getOfflineDataOwner()
   // Data retained after an expired session may only be reused by the same account.
@@ -279,19 +296,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextSession = normalizeSessionResponse(raw)
       if (nextSession?.user?.id && !isManagementHashRoute()) {
         await prepareOfflineDataForUser(nextSession.user.id)
-        // Restore the server copy before exposing an authenticated session. Without
-        // this barrier, TodayTaskPage can create a new empty 10-item run before
-        // the interrupted run from the previous login has been pulled.
-        await offlineSyncService.sync(nextSession.user.id).catch((error) => {
-          console.warn('[auth] initial offline restore failed; retained local data:', error)
-        })
-        // Script caches refresh in the background so login is not blocked on pagination.
-        void Promise.all([
-          scriptRepository.refreshMyRecords(),
-          scriptRepository.refreshMyWorks(),
-        ]).catch((error) => {
-          console.warn('[auth] script cache refresh failed; will retry on page open:', error)
-        })
+        // Mark restore pending before exposing the session so TodayTaskPage can
+        // wait, then sync in the background so login itself is not blocked.
+        startBackgroundLoginRestore(nextSession.user.id)
       }
       setCurrentSessionSnapshot(nextSession)
       setSession(nextSession)
@@ -310,7 +317,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const cached = options.allowCacheFallback === false ? null : readCachedSession()
       if (cached?.user?.id) {
-        if (!isManagementHashRoute()) await prepareOfflineDataForUser(cached.user.id)
+        if (!isManagementHashRoute()) {
+          await prepareOfflineDataForUser(cached.user.id)
+          startBackgroundLoginRestore(cached.user.id)
+        }
         setCurrentSessionSnapshot(cached)
         setSession(cached)
         localStorage.setItem(OTA_USER_ID_KEY, cached.user.id)

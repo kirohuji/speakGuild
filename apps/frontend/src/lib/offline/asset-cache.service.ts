@@ -48,7 +48,7 @@ function normalizeUrl(url: string) {
 }
 
 /** A COS signature changes, but the object pathname is the stable resource identity. */
-function stableRemoteUrl(url: string) {
+export function stableRemoteUrl(url: string) {
   try {
     const parsed = new URL(url)
     return `${parsed.origin}${parsed.pathname}`
@@ -235,7 +235,9 @@ async function assetKey(ref: AssetRef) {
   // `sha256` is the canonical on-disk key for package assets. A stable file
   // asset ID is deliberately only an alias: using it as the primary key would
   // break SHA based cross-package deduplication and uninstall reference counts.
-  return ref.assetId || ref.sha256 || await digest(normalizeUrl(ref.url))
+  // Signed COS/query URLs must hash the pathname only — otherwise every refresh
+  // creates a new miss for the same object.
+  return ref.assetId || ref.sha256 || await digest(stableRemoteUrl(normalizeUrl(ref.url)))
 }
 
 async function putAliases(record: LocalAsset, ref: AssetRef, url: string): Promise<void> {
@@ -375,16 +377,17 @@ export const assetCacheService = {
       })
       return OFFLINE_RESOURCE_MISSING
     }
+    // Non-package misses stay online-capable: return the remote URL and let
+    // callers (or download()) decide whether to materialize a local copy.
+    // Avoid noisy "downloading" logs on web — download() is a no-op there.
     if (isNative()) {
       console.warn('[offline-assets] native cache miss; using remote URL', {
         key,
         requestedUrl: url,
         fileAssetId: inferredFileAssetId || undefined,
       })
-      return url
     }
-    console.warn('[offline-assets] resolve miss; downloading remote fallback', { key, requestedUrl: url, assetId: ref.assetId })
-    return this.download({ ...ref, url })
+    return url
   },
 
   async download(ref: AssetRef): Promise<string> {

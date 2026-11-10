@@ -384,7 +384,8 @@ export const offlineStorageService = {
   },
 
   async clearPack(packId: string): Promise<void> {
-    await learningPackService.uninstall(packId)
+    await learningPackService.uninstallMetadata(packId)
+    void learningPackService.drainPackGcQueue()
   },
 
   async clearCategory(category: OfflineCacheCategory): Promise<void> {
@@ -413,8 +414,11 @@ export const offlineStorageService = {
       // protocol and removes both asset_refs and unshared physical files.
       const packs = await localDb.list<InstalledLearningPack>('downloaded_packs')
       for (const pack of packs) {
-        await learningPackService.uninstall(pack.packId)
+        await learningPackService.uninstallMetadata(pack.packId)
       }
+      // Finish queued file GC before the broad directory wipe so journals/jobs
+      // are not racing native rmdir.
+      await learningPackService.drainPackGcQueue()
       // Repair interrupted/legacy installs that left no downloaded_packs row.
       await localDb.clear('asset_refs')
       await localDb.clear('deferred_pack_assets')

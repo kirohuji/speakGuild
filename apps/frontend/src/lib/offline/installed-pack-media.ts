@@ -1,7 +1,8 @@
 import { Capacitor } from '@capacitor/core'
 import type { StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
-import { fileAssetIdFromUrl, resolveFileAssetUrl } from '@/lib/file-asset-reference'
+import { createFileAssetReference, fileAssetIdFromUrl, resolveFileAssetUrl } from '@/lib/file-asset-reference'
 import { OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
+import { deferredPackAssetService } from '@/lib/offline/deferred-pack-asset.service'
 import { localDb } from '@/lib/offline/unified-storage'
 
 /**
@@ -91,7 +92,22 @@ export async function resolveInstalledMedia(packId: string, identity: MediaIdent
   }
   const fileAssetId = identity.fileAssetId || fileAssetIdFromUrl(identity.url) || undefined
   const listed = manifestAssetFor(packId ? await assetsForPack(packId) : [], identity)
-  return playbackUrlForRow(listed?.sha256) || playbackUrlForRow(fileAssetId)
+  const ready = await playbackUrlForRow(listed?.sha256) || await playbackUrlForRow(fileAssetId)
+  if (ready) return ready
+
+  // Native installs index assets as deferred until background/on-demand materialize.
+  // Keep the installed-pack contract: never fall back to a remote signed URL here.
+  const contentUrl = identity.url
+    || (fileAssetId ? createFileAssetReference(fileAssetId) : undefined)
+    || (listed?.fileAssetId ? createFileAssetReference(listed.fileAssetId) : undefined)
+    || listed?.url
+  if (!contentUrl) return undefined
+  const deferred = await deferredPackAssetService.resolve({
+    url: contentUrl,
+    assetId: fileAssetId || listed?.fileAssetId || null,
+  }).catch(() => null)
+  if (deferred && isInstalledPlaybackUrl(deferred)) return toWebViewPlaybackUrl(deferred)
+  return undefined
 }
 
 /**

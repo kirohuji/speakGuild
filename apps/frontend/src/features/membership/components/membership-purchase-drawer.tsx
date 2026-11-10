@@ -1,9 +1,10 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { MobilePageLoading } from '@/components/common/mobile-page-loading'
+import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
 import { useAuth } from '@/providers/auth-provider'
 import { useUserStore } from '@/stores/user.store'
+import { cn } from '@/lib/cn'
 
 const MemberPage = lazy(() =>
   import('@/features/membership/pages/member-page').then((module) => ({ default: module.MemberPage })),
@@ -21,6 +22,13 @@ export function MembershipPurchaseDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  // Keep the page mounted after the first open so reopening does not flash
+  // header-only content or refetch from a cold remount.
+  const [contentReady, setContentReady] = useState(false)
+  useEffect(() => {
+    if (open) setContentReady(true)
+  }, [open])
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
       <DrawerContent className="z-[10006] max-h-[88vh] rounded-t-[28px] border-0 bg-background" overlayClassName="z-[10006]">
@@ -28,10 +36,12 @@ export function MembershipPurchaseDrawer({
           <DrawerTitle className="text-base font-semibold">{t('member.title')}</DrawerTitle>
         </DrawerHeader>
         <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-          {open && (
-            <Suspense fallback={<MobilePageLoading rows={4} />}>
-              <MemberPage compact />
-            </Suspense>
+          {contentReady && (
+            <div className={cn(!open && 'hidden')} aria-hidden={!open}>
+              <Suspense fallback={<MobileListSkeleton rows={4} showHeader={false} className="py-2" />}>
+                <MemberPage compact />
+              </Suspense>
+            </div>
           )}
         </div>
       </DrawerContent>

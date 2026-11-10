@@ -2068,6 +2068,8 @@ const ja = {
       noContent: '今日練習できる学習教材がありません',
       fetchingPlan: '学習計画を取得中',
       fetchingPlanHint: '教材の復元後、今日のタスクを自動で配置します。',
+      restoringProgress: '学習進捗を同期中',
+      restoringProgressHint: '未同期の練習を上書きしないよう、同期完了後に今日のタスクを配置します。',
       practiceRecords: '練習記録',
       todayReview: '今日の復習',
       expireOverdue: '期限切れ/超過 {{count}} 問',
