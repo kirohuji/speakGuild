@@ -1857,7 +1857,17 @@ export class LearningService {
       include: {
         mediaAsset: { select: { id: true, filename: true, mimeType: true, size: true } },
         inkScript: {
-          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true, updatedAt: true },
+          select: {
+            id: true,
+            key: true,
+            title: true,
+            inkJson: true,
+            inkSource: true,
+            assetMap: true,
+            version: true,
+            updatedAt: true,
+            characterId: true,
+          },
         },
         topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
         topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
@@ -1945,9 +1955,15 @@ export class LearningService {
 
     const allCommitments = gameLocation?.rooms.flatMap((r) => r.commitments) ?? [];
     const locationCharacters = allCommitments.map((commitment) => commitment.character);
-    const castCharacters = this.isStoryLearningPack(unitDetail)
-      ? await this.findStoryCastCharacters(episodeInkScripts)
-      : [];
+    // Practice topics and story episodes both resolve speakers from Ink; without this,
+    // practice packs ship empty scene.characters and skip avatar/sprite FileAssets.
+    const topicInkScripts = topics
+      .map((topic) => topic.inkScript)
+      .filter((script): script is NonNullable<typeof script> => Boolean(script));
+    const castCharacters = await this.findStoryCastCharacters([
+      ...episodeInkScripts,
+      ...topicInkScripts,
+    ]);
     const sceneCharacters = this.mergeCharactersById(castCharacters, locationCharacters);
 
     // Attach scene to unitDetail (one copy, not repeated per topic)
@@ -2019,20 +2035,34 @@ export class LearningService {
       offlineNqtrBundle = await this.buildOfflineNqtrBundle(unitId, assets);
       (unitDetail as any).offlineNqtrBundle = offlineNqtrBundle;
       if (offlineNqtrBundle?.characters?.length) {
-        (unitDetail as any).scene = {
-          ...((unitDetail as any).scene ?? { id: unitDetail.id, title: unitDetail.title }),
-          characters: offlineNqtrBundle.characters.map((c: any) => ({
+        // Keep training-topic / episode cast that is not on the NQTR roster so
+        // practice sessions can still resolve speaker portraits offline.
+        const nqtrCharacters = offlineNqtrBundle.characters.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          displayName: c.displayName,
+          role: c.role,
+          personality: c.personality,
+          avatarUrl: c.avatarUrl,
+          spriteBaseUrl: c.spriteBaseUrl,
+          expressions: c.expressions,
+          defaultPosition: (c.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+          voiceBindings: c.voiceBindings ?? [],
+        }));
+        const retainedCast = sceneCharacters
+          .filter((c) => !nqtrCharacters.some((n: { id: string }) => n.id === c.id))
+          .map((c) => ({
             id: c.id,
             name: c.name,
             displayName: c.displayName,
-            role: c.role,
-            personality: c.personality,
             avatarUrl: c.avatarUrl,
             spriteBaseUrl: c.spriteBaseUrl,
             expressions: c.expressions,
             defaultPosition: (c.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
-            voiceBindings: c.voiceBindings ?? [],
-          })),
+          }));
+        (unitDetail as any).scene = {
+          ...((unitDetail as any).scene ?? { id: unitDetail.id, title: unitDetail.title }),
+          characters: [...nqtrCharacters, ...retainedCast],
         };
       }
     }
