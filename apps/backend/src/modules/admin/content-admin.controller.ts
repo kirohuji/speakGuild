@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, Req, ForbiddenException, BadRequestException, NotFoundException,
+  Param, Body, Query, Req, ForbiddenException, BadRequestException, ConflictException, NotFoundException,
   UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -131,6 +131,33 @@ function normalizeOptionalForeignKey(value: string | null | undefined) {
   if (value == null) return value;
   const normalized = value.trim();
   return normalized || null;
+}
+
+/** TrainingTopic.inkScriptId 有全局唯一约束：一个 Ink 只能绑定一个话题。 */
+async function assertInkScriptAvailable(
+  prisma: PrismaService,
+  inkScriptId: string | null | undefined,
+  excludeTopicId?: string | null,
+) {
+  if (!inkScriptId) return;
+  const owner = await prisma.trainingTopic.findFirst({
+    where: {
+      inkScriptId,
+      ...(excludeTopicId ? { id: { not: excludeTopicId } } : {}),
+    },
+    select: {
+      id: true,
+      title: true,
+      scene: { select: { id: true, title: true } },
+    },
+  });
+  if (!owner) return;
+  const packLabel = owner.scene?.title
+    ? `学习包「${owner.scene.title}」`
+    : '其他学习包';
+  throw new ConflictException(
+    `该 Ink 故事已被话题「${owner.title}」绑定（${packLabel}），请先在该话题中解绑后再使用`,
+  );
 }
 
 /** 从 AI 输出中提取 JSON 对象（容忍代码围栏与前后缀文本） */
@@ -1419,6 +1446,9 @@ ${candidateLines}
     }
     const conflictMaterialIds = forceReview ? conflicts.map((conflict) => conflict.materialId) : [];
 
+    const nextInkScriptId = activityType === 'practice' ? normalizeOptionalForeignKey(data.inkScriptId) : null;
+    await assertInkScriptAvailable(this.prisma, nextInkScriptId, null);
+
     const topic = await this.prisma.$transaction(async (tx) => {
       if (forceOverride) {
         await this.materialConstraints.removeOverriddenTopicClaims(tx, dto.sceneId, null, conflicts);
@@ -1427,7 +1457,7 @@ ${candidateLines}
         data: {
           ...data,
           activityType: activityType as any,
-          inkScriptId: activityType === 'practice' ? normalizeOptionalForeignKey(data.inkScriptId) : null,
+          inkScriptId: nextInkScriptId,
           mediaAssetId: normalizeOptionalForeignKey(data.mediaAssetId),
         },
       });
@@ -1529,6 +1559,10 @@ ${candidateLines}
       } as any;
     }
     const conflictMaterialIds = forceReview ? conflicts.map((conflict) => conflict.materialId) : [];
+
+    if (normalizedData.inkScriptId !== undefined) {
+      await assertInkScriptAvailable(this.prisma, normalizedData.inkScriptId, id);
+    }
 
     await this.prisma.$transaction(async (tx) => {
       if (forceOverride) {

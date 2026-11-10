@@ -1023,7 +1023,13 @@ function TrainingTopicDialog({
       const matchesType = storyType === 'all' || story.scriptType === storyType
       if (!matchesType) return false
       if (!keyword) return true
-      return [story.title, story.key, story.scriptType, story.trainingTopic?.title]
+      return [
+        story.title,
+        story.key,
+        story.scriptType,
+        story.trainingTopic?.title,
+        story.trainingTopic?.scene?.title,
+      ]
         .filter(Boolean)
         .some((text) => String(text).toLowerCase().includes(keyword))
     })
@@ -1098,8 +1104,8 @@ function TrainingTopicDialog({
       toast.success('话题已保存')
       onSaved(saved)
       return saved
-    } catch {
-      toast.error('保存失败')
+    } catch (error: any) {
+      toast.error(error?.message || '保存失败')
       return null
     }
     finally { setSaving(false) }
@@ -1944,6 +1950,16 @@ function TrainingTopicDialog({
                                 在故事工坊中编辑
                               </Button>
                             </div>
+                            {displayStory.trainingTopic
+                              && displayStory.trainingTopic.id !== (edit?.id ?? form.id) && (
+                              <p className="mt-3 text-xs text-destructive">
+                                该 Ink 已被话题「{displayStory.trainingTopic.title}」占用
+                                {displayStory.trainingTopic.scene?.title
+                                  ? `（学习包「${displayStory.trainingTopic.scene.title}」）`
+                                  : ''}
+                                ，保存前请先到原话题解绑。
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1998,12 +2014,25 @@ function TrainingTopicDialog({
                       <div className="divide-y divide-border/70">
                         {filteredStories.map((story) => {
                           const active = form.inkScriptId === story.id
+                          const currentTopicId = edit?.id ?? form.id
+                          const binder = story.trainingTopic
+                          const boundElsewhere = Boolean(binder && binder.id !== currentTopicId)
                           return (
                             <button
                               key={story.id}
                               type="button"
-                              className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 ${active ? 'bg-primary/5' : ''}`}
-                              onClick={() => setForm({ ...form, inkScriptId: story.id })}
+                              className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 ${active ? 'bg-primary/5' : ''} ${boundElsewhere ? 'opacity-80' : ''}`}
+                              onClick={() => {
+                                if (boundElsewhere && binder) {
+                                  const pack = binder.scene?.title
+                                  toast.warning(
+                                    pack
+                                      ? `该 Ink 已被话题「${binder.title}」绑定（学习包「${pack}」），保存前请先解绑`
+                                      : `该 Ink 已被话题「${binder.title}」绑定，保存前请先解绑`,
+                                  )
+                                }
+                                setForm({ ...form, inkScriptId: story.id })
+                              }}
                             >
                               <span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background'}`}>
                                 {active && <CheckCircle2 className="size-3.5" />}
@@ -2018,9 +2047,19 @@ function TrainingTopicDialog({
                                 <span className="mt-1 block truncate font-mono text-xs text-muted-foreground">{story.key}</span>
                                 <span className="mt-2 flex flex-wrap gap-1.5">
                                   <Badge variant="secondary" className="text-[10px]">v{story.version}</Badge>
-                                  {story.trainingTopic && (
-                                    <Badge variant="outline" className="max-w-[220px] truncate text-[10px]">
-                                      已绑定：{story.trainingTopic.title}
+                                  {binder && (
+                                    <Badge
+                                      variant={boundElsewhere ? 'destructive' : 'outline'}
+                                      className="max-w-[280px] truncate text-[10px]"
+                                      title={
+                                        binder.scene?.title
+                                          ? `话题「${binder.title}」· 学习包「${binder.scene.title}」`
+                                          : `话题「${binder.title}」`
+                                      }
+                                    >
+                                      {boundElsewhere ? '已被占用：' : '当前话题：'}
+                                      {binder.title}
+                                      {binder.scene?.title ? ` · ${binder.scene.title}` : ''}
                                     </Badge>
                                   )}
                                   <span className="text-[11px] text-muted-foreground">
