@@ -186,7 +186,7 @@ export function ScriptPackagePage() {
             <ArrowLeft className="size-4" />
           </button>
           <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-            <p className="truncate text-xs text-muted-foreground">{displayLearningUnitLocation(detail.location, isNqtr ? t('scripts.immersiveTheater') : t('scripts.spokenScript'))}</p>
+            <p className="truncate text-xs text-muted-foreground">{displayLearningUnitLocation(detail.location, isNqtr ? t('scripts.interactiveNovel') : t('scripts.spokenScript'))}</p>
             <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.title}</h1>
           </div>
         </div>
@@ -198,7 +198,7 @@ export function ScriptPackagePage() {
             <div className="min-w-0">
               <Badge variant="secondary" className="mb-2 rounded-full">{detail.requiredOutputLevel}</Badge>
               <h1 className="text-xl font-bold leading-tight text-foreground">{detail.title}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{displayLearningUnitLocation(detail.location, isNqtr ? t('scripts.immersiveTheater') : t('scripts.spokenScript'))}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{displayLearningUnitLocation(detail.location, isNqtr ? t('scripts.interactiveNovel') : t('scripts.spokenScript'))}</p>
             </div>
             <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Clapperboard className="size-5" />
@@ -215,7 +215,7 @@ export function ScriptPackagePage() {
               {detail.description || t('scripts.defaultDescription')}
             </p>
             <Badge variant="secondary" className="shrink-0">
-              {isNqtr ? t('scripts.immersiveTheater') : t('scripts.spokenScript')}
+              {isNqtr ? t('scripts.interactiveNovel') : t('scripts.spokenScript')}
             </Badge>
           </div>
           <div className="mt-4 flex items-center gap-3">
@@ -251,32 +251,38 @@ export function ScriptPackagePage() {
         </div>
       </section>
 
-      <section className="mb-5">
-        <SectionHeader
-          eyebrow="2"
-          title={t('scripts.inStoryExpressions')}
-          meta={`${expressionTotal} ${t('scripts.itemsUnit')}`}
-        />
-        <ExpressionPrepSection
-          vocabularies={projected ? undefined : detail.vocabularies}
-          chunks={projected ? undefined : detail.chunks}
-          patterns={projected ? undefined : detail.sentencePatterns}
-          contentSource={projected ? {
-            unitId: detail.id,
-            totals: {
-              vocab: detail.vocabCount,
-              chunk: detail.chunkCount,
-              pattern: patternCount,
-            },
-          } : undefined}
-          sceneName={detail.title}
-          defaultCollapsed
-          collapsible
-        />
-      </section>
+      {!isNqtr && (
+        <section className="mb-5">
+          <SectionHeader
+            eyebrow="2"
+            title={t('scripts.inStoryExpressions')}
+            meta={`${expressionTotal} ${t('scripts.itemsUnit')}`}
+          />
+          <ExpressionPrepSection
+            vocabularies={projected ? undefined : detail.vocabularies}
+            chunks={projected ? undefined : detail.chunks}
+            patterns={projected ? undefined : detail.sentencePatterns}
+            contentSource={projected ? {
+              unitId: detail.id,
+              totals: {
+                vocab: detail.vocabCount,
+                chunk: detail.chunkCount,
+                pattern: patternCount,
+              },
+            } : undefined}
+            sceneName={detail.title}
+            defaultCollapsed
+            collapsible
+          />
+        </section>
+      )}
 
       <section className="mb-5">
-        <SectionHeader eyebrow="3" title={t('scripts.chapterPractice')} meta={`${completed}/${chapters.length}`} />
+        <SectionHeader
+          eyebrow={isNqtr ? '2' : '3'}
+          title={isNqtr ? t('scripts.chapterList') : t('scripts.chapterPractice')}
+          meta={`${completed}/${chapters.length}`}
+        />
         <div className="flex flex-col gap-2">
           {chapters.length === 0 ? (
             <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-12 text-center">
@@ -364,7 +370,7 @@ function NqtrChapterRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{chapter.title}</p>
           {chapter.summary ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{chapter.summary}</p> : null}
-          <p className="mt-1 text-xs text-muted-foreground">{t('scripts.vnInteractive')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t('scripts.interactiveNovelChapter')}</p>
         </div>
         {hasTeaching && (
           <button

@@ -69,6 +69,7 @@ import {
 } from '@/features/learning/api/learning-api'
 import {
   scriptCommunityApi,
+  type ScriptPracticeMode,
   type ScriptPublishHistoryItem,
   type ScriptPracticeRecord,
   type ScriptWork,
@@ -148,12 +149,8 @@ function isNqtrScriptUnit(unit: Pick<LearningUnitSummary, 'packageType' | 'conte
 function scriptPackageTypeLabel(
   unit: Pick<LearningUnitSummary, 'packageType' | 'contentMode'>,
   t: (key: string) => string,
-  options?: { shop?: boolean },
 ) {
-  if (isNqtrScriptUnit(unit)) {
-    return options?.shop ? t('scripts.immersivePlot') : t('scripts.immersiveTheater')
-  }
-  return t('scripts.spokenScript')
+  return isNqtrScriptUnit(unit) ? t('scripts.interactiveNovel') : t('scripts.spokenScript')
 }
 
 function getScriptShopChapters(unit: LearningUnitSummary) {
@@ -164,6 +161,43 @@ function getScriptShopChapters(unit: LearningUnitSummary) {
 
 function getScriptShopChapterCount(unit: LearningUnitSummary) {
   return unit.scriptChapters?.length ?? unit.scriptCount
+}
+
+function practiceRecordFromWork(
+  work: ScriptWork,
+  records: ScriptPracticeRecord[] = [],
+): ScriptPracticeRecord | null {
+  if (work.recordId) {
+    const existing = records.find((record) => record.id === work.recordId)
+    if (existing) return existing
+  }
+  if (!work.recordId) return null
+  const mode: ScriptPracticeMode = work.kind === 'repeat_video' || work.renderPayload?.mode === 'repeat'
+    ? 'repeat'
+    : 'vn'
+  return {
+    id: work.recordId,
+    episodeId: work.episodeId,
+    mode,
+    status: 'completed',
+    durationSec: work.durationSec,
+    turnCount: 0,
+    lineCount: 0,
+    usedChunkCount: 0,
+    completedObjectiveCount: 0,
+    score: null,
+    completedAt: work.createdAt,
+    createdAt: work.createdAt,
+    resultSnapshot: (work.renderPayload?.resultSnapshot ?? null) as ScriptPracticeRecord['resultSnapshot'],
+    episode: {
+      id: work.episode.id,
+      title: work.episode.title,
+      chapterName: work.episode.chapterName,
+      characterName: '',
+      scene: work.episode.scene,
+    },
+    works: [{ id: work.id, status: work.status, kind: work.kind }],
+  }
 }
 
 function useVideoFullscreenOrientation() {
@@ -222,7 +256,12 @@ export function ScriptCenterPage() {
   // the theatre must never participate in Vaul's drag-to-dismiss gesture.
   const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
   const [generating, setGenerating] = useState<Record<string, number>>({})
-  const ignoreReplayDismissOnRecordsDrawer = useRef(false)
+  // Closing the replay Dialog can finish as a synthetic Vaul dismiss on any
+  // underlying sheet (practice records / practice history). Swallow that once.
+  const ignoreReplayDismissOnSheetRef = useRef(false)
+  // Opening replay from works library also fires Dialog onOpenChange(false) on
+  // the works page before replayOpen commits — hold it open synchronously.
+  const suppressWorksCloseRef = useRef(false)
   const observedVideoTaskStates = useRef(new Map<string, 'running' | 'done' | 'error'>())
   const recordsRequest = useRef(0)
   const worksRequest = useRef(0)
@@ -286,7 +325,7 @@ export function ScriptCenterPage() {
     setRecordsOpen(panel === 'records')
   }, [panel])
 
-  const setPanel = useCallback((next: 'store' | 'records' | null) => {
+  const setPanel = useCallback((next: 'store' | 'records' | 'works' | null) => {
     const params = new URLSearchParams(searchParams)
     if (next) params.set('panel', next)
     else {
@@ -309,10 +348,10 @@ export function ScriptCenterPage() {
     // Vaul listens at the document level. When the full-screen dialog is
     // removed from a close-button click, the same pointer sequence can finish
     // as a drawer dismiss. Consume that one synthetic dismissal only.
-    ignoreReplayDismissOnRecordsDrawer.current = true
+    ignoreReplayDismissOnSheetRef.current = true
     setReplayRecord(null)
     window.setTimeout(() => {
-      ignoreReplayDismissOnRecordsDrawer.current = false
+      ignoreReplayDismissOnSheetRef.current = false
     }, 0)
   }, [])
 
@@ -466,8 +505,8 @@ export function ScriptCenterPage() {
   }, [loadShop, shopOpen, userId])
 
   useEffect(() => {
-    if (recordsOpen) void loadRecords()
-  }, [loadRecords, recordsOpen, userId])
+    if (recordsOpen || panel === 'works') void loadRecords()
+  }, [loadRecords, panel, recordsOpen, userId])
 
   useEffect(() => {
     if (tab === 'mine') void loadWorks()
@@ -481,7 +520,11 @@ export function ScriptCenterPage() {
   const visibleWorks = useMemo(() => (worksReady ? works : []), [works, worksReady])
   const visibleFeed = useMemo(() => (feedReady ? feed : []), [feed, feedReady])
   const visibleShopUnits = useMemo(() => (shopReady ? shopUnits : []), [shopReady, shopUnits])
-  const visibleReplay = recordsReady ? replayRecord : null
+  const visibleReplay = replayRecord
+
+  useEffect(() => {
+    if (!visibleReplay) suppressWorksCloseRef.current = false
+  }, [visibleReplay])
 
   // Only the task center polls rendering work. When it reports a terminal
   // state, refresh cloud-backed works and practice records exactly once.
@@ -579,6 +622,18 @@ export function ScriptCenterPage() {
             works={visibleWorks}
             worksLoading={worksLoading || !worksReady}
             onWorksChanged={loadWorks}
+            worksOpen={panel === 'works'}
+            onWorksOpenChange={(open) => {
+              if (!open && (visibleReplay || suppressWorksCloseRef.current)) return
+              setPanel(open ? 'works' : null)
+            }}
+            records={visibleRecords}
+            onOpenReplay={(record) => {
+              suppressWorksCloseRef.current = true
+              setReplayRecord(record)
+            }}
+            replayOpen={Boolean(visibleReplay)}
+            ignoreReplayDismiss={() => ignoreReplayDismissOnSheetRef.current}
           />
         </TabsContent>
 
@@ -651,7 +706,7 @@ export function ScriptCenterPage() {
         // any of its pointer gestures while it is visible.
         dismissible={!visibleReplay}
         onOpenChange={(open) => {
-          if (!open && ignoreReplayDismissOnRecordsDrawer.current) return
+          if (!open && ignoreReplayDismissOnSheetRef.current) return
           setPanel(open ? 'records' : null)
         }}
       >
@@ -717,6 +772,12 @@ function MineScripts({
   works,
   worksLoading,
   onWorksChanged,
+  worksOpen,
+  onWorksOpenChange,
+  records,
+  onOpenReplay,
+  replayOpen,
+  ignoreReplayDismiss,
 }: {
   activeUnit: MyUnit | null
   units: MyUnit[]
@@ -729,9 +790,14 @@ function MineScripts({
   works: ScriptWork[]
   worksLoading: boolean
   onWorksChanged: () => Promise<void>
+  worksOpen: boolean
+  onWorksOpenChange: (open: boolean) => void
+  records: ScriptPracticeRecord[]
+  onOpenReplay: (record: ScriptPracticeRecord) => void
+  replayOpen: boolean
+  ignoreReplayDismiss: () => boolean
 }) {
   const { t } = useTranslation()
-  const [worksOpen, setWorksOpen] = useState(false)
   const [deletingUnit, setDeletingUnit] = useState<MyUnit | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -772,65 +838,66 @@ function MineScripts({
         return (
         <section className="flex flex-col gap-2">
           <p className="px-1 text-xs font-medium text-muted-foreground">{t('scripts.continuePerformance')}</p>
-          <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
-            <div className="p-4">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {Math.round(activeUnit.completionPercent)}%
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setDeletingUnit(activeUnit)}
-                    className="-mr-1 -mt-1 flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
-                    aria-label={`${t('learning.quitUnit')} ${activeUnit.title}`}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                </div>
-                <div className="flex flex-col gap-2.5">
-                  <div className={cn(!activeInstalled && 'opacity-70')}>
-                    <p className="text-xs text-muted-foreground">{displayLearningUnitLocation(activeUnit.location, t('scripts.pocketTheater'))}</p>
-                    <h1 className="mt-0.5 text-xl font-semibold tracking-tight">{activeUnit.title}</h1>
-                    {activeUnit.description && (
-                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
-                        {activeUnit.description}
-                      </p>
-                    )}
-                  </div>
-                  <Progress value={activeUnit.completionPercent} className="h-1.5" />
-                  {!activeInstalled ? (
-                    <div className="flex items-center justify-between gap-3 rounded-md bg-muted/20 px-3 py-2">
-                      <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                        {activeDownloading ? t('scripts.preparingOffline') : t('scripts.packNeedsDownload')}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 shrink-0 rounded-full px-0 text-foreground hover:bg-muted"
-                        disabled={activeDownloading}
-                        onClick={() => void onDownload(activeUnit.id)}
-                        aria-label={t('scripts.downloadScript')}
-                      >
-                        {activeDownloading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button asChild className="flex-1 rounded-full">
-                        <Link to={`/scripts/packages/${activeUnit.id}`}>
-                          <Play data-icon="inline-start" />
-                          {t('scripts.continueStory')}
-                        </Link>
-                      </Button>
-                      <Button asChild variant="secondary" className="rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
-                        <Link to={`/scripts/packages/${activeUnit.id}`}>{t('scripts.chapterList')}</Link>
-                      </Button>
-                    </div>
-                  )}
-                </div>
+          <Card className="group relative overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
+            <div className="relative aspect-[2.8/1] overflow-hidden bg-muted/50">
+              <ScriptCover
+                url={activeUnit.coverImage}
+                packId={activeUnit.id}
+                className="size-full object-cover"
+                iconClassName="size-8 text-muted-foreground"
+              />
+              <Badge variant="secondary" className="absolute left-2.5 top-2.5 h-5 px-2 text-[10px]">
+                {Math.round(activeUnit.completionPercent)}%
+              </Badge>
+              <button
+                type="button"
+                onClick={() => setDeletingUnit(activeUnit)}
+                className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                aria-label={`${t('learning.quitUnit')} ${activeUnit.title}`}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+              <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2.5 py-1.5 backdrop-blur-sm">
+                <Progress value={activeUnit.completionPercent} className="h-1" />
               </div>
+            </div>
+            <div className={cn('space-y-2 p-2.5', !activeInstalled && 'opacity-70')}>
+              <div className="flex items-center gap-2">
+                <h1 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight">{activeUnit.title}</h1>
+                <p className="shrink-0 text-[11px] text-muted-foreground">
+                  {displayLearningUnitLocation(activeUnit.location, t('scripts.pocketTheater'))}
+                </p>
+              </div>
+              {!activeInstalled ? (
+                <div className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-1.5">
+                  <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                    {activeDownloading ? t('scripts.preparingOffline') : t('scripts.packNeedsDownload')}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 shrink-0 rounded-full px-0 text-foreground hover:bg-muted"
+                    disabled={activeDownloading}
+                    onClick={() => void onDownload(activeUnit.id)}
+                    aria-label={t('scripts.downloadScript')}
+                  >
+                    {activeDownloading ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button asChild size="sm" className="h-8 flex-1 rounded-full text-xs">
+                    <Link to={`/scripts/packages/${activeUnit.id}`}>
+                      <Play data-icon="inline-start" />
+                      {t('scripts.continueStory')}
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="secondary" className="h-8 rounded-full border-0 bg-primary/10 px-3 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary">
+                    <Link to={`/scripts/packages/${activeUnit.id}`}>{t('scripts.chapterList')}</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
         </section>
@@ -861,15 +928,19 @@ function MineScripts({
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
           <p className="text-xs font-medium text-muted-foreground">{t('scripts.myWorks')}</p>
-          <Button variant="ghost" size="sm" onClick={() => setWorksOpen(true)}>{t('scripts.viewMore')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => onWorksOpenChange(true)}>{t('scripts.viewMore')}</Button>
         </div>
         <MyWorks works={works} loading={worksLoading} onChanged={onWorksChanged} />
         <WorksLibraryDialog
           open={worksOpen}
-          onOpenChange={setWorksOpen}
+          onOpenChange={onWorksOpenChange}
           works={works}
           loading={worksLoading}
           onChanged={onWorksChanged}
+          records={records}
+          onOpenReplay={onOpenReplay}
+          replayOpen={replayOpen}
+          ignoreReplayDismiss={ignoreReplayDismiss}
         />
       </section>
 
@@ -1162,12 +1233,20 @@ function WorksLibraryDialog({
   works,
   loading,
   onChanged,
+  records,
+  onOpenReplay,
+  replayOpen,
+  ignoreReplayDismiss,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   works: ScriptWork[]
   loading: boolean
   onChanged: () => Promise<void>
+  records: ScriptPracticeRecord[]
+  onOpenReplay: (record: ScriptPracticeRecord) => void
+  replayOpen: boolean
+  ignoreReplayDismiss: () => boolean
 }) {
   const { t } = useTranslation()
   const pageSize = 15
@@ -1180,6 +1259,11 @@ function WorksLibraryDialog({
   const [deleteTarget, setDeleteTarget] = useState<ScriptWork | null>(null)
   const [deletingWork, setDeletingWork] = useState(false)
   const listScrollRef = useRef<HTMLDivElement>(null)
+  const holdOpenForReplayRef = useRef(false)
+
+  useEffect(() => {
+    if (!replayOpen) holdOpenForReplayRef.current = false
+  }, [replayOpen])
 
   const scenes = useMemo(() => Array.from(
     new Map(works.map((work) => [work.episode.scene.id, work.episode.scene])).values(),
@@ -1282,9 +1366,28 @@ function WorksLibraryDialog({
     }
   }
 
+  const openReplayFromLibrary = (record: ScriptPracticeRecord) => {
+    holdOpenForReplayRef.current = true
+    onOpenReplay(record)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="left-0 top-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && (replayOpen || holdOpenForReplayRef.current)) return
+        onOpenChange(nextOpen)
+      }}
+    >
+      <DialogContent
+        className="left-0 top-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden"
+        onInteractOutside={(event) => {
+          if (replayOpen || holdOpenForReplayRef.current) event.preventDefault()
+        }}
+        onEscapeKeyDown={(event) => {
+          if (replayOpen || holdOpenForReplayRef.current) event.preventDefault()
+        }}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>{t('scripts.myWorks')}</DialogTitle>
           <DialogDescription>{t('scripts.viewAllWorks')}</DialogDescription>
@@ -1420,13 +1523,19 @@ function WorksLibraryDialog({
             </div>
           )}
         </div>
-        <EpisodeWorkHistoryDialog
+        <EpisodeWorkHistoryDrawer
           open={Boolean(historyWork)}
-          onOpenChange={(nextOpen) => { if (!nextOpen) setHistoryWork(null) }}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen && (replayOpen || holdOpenForReplayRef.current || ignoreReplayDismiss())) return
+            if (!nextOpen) setHistoryWork(null)
+          }}
           works={historyWork ? works.filter((work) => work.episodeId === historyWork.episodeId) : []}
           initialKind={historyWork?.kind}
           onPublish={togglePublish}
           onDelete={setDeleteTarget}
+          records={records}
+          onOpenReplay={openReplayFromLibrary}
+          replayOpen={replayOpen}
         />
         <Dialog open={Boolean(deleteTarget)} onOpenChange={(nextOpen) => { if (!nextOpen && !deletingWork) setDeleteTarget(null) }}>
           <DialogContent className="w-[90vw] max-w-sm rounded-2xl p-6">
@@ -1454,13 +1563,16 @@ function WorksLibraryDialog({
   )
 }
 
-function EpisodeWorkHistoryDialog({
+function EpisodeWorkHistoryDrawer({
   open,
   onOpenChange,
   works,
   initialKind,
   onPublish,
   onDelete,
+  records,
+  onOpenReplay,
+  replayOpen,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -1468,6 +1580,9 @@ function EpisodeWorkHistoryDialog({
   initialKind?: ScriptWorkKind
   onPublish: (work: ScriptWork) => Promise<void>
   onDelete: (work: ScriptWork) => void
+  records: ScriptPracticeRecord[]
+  onOpenReplay: (record: ScriptPracticeRecord) => void
+  replayOpen: boolean
 }) {
   const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
@@ -1487,39 +1602,47 @@ function EpisodeWorkHistoryDialog({
   const ordered = useMemo(() => [...chronological].reverse(), [chronological])
   const episode = ordered[0]?.episode
 
+  const openReplay = (work: ScriptWork) => {
+    const record = practiceRecordFromWork(work, records)
+    if (!record) {
+      toast.error(t('scripts.playbackUnavailable'))
+      return
+    }
+    onOpenReplay(record)
+  }
+
   return (
     <>
-      <Dialog
+      <Drawer
         open={open}
+        // Same contract as practice-records drawer: replay Dialog must not
+        // drag-dismiss or auto-close this sheet.
+        dismissible={!replayOpen && !previewWork}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen && previewWork) return
+          if (!nextOpen && replayOpen) return
           onOpenChange(nextOpen)
         }}
       >
-        <DialogContent
-          className="flex max-h-[86dvh] w-[calc(100vw-2rem)] max-w-lg flex-col gap-4 overflow-hidden rounded-2xl p-5"
-          onInteractOutside={(event) => {
-            if (previewWork) event.preventDefault()
-          }}
-          onEscapeKeyDown={(event) => {
-            if (previewWork) event.preventDefault()
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>{episode ? t('scripts.practiceHistory', { name: episode.chapterName }) : t('scripts.practiceHistoryFallback')}</DialogTitle>
-            <DialogDescription className="text-xs">
+        <DrawerContent showHandle={false} className="flex h-[95dvh] max-h-[95dvh] flex-col rounded-t-[28px] bg-background drawer-surface">
+          <DrawerHeader className="shrink-0 px-4 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-left">
+            <DrawerTitle className="text-base font-semibold">
+              {episode ? t('scripts.practiceHistory', { name: episode.chapterName }) : t('scripts.practiceHistoryFallback')}
+            </DrawerTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
               {episode ? `${episode.scene.title} · ` : ''}{t('scripts.totalAttempts', { count: works.length })}
-            </DialogDescription>
-          </DialogHeader>
+            </p>
+          </DrawerHeader>
 
-          <Tabs value={mode} onValueChange={(value) => setMode(value as 'vn' | 'repeat')} className="shrink-0">
-            <TabsList className="grid h-9 w-full grid-cols-2 rounded-lg">
-              <TabsTrigger value="vn" className="text-xs">{t('scripts.vnHistoryTab')}</TabsTrigger>
-              <TabsTrigger value="repeat" className="text-xs">{t('scripts.repeatHistoryTab')}</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="shrink-0 px-4 pb-2">
+            <Tabs value={mode} onValueChange={(value) => setMode(value as 'vn' | 'repeat')}>
+              <TabsList className="grid h-9 w-full grid-cols-2 rounded-lg">
+                <TabsTrigger value="vn" className="text-xs">{t('scripts.vnHistoryTab')}</TabsTrigger>
+                <TabsTrigger value="repeat" className="text-xs">{t('scripts.repeatHistoryTab')}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             {ordered.length === 0 ? (
               <div className="rounded-lg bg-muted/30 py-12 text-center text-sm text-muted-foreground">
                 {t('scripts.noHistory')}
@@ -1535,24 +1658,33 @@ function EpisodeWorkHistoryDialog({
                       : work.status === 'failed'
                         ? t('scripts.generateFailed')
                         : t('scripts.privateOnly')
+                  const canReplay = Boolean(work.recordId)
+                  const hasVideo = Boolean(work.videoUrl)
                   return (
-                    <div key={work.id} className="flex gap-3 rounded-lg bg-muted/30 p-3">
-                      <button
-                        type="button"
-                        className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60 text-left disabled:cursor-default"
-                        disabled={!work.videoUrl}
-                        onClick={() => setPreviewWork(work)}
-                        aria-label={work.videoUrl ? t('scripts.viewAttemptVideo', { n: attempt }) : undefined}
-                      >
+                    <div
+                      key={work.id}
+                      role={canReplay ? 'button' : undefined}
+                      tabIndex={canReplay ? 0 : undefined}
+                      className={cn('flex gap-3 rounded-lg bg-muted/30 p-3 text-left', canReplay && 'cursor-pointer transition-colors hover:bg-muted/45')}
+                      onClick={() => { if (canReplay) openReplay(work) }}
+                      onKeyDown={(event) => {
+                        if (!canReplay) return
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          openReplay(work)
+                        }
+                      }}
+                    >
+                      <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60">
                         {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
-                        {work.videoUrl && (
+                        {hasVideo && (
                           <span className="absolute inset-0 flex items-center justify-center bg-black/5">
                             <span className="flex size-8 items-center justify-center rounded-full bg-black/55 text-white">
                               <Play className="ml-0.5 size-3.5 fill-current" />
                             </span>
                           </span>
                         )}
-                      </button>
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start gap-2">
                           <p className="line-clamp-1 flex-1 text-sm font-medium">{work.title}</p>
@@ -1565,9 +1697,9 @@ function EpisodeWorkHistoryDialog({
                           {' · '}
                           {new Date(work.createdAt).toLocaleString(i18n.language)}
                         </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
                           <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
-                          {work.videoUrl && (
+                          {hasVideo && (
                             <Button size="sm" variant="ghost" className="h-6 rounded-full px-2 text-[10px]" onClick={() => setPreviewWork(work)}>
                               {t('scripts.viewVideo')}
                             </Button>
@@ -1608,8 +1740,8 @@ function EpisodeWorkHistoryDialog({
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
       <Lightbox
         open={Boolean(previewWork?.videoUrl)}
         close={() => setPreviewWork(null)}
@@ -2642,14 +2774,14 @@ function ScriptShop({
   const packageTypeTabs = [
     { id: 'all' as const, label: t('scripts.allPackageTypes') },
     { id: 'story' as const, label: t('scripts.spokenScript') },
-    { id: 'nqtr' as const, label: t('scripts.immersivePlot') },
+    { id: 'nqtr' as const, label: t('scripts.interactiveNovel') },
   ]
   const filteredUnits = units.filter((unit) => {
     if (packageFilter === 'story' && isNqtrScriptUnit(unit)) return false
     if (packageFilter === 'nqtr' && !isNqtrScriptUnit(unit)) return false
     const query = keyword.trim().toLocaleLowerCase()
     if (!query) return true
-    return [unit.title, unit.location, unit.description, scriptPackageTypeLabel(unit, t, { shop: true })]
+    return [unit.title, unit.location, unit.description, scriptPackageTypeLabel(unit, t)]
       .some((value) => value?.toLocaleLowerCase().includes(query))
   })
 
@@ -2737,7 +2869,7 @@ function ScriptShop({
         {filteredUnits.map((unit) => {
           const installed = installedIds.has(unit.id)
           const task = downloadTasks.find((item) => item.packId === unit.id)
-          const packageLabel = scriptPackageTypeLabel(unit, t, { shop: true })
+          const packageLabel = scriptPackageTypeLabel(unit, t)
           return (
             <button
               key={unit.id}
@@ -2847,7 +2979,7 @@ function ScriptShopDetail({
       <DialogContent className="max-h-[88vh] w-[90vw] overflow-hidden rounded-2xl p-0 sm:max-w-md">
         <DialogHeader className="sr-only">
           <DialogTitle>{unit.title}</DialogTitle>
-          <DialogDescription>{displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t, { shop: true }))}</DialogDescription>
+          <DialogDescription>{displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t))}</DialogDescription>
         </DialogHeader>
         <div className="flex max-h-[88vh] flex-col">
           <div className="flex gap-3 bg-muted/30 p-4">
@@ -2856,13 +2988,13 @@ function ScriptShopDetail({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{scriptPackageTypeLabel(unit, t, { shop: true })}</Badge>
+                <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{scriptPackageTypeLabel(unit, t)}</Badge>
                 <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
                 {unit.categoryName && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{unit.categoryName}</Badge>}
                 {unit.isLocked && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('scripts.locked')}</Badge>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t, { shop: true }))}</p>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t))}</p>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                 <span>{t('scripts.chaptersUnit', { count: getScriptShopChapterCount(unit) })}</span>
                 <span>{t('scripts.wordsUnit', { count: unit.vocabCount })}</span>
