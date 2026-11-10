@@ -621,7 +621,6 @@ function PracticeRecordReadonlyReviewDrawer({
   ]), [session?.turns, t, topicDetail?.scene.title])
   const currentReplayLine = replayLines[lineIndex]
   const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
-  const score = Number(session?.analysisResult?.overallScore ?? record?.score ?? 0)
   const character = topicDetail?.scene.characters?.[0]
   const expressions = character?.expressions && typeof character.expressions === 'object'
     ? character.expressions as Record<string, string | { spriteUrl?: string }>
@@ -655,17 +654,14 @@ function PracticeRecordReadonlyReviewDrawer({
         ) : (
           <div className="relative h-full">
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2">
-              <div className="flex h-9 w-full max-w-[440px] items-center gap-1.5 rounded-full bg-background/90 px-2 text-foreground shadow-none backdrop-blur-2xl">
-                <Button variant="ghost" size="sm" className="relative z-10 h-7 shrink-0 rounded-full px-2.5 text-xs shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
-                <span className="pointer-events-none absolute inset-x-0 truncate px-20 text-center text-xs font-medium text-muted-foreground">
-                  {record?.questionText} · {titleLabel}
-                </span>
-                <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1.5 pr-0.5">
-                  {score > 0 && view === 'replay' && (
-                    <Badge variant="secondary" className="h-6 rounded-full border-0 px-2 text-[10px] shadow-none">
-                      {score} {t('profile.reviewScoreUnit')}
-                    </Badge>
-                  )}
+              <div className="grid h-9 w-full max-w-[440px] grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full bg-background/90 px-2 text-foreground shadow-none backdrop-blur-2xl">
+                <div className="flex items-center justify-start">
+                  <Button variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+                </div>
+                <p className="max-w-[10rem] truncate text-center text-xs font-medium text-muted-foreground" title={record?.questionText || undefined}>
+                  {titleLabel}
+                </p>
+                <div className="flex items-center justify-end gap-1.5 pr-0.5">
                   {view === 'replay' && (
                     <button
                       type="button"

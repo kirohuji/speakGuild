@@ -1147,28 +1147,31 @@ export function PracticeSessionPage() {
       <div className="app-surface relative flex h-dvh flex-col">
         {/* Floating minimal top bar */}
         <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-          <div className="relative flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full bg-background/90 px-1.5 text-foreground shadow-none backdrop-blur-2xl">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (analysisResult || practiceView === 'analysis') {
-                goBackToScene()
-              } else {
-                setConfirmAbandonOpen(true)
-              }
-            }}
-            className="relative z-10 h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
-          </Button>
+          <div className="grid h-9 w-full max-w-[400px] grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-full bg-background/90 px-1.5 text-foreground shadow-none backdrop-blur-2xl">
+          <div className="flex items-center justify-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (analysisResult || practiceView === 'analysis') {
+                  goBackToScene()
+                } else {
+                  setConfirmAbandonOpen(true)
+                }
+              }}
+              className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
+            </Button>
+          </div>
 
-          <span className="pointer-events-none absolute inset-x-0 truncate px-20 text-center text-xs font-medium text-foreground/70">
-            {detail.topic.title}
-            {canReview ? ` · ${practiceView === 'analysis' ? t('scripts.aiReviewTab') : t('scripts.dialogueReplay')}` : ''}
-          </span>
+          <p className="max-w-[10rem] truncate text-center text-xs font-medium text-foreground/70" title={detail.topic.title}>
+            {canReview
+              ? (practiceView === 'analysis' ? t('scripts.aiReviewTab') : t('scripts.dialogueReplay'))
+              : detail.topic.title}
+          </p>
 
-          <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1">
+          <div className="flex items-center justify-end gap-1">
           {canReview && (
             <>
               <Sparkles className={cn('size-3.5', practiceView === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
