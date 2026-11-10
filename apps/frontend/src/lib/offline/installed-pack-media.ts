@@ -33,6 +33,15 @@ type PackManifestAsset = {
 
 const manifestAssets = new Map<string, Promise<PackManifestAsset[]>>()
 
+/** Drop cached pack manifests after install/uninstall so remaps see fresh rows. */
+export function invalidateInstalledPackMediaCache(packId?: string) {
+  if (!packId) {
+    manifestAssets.clear()
+    return
+  }
+  manifestAssets.delete(packId)
+}
+
 /**
  * SQLite keeps the Filesystem `file://` URI. iOS WKWebView cannot load that
  * scheme; Capacitor.convertFileSrc remaps it to capacitor://localhost.
@@ -54,7 +63,16 @@ function assetsForPack(packId: string) {
   let pending = manifestAssets.get(packId)
   if (!pending) {
     pending = localDb.get<{ manifest?: { assets?: PackManifestAsset[] } }>('downloaded_packs', packId)
-      .then((pack) => pack?.manifest?.assets ?? [])
+      .then((pack) => {
+        const assets = pack?.manifest?.assets ?? []
+        // Never permanently cache an empty miss — install may finish later in-session.
+        if (assets.length === 0) manifestAssets.delete(packId)
+        return assets
+      })
+      .catch((error) => {
+        manifestAssets.delete(packId)
+        throw error
+      })
     manifestAssets.set(packId, pending)
   }
   return pending
@@ -127,12 +145,17 @@ export async function resolvePackDisplayUrl(
 
 export async function resolveInstalledAssetMap(packId: string, assetMap?: InstalledAssetMap | null): Promise<InstalledAssetMap> {
   const entries = await Promise.all(Object.entries(assetMap ?? {}).map(async ([alias, entry]) => {
-    const signedUrl = await resolveInstalledMedia(packId, {
+    const resolved = await resolveInstalledMedia(packId, {
       url: entry.signedUrl,
       fileAssetId: entry.fileAssetId,
       alias,
     })
-    return [alias, { ...entry, signedUrl }] as const
+    // Keep prior signedUrl/fileAssetId identity on miss so later deferred/cache
+    // lookups can still key off it — never wipe to undefined.
+    return [alias, {
+      ...entry,
+      signedUrl: resolved ?? entry.signedUrl ?? null,
+    }] as const
   }))
   return Object.fromEntries(entries)
 }
@@ -140,16 +163,25 @@ export async function resolveInstalledAssetMap(packId: string, assetMap?: Instal
 type StoryScene = StoryEpisodePlayerData['scene']
 type StoryCharacter = NonNullable<NonNullable<StoryScene>['characters']>[number]
 
+async function preferResolved(packId: string, url?: string | null) {
+  if (!url) return url ?? null
+  if (isInstalledPlaybackUrl(url)) return toWebViewPlaybackUrl(url)
+  const resolved = await resolveInstalledMedia(packId, { url })
+  // Preserve the original identity on miss so offlineOnly cache / deferred can
+  // still key off asset:// or fileAssetId later.
+  return resolved ?? url
+}
+
 async function resolveCharacterMedia(packId: string, character: StoryCharacter): Promise<StoryCharacter> {
   const expressions = character.expressions && typeof character.expressions === 'object'
     ? Object.fromEntries(await Promise.all(Object.entries(character.expressions).map(async ([name, value]) => {
-      if (typeof value === 'string') return [name, await resolveInstalledMedia(packId, { url: value })]
+      if (typeof value === 'string') return [name, await preferResolved(packId, value)]
       if (!value || typeof value !== 'object') return [name, value]
       const entry = value as { spriteUrl?: string | null; avatarUrl?: string | null }
       return [name, {
         ...entry,
-        spriteUrl: await resolveInstalledMedia(packId, { url: entry.spriteUrl }),
-        avatarUrl: await resolveInstalledMedia(packId, { url: entry.avatarUrl }),
+        spriteUrl: await preferResolved(packId, entry.spriteUrl),
+        avatarUrl: await preferResolved(packId, entry.avatarUrl),
       }]
     })))
     : character.expressions
@@ -158,14 +190,14 @@ async function resolveCharacterMedia(packId: string, character: StoryCharacter):
     ...binding,
     voiceAsset: binding.voiceAsset ? {
       ...binding.voiceAsset,
-      previewUrl: await resolveInstalledMedia(packId, { url: binding.voiceAsset.previewUrl }),
+      previewUrl: await preferResolved(packId, binding.voiceAsset.previewUrl),
     } : binding.voiceAsset,
   })))
 
   return {
     ...character,
-    avatarUrl: await resolveInstalledMedia(packId, { url: character.avatarUrl }),
-    spriteBaseUrl: await resolveInstalledMedia(packId, { url: character.spriteBaseUrl }),
+    avatarUrl: await preferResolved(packId, character.avatarUrl),
+    spriteBaseUrl: await preferResolved(packId, character.spriteBaseUrl),
     expressions,
     voiceBindings,
   }
@@ -176,16 +208,13 @@ export async function resolveInstalledScene(packId: string, scene: StoryScene): 
   const characters = await Promise.all((scene.characters ?? []).map((character) => resolveCharacterMedia(packId, character)))
   return {
     ...scene,
-    backgroundUrl: await resolveInstalledMedia(packId, { url: scene.backgroundUrl }),
+    backgroundUrl: await preferResolved(packId, scene.backgroundUrl),
     characters,
   }
 }
 
 async function resolveUrl(packId: string, url?: string | null) {
-  if (!url) return url ?? null
-  if (isInstalledPlaybackUrl(url)) return toWebViewPlaybackUrl(url)
-  // Installed packs stay local: never fall back to asset:// or signed COS URLs.
-  return (await resolveInstalledMedia(packId, { url })) ?? null
+  return preferResolved(packId, url)
 }
 
 async function resolveExplorationItems(packId: string, items: unknown) {

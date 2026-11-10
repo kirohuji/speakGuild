@@ -1,6 +1,7 @@
 import type { StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { toVnDisplayUrl, vnTextureRuntime } from '@/features/vn-engine/vn-texture-runtime'
-import { learningRepository } from '@/lib/offline'
+import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
+import { learningPackService, learningRepository } from '@/lib/offline'
 import {
   resolveInstalledAssetMap,
   resolveInstalledScene,
@@ -63,6 +64,15 @@ async function warmStageUrls(urls: Array<string | null | undefined>) {
   }))
 }
 
+function hasPlayableOpeningMedia(
+  scene: StoryEpisodePlayerData['scene'] | null | undefined,
+  assetMap: InstalledAssetMap,
+) {
+  if (isPlayableMediaUrl(scene?.backgroundUrl)) return true
+  if (isPlayableMediaUrl(pickDefaultSprite(scene))) return true
+  return Object.values(assetMap).some((entry) => isPlayableMediaUrl(entry?.signedUrl))
+}
+
 /**
  * Click-time prep for VN / Repeat Theater entry.
  * Resolves installed pack URLs and warms the opening background (and default sprite).
@@ -73,10 +83,21 @@ export async function prepareStoryVnEntry(input: {
 }): Promise<PreparedStoryVnEntry> {
   const data = await learningRepository.getStoryEpisodePlayer(input.packageId, input.episodeId)
   const packageId = input.packageId || data.episode.sceneId
-  const [scene, assetMap] = await Promise.all([
+  let [scene, assetMap] = await Promise.all([
     resolveInstalledScene(packageId, (data.scene ?? {}) as any),
     resolveInstalledAssetMap(packageId, data.inkScript.assetMap ?? null),
   ])
+
+  // Native packs may still be deferred. One materialize pass then re-resolve
+  // fills opening media without falling back to COS while the pack is installed.
+  const installed = packageId ? await learningPackService.isInstalled(packageId) : false
+  if (installed && !hasPlayableOpeningMedia(scene, assetMap)) {
+    await learningPackService.drainPackAssetMaterializeQueue(packageId).catch(() => undefined)
+    ;[scene, assetMap] = await Promise.all([
+      resolveInstalledScene(packageId, (data.scene ?? {}) as any),
+      resolveInstalledAssetMap(packageId, data.inkScript.assetMap ?? null),
+    ])
+  }
 
   const backgroundUrl = scene?.backgroundUrl || undefined
   const spriteUrl = pickDefaultSprite(scene)

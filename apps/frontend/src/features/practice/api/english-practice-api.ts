@@ -235,6 +235,7 @@ export interface PracticeSession {
     round: number
     npcText: string
     userText: string
+    userAudioUrl?: string | null
     inputNodeId?: string | null
     tags?: any
     judgement?: any

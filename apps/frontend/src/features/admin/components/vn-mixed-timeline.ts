@@ -74,7 +74,8 @@ export function resolveTimelineAssetAliases(
   const resolveImage = (value?: string) => {
     // Never return Ink aliases — they are identity keys, not browser paths.
     // Live VN resolves via parseVnTags/resolveVnImageUrl the same way.
-    return resolveVnImageUrl(value, map) || ''
+    // Render mode prefers signed / asset:// so Remotion never gets cookie URLs.
+    return resolveVnImageUrl(value, map, { preferSigned: audioMode === 'render' }) || ''
   }
   return scenes.map((scene) => ({
     ...scene,

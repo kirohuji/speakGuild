@@ -330,6 +330,7 @@ export class AdminTasksService implements OnModuleInit {
     const framesForQueue = frames.map((frame: any) => {
       const backgroundUrl = typeof frame?.background?.url === 'string' ? frame.background.url : undefined;
       const spriteUrl = typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined;
+      const avatarUrl = typeof frame?.sprite?.avatarUrl === 'string' ? frame.sprite.avatarUrl : undefined;
       const isLocal = (url?: string) => Boolean(url && (
         url.startsWith('capacitor://')
         || url.includes('/_capacitor_file_/')
@@ -342,7 +343,11 @@ export class AdminTasksService implements OnModuleInit {
           ? { ...frame.background, url: isLocal(backgroundUrl) ? undefined : backgroundUrl }
           : frame?.background,
         sprite: frame?.sprite
-          ? { ...frame.sprite, url: isLocal(spriteUrl) ? undefined : spriteUrl }
+          ? {
+              ...frame.sprite,
+              url: isLocal(spriteUrl) ? undefined : spriteUrl,
+              avatarUrl: isLocal(avatarUrl) ? undefined : avatarUrl,
+            }
           : frame?.sprite,
       };
     });
@@ -351,6 +356,8 @@ export class AdminTasksService implements OnModuleInit {
       frames: framesForQueue.length,
       backgrounds: framesForQueue.filter((frame: any) => Boolean(frame?.background?.url)).length,
       sprites: framesForQueue.filter((frame: any) => Boolean(frame?.sprite?.url)).length,
+      avatars: framesForQueue.filter((frame: any) => Boolean(frame?.sprite?.avatarUrl)).length,
+      audio: framesForQueue.filter((frame: any) => Boolean(frame?.resolvedAudioUrl)).length,
     });
     const task = await this.prisma.adminTask.create({
       data: {

@@ -1712,7 +1712,24 @@ function EpisodeWorkHistoryDrawer({
                         }
                       }}
                     >
-                      <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60">
+                      <div
+                        className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60"
+                        role={hasVideo ? 'button' : undefined}
+                        tabIndex={hasVideo ? 0 : undefined}
+                        onClick={(event) => {
+                          if (!hasVideo) return
+                          event.stopPropagation()
+                          setPreviewWork(work)
+                        }}
+                        onKeyDown={(event) => {
+                          if (!hasVideo) return
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            setPreviewWork(work)
+                          }
+                        }}
+                      >
                         {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
                         {hasVideo && (
                           <span className="absolute inset-0 flex items-center justify-center bg-black/5">

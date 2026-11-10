@@ -16,16 +16,27 @@ import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
  */
 export function useCachedAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const playGenerationRef = useRef(0)
   const [isPlaying, setIsPlaying] = useState(false)
 
   const stopCurrent = useCallback(() => {
+    playGenerationRef.current += 1
     const current = audioRef.current
-    if (!current) return
+    if (!current) {
+      setIsPlaying(false)
+      return
+    }
     current.pause()
     current.onplay = null
     current.onpause = null
     current.onended = null
     current.onerror = null
+    try {
+      current.removeAttribute('src')
+      current.load()
+    } catch {
+      // Some WebViews reject load() after src removal.
+    }
     audioRef.current = null
     setIsPlaying(false)
   }, [])
@@ -37,6 +48,7 @@ export function useCachedAudio() {
 
     // Stop any currently playing audio
     stopCurrent()
+    const generation = playGenerationRef.current
     const audio = new Audio()
     audio.preload = 'auto'
     audioRef.current = audio
@@ -51,13 +63,16 @@ export function useCachedAudio() {
     audio.onerror = clearPlayingState
 
     const resolvedUrl = await resolvePlaybackAudio({ url, assetId, role })
+    if (playGenerationRef.current !== generation || audioRef.current !== audio) return
     if (!resolvedUrl) return
     try {
       audio.src = resolvedUrl
       audio.load()
       await audio.play()
     } catch (error) {
-      console.warn('[useCachedAudio] playback failed', error)
+      if (playGenerationRef.current === generation) {
+        console.warn('[useCachedAudio] playback failed', error)
+      }
     }
   }, [stopCurrent])
 

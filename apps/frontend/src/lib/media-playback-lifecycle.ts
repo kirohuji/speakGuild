@@ -38,15 +38,35 @@ export function installMediaPlaybackTracking() {
   }
 }
 
+/**
+ * Detach handlers before clearing src so onerror/onended cannot re-enter
+ * schedule/advance logic after the owner already stopped playback.
+ */
+export function releaseMediaElement(media: HTMLMediaElement | null | undefined) {
+  if (!media) return
+  media.onplay = null
+  media.onpause = null
+  media.onended = null
+  media.onerror = null
+  media.oncanplay = null
+  try {
+    media.pause()
+  } catch {
+    // Ignore pause failures on already-invalid elements.
+  }
+  try {
+    media.removeAttribute('src')
+    media.load()
+  } catch {
+    // Some WebViews reject load() after src removal.
+  }
+  untrack(media)
+}
+
 /** Interrupt foreground media without affecting explicitly persistent media such as BGM. */
 export function stopTransientMediaPlayback() {
   activeTransientMedia.forEach((media) => {
-    media.pause()
-    try {
-      media.currentTime = 0
-    } catch {
-      // A stream without a seekable timeline can still be paused.
-    }
+    releaseMediaElement(media)
   })
   activeTransientMedia.clear()
 }

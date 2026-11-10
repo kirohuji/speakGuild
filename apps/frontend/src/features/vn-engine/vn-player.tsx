@@ -22,6 +22,7 @@ import { TappableText } from './dialogue-list-view'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
 import { PixiVnStage, type BackgroundFit, type StageVariant } from './pixi-vn-stage'
 import { vnTextureRuntime } from './vn-texture-runtime'
+import { releaseMediaElement, stopTransientMediaPlayback } from '@/lib/media-playback-lifecycle'
 
 export type { BackgroundFit } from './pixi-vn-stage'
 
@@ -143,27 +144,36 @@ function sameDialogueLine(a?: VnPlayerLine | null, b?: VnPlayerLine | null) {
 
 function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
   const allowRemoteFallback = !offlineOnly || isOfflineSafePlaybackUrl(url)
-  const [cachedUrl, setCachedUrl] = useState(allowRemoteFallback ? resolveDisplayAssetUrl(url) : undefined)
+  const displayUrl = allowRemoteFallback ? resolveDisplayAssetUrl(url) : undefined
+  const [cachedUrl, setCachedUrl] = useState(displayUrl)
+  // Keep previous-line URLs from leaking into the Volume button for one frame.
+  const [seenUrl, setSeenUrl] = useState(url)
+  if (url !== seenUrl) {
+    setSeenUrl(url)
+    setCachedUrl(displayUrl)
+  }
 
   useEffect(() => {
     let cancelled = false
-    const displayUrl = resolveDisplayAssetUrl(url)
+    const nextDisplay = resolveDisplayAssetUrl(url)
     const allowFallback = !offlineOnly || isOfflineSafePlaybackUrl(url)
     // Package mode: only mount local / same-origin content URLs, never COS.
     if (!allowFallback && url?.startsWith('http')) {
       setCachedUrl(undefined)
     } else {
-      setCachedUrl(displayUrl)
+      setCachedUrl(nextDisplay)
     }
-    if (!canCacheAssetUrl(url)) return
+    // User recordings are not learning-pack assets. Routing them through
+    // offlineOnly pack cache can miss — or worse, hit an unrelated local file.
+    if (!canCacheAssetUrl(url) || role === 'recording') return
 
     assetCacheService.resolve({ url, role, offlineOnly }).then((resolved) => {
       if (!cancelled) {
-        setCachedUrl(usableCachedAssetUrl(resolved, allowFallback ? displayUrl : undefined))
+        setCachedUrl(usableCachedAssetUrl(resolved, allowFallback ? nextDisplay : undefined))
       }
     }).catch((err) => {
       if (role === 'background' || role === 'sprite') console.warn('[vn-player] ❌ resolve 失败:', role, url, err)
-      if (!cancelled) setCachedUrl(allowFallback ? displayUrl : undefined)
+      if (!cancelled) setCachedUrl(allowFallback ? nextDisplay : undefined)
     })
 
     return () => {
@@ -320,53 +330,88 @@ export function VnPlayer({
 
   // ── 音频自动播放（只依赖 audioUrl，内部 resolve cached URL）──
   const playingAudioRef = useRef<HTMLAudioElement | null>(null)
+  const manualAudioUrlRef = useRef<string | null>(null)
 
-  useEffect(() => {
-    if (!audioUrl) return
+  const stopOwnedAudio = () => {
+    releaseMediaElement(playingAudioRef.current)
+    playingAudioRef.current = null
+    manualAudioUrlRef.current = null
+  }
 
-    // 停止前一段音频
-    if (playingAudioRef.current) {
-      playingAudioRef.current.pause()
-      playingAudioRef.current.removeAttribute('src')
-      playingAudioRef.current = null
-    }
-
-    let cancelled = false
-    const allowFallback = !offlineOnly || isOfflineSafePlaybackUrl(audioUrl)
-
-    const playResolved = (playable: string) => {
-      if (cancelled || !playable) return
-      const audio = new Audio(playable)
-      audio.preload = 'auto'
-      playingAudioRef.current = audio
-
-      audio.play().catch((err) => {
+  /** Volume button = play/restart this line. Never toggle-stop autoplay (that forced a second click). */
+  const playOwnedAudio = (playable: string) => {
+    if (!playable) return
+    // Same clip already playing → restart from 0 instead of stop+recreate.
+    if (manualAudioUrlRef.current === playable && playingAudioRef.current) {
+      const current = playingAudioRef.current
+      try {
+        current.currentTime = 0
+      } catch {
+        // Some WebViews reject seek before metadata.
+      }
+      current.play().catch((err) => {
         if (isNative() && err.name === 'AbortError') {
-          audio.addEventListener('canplay', () => audio.play().catch(() => {}), { once: true })
+          current.addEventListener('canplay', () => current.play().catch(() => {}), { once: true })
         } else {
           console.warn('[VnPlayer] Audio play failed:', err.message)
         }
       })
+      return
+    }
+    stopTransientMediaPlayback()
+    stopOwnedAudio()
+    const audio = new Audio(playable)
+    audio.preload = 'auto'
+    playingAudioRef.current = audio
+    manualAudioUrlRef.current = playable
+    audio.onended = () => {
+      if (playingAudioRef.current === audio) {
+        playingAudioRef.current = null
+        manualAudioUrlRef.current = null
+      }
+    }
+    audio.play().catch((err) => {
+      if (isNative() && err.name === 'AbortError') {
+        audio.addEventListener('canplay', () => audio.play().catch(() => {}), { once: true })
+      } else {
+        console.warn('[VnPlayer] Audio play failed:', err.message)
+      }
+    })
+  }
+
+  useEffect(() => {
+    if (!audioUrl) return
+
+    stopOwnedAudio()
+
+    let cancelled = false
+    const isUserRecording = Boolean(displayLine?.isUser)
+    const allowFallback = !offlineOnly || isOfflineSafePlaybackUrl(audioUrl)
+
+    const playResolved = (playable: string) => {
+      if (cancelled || !playable) return
+      playOwnedAudio(playable)
     }
 
-    // data:/blob: audio is already playable — never send it through offline cache.
-    if (!canCacheAssetUrl(audioUrl)) {
-      playResolved(audioUrl)
-    } else {
-      assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
-        playResolved(usableCachedAssetUrl(resolvedUrl, allowFallback ? audioUrl : undefined) ?? '')
-      })
+    // data:/blob: and user recordings are never pack assets — play the display
+    // URL directly (same contract as story-pack live VN keeping blob: clips).
+    if (!canCacheAssetUrl(audioUrl) || isUserRecording) {
+      playResolved(resolveDisplayAssetUrl(audioUrl) || audioUrl)
+      return () => {
+        cancelled = true
+        stopOwnedAudio()
+      }
     }
+
+    assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
+      playResolved(usableCachedAssetUrl(resolvedUrl, allowFallback ? audioUrl : undefined) ?? '')
+    })
 
     return () => {
       cancelled = true
-      if (playingAudioRef.current) {
-        playingAudioRef.current.pause()
-        playingAudioRef.current.removeAttribute('src')
-        playingAudioRef.current = null
-      }
+      stopOwnedAudio()
     }
-  }, [audioUrl, offlineOnly])
+  }, [audioUrl, displayLine?.isUser, offlineOnly])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)
@@ -613,12 +658,15 @@ export function VnPlayer({
             </div>
           )}
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] backdrop-blur-2xl">
-            {cachedAudioUrl && (
+            {(cachedAudioUrl || audioUrl) && (
               <VnIconButton
                 label={displayLine?.isUser ? t('vnSettings.playbackRecording') : t('practiceSession.warmupDrill.playAudio')}
                 onClick={() => {
-                  const audio = new Audio(cachedAudioUrl)
-                  audio.play().catch(() => {})
+                  // Always play *this* line's URL — never a stale cached NPC clip.
+                  const playable = displayLine?.isUser
+                    ? (resolveDisplayAssetUrl(audioUrl) || audioUrl || cachedAudioUrl)
+                    : (cachedAudioUrl || resolveDisplayAssetUrl(audioUrl) || audioUrl)
+                  if (playable) playOwnedAudio(playable)
                 }}
               >
                 <Volume2 className="size-3.5" />

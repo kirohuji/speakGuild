@@ -15,6 +15,8 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
+import type { VnInputRecording } from '@/features/vn-engine/vn-input-panel'
+import { persistUserRecordingAsset } from '@/features/vn-engine/persist-user-recording'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
 import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
@@ -96,7 +98,14 @@ export function PracticeSessionPage() {
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
   const [packInkAssetMap, setPackInkAssetMap] = useState<InstalledAssetMap | null>(null)
   const [packInkSourceReady, setPackInkSourceReady] = useState(false)
-  const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; translation?: string; audioUrl?: string }[]>([])
+  const [dialogueRounds, setDialogueRounds] = useState<{
+    speaker: string
+    text: string
+    isNpc: boolean
+    translation?: string
+    audioUrl?: string
+    tags?: string[]
+  }[]>([])
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(null)
   const [turnFeedback, setTurnFeedback] = useState<TurnFeedback | null>(null)
   // Retry state: when AI suggests correction, user must re-speak before advancing
@@ -483,7 +492,8 @@ export function PracticeSessionPage() {
     })
   }, [currentTags])
 
-  // Sync Ink lines to dialogue display
+  // Sync Ink lines to dialogue display. Keep tags so TTS can re-resolve when
+  // installed assetMap becomes ready (same contract as script VN live).
   useEffect(() => {
     const newLines = inkLines.slice(syncedInkLineCountRef.current)
     if (newLines.length === 0) return
@@ -496,10 +506,35 @@ export function PracticeSessionPage() {
         isNpc: true, // All Ink lines are NPC/narration; user lines added by sendUserInput
         translation: parsed.translation,
         audioUrl: parsed.audio,
+        tags: line.tags,
       }
     })
     setDialogueRounds((prev) => [...prev, ...newDialogues])
   }, [fallbackNpcName, inkLines, packMediaReady, resolvedAssetMap])
+
+  const vnDialogueLines = useMemo(() => {
+    return dialogueRounds.map((line) => {
+      if (!line.isNpc) {
+        return {
+          speaker: line.speaker,
+          text: line.text,
+          isUser: true as const,
+          translation: line.translation,
+          audioUrl: line.audioUrl,
+        }
+      }
+      const parsed = line.tags?.length
+        ? parseVnTags(line.tags, packMediaReady ? resolvedAssetMap : undefined)
+        : null
+      return {
+        speaker: line.speaker,
+        text: line.text,
+        isUser: false as const,
+        translation: parsed?.translation || line.translation,
+        audioUrl: parsed?.audio || line.audioUrl,
+      }
+    })
+  }, [dialogueRounds, packMediaReady, resolvedAssetMap])
 
   // Fallback NPC greeting when no Ink script
   useEffect(() => {
@@ -641,7 +676,7 @@ export function PracticeSessionPage() {
   const patternTotal = prepMaterials.patterns.length
 
   // ==================== Practice: Send Input ====================
-  const sendUserInput = useCallback(async (text: string, audioUrl?: string) => {
+  const sendUserInput = useCallback(async (text: string, audioUrl?: string, recording?: VnInputRecording) => {
     if (!text.trim()) return
 
     const round = dialogueRounds.length + 1
@@ -655,6 +690,19 @@ export function PracticeSessionPage() {
       ? readListTags(currentTags, 'objective:')
       : objectives
     const hintForRound = readTagValue(currentTags, 'hint:')
+    const sessionKey = practiceSessionId || topicId || 'practice'
+    // Upload in parallel with AI judge so turn latency stays close to story VN.
+    const durableAudioPromise = persistUserRecordingAsset({
+      recording,
+      fallbackAudioUrl: audioUrl,
+      bizType: 'practice_turn_recording',
+      bizId: `${sessionKey}:${round}`,
+    })
+    // Story-pack live VN keeps the panel's session URL (blob:/capacitor:) on the
+    // timeline. Durable asset:// is only written to submitTurn for later replay.
+    const liveUserAudioUrl = audioUrl && !audioUrl.startsWith('asset:')
+      ? audioUrl
+      : undefined
 
     // If using Ink engine
     if (inkJson) {
@@ -747,12 +795,13 @@ export function PracticeSessionPage() {
         return
       }
 
+      const durableUserAudioUrl = await durableAudioPromise
       if (practiceSessionId) {
         practiceRepository.submitTurn(practiceSessionId, {
           round,
           npcText,
           userText: userMsg,
-          userAudioUrl: audioUrl,
+          userAudioUrl: durableUserAudioUrl,
           inputNodeId: readInputNodeId(currentTags),
           tags: currentTags,
           judgement: turnJudgement,
@@ -766,7 +815,14 @@ export function PracticeSessionPage() {
       }
 
       if (passed) {
-        setDialogueRounds((prev) => [...prev, { speaker: t('practiceSession.speakerYou'), text: userMsg, isNpc: false, audioUrl }])
+        // Match story-pack live VN: keep blob: on the timeline for in-session
+        // playback; durable asset:// is only for submitTurn / later replay.
+        setDialogueRounds((prev) => [...prev, {
+          speaker: t('practiceSession.speakerYou'),
+          text: userMsg,
+          isNpc: false,
+          audioUrl: liveUserAudioUrl || durableUserAudioUrl,
+        }])
         practiceApi.submitDialogue(topicId!, {
           round,
           npcText,
@@ -780,7 +836,13 @@ export function PracticeSessionPage() {
       return
     }
 
-    setDialogueRounds((prev) => [...prev, { speaker: t('practiceSession.speakerYou'), text: userMsg, isNpc: false, audioUrl }])
+    const durableUserAudioUrl = await durableAudioPromise
+    setDialogueRounds((prev) => [...prev, {
+      speaker: t('practiceSession.speakerYou'),
+      text: userMsg,
+      isNpc: false,
+      audioUrl: liveUserAudioUrl || durableUserAudioUrl,
+    }])
     targetChunksForRound.forEach((chunkText) => {
       if (userMsg.toLowerCase().includes(chunkText.toLowerCase())) {
         setUsedChunks((prev) => new Set([...prev, chunkText]))
@@ -801,7 +863,7 @@ export function PracticeSessionPage() {
         round,
         npcText,
         userText: userMsg,
-        userAudioUrl: audioUrl,
+        userAudioUrl: durableUserAudioUrl,
         objectivesCompleted: [...completedObjectives],
         chunksUsed: [...usedChunks],
       }).catch((err) => {
@@ -831,7 +893,7 @@ export function PracticeSessionPage() {
       const idx = fallbackRound % objectives.length
       setCompletedObjectives((prev) => new Set([...prev, objectives[idx]]))
     }
-  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags, practiceSessionId])
+  }, [dialogueRounds, fallbackRound, inkJson, topicId, resumeAfterInput, completedObjectives, usedChunks, coreChunkTexts, objectives, fallbackNpcName, currentTags, practiceSessionId, t, retryState])
 
   const continueDespiteFeedback = useCallback(() => {
     if (!turnFeedback) return
@@ -1121,11 +1183,11 @@ export function PracticeSessionPage() {
 
   // ==================== Phase: Practice (VN) ====================
   if (phase === 'practice') {
-    const currentLine = dialogueRounds[dialogueRounds.length - 1]
+    const currentLine = vnDialogueLines[vnDialogueLines.length - 1]
     const canReview = inkEnded
     const characters = activeScene?.characters ?? detail.scene.characters ?? []
     const currentCharacter = characters.find((character) => {
-      const speaker = vnVisual.speaker || (currentLine?.isNpc ? currentLine.speaker : undefined)
+      const speaker = vnVisual.speaker || (currentLine && !currentLine.isUser ? currentLine.speaker : undefined)
       return characterMatchesSpeaker(character, speaker)
     }) || (characters.length === 1 ? characters[0] : undefined)
     const expressionMap = currentCharacter?.expressions && typeof currentCharacter.expressions === 'object'
@@ -1153,7 +1215,8 @@ export function PracticeSessionPage() {
               variant="ghost"
               size="sm"
               onClick={() => {
-                if (analysisResult || practiceView === 'analysis') {
+                // Story finished (or already reviewing): leave freely. Mid-run still confirms abandon.
+                if (inkEnded || analysisResult || practiceView === 'analysis') {
                   goBackToScene()
                 } else {
                   setConfirmAbandonOpen(true)
@@ -1235,8 +1298,8 @@ export function PracticeSessionPage() {
               offlineOnly
               backgroundUrl={packMediaReady ? vnVisual.backgroundUrl : undefined}
               backgroundFit={vnVisual.backgroundFit}
-              currentLine={!packMediaReady || inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, translation: currentLine.translation, audioUrl: currentLine.audioUrl } : null}
-              history={packMediaReady ? dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, translation: line.translation, audioUrl: line.audioUrl })) : []}
+              currentLine={!packMediaReady || inkEnded ? null : currentLine ?? null}
+              history={packMediaReady ? vnDialogueLines : []}
               choices={packMediaReady ? inkChoices : []}
               currentSpriteUrl={packMediaReady ? currentSpriteUrl : undefined}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
@@ -1254,7 +1317,16 @@ export function PracticeSessionPage() {
               onAdvance={packMediaReady && inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}
               hideChatTopBar
               endedActions={(
-                <div className="mx-auto flex items-center justify-center gap-2">
+                <div className="mx-auto flex flex-wrap items-center justify-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 rounded-full border-0 bg-background/70 px-4 text-xs text-foreground shadow-none hover:bg-muted hover:text-foreground"
+                    onClick={goBackToScene}
+                  >
+                    {t('practiceSession.backToScene')}
+                  </Button>
                   <Button type="button" size="sm" className="h-8 rounded-full border-0 px-4 text-xs shadow-none" onClick={() => void startAnalysis()}>
                     {t('practiceSession.viewReview')}
                   </Button>

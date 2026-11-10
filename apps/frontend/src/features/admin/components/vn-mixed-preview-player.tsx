@@ -10,6 +10,7 @@ import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
+import { releaseMediaElement } from '@/lib/media-playback-lifecycle'
 
 type FrameAudioSource = 'tts' | 'recording'
 
@@ -185,6 +186,11 @@ export function VnMixedPreviewPlayer({
   const ttsPreviewRef = useRef<HTMLAudioElement | null>(null)
   const recordingUrlsRef = useRef<Record<number, string>>({})
   const recordingBlobsRef = useRef<Record<number, Blob>>({})
+  const playingRef = useRef(false)
+
+  useEffect(() => {
+    playingRef.current = playing
+  }, [playing])
 
   useEffect(() => {
     console.log('[repeat-vn] stage resources', {
@@ -202,49 +208,40 @@ export function VnMixedPreviewPlayer({
       window.clearTimeout(timerRef.current)
       timerRef.current = null
     }
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.removeAttribute('src')
-      audioRef.current = null
-    }
+    releaseMediaElement(audioRef.current)
+    audioRef.current = null
   }, [])
 
   const clearRecordingPlayback = useCallback(() => {
-    const audio = recordingAudioRef.current
-    if (audio) {
-      audio.pause()
-      audio.removeAttribute('src')
-      recordingAudioRef.current = null
-    }
+    releaseMediaElement(recordingAudioRef.current)
+    recordingAudioRef.current = null
     setPlayingRecordingIndex(null)
   }, [])
 
   const clearTtsPreview = useCallback(() => {
-    const audio = ttsPreviewRef.current
-    if (audio) {
-      audio.pause()
-      audio.removeAttribute('src')
-      ttsPreviewRef.current = null
-    }
+    releaseMediaElement(ttsPreviewRef.current)
+    ttsPreviewRef.current = null
     setPlayingTtsIndex(null)
   }, [])
 
-  const jumpToFrame = useCallback((index: number) => {
+  const stopAllPlayback = useCallback(() => {
     clearPlayback()
-    clearTtsPreview()
     clearRecordingPlayback()
+    clearTtsPreview()
+  }, [clearPlayback, clearRecordingPlayback, clearTtsPreview])
+
+  const jumpToFrame = useCallback((index: number) => {
+    stopAllPlayback()
     onJumpTo(index)
-  }, [clearPlayback, clearRecordingPlayback, clearTtsPreview, onJumpTo])
+  }, [onJumpTo, stopAllPlayback])
 
   useEffect(() => {
     itemRefs.current[activeIndex]?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [activeIndex])
 
   useEffect(() => () => {
-    clearPlayback()
-    clearRecordingPlayback()
-    clearTtsPreview()
-  }, [clearPlayback, clearRecordingPlayback, clearTtsPreview])
+    stopAllPlayback()
+  }, [stopAllPlayback])
 
   useEffect(() => {
     recordingUrlsRef.current = recordingUrls
@@ -261,8 +258,8 @@ export function VnMixedPreviewPlayer({
   useEffect(() => {
     setPlaying(false)
     setLoopIndex(1)
-    clearPlayback()
-  }, [clearPlayback, frames])
+    stopAllPlayback()
+  }, [frames, stopAllPlayback])
 
   useEffect(() => {
     if (!playing || !activeFrame) return
@@ -273,6 +270,7 @@ export function VnMixedPreviewPlayer({
     }
 
     const moveNext = () => {
+      if (!playingRef.current) return
       const nextIndex = activeIndex + 1
       if (nextIndex < frames.length) {
         onJumpTo(nextIndex)
@@ -290,6 +288,7 @@ export function VnMixedPreviewPlayer({
     }
 
     const scheduleNext = (baseDelay = 0) => {
+      if (!playingRef.current) return
       timerRef.current = window.setTimeout(moveNext, baseDelay + gapSeconds * 1000)
     }
 
@@ -314,7 +313,11 @@ export function VnMixedPreviewPlayer({
       setPlaying(false)
       clearPlayback()
     } else {
+      clearTtsPreview()
+      clearRecordingPlayback()
       setLoopIndex(1)
+      // Overall replay always starts from the first frame.
+      if (activeIndex !== 0) onJumpTo(0)
       setPlaying(true)
     }
   }
@@ -323,9 +326,7 @@ export function VnMixedPreviewPlayer({
 
   const openFollow = (frame: MixedTimelineFrame) => {
     if (!canFollowFrame(frame)) return
-    clearPlayback()
-    clearRecordingPlayback()
-    clearTtsPreview()
+    stopAllPlayback()
     setPlaying(false)
     onJumpTo(frame.index)
     setFollowFrame(frame)
@@ -410,9 +411,7 @@ export function VnMixedPreviewPlayer({
       return
     }
     setPlaying(false)
-    clearPlayback()
-    clearTtsPreview()
-    clearRecordingPlayback()
+    stopAllPlayback()
     onJumpTo(frameIndex)
     const audio = new Audio(url)
     recordingAudioRef.current = audio
@@ -433,9 +432,7 @@ export function VnMixedPreviewPlayer({
       return
     }
     setPlaying(false)
-    clearPlayback()
-    clearRecordingPlayback()
-    clearTtsPreview()
+    stopAllPlayback()
     onJumpTo(frameIndex)
     const audio = new Audio(url)
     ttsPreviewRef.current = audio
@@ -773,8 +770,8 @@ export function FollowReadDrawer({
   }, [])
 
   const cleanupAudio = useCallback(() => {
-    ttsAudioRef.current?.pause()
-    recordingAudioRef.current?.pause()
+    releaseMediaElement(ttsAudioRef.current)
+    releaseMediaElement(recordingAudioRef.current)
     ttsAudioRef.current = null
     recordingAudioRef.current = null
     setPlayingTts(false)
@@ -904,25 +901,47 @@ export function FollowReadDrawer({
 
   const playTts = useCallback(() => {
     if (!frame?.audioUrl) return
+    if (playingTts && ttsAudioRef.current) {
+      cleanupAudio()
+      return
+    }
     cleanupAudio()
     const audio = new Audio(frame.audioUrl)
     ttsAudioRef.current = audio
     audio.onplay = () => setPlayingTts(true)
-    audio.onpause = () => setPlayingTts(false)
-    audio.onended = () => setPlayingTts(false)
+    audio.onpause = () => {
+      if (ttsAudioRef.current === audio) setPlayingTts(false)
+    }
+    audio.onended = () => {
+      if (ttsAudioRef.current === audio) {
+        ttsAudioRef.current = null
+        setPlayingTts(false)
+      }
+    }
     audio.play().catch(() => setPlayingTts(false))
-  }, [cleanupAudio, frame?.audioUrl])
+  }, [cleanupAudio, frame?.audioUrl, playingTts])
 
   const playRecording = useCallback(() => {
     if (!recordedUrl) return
+    if (playingRecording && recordingAudioRef.current) {
+      cleanupAudio()
+      return
+    }
     cleanupAudio()
     const audio = new Audio(recordedUrl)
     recordingAudioRef.current = audio
     audio.onplay = () => setPlayingRecording(true)
-    audio.onpause = () => setPlayingRecording(false)
-    audio.onended = () => setPlayingRecording(false)
+    audio.onpause = () => {
+      if (recordingAudioRef.current === audio) setPlayingRecording(false)
+    }
+    audio.onended = () => {
+      if (recordingAudioRef.current === audio) {
+        recordingAudioRef.current = null
+        setPlayingRecording(false)
+      }
+    }
     audio.play().catch(() => setPlayingRecording(false))
-  }, [cleanupAudio, recordedUrl])
+  }, [cleanupAudio, playingRecording, recordedUrl])
 
   const clearRecording = useCallback(() => {
     cleanupAudio()

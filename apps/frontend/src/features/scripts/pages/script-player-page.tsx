@@ -223,6 +223,23 @@ function InkEpisodePlayer({
     setPerformedTurns((current) => [...current, ...appended])
   }, [inkLines])
 
+  // Re-bind NPC TTS when installed assetMap resolves after lines were first captured.
+  useEffect(() => {
+    setPerformedTurns((current) => {
+      let inkIdx = 0
+      let changed = false
+      const next = current.map((turn) => {
+        if (turn.isUser) return turn
+        const ink = inkLines[inkIdx++]
+        if (!ink) return turn
+        if (turn.audioUrl === ink.audioUrl && turn.speaker === ink.speaker) return turn
+        changed = true
+        return { ...turn, audioUrl: ink.audioUrl, speaker: ink.speaker || turn.speaker }
+      })
+      return changed ? next : current
+    })
+  }, [inkLines])
+
   // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
   useEffect(() => {
     userInputJustSubmittedRef.current = false

@@ -45,14 +45,32 @@ export async function enqueueScriptVideoRender({
   // Do not invent a one-second pause between lines. The timeline may still
   // use its per-line duration estimate, but there is no artificial silence.
   const timeline = buildNqtrVideoTimeline(frames, { gapSeconds: 0 })
-  const localVisualFrames = timeline.frames.filter((frame) => [frame.background?.url, frame.sprite?.url].some((url) =>
-    Boolean(url?.startsWith('capacitor://') || url?.includes('/_capacitor_file_/')),
+  const isLocal = (url?: string) => Boolean(url && (
+    url.startsWith('capacitor://')
+    || url.includes('/_capacitor_file_/')
+    || url.startsWith('file:')
+    || url.startsWith('blob:')
   ))
+  const isAssetRef = (url?: string) => Boolean(url && (
+    url.startsWith('asset://')
+    || /\/file-assets\/[^/]+\/content/i.test(url)
+  ))
+  const localVisualFrames = timeline.frames.filter((frame) =>
+    [frame.background?.url, frame.sprite?.url, frame.sprite?.avatarUrl].some(isLocal),
+  )
   console.log('[script-video] submit render timeline', {
     workId,
     frames: timeline.frames.length,
+    fps: timeline.fps,
+    size: `${timeline.width}x${timeline.height}`,
     backgrounds: timeline.frames.filter((frame) => Boolean(frame.background?.url)).length,
     sprites: timeline.frames.filter((frame) => Boolean(frame.sprite?.url)).length,
+    avatars: timeline.frames.filter((frame) => Boolean(frame.sprite?.avatarUrl)).length,
+    audio: timeline.frames.filter((frame) => Boolean(frame.resolvedAudioUrl || frame.audioUrl)).length,
+    assetRefs: timeline.frames.filter((frame) =>
+      [frame.background?.url, frame.sprite?.url, frame.sprite?.avatarUrl, frame.resolvedAudioUrl, frame.audioUrl]
+        .some(isAssetRef),
+    ).length,
     localVisualFrames: localVisualFrames.map((frame) => frame.index),
   })
   return scriptCommunityApi.renderWork(workId, timeline.frames as unknown as Record<string, unknown>[])

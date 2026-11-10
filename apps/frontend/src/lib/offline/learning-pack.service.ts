@@ -1,5 +1,6 @@
 import { assetCacheService, type AssetRef } from './asset-cache.service'
 import { deferredLookupKeys, deferredPackAssetService, learningPackZipPath, type DeferredPackAsset } from './deferred-pack-asset.service'
+import { invalidateInstalledPackMediaCache } from './installed-pack-media'
 import { digestBuffer } from './sha256-worker.service'
 import { learningApi } from '@/features/learning/api/learning-api'
 import { readStoredTopicDetail, readStoredUnitDetail, writePackProjection } from './learning-pack-read-model'
@@ -933,6 +934,7 @@ export const learningPackService = {
         updateMode: previous ? 'full' : undefined,
       })
       // Native packs are installed with deferred asset rows; materialize off the UI path.
+      invalidateInstalledPackMediaCache(unitId)
       void drainPackAssetMaterializeQueueInternal(unitId)
       return installed
     } catch (error) {
@@ -1718,6 +1720,11 @@ export const learningPackService = {
       status: 'pending',
     })
     timer.lap('enqueue gc job', { deletedFiles, keptFiles })
+    invalidateInstalledPackMediaCache(packId)
+    // Drop click-time VN prep so the next open cannot reuse deleted pack URLs.
+    void import('@/features/vn-engine/prepare-story-vn-entry')
+      .then((mod) => mod.clearPreparedStoryVnEntry())
+      .catch(() => undefined)
     logger.info(`🗑️ 已标记卸载: ${packId} (${pack.title} v${pack.version}); GC queued (${deletedFiles} files, ${keptFiles} retained)`)
     timer.done({ packId, title: pack.title, version: pack.version })
   },

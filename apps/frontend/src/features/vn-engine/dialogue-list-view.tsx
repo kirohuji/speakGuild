@@ -3,12 +3,17 @@ import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { ExternalLink, History, Loader2, RotateCcw, Settings, Volume2, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { releaseMediaElement, stopTransientMediaPlayback } from '@/lib/media-playback-lifecycle'
+import { assetCacheService } from '@/lib/offline/asset-cache.service'
+import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
+import { isNative } from '@/lib/native/platform'
 import { get } from '@/lib/request'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { VnPlayerLine, VnPlayerChoice, BackgroundFit } from './vn-player'
 import type { DictionaryEntry } from '@/features/admin/api-dictionary'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
-import { VnInputPanel } from './vn-input-panel'
+import { VnInputPanel, type VnInputRecording } from './vn-input-panel'
+import { resolveUserRecordingPlaybackUrl } from './user-recording-url'
 
 // ── 单词查询缓存 ──
 const wordCache = new Map<string, DictionaryEntry | null>()
@@ -288,7 +293,7 @@ interface DialogueListViewProps {
   hideEndedCaption?: boolean
   onAdvance?: () => void
   onChoice?: (index: number) => void
-  onSubmitInput?: (text: string) => void | Promise<void>
+  onSubmitInput?: (text: string, audioUrl?: string, recording?: VnInputRecording) => void | Promise<void>
   inputFeedback?: ReactNode
   inputGuidance?: VnTurnGuidance
   inputDisabled?: boolean
@@ -704,6 +709,7 @@ function ChatBubble({
           {line.audioUrl && (
             <LineAudioButton
               audioUrl={line.audioUrl}
+              isUser
               label={t('vnSettings.playbackRecording')}
             />
           )}
@@ -724,25 +730,74 @@ function ChatBubble({
   )
 }
 
-function LineAudioButton({ audioUrl, label }: { audioUrl: string; label: string }) {
+function LineAudioButton({ audioUrl, label, isUser }: { audioUrl: string; label: string; isUser?: boolean }) {
   const [audioPlaying, setAudioPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const playGenRef = useRef(0)
 
   const handlePlayAudio = () => {
+    // Second tap while *this* button owns playback → stop.
     if (audioPlaying && audioRef.current) {
-      audioRef.current.pause()
+      playGenRef.current += 1
+      releaseMediaElement(audioRef.current)
+      audioRef.current = null
+      setAudioPlaying(false)
       return
     }
-    const audio = new Audio(audioUrl)
+
+    // Stop VN autoplay / other transient clips, then play this line (may be user recording).
+    playGenRef.current += 1
+    const generation = playGenRef.current
+    stopTransientMediaPlayback()
+    releaseMediaElement(audioRef.current)
+    const audio = new Audio()
+    audio.preload = 'auto'
     audioRef.current = audio
-    audio.onplay = () => setAudioPlaying(true)
-    audio.onpause = () => setAudioPlaying(false)
-    audio.onended = () => { setAudioPlaying(false); audioRef.current = null }
-    audio.play().catch(() => setAudioPlaying(false))
+    setAudioPlaying(true)
+    audio.onplay = () => {
+      if (audioRef.current === audio) setAudioPlaying(true)
+    }
+    audio.onpause = () => {
+      if (audioRef.current === audio) setAudioPlaying(false)
+    }
+    audio.onended = () => {
+      if (audioRef.current === audio) {
+        setAudioPlaying(false)
+        audioRef.current = null
+      }
+    }
+
+    const start = (src: string) => {
+      if (playGenRef.current !== generation || audioRef.current !== audio) return
+      audio.src = src
+      audio.play().catch((err) => {
+        if (isNative() && err?.name === 'AbortError') {
+          audio.addEventListener('canplay', () => {
+            if (playGenRef.current === generation) audio.play().catch(() => setAudioPlaying(false))
+          }, { once: true })
+          return
+        }
+        if (playGenRef.current === generation) setAudioPlaying(false)
+      })
+    }
+
+    // User recordings share the story-pack content-URL contract — never pack-cache them.
+    if (isUser || audioUrl.startsWith('blob:') || audioUrl.startsWith('data:')) {
+      start(resolveUserRecordingPlaybackUrl(audioUrl) || resolveDisplayAssetUrl(audioUrl) || audioUrl)
+      return
+    }
+
+    void assetCacheService.resolve({ url: audioUrl, role: 'voice' }).then((resolved) => {
+      start(resolved || resolveDisplayAssetUrl(audioUrl) || audioUrl)
+    }).catch(() => {
+      start(resolveDisplayAssetUrl(audioUrl) || audioUrl)
+    })
   }
 
   useEffect(() => () => {
-    audioRef.current?.pause()
+    playGenRef.current += 1
+    releaseMediaElement(audioRef.current)
+    audioRef.current = null
   }, [])
 
   return (

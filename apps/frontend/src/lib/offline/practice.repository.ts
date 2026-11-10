@@ -348,9 +348,8 @@ export const practiceRepository = {
   },
 
   async getPracticeSessionForReview(sessionId: string): Promise<PracticeSession | null> {
-    const cached = await this.getCachedPracticeSession(sessionId)
-    if (cached) return cached
-
+    // Prefer network so turn.userAudioUrl (durable recordings) is fresh —
+    // stale history cache often predates recording persistence.
     try {
       const session = await practiceApi.getSession(sessionId)
       if (hasFinalAnalysis(session)) {
@@ -362,7 +361,7 @@ export const practiceRepository = {
       }
       return session
     } catch {
-      return null
+      return this.getCachedPracticeSession(sessionId)
     }
   },
 

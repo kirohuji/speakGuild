@@ -40,30 +40,61 @@ export function isVnAssetAlias(value?: string | null): boolean {
   return false
 }
 
+function isCookieBoundContentUrl(url?: string | null): boolean {
+  if (!url) return false
+  try {
+    return /\/file-assets\/[^/]+\/content\/?$/i.test(new URL(url, 'http://manyu.local').pathname)
+  } catch {
+    return false
+  }
+}
+
 /**
  * Resolve a background / image tag value to a playable URL.
  * Accepts ink aliases (via assetMap), asset:// refs, and plain http(s) URLs.
  * Unresolved aliases never fall through as relative browser paths.
+ *
+ * `preferSigned` keeps Remotion-safe URLs only (no cookie-bound content proxies).
  */
 export function resolveVnImageUrl(
   value: string | undefined,
   assetMap?: VnAssetMap | null,
+  options?: { preferSigned?: boolean },
 ): string | undefined {
   if (!value) return undefined
+  const preferSigned = Boolean(options?.preferSigned)
 
   if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
     const entry = assetMap[value]
     if (isPlayableMediaUrl(entry?.signedUrl)) return entry!.signedUrl!
+    if (preferSigned) {
+      // Remotion cannot authenticate /file-assets/:id/content — leave the
+      // asset:// / bare id for the render service to re-sign.
+      if (entry?.fileAssetId) return `asset://${encodeURIComponent(entry.fileAssetId)}`
+      const signedId = fileAssetIdFromUrl(entry?.signedUrl)
+      if (signedId) return `asset://${encodeURIComponent(signedId)}`
+      return undefined
+    }
     if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId)
     const signedId = fileAssetIdFromUrl(entry?.signedUrl)
     if (signedId) return getFileAssetContentUrl(signedId)
     return undefined
   }
 
-  if (isPlayableMediaUrl(value)) return value
+  if (isPlayableMediaUrl(value)) {
+    if (preferSigned && isCookieBoundContentUrl(value)) {
+      const assetId = fileAssetIdFromUrl(value)
+      return assetId ? `asset://${encodeURIComponent(assetId)}` : undefined
+    }
+    return value
+  }
 
   const assetId = fileAssetIdFromUrl(value)
-  if (assetId) return getFileAssetContentUrl(assetId)
+  if (assetId) {
+    return preferSigned
+      ? `asset://${encodeURIComponent(assetId)}`
+      : getFileAssetContentUrl(assetId)
+  }
 
   const displayed = resolveDisplayAssetUrl(value)
   return isPlayableMediaUrl(displayed) ? displayed : undefined

@@ -90,12 +90,26 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         where: { id: taskId, status: { not: 'canceled' } },
         data: { progress: 6, currentStep: 'initializing-renderer' },
       });
-      const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
+      const fps = Number(frames?.[0]?.fps) || 24;
+      const inputProps = {
+        timeline: {
+          frames,
+          durationInFrames: frames.at(-1)?.endFrame ?? fps,
+          fps,
+          width: 1280,
+          height: 720,
+        },
+      };
       console.log('[script-video] initializing renderer', {
         taskId,
         workId,
         frameCount: frames?.length ?? 0,
+        fps,
+        size: '1280x720',
         browserExecutable: browserExecutable || 'remotion-default',
+        sampleBackground: frames?.[0]?.background?.url,
+        sampleSprite: frames?.[0]?.sprite?.url,
+        sampleAvatar: frames?.[0]?.sprite?.avatarUrl,
         sampleAudio: frames?.[0]?.resolvedAudioUrl || frames?.[0]?.audioUrl,
       });
       const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
@@ -108,6 +122,11 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         serveUrl,
         composition,
         codec: 'h264',
+        // Community clips: fast encode, acceptable quality (not archival).
+        x264Preset: 'ultrafast',
+        crf: 28,
+        // Let Remotion pick a concurrency based on available cores.
+        concurrency: null,
         outputLocation: output,
         inputProps,
         browserExecutable,
@@ -199,10 +218,21 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         where: { id: taskId, status: { not: 'canceled' } },
         data: { progress: 6, currentStep: 'initializing-renderer' },
       });
-      const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
+      const fps = Number(frames?.[0]?.fps) || 24;
+      const inputProps = {
+        timeline: {
+          frames,
+          durationInFrames: frames.at(-1)?.endFrame ?? fps,
+          fps,
+          width: 1280,
+          height: 720,
+        },
+      };
       console.log('[narrative-video] initializing renderer', {
         taskId,
         frameCount: frames?.length ?? 0,
+        fps,
+        size: '1280x720',
         browserExecutable: browserExecutable || 'remotion-default',
         sampleAudio: frames?.[0]?.resolvedAudioUrl || frames?.[0]?.audioUrl,
       });
@@ -216,6 +246,9 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         serveUrl,
         composition,
         codec: 'h264',
+        x264Preset: 'ultrafast',
+        crf: 28,
+        concurrency: null,
         outputLocation: output,
         inputProps,
         browserExecutable,

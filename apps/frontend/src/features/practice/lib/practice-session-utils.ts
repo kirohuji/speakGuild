@@ -89,6 +89,10 @@ export type AudioAssetResolveMode = 'playback' | 'render'
  * - render: prefer signed/public URLs Remotion can fetch without browser cookies
  * Unresolved aliases never fall through as relative paths.
  */
+function toRemotionAssetRef(assetId: string) {
+  return `asset://${encodeURIComponent(assetId)}`
+}
+
 export function resolveAudioAssetUrl(
   value: string | undefined,
   assetMap?: VnAssetMap,
@@ -100,8 +104,11 @@ export function resolveAudioAssetUrl(
     const entry = assetMap[value]
     if (entry?.signedUrl && isPlayableMediaUrl(entry.signedUrl)) return entry.signedUrl
     if (mode === 'render') {
-      if (entry?.signedUrl && isPlayableMediaUrl(entry.signedUrl)) return entry.signedUrl
-      if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId, '?inline=1')
+      // Remotion has no session cookies — never hand it /file-assets/:id/content.
+      // Leave an asset:// ref for the render service to re-sign.
+      if (entry?.fileAssetId) return toRemotionAssetRef(entry.fileAssetId)
+      const signedId = fileAssetIdFromUrl(entry?.signedUrl)
+      if (signedId) return toRemotionAssetRef(signedId)
       return undefined
     }
     if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId, '?inline=1')
@@ -112,11 +119,16 @@ export function resolveAudioAssetUrl(
     }
     return undefined
   }
+  if (mode === 'render') {
+    if (isPlayableMediaUrl(value) && !/\/file-assets\/[^/]+\/content/i.test(value)) return value
+    const renderId = fileAssetIdFromUrl(value)
+    return renderId ? toRemotionAssetRef(renderId) : undefined
+  }
   if (isPlayableMediaUrl(value)) return value
   const id = fileAssetIdFromUrl(value)
   if (id) return getFileAssetContentUrl(id, '?inline=1')
   if (isVnAssetAlias(value)) return undefined
-  return mode === 'render' && isPlayableMediaUrl(value) ? value : undefined
+  return undefined
 }
 
 export function isBackgroundFit(value?: string): value is 'cover' | 'contain' | 'stretch' | 'repeat' {

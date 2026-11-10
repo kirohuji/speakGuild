@@ -113,6 +113,28 @@ export class ScriptCommunityService {
       || url.startsWith('blob:')
   }
 
+  /** Extract a file-asset id from asset:// refs or /file-assets/:id/content URLs. */
+  private extractFileAssetId(url?: string | null): string | undefined {
+    if (!url || typeof url !== 'string') return undefined
+    if (url.startsWith('asset://')) {
+      const raw = url.slice('asset://'.length).split(/[?#]/)[0] || ''
+      if (!raw || raw.includes('/')) return undefined
+      try {
+        return decodeURIComponent(raw)
+      } catch {
+        return raw
+      }
+    }
+    try {
+      const pathname = new URL(url, 'http://manyu.local').pathname
+      const match = pathname.match(/\/file-assets\/([^/]+)\/content\/?$/i)
+      if (!match?.[1]) return undefined
+      return decodeURIComponent(match[1])
+    } catch {
+      return undefined
+    }
+  }
+
   private async getRecordingDurationMs(url: string, assetId: string) {
     try {
       const { durationInSeconds } = await parseMedia({
@@ -132,6 +154,100 @@ export class ScriptCommunityService {
     }
   }
 
+  /** Match frontend NQTR_VIDEO_FPS — keep encode/timeline in sync. */
+  private static readonly SCRIPT_VIDEO_FPS = 24
+
+  /**
+   * Remotion fetches media without cookies. Rewrite asset:// and
+   * /file-assets/:id/content into long-lived private COS signed URLs.
+   */
+  private async remapFramesForRemotion(frames: any[], expiresSeconds = 6 * 3600) {
+    const assetIds = new Set<string>()
+    for (const frame of frames) {
+      for (const url of [
+        frame?.background?.url,
+        frame?.sprite?.url,
+        frame?.sprite?.avatarUrl,
+        frame?.resolvedAudioUrl,
+        frame?.audioUrl,
+      ]) {
+        const id = this.extractFileAssetId(typeof url === 'string' ? url : undefined)
+        if (id) assetIds.add(id)
+      }
+    }
+    const signed = await this.fileAssetsService.getPrivateUrlsByAssetIds(
+      [...assetIds],
+      expiresSeconds,
+    )
+    const unresolvedAssetIds: string[] = []
+    const resolveUrl = (url?: string) => {
+      if (!url || this.isLocalVisualUrl(url)) return undefined
+      const id = this.extractFileAssetId(url)
+      if (id) {
+        const mapped = signed.get(id)
+        if (!mapped) unresolvedAssetIds.push(id)
+        return mapped || undefined
+      }
+      // Already a public/signed https URL Remotion can fetch.
+      if (/^https?:\/\//i.test(url)) return url
+      return undefined
+    }
+
+    const remapped = frames.map((frame: any) => {
+      const backgroundUrl = resolveUrl(
+        typeof frame?.background?.url === 'string' ? frame.background.url : undefined,
+      )
+      const spriteUrl = resolveUrl(
+        typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined,
+      )
+      const avatarUrl = resolveUrl(
+        typeof frame?.sprite?.avatarUrl === 'string' ? frame.sprite.avatarUrl : undefined,
+      )
+      const rawAudio = typeof frame?.resolvedAudioUrl === 'string'
+        ? frame.resolvedAudioUrl
+        : typeof frame?.audioUrl === 'string'
+          ? frame.audioUrl
+          : undefined
+      const audioUrl = resolveUrl(rawAudio)
+      return {
+        ...frame,
+        background: frame.background
+          ? { ...frame.background, url: backgroundUrl }
+          : frame.background,
+        sprite: frame.sprite
+          ? { ...frame.sprite, url: spriteUrl, avatarUrl }
+          : frame.sprite,
+        // Never leave asset:// / content proxies for Remotion to fetch.
+        resolvedAudioUrl: audioUrl,
+      }
+    })
+
+    // Carry the first available background forward AND backward so opening
+    // beats before the first #bg: tag (or after a stripped local URL) are not black.
+    const seedBackground = remapped.find((frame) => frame?.background?.url)?.background
+    let lastBackground = seedBackground
+    const withBackground = remapped.map((frame: any) => {
+      if (frame?.background?.url) {
+        lastBackground = frame.background
+        return frame
+      }
+      if (!lastBackground) return frame
+      return {
+        ...frame,
+        background: { ...lastBackground },
+      }
+    })
+
+    if (unresolvedAssetIds.length) {
+      console.warn('[script-video] file assets missing during Remotion remap', {
+        count: unresolvedAssetIds.length,
+        sample: [...new Set(unresolvedAssetIds)].slice(0, 8),
+      })
+    }
+
+    return withBackground
+  }
+
   async requestRender(userId: string, workId: string, frames: Record<string, unknown>[]) {
     if (!frames.length) throw new BadRequestException('没有可渲染的视频帧')
     const work = await this.prisma.scriptWork.findFirst({
@@ -144,22 +260,42 @@ export class ScriptCommunityService {
     }
     const recordSnapshot = (work.record?.resultSnapshot as any) ?? {}
     const recordingAssets = recordSnapshot.recordingAssets
-    const recordingsByFrame = recordingAssets && typeof recordingAssets === 'object'
-      ? await Promise.all(Object.entries(recordingAssets as Record<string, unknown>).map(async ([frameIndex, assetId]) => {
-        if (typeof assetId !== 'string' || !assetId) return null
-        let asset: Awaited<ReturnType<FileAssetsService['getPrivateUrlByAssetId']>>
-        try {
-          asset = await this.fileAssetsService.getPrivateUrlByAssetId(assetId)
-        } catch (error) {
-          console.warn('[script-video] saved recording is unavailable; falling back to TTS', { workId, frameIndex, assetId, error })
-          return null
-        }
-        return [Number(frameIndex), {
-          url: asset.url,
-          durationMs: await this.getRecordingDurationMs(asset.url, assetId),
-        }] as const
-      }))
+    const durationHints = (
+      recordSnapshot.recordingDurationsMs
+      && typeof recordSnapshot.recordingDurationsMs === 'object'
+    )
+      ? recordSnapshot.recordingDurationsMs as Record<string, unknown>
+      : {}
+
+    const recordingEntries = recordingAssets && typeof recordingAssets === 'object'
+      ? Object.entries(recordingAssets as Record<string, unknown>)
+        .filter((entry): entry is [string, string] => typeof entry[1] === 'string' && Boolean(entry[1]))
       : []
+    const recordingAssetIds = [...new Set(recordingEntries.map(([, assetId]) => assetId))]
+    // One DB round-trip + parallel signing instead of N getPrivateUrlByAssetId calls.
+    const recordingSignedUrls = await this.fileAssetsService.getPrivateUrlsByAssetIds(
+      recordingAssetIds,
+      6 * 3600,
+    )
+    const recordingsByFrame = await Promise.all(recordingEntries.map(async ([frameIndex, assetId]) => {
+      const url = recordingSignedUrls.get(assetId)
+      if (!url) {
+        console.warn('[script-video] saved recording is unavailable; falling back to TTS', {
+          workId,
+          frameIndex,
+          assetId,
+        })
+        return null
+      }
+      const hintRaw = durationHints[frameIndex] ?? durationHints[String(Number(frameIndex))]
+      const hintMs = typeof hintRaw === 'number' ? hintRaw : Number(hintRaw)
+      // Reuse snapshot durations when present — parseMedia per recording is a major
+      // latency source before Remotion even starts.
+      const durationMs = Number.isFinite(hintMs) && hintMs > 0
+        ? Math.ceil(hintMs)
+        : await this.getRecordingDurationMs(url, assetId)
+      return [Number(frameIndex), { url, durationMs }] as const
+    }))
     const recordingUrls = new Map(recordingsByFrame.filter((entry): entry is readonly [number, { url: string; durationMs: number }] => Boolean(entry)))
     const audioLocks = (recordSnapshot.audioLocks && typeof recordSnapshot.audioLocks === 'object')
       ? recordSnapshot.audioLocks as Record<string, 'tts' | 'recording'>
@@ -191,51 +327,73 @@ export class ScriptCommunityService {
     // often much longer, so rebuild the sequential timeline after injection
     // and give the recording its complete duration instead of cutting Audio at
     // the original text-derived Sequence boundary.
+    const fps = ScriptCommunityService.SCRIPT_VIDEO_FPS
     let cursor = 0
     const renderFrames = framesWithRecordingAudio.map((frame: any) => {
       const recordingFrames = frame.recordingDurationMs
-        ? Math.ceil((frame.recordingDurationMs / 1000) * 30)
+        ? Math.ceil((frame.recordingDurationMs / 1000) * fps)
         : 0
+      // Client timeline already uses the same community fps; extend only when
+      // a recording is longer than the text-estimated beat.
       const durationFrames = Math.max(1, Number(frame.durationFrames) || 1, recordingFrames)
       const next = {
         ...frame,
         startFrame: cursor,
         durationFrames,
         endFrame: cursor + durationFrames,
+        fps,
       }
       cursor = next.endFrame
       return next
     })
-    // Drop device-local visual URLs Remotion cannot fetch. Missing COS assets are
-    // skipped (dark stage / no sprite) instead of failing the whole render.
-    const sanitizedFrames = renderFrames.map((frame: any) => {
-      const backgroundUrl = typeof frame?.background?.url === 'string' ? frame.background.url : undefined
-      const spriteUrl = typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined
-      const usableBackground = backgroundUrl && !this.isLocalVisualUrl(backgroundUrl) ? backgroundUrl : undefined
-      const usableSprite = spriteUrl && !this.isLocalVisualUrl(spriteUrl) ? spriteUrl : undefined
-      return {
-        ...frame,
-        background: frame.background ? { ...frame.background, url: usableBackground } : frame.background,
-        sprite: frame.sprite ? { ...frame.sprite, url: usableSprite } : frame.sprite,
-      }
-    })
+    // Sign private assets Remotion can fetch, drop device-local URLs, and
+    // forward-fill backgrounds so the opening beat is never a black stage.
+    const sanitizedFrames = await this.remapFramesForRemotion(renderFrames)
     const skippedBackgroundFrames = sanitizedFrames.filter((frame: any) => !frame.background?.url).map((frame: any) => frame.index)
     const skippedSpriteFrames = sanitizedFrames.filter((frame: any) => (
       frame.kind !== 'choice'
       && frame.sprite?.speaker
       && !frame.sprite?.url
+      && !frame.sprite?.avatarUrl
     )).map((frame: any) => frame.index)
-    if (skippedBackgroundFrames.length || skippedSpriteFrames.length) {
-      console.warn('[script-video] skipping missing visuals for render', {
+    const missingAudioFrames = sanitizedFrames.filter((frame: any) => (
+      !frame.resolvedAudioUrl
+      && (frame.kind === 'line' || frame.kind === 'choice' || frame.kind === 'userInput')
+      && Boolean(frame.text)
+    )).map((frame: any) => frame.index)
+    const stillAssetScheme = sanitizedFrames.flatMap((frame: any) => {
+      const urls = [frame?.background?.url, frame?.sprite?.url, frame?.sprite?.avatarUrl, frame?.resolvedAudioUrl]
+      return urls.some((url) => typeof url === 'string' && (url.startsWith('asset://') || /\/file-assets\/[^/]+\/content/i.test(url)))
+        ? [frame.index]
+        : []
+    })
+    if (skippedBackgroundFrames.length || skippedSpriteFrames.length || missingAudioFrames.length || stillAssetScheme.length) {
+      console.warn('[script-video] asset gaps after Remotion remap', {
         workId,
         backgrounds: skippedBackgroundFrames,
         sprites: skippedSpriteFrames,
+        audio: missingAudioFrames,
+        unresolvedScheme: stillAssetScheme,
       })
     }
-    console.log('[script-video] resolved user recordings for render', {
+    console.log('[script-video] resolved media for render', {
       workId,
+      fps,
+      frames: sanitizedFrames.length,
+      backgrounds: sanitizedFrames.filter((frame: any) => Boolean(frame.background?.url)).length,
+      sprites: sanitizedFrames.filter((frame: any) => Boolean(frame.sprite?.url)).length,
+      avatars: sanitizedFrames.filter((frame: any) => Boolean(frame.sprite?.avatarUrl)).length,
+      audio: sanitizedFrames.filter((frame: any) => Boolean(frame.resolvedAudioUrl)).length,
       savedRecordings: recordingUrls.size,
+      reusedDurationHints: recordingsByFrame.filter((entry) => {
+        if (!entry) return false
+        const [frameIndex] = entry
+        const hintRaw = durationHints[String(frameIndex)] ?? durationHints[frameIndex]
+        const hintMs = typeof hintRaw === 'number' ? hintRaw : Number(hintRaw)
+        return Number.isFinite(hintMs) && hintMs > 0
+      }).length,
       injectedFrames: sanitizedFrames.filter((frame: any) => frame.audioSource === 'userRecording').map((frame: any) => frame.index),
+      openingBackground: sanitizedFrames[0]?.background?.url ? 'present' : 'missing',
     })
     await this.adminTasksService.cancelScriptVideoTasks(workId, userId)
     await this.prisma.scriptWork.update({

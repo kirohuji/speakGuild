@@ -1,7 +1,7 @@
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { parseComposer } from '@/features/admin/components/composer-parser'
 import { flattenComposerToTimeline, resolveTimelineAssetAliases } from '@/features/admin/components/vn-mixed-timeline'
-import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
+import { isPlayableMediaUrl, resolveVnImageUrl } from '@/features/vn-engine/vn-media-url'
 
 /**
  * Builds the single source of truth for repeat-theatre and Remotion frames.
@@ -19,43 +19,47 @@ export function buildStoryRepeatFrames(
 ) {
   if (!data.inkScript.inkSource) return []
   const scene = options.scene ?? data.scene
+  const assetMap = options.assetMap ?? data.inkScript.assetMap
+  const preferSigned = options.audioMode === 'render'
+  const resolveVisual = (value?: string | null) => {
+    if (!value) return undefined
+    // Prefer assetMap (signed URL for render) over requiring an already-playable URL.
+    // asset:// / aliases used to be dropped here → first Remotion frames rendered black.
+    return resolveVnImageUrl(value, assetMap, { preferSigned })
+      || (!preferSigned && isPlayableMediaUrl(value) ? value : undefined)
+  }
   const characterSprites: Record<string, Record<string, string>> = {}
   const characterAvatars: Record<string, string> = {}
   const characterPositions: Record<string, 'left' | 'center' | 'right'> = {}
   for (const character of scene?.characters ?? []) {
     const sprites: Record<string, string> = {}
-    if (character.spriteBaseUrl) sprites.default = character.spriteBaseUrl
-    let avatarUrl = character.avatarUrl || undefined
+    const base = resolveVisual(character.spriteBaseUrl)
+    if (base) sprites.default = base
+    let avatarUrl = resolveVisual(character.avatarUrl) || undefined
     for (const [expression, value] of Object.entries(character.expressions ?? {})) {
       if (typeof value === 'string') {
-        if (value) sprites[expression] = value
+        const resolved = resolveVisual(value)
+        if (resolved) sprites[expression] = resolved
       } else if (value && typeof value === 'object') {
         const entry = value as { spriteUrl?: string; avatarUrl?: string }
-        if (entry.spriteUrl) sprites[expression] = entry.spriteUrl
-        if (!avatarUrl && entry.avatarUrl) avatarUrl = entry.avatarUrl
+        const spriteUrl = resolveVisual(entry.spriteUrl)
+        if (spriteUrl) sprites[expression] = spriteUrl
+        if (!avatarUrl) avatarUrl = resolveVisual(entry.avatarUrl) || undefined
       }
     }
     for (const name of [character.name, character.displayName].filter(Boolean) as string[]) {
       characterSprites[name] = sprites
-      if (avatarUrl && isPlayableMediaUrl(avatarUrl)) characterAvatars[name] = avatarUrl
+      if (avatarUrl) characterAvatars[name] = avatarUrl
       characterPositions[name] = character.defaultPosition ?? 'center'
     }
   }
-  const playableSprites = Object.fromEntries(
-    Object.entries(characterSprites).map(([name, sprites]) => [
-      name,
-      Object.fromEntries(
-        Object.entries(sprites).filter(([, url]) => isPlayableMediaUrl(url)),
-      ),
-    ]),
-  )
   return flattenComposerToTimeline(resolveTimelineAssetAliases(
     parseComposer(data.inkScript.inkSource),
-    options.assetMap ?? data.inkScript.assetMap,
+    assetMap,
     { audioMode: options.audioMode ?? 'playback' },
   ), {
-    defaultBackgroundUrl: isPlayableMediaUrl(scene?.backgroundUrl) ? scene?.backgroundUrl : undefined,
-    characterSprites: playableSprites,
+    defaultBackgroundUrl: resolveVisual(scene?.backgroundUrl),
+    characterSprites,
     characterAvatars,
     characterPositions,
   })

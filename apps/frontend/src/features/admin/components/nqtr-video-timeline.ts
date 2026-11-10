@@ -4,9 +4,10 @@ import {
 } from './vn-mixed-preview-player'
 import { isUserMixedFrame, type MixedTimelineFrame } from './vn-mixed-timeline'
 
-export const NQTR_VIDEO_FPS = 30
-export const NQTR_VIDEO_WIDTH = 1920
-export const NQTR_VIDEO_HEIGHT = 1080
+/** Community clips prioritize encode speed over cinema-grade fidelity. */
+export const NQTR_VIDEO_FPS = 24
+export const NQTR_VIDEO_WIDTH = 1280
+export const NQTR_VIDEO_HEIGHT = 720
 
 export interface NqtrVideoTimelineFrame extends MixedTimelineFrame {
   startFrame: number

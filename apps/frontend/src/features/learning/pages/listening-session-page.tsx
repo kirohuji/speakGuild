@@ -12,6 +12,7 @@ import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/cn'
+import { releaseMediaElement } from '@/lib/media-playback-lifecycle'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { useTopicMediaUrl } from '@/hooks/use-topic-media'
 import { MixedPlaybackSettingsDialog, type DisplayMode, type LoopMode } from '@/components/common/playback-settings-dialog'
@@ -750,7 +751,7 @@ function ListeningShadowDrawer({
   }, [])
 
   const cleanupAudio = useCallback(() => {
-    recordingAudioRef.current?.pause()
+    releaseMediaElement(recordingAudioRef.current)
     recordingAudioRef.current = null
     setPlayingRecording(false)
   }, [])
@@ -854,14 +855,25 @@ function ListeningShadowDrawer({
   // 回放录音
   const playRecording = useCallback(() => {
     if (!recordedUrl) return
+    if (playingRecording && recordingAudioRef.current) {
+      cleanupAudio()
+      return
+    }
     cleanupAudio()
     const audio = new Audio(recordedUrl)
     recordingAudioRef.current = audio
     audio.onplay = () => setPlayingRecording(true)
-    audio.onpause = () => setPlayingRecording(false)
-    audio.onended = () => setPlayingRecording(false)
+    audio.onpause = () => {
+      if (recordingAudioRef.current === audio) setPlayingRecording(false)
+    }
+    audio.onended = () => {
+      if (recordingAudioRef.current === audio) {
+        recordingAudioRef.current = null
+        setPlayingRecording(false)
+      }
+    }
     audio.play().catch(() => setPlayingRecording(false))
-  }, [cleanupAudio, recordedUrl])
+  }, [cleanupAudio, playingRecording, recordedUrl])
 
   // 重录
   const resetRecording = useCallback(() => {

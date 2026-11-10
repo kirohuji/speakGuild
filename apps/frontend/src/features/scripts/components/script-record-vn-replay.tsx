@@ -16,14 +16,16 @@ import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media
 import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
 import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
+import { resolveUserRecordingPlaybackUrl } from '@/features/vn-engine/user-recording-url'
 
 type ReplayLine = VnPlayerLine & { tags?: string[] }
 
 /**
  * Practice-record VN replay.
- * Reuses the live theatre entry path (prepareStoryVnEntry ? installed media ?
- * Ink drive ? useVnTagVisuals ? character sprites). Saved records only keep
- * dialogue text, so we re-drive Ink with those answers to recover tags/media.
+ * Reuses the live theatre entry path (prepareStoryVnEntry → installed media →
+ * Ink drive → useVnTagVisuals → character sprites). User text/answers come from
+ * the saved snapshot; NPC tags/media are recovered by re-driving Ink. User
+ * recordings are remapped from resultSnapshot.recordingAssets onto audioUrl.
  */
 export function ScriptRecordVnReplay({
   record,
@@ -174,23 +176,35 @@ export function ScriptRecordVnReplay({
     // Prefer the saved dialogue order for user text, but keep Ink tags on NPC
     // turns so stage media matches the live theatre.
     const saved = record.resultSnapshot?.dialogue ?? []
+    const recordingAssets = record.resultSnapshot?.recordingAssets ?? {}
+    const userRecordingUrl = (line: { recordingFrameIndex?: number }, index: number) => {
+      const assetId = recordingAssets[String(line.recordingFrameIndex ?? index)]
+      return resolveUserRecordingPlaybackUrl(assetId)
+    }
     if (saved.length === 0) {
       const result: ReplayLine[] = []
       const maxLen = Math.max(inkLines.length, userTurns.length)
       for (let i = 0; i < maxLen; i++) {
         if (i < inkLines.length) result.push(inkLines[i])
-        if (i < userTurns.length) result.push(userTurns[i])
+        if (i < userTurns.length) {
+          const turn = userTurns[i]
+          result.push({
+            ...turn,
+            audioUrl: turn.audioUrl || userRecordingUrl({}, result.length),
+          })
+        }
       }
       return result
     }
 
     let inkCursor = 0
-    return saved.map((line) => {
+    return saved.map((line, index) => {
       if (line.isUser) {
         return {
           speaker: line.speaker || t('learning.speakerMe'),
           text: line.text,
           isUser: true,
+          audioUrl: userRecordingUrl(line, index),
         }
       }
       const inkLine = inkLines[inkCursor]
@@ -204,7 +218,7 @@ export function ScriptRecordVnReplay({
         text: line.text || inkLine.text,
       }
     })
-  }, [inkLines, record.resultSnapshot?.dialogue, t, userTurns])
+  }, [inkLines, record.resultSnapshot?.dialogue, record.resultSnapshot?.recordingAssets, t, userTurns])
 
   const activeTags = useMemo(() => {
     if (!replayReady || combined.length === 0) return [] as string[]
@@ -249,17 +263,16 @@ export function ScriptRecordVnReplay({
   const currentState = vnVisual.expression ? expressionMap[vnVisual.expression] : expressionMap.default
   const stateSpriteUrl = typeof currentState === 'string' ? currentState : (currentState as any)?.spriteUrl
   const stateAvatarUrl = typeof currentState === 'object' ? (currentState as any)?.avatarUrl : undefined
+  // Match live theatre: pass resolved identities through to VnPlayer offlineOnly
+  // cache resolution instead of pre-stripping with isPlayableMediaUrl.
   const currentSpriteUrl = currentCharacter
-    ? (isPlayableMediaUrl(stateSpriteUrl) ? stateSpriteUrl : undefined)
-      || (isPlayableMediaUrl(currentCharacter.spriteBaseUrl) ? currentCharacter.spriteBaseUrl : undefined)
-      || undefined
+    ? stateSpriteUrl || currentCharacter.spriteBaseUrl || undefined
     : undefined
   const currentAvatarUrl = currentLine?.isUser
     ? undefined
-    : (isPlayableMediaUrl(stateAvatarUrl) ? stateAvatarUrl : undefined)
-      || (isPlayableMediaUrl((currentCharacter as any)?.avatarUrl) ? (currentCharacter as any).avatarUrl : undefined)
+    : stateAvatarUrl || (currentCharacter as any)?.avatarUrl || undefined
   const spritePosition = (vnVisual.position || currentCharacter?.defaultPosition || 'center') as 'left' | 'center' | 'right'
-  const backgroundUrl = isPlayableMediaUrl(vnVisual.backgroundUrl) ? vnVisual.backgroundUrl : undefined
+  const backgroundUrl = vnVisual.backgroundUrl || undefined
 
   const isEnded = replayReady && combined.length > 0 && lineIndex >= combined.length
   const history = combined.slice(0, Math.min(lineIndex, combined.length))

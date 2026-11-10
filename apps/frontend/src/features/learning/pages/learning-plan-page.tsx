@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { ColumnConfig, ConfigDataTableProps } from '@/components/common/config-datatable'
 import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { type PracticeSession, type TopicDetail, warmupRecordApi, type WarmupRecord } from '@/features/practice/api/english-practice-api'
-import type { VnPlayerLine, VnPlayerHandle } from '@/features/vn-engine/vn-player'
+import type { VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { cn } from '@/lib/cn'
 import { learningRepository, practiceRepository } from '@/lib/offline'
 import { dailyPracticeRepository } from '@/lib/offline/daily-practice.repository'
@@ -43,8 +43,8 @@ const PracticeAnalysisPanel = lazy(() =>
 const WarmupRecordDetailDialog = lazy(() =>
   import('@/features/practice/components/warmup-record-detail-dialog').then((m) => ({ default: m.WarmupRecordDetailDialog })),
 )
-const VnPlayer = lazy(() =>
-  import('@/features/vn-engine/vn-player').then((m) => ({ default: m.VnPlayer })),
+const PracticeDialogueVnReplay = lazy(() =>
+  import('../components/practice-dialogue-vn-replay').then((m) => ({ default: m.PracticeDialogueVnReplay })),
 )
 const ShopView = lazy(() =>
   import('../components/shop-view').then((m) => ({ default: m.ShopView })),
@@ -593,15 +593,14 @@ function PracticeRecordReadonlyReviewDrawer({
   const [session, setSession] = useState<PracticeSession | null>(null)
   const [topicDetail, setTopicDetail] = useState<TopicDetail | null>(null)
   const [loading, setLoading] = useState(false)
-  const [lineIndex, setLineIndex] = useState(0)
   const [view, setView] = useState<'replay' | 'analysis'>('replay')
+  const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
 
   useEffect(() => {
     if (!open || !record?.sessionId) return
     setLoading(true)
     setSession(null)
     setTopicDetail(null)
-    setLineIndex(0)
     setView('replay')
     Promise.all([
       practiceRepository.getPracticeSessionForReview(record.sessionId),
@@ -615,19 +614,8 @@ function PracticeRecordReadonlyReviewDrawer({
       .finally(() => setLoading(false))
   }, [open, record?.sessionId, record?.topicId])
 
-  const replayLines = useMemo(() => (session?.turns ?? []).flatMap((turn) => [
-    { line: { speaker: topicDetail?.scene.title || 'NPC', text: turn.npcText } satisfies VnPlayerLine },
-    { line: { speaker: t('learning.speakerMe'), text: turn.userText, isUser: true } satisfies VnPlayerLine, turn },
-  ]), [session?.turns, t, topicDetail?.scene.title])
-  const currentReplayLine = replayLines[lineIndex]
-  const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
-  const character = topicDetail?.scene.characters?.[0]
-  const expressions = character?.expressions && typeof character.expressions === 'object'
-    ? character.expressions as Record<string, string | { spriteUrl?: string }>
-    : {}
-  const defaultState = expressions.default
-  const spriteUrl = (typeof defaultState === 'string' ? defaultState : defaultState?.spriteUrl) || character?.spriteBaseUrl || undefined
-  const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
+  const packageId = record?.unitId || topicDetail?.scene.id || ''
+  const hasTurns = Boolean(session?.turns?.length)
   const hasAnalysis = Boolean(session?.analysisResult)
   const titleLabel = view === 'analysis'
     ? t('scripts.aiReviewTab')
@@ -646,7 +634,7 @@ function PracticeRecordReadonlyReviewDrawer({
             <p className="text-sm text-muted-foreground">{t('profile.reviewLoadFailed')}</p>
             <Button variant="secondary" size="sm" className="border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
-        ) : replayLines.length === 0 && !hasAnalysis ? (
+        ) : !hasTurns && !hasAnalysis ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
             <Button variant="secondary" size="sm" className="border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
@@ -693,7 +681,7 @@ function PracticeRecordReadonlyReviewDrawer({
                   <p className="rounded-xl bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">{t('profile.reviewNoAnalysis')}</p>
                 )}
               </div>
-            ) : replayLines.length === 0 ? (
+            ) : !hasTurns ? (
               <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
                 <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
                 {hasAnalysis && (
@@ -704,24 +692,13 @@ function PracticeRecordReadonlyReviewDrawer({
               </div>
             ) : (
               <Suspense fallback={<MobilePageLoading rows={4} minHeightClassName="min-h-full" />}>
-                <VnPlayer
-                  ref={vnPlayerRef}
-                  className="h-full max-w-none rounded-none border-none"
-                  stageClassName="min-h-0"
-                  showUserInputOverride
-                  hideChatTopBar
-                  backgroundUrl={topicDetail?.scene.backgroundUrl || undefined}
-                  currentLine={isEnded ? null : currentReplayLine?.line ?? null}
-                  history={replayLines.slice(0, Math.min(lineIndex, replayLines.length)).map((item) => item.line)}
-                  currentSpriteUrl={spriteUrl}
-                  spritePosition={character?.defaultPosition || 'center'}
-                  currentAvatarUrl={character?.avatarUrl || undefined}
-                  currentAvatarAlt={character?.displayName || character?.name}
-                  isEnded={isEnded}
-                  onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
-                  inputFeedback={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} /> : null}
-                  inputFeedbackChat={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} compact /> : null}
-                  showHistoryButton={false}
+                <PracticeDialogueVnReplay
+                  session={session}
+                  topicDetail={topicDetail}
+                  packageId={packageId}
+                  vnPlayerRef={vnPlayerRef}
+                  renderTurnFeedback={(turn) => <PracticeReplayFeedback turn={turn} />}
+                  renderTurnFeedbackChat={(turn) => <PracticeReplayFeedback turn={turn} compact />}
                   endedActions={hasAnalysis ? (
                     <div className="mx-auto flex items-center justify-center">
                       <Button size="sm" className="h-8 rounded-full border-0 px-4 text-xs shadow-none" onClick={() => setView('analysis')}>

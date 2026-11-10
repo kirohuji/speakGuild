@@ -366,6 +366,23 @@ export const assetCacheService = {
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
+    // Native packs index many files as deferred ZIP entries. Try on-demand
+    // materialize before treating the miss as offline-blocked or remote-only.
+    if (isNative()) {
+      try {
+        const { deferredPackAssetService } = await import('./deferred-pack-asset.service')
+        const deferred = await deferredPackAssetService.resolve({
+          url,
+          assetId: inferredFileAssetId || ref.assetId || null,
+          role: ref.role,
+          asFileUri: ref.asFileUri,
+        })
+        if (deferred && deferred !== OFFLINE_RESOURCE_MISSING) return deferred
+      } catch {
+        // Fall through to offline/remote handling below.
+      }
+    }
+
     // Package playback must stay local-only. Shop/list covers and similar
     // non-offline callers may still show the remote content URL.
     if (ref.offlineOnly) {
