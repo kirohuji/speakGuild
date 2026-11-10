@@ -1125,11 +1125,10 @@ export class LearningService {
         try {
           const signed = await this.fileAssets.getAssetLongLivedUrl(entry.fileAssetId);
           return [alias, { ...entry, signedUrl: signed.url }] as const;
-        } catch (error) {
-          // Preserve the entry for the interactive player, but make this
-          // visible in server logs rather than silently rendering it blank.
-          console.warn('[story-player] failed to resolve Ink render asset', { episodeId, alias, assetId: entry.fileAssetId, error });
-          return [alias, entry] as const;
+        } catch {
+          // Missing/deleted FileAsset: skip for server render. On-device packs may
+          // still have a local copy; Remotion just omits this visual.
+          return [alias, { ...entry, signedUrl: null }] as const;
         }
       }),
     ));

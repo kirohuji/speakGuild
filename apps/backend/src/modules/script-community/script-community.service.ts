@@ -52,6 +52,13 @@ export class ScriptCommunityService {
     private readonly adminTasksService: AdminTasksService,
   ) {}
 
+  private isLocalVisualUrl(url: string) {
+    return url.startsWith('capacitor://')
+      || url.includes('/_capacitor_file_/')
+      || url.startsWith('file:')
+      || url.startsWith('blob:')
+  }
+
   private async getRecordingDurationMs(url: string, assetId: string) {
     try {
       const { durationInSeconds } = await parseMedia({
@@ -145,23 +152,36 @@ export class ScriptCommunityService {
       cursor = next.endFrame
       return next
     })
-    const missingBackgroundFrames = renderFrames.filter((frame: any) => !frame.background?.url).map((frame: any) => frame.index)
-    const missingSpriteFrames = renderFrames.filter((frame: any) => (
+    // Drop device-local visual URLs Remotion cannot fetch. Missing COS assets are
+    // skipped (dark stage / no sprite) instead of failing the whole render.
+    const sanitizedFrames = renderFrames.map((frame: any) => {
+      const backgroundUrl = typeof frame?.background?.url === 'string' ? frame.background.url : undefined
+      const spriteUrl = typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined
+      const usableBackground = backgroundUrl && !this.isLocalVisualUrl(backgroundUrl) ? backgroundUrl : undefined
+      const usableSprite = spriteUrl && !this.isLocalVisualUrl(spriteUrl) ? spriteUrl : undefined
+      return {
+        ...frame,
+        background: frame.background ? { ...frame.background, url: usableBackground } : frame.background,
+        sprite: frame.sprite ? { ...frame.sprite, url: usableSprite } : frame.sprite,
+      }
+    })
+    const skippedBackgroundFrames = sanitizedFrames.filter((frame: any) => !frame.background?.url).map((frame: any) => frame.index)
+    const skippedSpriteFrames = sanitizedFrames.filter((frame: any) => (
       frame.kind !== 'choice'
       && frame.sprite?.speaker
       && !frame.sprite?.url
     )).map((frame: any) => frame.index)
-    if (missingBackgroundFrames.length || missingSpriteFrames.length) {
-      throw new BadRequestException(
-        `视频素材不完整：${missingBackgroundFrames.length ? `背景缺失（帧 ${missingBackgroundFrames.join(', ')}）` : ''}`
-        + `${missingBackgroundFrames.length && missingSpriteFrames.length ? '；' : ''}`
-        + `${missingSpriteFrames.length ? `立绘缺失（帧 ${missingSpriteFrames.join(', ')}）` : ''}`,
-      )
+    if (skippedBackgroundFrames.length || skippedSpriteFrames.length) {
+      console.warn('[script-video] skipping missing visuals for render', {
+        workId,
+        backgrounds: skippedBackgroundFrames,
+        sprites: skippedSpriteFrames,
+      })
     }
     console.log('[script-video] resolved user recordings for render', {
       workId,
       savedRecordings: recordingUrls.size,
-      injectedFrames: renderFrames.filter((frame: any) => frame.audioSource === 'userRecording').map((frame: any) => frame.index),
+      injectedFrames: sanitizedFrames.filter((frame: any) => frame.audioSource === 'userRecording').map((frame: any) => frame.index),
     })
     await this.adminTasksService.cancelScriptVideoTasks(workId, userId)
     await this.prisma.scriptWork.update({
@@ -175,7 +195,7 @@ export class ScriptCommunityService {
       },
     })
     try {
-      const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, renderFrames)
+      const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, sanitizedFrames)
       return { taskId: task.id, workId }
     } catch (error) {
       await this.prisma.scriptWork.update({

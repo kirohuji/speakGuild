@@ -327,21 +327,30 @@ export class AdminTasksService implements OnModuleInit {
       select: { id: true, title: true },
     });
     if (!work) throw new NotFoundException('作品不存在');
-    const localVisualFrames = frames.filter((frame: any) => [frame?.background?.url, frame?.sprite?.url].some((url) =>
-      typeof url === 'string' && (url.startsWith('capacitor://') || url.includes('/_capacitor_file_/')),
-    ));
-    if (localVisualFrames.length > 0) {
-      console.error('[script-video] rejected local visual URLs in render payload', {
-        workId,
-        frameIndexes: localVisualFrames.map((frame: any) => frame?.index),
-      });
-      throw new BadRequestException('视频渲染不能使用设备本地资源地址，请重新提交渲染任务');
-    }
+    const framesForQueue = frames.map((frame: any) => {
+      const backgroundUrl = typeof frame?.background?.url === 'string' ? frame.background.url : undefined;
+      const spriteUrl = typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined;
+      const isLocal = (url?: string) => Boolean(url && (
+        url.startsWith('capacitor://')
+        || url.includes('/_capacitor_file_/')
+        || url.startsWith('file:')
+        || url.startsWith('blob:')
+      ));
+      return {
+        ...frame,
+        background: frame?.background
+          ? { ...frame.background, url: isLocal(backgroundUrl) ? undefined : backgroundUrl }
+          : frame?.background,
+        sprite: frame?.sprite
+          ? { ...frame.sprite, url: isLocal(spriteUrl) ? undefined : spriteUrl }
+          : frame?.sprite,
+      };
+    });
     console.log('[script-video] queued render payload', {
       workId,
-      frames: frames.length,
-      backgrounds: frames.filter((frame: any) => Boolean(frame?.background?.url)).length,
-      sprites: frames.filter((frame: any) => Boolean(frame?.sprite?.url)).length,
+      frames: framesForQueue.length,
+      backgrounds: framesForQueue.filter((frame: any) => Boolean(frame?.background?.url)).length,
+      sprites: framesForQueue.filter((frame: any) => Boolean(frame?.sprite?.url)).length,
     });
     const task = await this.prisma.adminTask.create({
       data: {
@@ -350,11 +359,11 @@ export class AdminTasksService implements OnModuleInit {
         targetType: 'script_work',
         targetId: work.id,
         createdById: userId,
-        totalItems: frames.length,
-        payload: { workId, userId, frames } as Prisma.InputJsonValue,
+        totalItems: framesForQueue.length,
+        payload: { workId, userId, frames: framesForQueue } as Prisma.InputJsonValue,
       },
     });
-    const job = await this.videoQueue.add(SCRIPT_VIDEO_RENDER_JOB, { taskId: task.id, workId, userId, frames });
+    const job = await this.videoQueue.add(SCRIPT_VIDEO_RENDER_JOB, { taskId: task.id, workId, userId, frames: framesForQueue });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
     await this.log(task.id, 'info', '视频任务已加入 Redis 队列', { step: 'queued' });
     return task;
