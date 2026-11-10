@@ -2473,7 +2473,7 @@ function ScriptRecordReplayDialog({
               />
             </div>
           ) : (
-            <div className="h-full pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+            <div className="h-full bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
               <ScriptRecordVnReplay key={replayNonce} record={record} onClose={onClose} />
             </div>
           )}
@@ -2556,36 +2556,28 @@ function ReadonlyRepeatRecordTheater({
   })
 
   const frames = useMemo(() => {
-    if (!data || !mediaReady) return []
+    // Require prepared maps too — mediaReady alone can briefly be true from an
+    // empty pre-prep resolve while data already exists (alias leak into frames).
+    if (!data || !mediaReady || !preparedAssetMap || !preparedScene) return []
     return buildStoryRepeatFrames(data, {
-      assetMap,
-      scene: (scene as StoryEpisodePlayerData['scene']) ?? data.scene,
+      assetMap: preparedAssetMap ?? assetMap,
+      scene: (preparedScene as StoryEpisodePlayerData['scene'])
+        ?? (scene as StoryEpisodePlayerData['scene'])
+        ?? data.scene,
     })
-  }, [assetMap, data, mediaReady, scene])
+  }, [assetMap, data, mediaReady, preparedAssetMap, preparedScene, scene])
 
   return (
     <div className="absolute inset-0 flex min-h-0 flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-        <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-none backdrop-blur-2xl">
-          <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-1 px-1">
+        <div className="relative flex h-9 w-full max-w-[400px] items-center rounded-full bg-background/90 px-2 shadow-none backdrop-blur-2xl">
+          <Button variant="ghost" size="sm" className="relative z-10 h-7 shrink-0 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
+          <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center px-14">
             <span className="min-w-0 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.repeatReplay')}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="size-7 shrink-0 rounded-full text-foreground/80"
-              onClick={() => setActiveIndex(0)}
-              aria-label={t('scripts.restart')}
-              title={t('scripts.restart')}
-            >
-              <RotateCcw className="size-3.5" />
-            </Button>
           </div>
-          <Badge variant="secondary" className="h-6 text-[10px]">{t('scripts.readOnly')}</Badge>
         </div>
       </div>
-      {loading || (data && !mediaReady) ? (
+      {loading || (data && (!mediaReady || !preparedAssetMap || !preparedScene)) ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="size-7 animate-spin text-primary" />
           <p className="text-sm">{t('scripts.loadingRepeatTheater')}</p>

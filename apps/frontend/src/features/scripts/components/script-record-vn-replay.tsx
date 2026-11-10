@@ -297,7 +297,7 @@ export function ScriptRecordVnReplay({
 
   return (
     <VnPlayer
-      className="h-full max-w-none rounded-none border-none"
+      className="h-full max-w-none rounded-none border-0 bg-background"
       stageClassName="min-h-0"
       offlineOnly
       currentLine={currentLine}
@@ -306,6 +306,7 @@ export function ScriptRecordVnReplay({
       onAdvance={() => setLineIndex((current) => Math.min(current + 1, combined.length))}
       showHistoryButton={false}
       showUserInputOverride
+      clearBackdrop
       backgroundUrl={backgroundUrl}
       backgroundFit={vnVisual.backgroundFit}
       currentSpriteUrl={currentSpriteUrl}

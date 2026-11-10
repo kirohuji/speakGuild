@@ -9,6 +9,7 @@ import { isUserMixedFrame, type MixedTimelineFrame } from './vn-mixed-timeline'
 import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
+import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 
 type FrameAudioSource = 'tts' | 'recording'
 
@@ -112,27 +113,31 @@ export function mixedFrameDisplayText(frame: MixedTimelineFrame) {
 }
 
 function useOfflineAssetUrl(url: string | undefined, role: 'background' | 'sprite') {
-  const [resolvedUrl, setResolvedUrl] = useState(() => resolveDisplayAssetUrl(url))
+  // Ink aliases (bg_*) are lookup keys, not paths — never hand them to Pixi
+  // or the offline downloader (that produced /bg_xxx decode failures).
+  const playableUrl = isPlayableMediaUrl(url) ? url : undefined
+  const [resolvedUrl, setResolvedUrl] = useState(() => resolveDisplayAssetUrl(playableUrl))
 
   useEffect(() => {
     let cancelled = false
-    const displayUrl = resolveDisplayAssetUrl(url)
+    const displayUrl = resolveDisplayAssetUrl(playableUrl)
     setResolvedUrl(displayUrl)
-    if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
-    void assetCacheService.resolve({ url, role })
+    if (!playableUrl || playableUrl.startsWith('blob:') || playableUrl.startsWith('data:')) return
+    void assetCacheService.resolve({ url: playableUrl, role })
       .then((resolved) => {
         if (cancelled) return
         if (!resolved || resolved === OFFLINE_RESOURCE_MISSING) {
           setResolvedUrl(displayUrl)
           return
         }
-        setResolvedUrl(resolveDisplayAssetUrl(resolved) ?? displayUrl)
+        const next = resolveDisplayAssetUrl(resolved)
+        setResolvedUrl(isPlayableMediaUrl(next) ? next : displayUrl)
       })
       .catch(() => {
         if (!cancelled) setResolvedUrl(displayUrl)
       })
     return () => { cancelled = true }
-  }, [role, url])
+  }, [playableUrl, role])
 
   return resolvedUrl
 }

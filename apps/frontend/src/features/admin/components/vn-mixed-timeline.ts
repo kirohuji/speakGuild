@@ -1,5 +1,6 @@
 import { type BackgroundFit } from '@/features/vn-engine/pixi-vn-stage'
 import { resolveAudioAssetUrl, type AudioAssetResolveMode } from '@/features/practice/lib/practice-session-utils'
+import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 import { type CharacterSpriteMap } from './vn-story-preview'
 import { type ComposerItem, type ComposerScene } from './composer-parser'
 
@@ -67,26 +68,28 @@ export function resolveTimelineAssetAliases(
   assetMap?: TimelineAssetMap,
   options?: { audioMode?: AudioAssetResolveMode },
 ): ComposerScene[] {
-  if (!assetMap || Object.keys(assetMap).length === 0) return scenes
+  const map = assetMap ?? {}
   const audioMode = options?.audioMode ?? 'playback'
 
   const resolveImage = (value?: string) => {
     if (!value) return ''
     // Never return Ink aliases — they are identity keys, not browser paths.
     // Live VN resolves via parseVnTags/resolveVnImageUrl the same way.
-    if (Object.prototype.hasOwnProperty.call(assetMap, value)) {
-      const signed = assetMap[value]?.signedUrl
-      return signed && /^(data:|blob:|file:|capacitor:|https?:)/i.test(signed) ? signed : ''
+    // Empty maps must still strip aliases; early-returning raw scenes used to
+    // leak `bg_*` into MixedTimelineFrame.background.url.
+    if (Object.prototype.hasOwnProperty.call(map, value)) {
+      const signed = map[value]?.signedUrl
+      return isPlayableMediaUrl(signed) ? signed : ''
     }
-    if (/^(data:|blob:|file:|capacitor:|https?:)/i.test(value)) return value
+    if (isPlayableMediaUrl(value)) return value
     return ''
   }
   return scenes.map((scene) => ({
     ...scene,
     items: scene.items.map((item) => {
       if (item.type === 'background') return { ...item, url: resolveImage(item.url) }
-      if (item.type === 'line') return { ...item, audioUrl: resolveAudioAssetUrl(item.audioUrl, assetMap, { mode: audioMode }) }
-      if (item.type === 'wait') return { ...item, defaultAnswerAudioUrl: resolveAudioAssetUrl(item.defaultAnswerAudioUrl, assetMap, { mode: audioMode }) }
+      if (item.type === 'line') return { ...item, audioUrl: resolveAudioAssetUrl(item.audioUrl, map, { mode: audioMode }) }
+      if (item.type === 'wait') return { ...item, defaultAnswerAudioUrl: resolveAudioAssetUrl(item.defaultAnswerAudioUrl, map, { mode: audioMode }) }
       return { ...item }
     }),
   }))

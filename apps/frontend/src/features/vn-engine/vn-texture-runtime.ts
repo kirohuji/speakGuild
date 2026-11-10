@@ -3,6 +3,7 @@ import { Assets, Texture } from 'pixi.js'
 import { getBearerToken } from '@/features/auth/client'
 import { inlineFileAssetContentUrl, resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
+import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 
 /**
  * VN texture runtime
@@ -48,9 +49,9 @@ function hasImageExtension(url: string) {
 
 /** Stable cache key + WebView-displayable local URL. */
 export function toVnDisplayUrl(url?: string | null): string | undefined {
-  if (!url) return undefined
+  if (!url || !isPlayableMediaUrl(url)) return undefined
   const display = resolveDisplayAssetUrl(url) ?? url
-  if (!display) return undefined
+  if (!display || !isPlayableMediaUrl(display)) return undefined
   if (display.startsWith('file:')) {
     try {
       return Capacitor.convertFileSrc(display)

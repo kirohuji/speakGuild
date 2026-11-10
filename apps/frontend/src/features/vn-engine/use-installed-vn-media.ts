@@ -14,6 +14,11 @@ type SceneLike = {
 /**
  * Single readiness gate for installed-pack scene + Ink assetMap.
  * Failures still flip mediaReady so the stage never hangs forever.
+ *
+ * Prepared maps must win in the *same render* they arrive. Deferring them to
+ * useEffect left one paint where mediaReady was already true from an earlier
+ * empty resolve while assetMap was still {} — repeat replay then built frames
+ * with raw Ink aliases (bg_*) and Pixi tried to load `/bg_xxx`.
  */
 export function useInstalledVnMedia(input: {
   packageId: string
@@ -87,6 +92,16 @@ export function useInstalledVnMedia(input: {
     input.preparedScene,
     input.revision,
   ])
+
+  // Prefer prepared props over effect-lagged state so callers never see the
+  // empty-map / mediaReady=true interstitial that leaks Ink aliases.
+  if (input.preparedAssetMap && input.preparedScene) {
+    return {
+      mediaReady: true,
+      assetMap: input.preparedAssetMap,
+      scene: input.preparedScene,
+    }
+  }
 
   return { mediaReady, assetMap, scene }
 }
