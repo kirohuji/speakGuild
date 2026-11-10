@@ -2600,7 +2600,7 @@ const zhCN = {
       submitted: '已提交',
       generatingVideo: '生成视频',
       submitting: '提交中',
-      finishReplay: '完成回放',
+      replayAgain: '重新播放',
       repeatReplay: '跟读回放',
       readOnly: '只读',
       loadingRepeatTheater: '正在载入跟读剧场…',

@@ -313,10 +313,19 @@ export function ScriptRecordVnReplay({
       spritePosition={spritePosition}
       currentAvatarUrl={currentAvatarUrl}
       currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
+      hideEndedCaption
       endedActions={(
-        <Button size="sm" className="rounded-full" onClick={onClose}>
-          {t('scripts.finishReplay')}
-        </Button>
+        <div className="mx-auto flex flex-col items-center gap-2.5">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="h-8 rounded-full border-0 bg-primary/10 px-4 text-xs font-medium text-primary shadow-none hover:bg-primary/16 hover:text-primary"
+            onClick={() => setLineIndex(0)}
+          >
+            {t('scripts.replayAgain')}
+          </Button>
+        </div>
       )}
     />
   )

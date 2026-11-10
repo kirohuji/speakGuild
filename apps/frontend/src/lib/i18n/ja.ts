@@ -2580,7 +2580,7 @@ const ja = {
       episodeHeader: 'エピソード',
       episodePlayFailed: 'このエピソードの脚本は現在再生できません',
       episodePlayFailedDesc: '脚本パックがダウンロードされ、バックエンドでこの章の Ink スクリプトがコンパイル・公開されているか確認してください。',
-      finishReplay: '再生を完了',
+      replayAgain: 'もう一度再生',
       generateVideo: '動画を生成',
       generatingVideo: '動画を生成',
       joinDownloadStarted: '「{{title}}」を追加し、ダウンロードを開始しました',

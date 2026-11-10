@@ -2581,7 +2581,7 @@ const en = {
       episodeHeader: 'Episode',
       episodePlayFailed: 'This episode script cannot be played right now',
       episodePlayFailedDesc: 'Make sure the script pack is downloaded and the backend has compiled and published the Ink script for this episode.',
-      finishReplay: 'Finish Replay',
+      replayAgain: 'Replay',
       generateVideo: 'Generate Video',
       generatingVideo: 'Generate Video',
       joinDownloadStarted: '“{{title}}” added and download started',
