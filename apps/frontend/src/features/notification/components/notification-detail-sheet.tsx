@@ -39,17 +39,15 @@ interface Props {
   onMarkRead?: () => void
 }
 
-function panelWash(variant: NotificationVariant) {
+/** 仅反馈 / 维护 / 会员·奖励到账保留嵌套底；其余类型正文直出 */
+function panelWash(variant: 'maintenance' | 'feedback' | 'membership') {
   switch (variant) {
     case 'maintenance':
       return 'bg-destructive/10'
     case 'feedback':
       return 'bg-muted/35'
-    case 'direct':
     case 'membership':
       return 'bg-primary/[0.06]'
-    default:
-      return 'bg-card/40'
   }
 }
 
@@ -243,14 +241,12 @@ function NotificationDetailBody({
                 </div>
                 <MarkdownRenderer content={item.content} className="prose-p:my-2" />
               </div>
-            ) : variant === 'direct' || variant === 'membership' ? (
-              <div className={cn('rounded-2xl px-4 py-4', panelWash(variant))}>
+            ) : variant === 'membership' ? (
+              <div className={cn('rounded-2xl px-4 py-4', panelWash('membership'))}>
                 <MarkdownRenderer content={item.content} className="prose-p:my-2" />
               </div>
             ) : (
-              <div className={cn('rounded-2xl px-4 py-4', panelWash('broadcast'))}>
-                <MarkdownRenderer content={item.content} className="prose-p:my-2.5" />
-              </div>
+              <MarkdownRenderer content={item.content} className="prose-p:my-2.5" />
             )}
           </div>
         </BlurFade>
@@ -291,7 +287,7 @@ function FeedbackBody({ content }: { content: string }) {
   const parts = content.split(/\n---\n/)
   if (parts.length < 2) {
     return (
-      <div className={cn('rounded-2xl px-4 py-4', panelWash('direct'))}>
+      <div className={cn('rounded-2xl px-4 py-4', panelWash('feedback'))}>
         <MarkdownRenderer content={content} className="prose-p:my-2" />
       </div>
     )
@@ -307,7 +303,7 @@ function FeedbackBody({ content }: { content: string }) {
         </div>
         <MarkdownRenderer content={quote.trim()} className="prose-p:my-1.5 prose-blockquote:border-0" />
       </div>
-      <div className={cn('rounded-2xl px-4 py-4', panelWash('direct'))}>
+      <div className={cn('rounded-2xl px-4 py-4', panelWash('membership'))}>
         <MarkdownRenderer content={rest.join('\n---\n').trim()} className="prose-p:my-2" />
       </div>
     </div>

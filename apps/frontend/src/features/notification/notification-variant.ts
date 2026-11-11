@@ -11,10 +11,11 @@ export type NotificationVariant =
 
 export function resolveNotificationVariant(item: NotificationItem): NotificationVariant {
   const title = item.title ?? ''
-  if (item.imageUrl || item.isSpecial) return 'campaign'
+  // 这几类保留独立布局，优先于 isSpecial / 配图
   if (/维护|维护通知|maintenance/i.test(title)) return 'maintenance'
-  if (/会员已到账|邀请奖励已到账|会员|奖励已到账/i.test(title)) return 'membership'
+  if (/会员已到账|邀请奖励已到账|奖励已到账/i.test(title)) return 'membership'
   if (/反馈已收到回复|反馈/i.test(title)) return 'feedback'
+  if (item.imageUrl || item.isSpecial) return 'campaign'
   if (/已生成|审核通过|批量生成完成|构建失败|审核未通过/i.test(title)) return 'success'
   if (item.type === 'broadcast') return 'broadcast'
   return 'direct'
