@@ -931,6 +931,50 @@ function isHotspotMarker(kind?: ExplorationNode["kind"]) {
   return kind === "location" || kind === "room" || kind === "learning" || kind === "character" || kind === "exit" || kind === "object";
 }
 
+/**
+ * @pixi/react 8 cannot infer Pixi v8 Text's overloaded constructor in JSX.
+ * Keep the marker label as a native Pixi child so its runtime behavior does
+ * not depend on those incompatible JSX prop types.
+ */
+function HotspotTitle({
+  parentRef,
+  title,
+  y,
+  viewportScale,
+}: {
+  parentRef: { current: Container | null };
+  title: string;
+  y: number;
+  viewportScale: number;
+}) {
+  useEffect(() => {
+    const parent = parentRef.current;
+    if (!parent) return;
+    const label = new PixiText({
+      text: title,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      style: {
+        fontFamily: "Nunito, sans-serif",
+        fontSize: 15 / viewportScale,
+        fontWeight: "700",
+        fill: 0x111111,
+        stroke: { color: 0xffffff, width: 4 / viewportScale },
+        align: "center",
+      },
+    });
+    label.anchor.set(0.5, 0);
+    label.y = y;
+    label.eventMode = "none";
+    parent.addChild(label);
+    return () => {
+      label.removeFromParent();
+      label.destroy();
+    };
+  }, [parentRef, title, viewportScale, y]);
+
+  return null;
+}
+
 function ExplorationNodeEntry(
   props: Omit<
     React.ComponentProps<typeof HotspotNode>,
@@ -1302,20 +1346,11 @@ function HotspotNode({
         />
       )}
       {showTitle && isHotspotMarker(node.kind) && (
-        <pixiText
-          text={node.title}
-          anchor={{ x: 0.5, y: 0 }}
+        <HotspotTitle
+          parentRef={ref}
+          title={node.title}
           y={4 / viewportScale}
-          resolution={Math.min(window.devicePixelRatio || 1, 2)}
-          style={{
-            fontFamily: "Nunito, sans-serif",
-            fontSize: 15 / viewportScale,
-            fontWeight: "700",
-            fill: 0x111111,
-            stroke: { color: 0xffffff, width: 4 / viewportScale },
-            align: "center",
-          }}
-          eventMode="none"
+          viewportScale={viewportScale}
         />
       )}
       {!isHotspotMarker(node.kind) && texture && (

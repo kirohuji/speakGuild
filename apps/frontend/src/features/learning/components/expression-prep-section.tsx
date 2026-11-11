@@ -38,6 +38,14 @@ type PendingSave =
 
 const DEFAULT_PAGE_SIZE = 8
 
+/** Chunk examples from topic APIs and offline packs may omit optional metadata. */
+type ChunkPrepItem = Omit<Partial<ChunkItem>, 'examples'> & {
+  id: string
+  text: string
+  meaning: string
+  examples?: Array<{ en: string; zh: string; note?: string | null; level?: string }>
+}
+
 function firstExampleText(examples: unknown): string {
   if (!Array.isArray(examples) || examples.length === 0) return ''
   const first = examples[0]
@@ -67,7 +75,7 @@ export function normalizeVocabItem(item: Partial<VocabItem> & { id: string; word
 }
 
 export function normalizeChunkItem(
-  item: Partial<ChunkItem> & { id: string; text: string; meaning: string },
+  item: ChunkPrepItem,
 ): ChunkItem {
   return {
     id: item.id,
@@ -344,7 +352,7 @@ export function ExpressionPrepSection({
   className,
 }: {
   vocabularies?: Array<Partial<VocabItem> & { id: string; word: string; meaning: string }>
-  chunks?: Array<Partial<ChunkItem> & { id: string; text: string; meaning: string }>
+  chunks?: ChunkPrepItem[]
   patterns?: Array<Partial<SentencePattern> & { pattern: string; meaning?: string | null }>
   /** 已安装学习包：从本地 content index 分页读取，不走后端。包级传 unitId，章节/话题传 topicId。 */
   contentSource?: {
