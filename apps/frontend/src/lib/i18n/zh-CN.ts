@@ -323,6 +323,8 @@ const zhCN = {
       reviewScorePending: '等待评估',
       reviewNoAnalysis: '这次练习还没有最终 AI 评估',
       reviewNoReplay: '这次练习没有保存可回放的对话',
+      reviewPackNeedsDownload: '学习包未安装，场景资源暂不可用',
+      reviewContinueWithoutPack: '继续回放',
       reviewViewAnalysis: '查看最终评价',
       reviewReadonlyHeader: '只读回顾',
       reviewBadge: '回顾',

@@ -78,6 +78,7 @@ function practiceRecordFromSession(session: PracticeSession): PracticeRecord {
     recordId: session.id,
     sessionId: session.id,
     topicId: session.topicId,
+    unitId: session.sceneId,
     topicName: session.sceneSnapshot?.title || '英语输出训练',
     questionId: session.topicId,
     questionText: session.topicSnapshot?.title || '练习题目',
@@ -88,6 +89,7 @@ function practiceRecordFromSession(session: PracticeSession): PracticeRecord {
     summary: typeof analysis.summary === 'string' ? analysis.summary : null,
     completedAt: toIsoString(session.completedAt),
     analyzedAt: toIsoString(session.analyzedAt),
+    recordType: 'dialogue',
   }
 }
 
@@ -96,6 +98,7 @@ function normalizePracticeRecord(record: PracticeRecord): PracticeRecord {
     ...record,
     recordId: record.recordId || record.sessionId || record.topicId,
     questionId: record.questionId || record.topicId,
+    unitId: record.unitId || undefined,
     practiceCount: record.practiceCount ?? 0,
     lastPracticeAt: record.lastPracticeAt || record.analyzedAt || record.completedAt || new Date().toISOString(),
     status: record.status ?? 'analyzed',

@@ -614,7 +614,7 @@ function PracticeRecordReadonlyReviewDrawer({
       .finally(() => setLoading(false))
   }, [open, record?.sessionId, record?.topicId])
 
-  const packageId = record?.unitId || topicDetail?.scene.id || ''
+  const packageId = record?.unitId || session?.sceneId || topicDetail?.scene?.id || ''
   const hasTurns = Boolean(session?.turns?.length)
   const hasAnalysis = Boolean(session?.analysisResult)
   const titleLabel = view === 'analysis'
@@ -697,6 +697,7 @@ function PracticeRecordReadonlyReviewDrawer({
                   topicDetail={topicDetail}
                   packageId={packageId}
                   vnPlayerRef={vnPlayerRef}
+                  onRequestClose={() => onOpenChange(false)}
                   renderTurnFeedback={(turn) => <PracticeReplayFeedback turn={turn} />}
                   renderTurnFeedbackChat={(turn) => <PracticeReplayFeedback turn={turn} compact />}
                   endedActions={hasAnalysis ? (

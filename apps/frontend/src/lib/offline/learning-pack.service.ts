@@ -163,6 +163,40 @@ function isAssetPath(path: string) {
   return normalizeZipPath(path).startsWith('assets/')
 }
 
+/** Word pronunciation audio — large and slow to extract on web IndexedDB. */
+function isVocabularyPronunciationRole(role?: string | null) {
+  return role === 'vocabulary_pronunciation_us' || role === 'vocabulary_pronunciation_uk'
+}
+
+function isVocabularyPronunciationPath(path: string) {
+  const normalized = normalizeZipPath(path)
+  return normalized.startsWith('assets/vocabulary_pronunciation_us/')
+    || normalized.startsWith('assets/vocabulary_pronunciation_uk/')
+}
+
+/**
+ * Web skips word-audio install/uninstall (playback already falls back to
+ * signed URLs). Native keeps deferred indexing / materialization unchanged.
+ */
+function shouldSkipWebVocabularyPronunciation(asset?: Pick<AssetRef, 'role' | 'path'> | null, path?: string) {
+  if (Capacitor.isNativePlatform()) return false
+  if (isVocabularyPronunciationRole(asset?.role)) return true
+  return isVocabularyPronunciationPath(path ?? asset?.path ?? '')
+}
+
+function isVocabularyPronunciationAssetRef(ref: { logicalPath?: string | null; data?: unknown }) {
+  if (isVocabularyPronunciationPath(String(ref.logicalPath ?? ''))) return true
+  try {
+    const raw = ref.data
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return isVocabularyPronunciationRole(
+      parsed && typeof parsed === 'object' ? (parsed as { role?: string }).role : null,
+    )
+  } catch {
+    return false
+  }
+}
+
 /** Preserve the persisted asset:// URL (including a possible suffix) that UI playback uses. */
 function collectContentAssetUrls(value: unknown, output = new Map<string, string>()): Map<string, string> {
   if (typeof value === 'string') {
@@ -285,7 +319,14 @@ async function pruneUnreferencedPackZips(packId: string) {
 }
 
 async function cleanupObsoletePackAssetRefs(packId: string, manifest: LearningPackManifest) {
-  const declared = new Set((manifest.assets ?? []).map((asset) => asset.sha256).filter(Boolean))
+  // Web never installs vocabulary pronunciations, so treat them as undeclared
+  // and drop leftovers from older installs. Native keeps every declared sha.
+  const declared = new Set(
+    (manifest.assets ?? [])
+      .filter((asset) => !shouldSkipWebVocabularyPronunciation(asset))
+      .map((asset) => asset.sha256)
+      .filter(Boolean),
+  )
   const refs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
   for (const ref of refs) {
     if (declared.has(ref.sha256)) continue
@@ -1230,7 +1271,13 @@ export const learningPackService = {
         logger.info(`✅ ⑨ Native 资源索引完成: ${assetOk} 项 (${assetDeduped} 复用, ${assetDeferred} 延迟物化)`)
       } else {
         // Web: keep eager extract — there is no retained zip for deferred materialize.
-        const eagerAssets = manifestAssets
+        // Skip vocabulary pronunciations: web playback already uses signed URLs,
+        // and extracting hundreds of short audio files into IndexedDB is too slow.
+        const eagerAssets = manifestAssets.filter((asset) => !shouldSkipWebVocabularyPronunciation(asset))
+        const skippedVocabAudio = manifestAssets.length - eagerAssets.length
+        if (skippedVocabAudio > 0) {
+          logger.info(`Web: skip installing ${skippedVocabAudio} vocabulary pronunciation assets`)
+        }
         report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: eagerAssets.length })
         logger.info(`⏳ ⑨ 提取资源文件 (${eagerAssets.length} 个)...`)
         const totalAssets = eagerAssets.length
@@ -1522,8 +1569,14 @@ export const learningPackService = {
       }
 
       // 2. 应用 added asset 文件
+      let skippedWebVocabAdded = 0
       for (const path of deltaManifest.added ?? []) {
         if (!isAssetPath(path)) continue
+        const manifestAsset = targetAssetForPath(path)
+        if (shouldSkipWebVocabularyPronunciation(manifestAsset, path)) {
+          skippedWebVocabAdded++
+          continue
+        }
         const entry = entries.get(normalizeZipPath(path))
         if (!entry) throw new Error(`Delta asset file is missing: ${path}`)
         const buffer = await readEntryBuffer(entry)
@@ -1545,11 +1598,20 @@ export const learningPackService = {
           data: '{}',
         })
       }
-      logger.info(`  added: ${deltaManifest.added?.length ?? 0}`)
+      logger.info(`  added: ${deltaManifest.added?.length ?? 0}${skippedWebVocabAdded ? ` (web skipped vocab audio: ${skippedWebVocabAdded})` : ''}`)
 
       // 3. 应用 modified asset 文件（替换旧 SHA256 → 新 SHA256）
+      let skippedWebVocabModified = 0
       for (const path of deltaManifest.modified ?? []) {
         if (!isAssetPath(path)) continue
+        const manifestAsset = targetAssetForPath(path)
+        if (shouldSkipWebVocabularyPronunciation(manifestAsset, path)) {
+          skippedWebVocabModified++
+          // Drop any leftover local refs from older installs that still extracted these.
+          const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+          obsoleteAssetRefs.push(...packRefs.filter((r: any) => r.logicalPath === path))
+          continue
+        }
         const entry = entries.get(normalizeZipPath(path))
         if (!entry) throw new Error(`Delta asset file is missing: ${path}`)
         const buffer = await readEntryBuffer(entry)
@@ -1577,7 +1639,7 @@ export const learningPackService = {
         })
         obsoleteAssetRefs.push(...oldRefs.filter((ref: any) => ref.sha256 !== newSha256))
       }
-      logger.info(`  modified: ${deltaManifest.modified?.length ?? 0}`)
+      logger.info(`  modified: ${deltaManifest.modified?.length ?? 0}${skippedWebVocabModified ? ` (web skipped vocab audio: ${skippedWebVocabModified})` : ''}`)
 
       // 4. 应用 removed asset 文件
       for (const path of deltaManifest.removed ?? []) {
@@ -1655,7 +1717,17 @@ export const learningPackService = {
     }
     await beginPackOperation(packId, 'uninstall')
 
-    const myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+    let myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+    // Web never installs vocabulary pronunciations; skip them on uninstall too
+    // so old packs with leftover word-audio refs do not dominate shared counting / GC.
+    if (!Capacitor.isNativePlatform()) {
+      const before = myRefs.length
+      myRefs = myRefs.filter((ref) => !isVocabularyPronunciationAssetRef(ref))
+      const skipped = before - myRefs.length
+      if (skipped > 0) {
+        logger.info(`Web: skip uninstalling ${skipped} vocabulary pronunciation assets`)
+      }
+    }
     timer.lap('load asset refs', { packRefs: myRefs.length })
 
     const refCountBySha = new Map<string, number>()

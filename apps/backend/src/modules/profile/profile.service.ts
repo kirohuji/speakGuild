@@ -232,6 +232,8 @@ export class ProfileService {
             recordId: session.id,
             sessionId: session.id,
             topicId: session.topicId,
+            // Same pack id as reading/writing records — needed for offline media replay gates.
+            unitId: session.sceneId,
             topicName: sceneSnapshot?.title || session.topic.scene?.title || '英语输出训练',
             questionId: session.topicId,
             questionText: topicSnapshot?.title || session.topic.title,

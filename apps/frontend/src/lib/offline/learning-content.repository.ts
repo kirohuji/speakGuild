@@ -564,9 +564,15 @@ export const learningContentRepository = {
     }
 
     await localDb.deleteByIndex('offline_content_refs', 'pack_id', packId)
-    for (const id of orphanIds.vocab) await localDb.delete('offline_vocabularies', id)
-    for (const id of orphanIds.chunk) await localDb.delete('offline_chunks', id)
-    for (const id of orphanIds.pattern) await localDb.delete('offline_patterns', id)
+    const deleteAll = async (store: 'offline_vocabularies' | 'offline_chunks' | 'offline_patterns', ids: Set<string>) => {
+      const list = [...ids]
+      for (let index = 0; index < list.length; index += 40) {
+        await Promise.all(list.slice(index, index + 40).map((id) => localDb.delete(store, id)))
+      }
+    }
+    await deleteAll('offline_vocabularies', orphanIds.vocab)
+    await deleteAll('offline_chunks', orphanIds.chunk)
+    await deleteAll('offline_patterns', orphanIds.pattern)
   },
 
   /** 从已下载的学习包中提取词汇数据 */

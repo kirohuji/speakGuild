@@ -26,18 +26,17 @@ export function MarkdownContent({ content, className }: { content: string; class
 
       [&_img]:rounded-xl [&_img]:max-w-full
 
-      /* 表格容器：溢出横向滚动 + 圆角边框 */
-      [&_.table-wrapper]:overflow-x-auto [&_.table-wrapper]:my-4 [&_.table-wrapper]:rounded-lg [&_.table-wrapper]:border [&_.table-wrapper]:border-border
+      /* 表格容器：与练习记录 ConfigDataTable 一致 — muted 底、无边框无阴影 */
+      [&_.table-wrapper]:overflow-x-auto [&_.table-wrapper]:my-4 [&_.table-wrapper]:rounded-lg [&_.table-wrapper]:border-0 [&_.table-wrapper]:bg-muted/30 [&_.table-wrapper]:shadow-none
 
       /* 表格：最小宽度撑满，内容过多则自然撑开触发横向滚动 */
-      [&_table]:min-w-full [&_table]:border-collapse [&_table]:text-sm
+      [&_table]:min-w-full [&_table]:border-collapse [&_table]:border-0 [&_table]:shadow-none [&_table]:text-sm
 
-      [&_th]:border [&_th]:border-solid [&_th]:border-border [&_th]:bg-muted/50 [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-foreground [&_th]:whitespace-nowrap
+      [&_th]:border [&_th]:border-solid [&_th]:border-border/60 [&_th]:bg-muted/50 [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-foreground [&_th]:whitespace-nowrap
 
-      [&_td]:border [&_td]:border-solid [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-xs [&_td]:text-foreground/85
+      [&_td]:border [&_td]:border-solid [&_td]:border-border/60 [&_td]:px-3 [&_td]:py-2 [&_td]:text-xs [&_td]:text-foreground/85
 
-      [&_tr:hover]:bg-muted/30
-      [&_tr]:transition-colors
+      [&_tr]:transition-colors [&_tr:hover]:bg-muted/50
     `, className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

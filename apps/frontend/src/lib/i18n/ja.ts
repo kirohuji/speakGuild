@@ -323,6 +323,8 @@ const ja = {
       reviewScorePending: '評価待ち',
       reviewNoAnalysis: 'この練習にはまだ最終AI評価がありません',
       reviewNoReplay: 'このセッションには再生可能な会話が保存されていません',
+      reviewPackNeedsDownload: '教材未インストールのため、シーン素材は使えません',
+      reviewContinueWithoutPack: '再生を続ける',
       reviewViewAnalysis: '評価を見る',
       reviewReadonlyHeader: '読み取り専用レビュー',
       reviewBadge: 'レビュー',

@@ -1,6 +1,8 @@
 import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Download, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { PracticeSession, TopicDetail } from '@/features/practice/api/english-practice-api'
 import {
   characterMatchesSpeaker,
@@ -14,7 +16,7 @@ import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-
 import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 import { resolveUserRecordingPlaybackUrl } from '@/features/vn-engine/user-recording-url'
 import type { InstalledAssetMap } from '@/lib/offline/installed-pack-media'
-import { practiceRepository } from '@/lib/offline'
+import { learningPackService, practiceRepository } from '@/lib/offline'
 
 type ReplayLine = VnPlayerLine & {
   tags?: string[]
@@ -47,6 +49,7 @@ export function PracticeDialogueVnReplay({
   endedActions,
   renderTurnFeedback,
   renderTurnFeedbackChat,
+  onRequestClose,
 }: {
   session: PracticeSession
   topicDetail: TopicDetail | null
@@ -55,8 +58,13 @@ export function PracticeDialogueVnReplay({
   endedActions?: ReactNode
   renderTurnFeedback?: (turn: NonNullable<PracticeSession['turns']>[number]) => ReactNode
   renderTurnFeedbackChat?: (turn: NonNullable<PracticeSession['turns']>[number]) => ReactNode
+  onRequestClose?: () => void
 }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [packInstalled, setPackInstalled] = useState<boolean | null>(null)
+  /** User chose to replay dialogue without local scene media. */
+  const [continueWithoutPack, setContinueWithoutPack] = useState(false)
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
   const [rawAssetMap, setRawAssetMap] = useState<InstalledAssetMap | null>(null)
   const [prepReady, setPrepReady] = useState(false)
@@ -71,9 +79,41 @@ export function PracticeDialogueVnReplay({
 
   const turns = session.turns ?? []
   const userAnswers = useMemo(() => turns.map((turn) => turn.userText), [turns])
+  const canPrepReplay = packInstalled === true || continueWithoutPack
 
   useEffect(() => {
     let cancelled = false
+    setContinueWithoutPack(false)
+    // Missing packageId cannot resolve scene media — prompt download / continue.
+    if (!packageId) {
+      setPackInstalled(false)
+      return
+    }
+    setPackInstalled(null)
+    void learningPackService.isInstalled(packageId)
+      .then((installed) => {
+        if (!cancelled) setPackInstalled(installed)
+      })
+      .catch(() => {
+        if (!cancelled) setPackInstalled(false)
+      })
+    return () => { cancelled = true }
+  }, [packageId])
+
+  useEffect(() => {
+    let cancelled = false
+    // Wait until pack is installed, or the user opts to continue without media.
+    if (!canPrepReplay) {
+      setInkJson(null)
+      setRawAssetMap(null)
+      setPrepReady(false)
+      setPrepFailed(false)
+      setLineIndex(0)
+      setCombined([])
+      setReplayReady(false)
+      return
+    }
+
     setInkJson(null)
     setRawAssetMap(null)
     setPrepReady(false)
@@ -117,7 +157,7 @@ export function PracticeDialogueVnReplay({
     })()
 
     return () => { cancelled = true }
-  }, [session.topicId, topicDetail])
+  }, [canPrepReplay, session.topicId, topicDetail])
 
   const {
     lines: storyLines,
@@ -334,6 +374,37 @@ export function PracticeDialogueVnReplay({
   const history = combined.slice(0, Math.min(lineIndex, combined.length))
   const feedbackTurn = currentLine?.turn
 
+  if (packInstalled === false && !continueWithoutPack) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-sm text-muted-foreground">{t('profile.reviewPackNeedsDownload')}</p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {packageId ? (
+            <Button
+              size="sm"
+              className="border-0 shadow-none"
+              onClick={() => {
+                onRequestClose?.()
+                navigate(`/learning/units/${packageId}`)
+              }}
+            >
+              <Download data-icon="inline-start" />
+              {t('learning.downloadPack')}
+            </Button>
+          ) : null}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="border-0 shadow-none"
+            onClick={() => setContinueWithoutPack(true)}
+          >
+            {t('profile.reviewContinueWithoutPack')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (prepFailed && !topicDetail) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
@@ -342,7 +413,7 @@ export function PracticeDialogueVnReplay({
     )
   }
 
-  if (!prepReady || !mediaReady || !replayReady) {
+  if (!canPrepReplay || !prepReady || !mediaReady || !replayReady) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
         <Loader2 className="size-7 animate-spin text-primary" />
@@ -366,7 +437,7 @@ export function PracticeDialogueVnReplay({
       stageClassName="min-h-0"
       showUserInputOverride
       hideChatTopBar
-      offlineOnly={Boolean(packageId)}
+      offlineOnly={packInstalled === true && Boolean(packageId)}
       backgroundUrl={vnVisual.backgroundUrl}
       backgroundFit={vnVisual.backgroundFit}
       currentLine={isEnded ? null : currentLine}

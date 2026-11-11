@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Download, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   characterMatchesSpeaker,
@@ -17,6 +18,7 @@ import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
 import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 import { resolveUserRecordingPlaybackUrl } from '@/features/vn-engine/user-recording-url'
+import { learningPackService } from '@/lib/offline'
 
 type ReplayLine = VnPlayerLine & { tags?: string[] }
 
@@ -35,8 +37,10 @@ export function ScriptRecordVnReplay({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const packageId = record.episode.scene.id
   const episodeId = record.episodeId
+  const [packInstalled, setPackInstalled] = useState<boolean | null>(packageId ? null : true)
   const [prepared, setPrepared] = useState<PreparedStoryVnEntry | null>(null)
   const [prepFailed, setPrepFailed] = useState(false)
   const [lineIndex, setLineIndex] = useState(0)
@@ -52,6 +56,31 @@ export function ScriptRecordVnReplay({
 
   useEffect(() => {
     let alive = true
+    if (!packageId) {
+      setPackInstalled(true)
+      return
+    }
+    setPackInstalled(null)
+    void learningPackService.isInstalled(packageId)
+      .then((installed) => {
+        if (alive) setPackInstalled(installed)
+      })
+      .catch(() => {
+        if (alive) setPackInstalled(false)
+      })
+    return () => { alive = false }
+  }, [packageId])
+
+  useEffect(() => {
+    let alive = true
+    if (packInstalled !== true) {
+      setPrepared(null)
+      setPrepFailed(false)
+      setLineIndex(0)
+      setUserTurns([])
+      setReplayReady(false)
+      return
+    }
     setPrepared(null)
     setPrepFailed(false)
     setLineIndex(0)
@@ -67,7 +96,7 @@ export function ScriptRecordVnReplay({
         if (alive) setPrepFailed(true)
       })
     return () => { alive = false }
-  }, [packageId, episodeId, record.id])
+  }, [packInstalled, packageId, episodeId, record.id])
 
   const story = useInkStory(prepared?.data.inkScript.inkJson ?? null)
   const {
@@ -277,6 +306,30 @@ export function ScriptRecordVnReplay({
   const isEnded = replayReady && combined.length > 0 && lineIndex >= combined.length
   const history = combined.slice(0, Math.min(lineIndex, combined.length))
 
+  if (packInstalled === false) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-sm text-muted-foreground">{t('scripts.packNeedsDownload')}</p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button
+            size="sm"
+            className="rounded-full border-0 shadow-none"
+            onClick={() => {
+              onClose()
+              navigate(`/scripts/packages/${packageId}`)
+            }}
+          >
+            <Download data-icon="inline-start" />
+            {t('learning.redownloadPack')}
+          </Button>
+          <Button variant="secondary" size="sm" className="rounded-full border-0 shadow-none" onClick={onClose}>
+            {t('common.close')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (prepFailed) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
@@ -288,7 +341,7 @@ export function ScriptRecordVnReplay({
     )
   }
 
-  if (!prepared || !mediaReady || !replayReady) {
+  if (packInstalled !== true || !prepared || !mediaReady || !replayReady) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
         <Loader2 className="size-7 animate-spin text-primary" />

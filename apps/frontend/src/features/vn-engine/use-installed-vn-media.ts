@@ -45,9 +45,10 @@ export function useInstalledVnMedia(input: {
 
   useEffect(() => {
     if (!input.packageId) {
+      // No pack to resolve — do not leave callers stuck on mediaReady=false.
       setAssetMap({})
       setScene(rawSceneRef.current ?? null)
-      setMediaReady(false)
+      setMediaReady(true)
       return
     }
 

@@ -323,6 +323,8 @@ const en = {
       reviewScorePending: 'Pending Review',
       reviewNoAnalysis: 'This practice session has no final AI review yet',
       reviewNoReplay: 'No replayable conversation saved for this session',
+      reviewPackNeedsDownload: 'Learning pack not installed. Scene media unavailable.',
+      reviewContinueWithoutPack: 'Continue replay',
       reviewViewAnalysis: 'View Analysis',
       reviewReadonlyHeader: 'Read-only Review',
       reviewBadge: 'Review',

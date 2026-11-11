@@ -113,6 +113,13 @@ vi.mock('../unified-storage', () => ({
       }
       return []
     }),
+    findByIndexIn: vi.fn(async (store: string, column: string, values: Array<string | number>) => {
+      const wanted = new Set(values.map(String))
+      if (store === 'asset_refs' && column === 'sha256') {
+        return assetRefs.filter((ref) => wanted.has(String(ref.sha256)))
+      }
+      return []
+    }),
     deleteByIndex: vi.fn(async (store: string, column: string, value: string) => {
       if (store === 'asset_refs' && column === 'pack_id') {
         for (let i = assetRefs.length - 1; i >= 0; i--) {
