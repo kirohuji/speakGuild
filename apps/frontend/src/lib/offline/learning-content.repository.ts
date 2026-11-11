@@ -821,12 +821,12 @@ export const learningContentRepository = {
       updatedAt: next.updatedAt,
       syncStatus: 'synced',
     }
-    console.log(
-      '[saveRemoteExpressionEntry]',
-      `id=${entry.id}`,
-      `hasContentSnapshot=${!!entry.contentSnapshot}`,
-      `snapshotKeys=${entry.contentSnapshot ? Object.keys(entry.contentSnapshot).join(',') : 'none'}`,
-    )
+    // console.log(
+    //   '[saveRemoteExpressionEntry]',
+    //   `id=${entry.id}`,
+    //   `hasContentSnapshot=${!!entry.contentSnapshot}`,
+    //   `snapshotKeys=${entry.contentSnapshot ? Object.keys(entry.contentSnapshot).join(',') : 'none'}`,
+    // )
     await localDb.put('expression_entries', entry)
     return entry
   },

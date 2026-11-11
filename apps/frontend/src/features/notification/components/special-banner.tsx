@@ -14,6 +14,7 @@ import {
 import { useNotificationStore } from '@/features/notification/store'
 import { useHomeStore } from '@/stores/home.store'
 import { NotificationDetailSheet } from './notification-detail-sheet'
+import { NotificationStickerImage } from './notification-sticker'
 
 function toNotificationItem(item: SpecialNotification | null): NotificationItem | null {
   if (!item) return null
@@ -29,11 +30,9 @@ function toNotificationItem(item: SpecialNotification | null): NotificationItem 
 
 export function SpecialBanner() {
   const { t } = useTranslation()
-  // 数据来源：home.store（首页统一管理）
   const storeNotifs = useHomeStore((s) => s.specialNotifications)
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
 
-  // 🧪 test=3 注入模拟通知
   const location = useLocation()
   const searchStr = location.search || (
     typeof window !== 'undefined'
@@ -51,9 +50,9 @@ export function SpecialBanner() {
           specialNotifications: [
             {
               id: 'test-notification-3',
-              title: '🎉 测试活动通知',
+              title: '测试活动通知',
               content: '这是一条测试用的活动通知。\n\n你可以在此查看活动详情内容，图片和文字都可以正常展示。',
-              imageUrl: 'https://picsum.photos/400/300?random=1',
+              imageUrl: '/special-sticker-test.png',
               createdAt: new Date().toISOString(),
             },
           ],
@@ -63,20 +62,17 @@ export function SpecialBanner() {
     }
   }, [isTestMode])
 
-  // 本地 UI 状态
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [currentIndex, setCurrentIndex] = useState(0)
   const [popupOpen, setPopupOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
   const autoPopped = useRef(false)
 
-  // 过滤已 dismiss 的通知
   const notifs = storeNotifs.filter((n) => !dismissedIds.has(n.id))
 
   const currentNotification = notifs[currentIndex] ?? null
   const detailItem = toNotificationItem(currentNotification)
 
-  // ── 自动弹出居中卡片 ──
   useEffect(() => {
     if (autoPopped.current) return
     if (notifs.length === 0) return
@@ -84,13 +80,11 @@ export function SpecialBanner() {
     if (firstWithImage !== -1) {
       autoPopped.current = true
       setCurrentIndex(firstWithImage)
-      // 延迟等页面入场动画走完再弹出
       const timer = setTimeout(() => setPopupOpen(true), 600)
       return () => clearTimeout(timer)
     }
   }, [notifs])
 
-  // ── 关闭弹窗并标记已读 ──
   const dismissAndMarkRead = useCallback(async () => {
     if (!currentNotification) return
     await markAsRead(currentNotification.id).catch(() => {})
@@ -102,21 +96,17 @@ export function SpecialBanner() {
     autoPopped.current = false
   }, [currentNotification, fetchUnreadCount])
 
-  // ── "立即查看"：关闭弹窗，打开详情 ──
   const handleViewDetail = useCallback(() => {
     setPopupOpen(false)
-    // 等弹窗关闭动画完成后再打开详情
     setTimeout(() => setDetailOpen(true), 200)
   }, [])
 
-  // ── 无图片的横幅卡片 ──
   const bannerNotifs = notifs.filter((n) => !n.imageUrl)
   const showBanner = bannerNotifs.length > 0 && !popupOpen && !detailOpen
   const bannerNotification = bannerNotifs[0] ?? null
 
   return (
     <>
-      {/* 无图片的横幅卡片 */}
       {showBanner && bannerNotification && (
         <AnimatePresence mode="wait">
           <motion.button
@@ -142,10 +132,11 @@ export function SpecialBanner() {
         </AnimatePresence>
       )}
 
-      {/* ── 居中弹窗卡片（有图片的特殊通知） ── */}
+      {/* 有图：透明贴图浮层（不规则边缘靠素材 alpha + drop-shadow） */}
       <Dialog open={popupOpen} onOpenChange={(v) => { if (!v) dismissAndMarkRead() }}>
         <DialogContent
-          className="flex flex-col gap-0 overflow-hidden rounded-2xl border-0 p-0 shadow-xl size-[80vw] max-w-[400px] max-h-[400px] [&>button]:hidden"
+          overlayClassName="bg-black/20"
+          className="flex w-auto max-w-none translate-x-[-50%] translate-y-[-50%] flex-col items-center gap-0 overflow-visible border-0 bg-transparent p-0 shadow-none sm:rounded-none [&>button]:hidden"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <DialogTitle className="sr-only">{currentNotification?.title}</DialogTitle>
@@ -153,34 +144,24 @@ export function SpecialBanner() {
             {currentNotification?.createdAt ?? ''}
           </DialogDescription>
 
-          {/* 关闭按钮 */}
-          <div className="absolute right-3 top-3 z-10">
+          <div className="relative">
             <button
               type="button"
               onClick={dismissAndMarkRead}
-              className="flex size-7 items-center justify-center rounded-full bg-white text-muted-foreground/60 shadow-sm transition-colors hover:bg-gray-100"
+              className="absolute -right-1 -top-1 z-10 flex size-11 items-center justify-center border-0 bg-transparent p-0 text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] transition-opacity hover:opacity-80"
               aria-label={t('common.close')}
             >
-              <X className="size-4" />
+              <X className="size-7" strokeWidth={2.25} />
             </button>
-          </div>
 
-          {/* 图片 — 点击打开详情 */}
-          {currentNotification?.imageUrl && (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={handleViewDetail}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleViewDetail() }}
-              className="block w-full overflow-hidden cursor-pointer focus-visible:outline-none"
-            >
-              <img
+            {currentNotification?.imageUrl && (
+              <NotificationStickerImage
                 src={currentNotification.imageUrl}
                 alt={currentNotification.title}
-                className="w-full object-cover pointer-events-none"
+                onClick={handleViewDetail}
               />
-            </div>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

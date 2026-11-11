@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { NotificationService } from '../../notification/notification.service';
 import { EnglishPracticeAiService } from '../../practice-ai/english-practice-ai.service';
 import { AdminTasksService } from '../admin-tasks.service';
 
@@ -10,16 +9,13 @@ type JsonRecord = Record<string, any>;
 
 @Injectable()
 export class WarmupPipelineGenerateService {
-  private readonly logger = new Logger(WarmupPipelineGenerateService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly practiceAi: EnglishPracticeAiService,
     private readonly tasks: AdminTasksService,
-    private readonly notifications: NotificationService,
   ) {}
 
-  async run(taskId: string, topicId: string, createdById?: string) {
+  async run(taskId: string, topicId: string, _createdById?: string) {
     const started = await this.tasks.markRunning(taskId, 'loading-topic');
     if (!started) {
       const task = await this.prisma.adminTask.findUnique({ where: { id: taskId }, select: { status: true } });
@@ -41,25 +37,12 @@ export class WarmupPipelineGenerateService {
     await this.tasks.setProgress(taskId, { currentStep: 'saving-warmup', totalItems: 3, processedItems: 3 });
     await this.tasks.markCompleted(taskId, summary);
 
-    if (createdById) {
-      try {
-        await this.notifications.createSystemTargetedNotification(
-          createdById,
-          createdById,
-          `知识点练习已生成：${summary.topicTitle}`,
-          `已为「${summary.sceneTitle} / ${summary.topicTitle}」补齐 ${summary.generatedGroups} 个练习题组，点击可直接检查结果。`,
-          summary.actionUrl,
-        );
-      } catch (error) {
-        this.logger.warn(`生成成功但通知发送失败: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
     return summary;
   }
 
   /**
-   * 生成并保存话题知识点练习（不管理任务状态、不发通知）。
-   * 供单话题任务与场景批量生成复用。返回 summary 供上层记录/通知。
+   * 生成并保存话题知识点练习（不管理任务状态）。
+   * 供单话题任务与场景批量生成复用。返回 summary 供上层记录。
    */
   async generateAndSaveForTopic(topicId: string, shouldCancel?: () => Promise<boolean>) {
     const topic = await this.prisma.trainingTopic.findUnique({

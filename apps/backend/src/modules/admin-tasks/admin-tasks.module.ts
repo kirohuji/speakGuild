@@ -16,7 +16,6 @@ import { LibraryFieldBatchService } from './jobs/library-field-batch.service';
 import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import.processor';
 import { VocabularyExampleAudioService } from './jobs/vocabulary-example-audio.service';
 import { PracticeAiModule } from '../practice-ai/practice-ai.module';
-import { NotificationModule } from '../notification/notification.module';
 import { WarmupPipelineGenerateService } from './jobs/warmup-pipeline-generate.service';
 import { TopicTeachingGenerateService } from './jobs/topic-teaching-generate.service';
 import { SceneTopicBatchGenerateService } from './jobs/scene-topic-batch-generate.service';
@@ -29,7 +28,6 @@ import { ContentExperienceModule } from '../content-experiences/content-experien
     FileAssetsModule,
     DictionaryModule,
     PracticeAiModule,
-    NotificationModule,
     AiModelModule,
     ContentExperienceModule,
     BullModule.forRoot({

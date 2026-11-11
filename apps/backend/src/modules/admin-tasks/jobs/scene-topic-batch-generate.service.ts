@@ -1,6 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { NotificationService } from '../../notification/notification.service';
 import { AdminTasksService } from '../admin-tasks.service';
 import { TopicTeachingGenerateService } from './topic-teaching-generate.service';
 import { WarmupPipelineGenerateService } from './warmup-pipeline-generate.service';
@@ -12,18 +11,15 @@ const TEACHING_MIN_CHARS = 100;
 
 @Injectable()
 export class SceneTopicBatchGenerateService {
-  private readonly logger = new Logger(SceneTopicBatchGenerateService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly tasks: AdminTasksService,
     private readonly teachingGenerate: TopicTeachingGenerateService,
     private readonly warmupGenerate: WarmupPipelineGenerateService,
-    private readonly notifications: NotificationService,
   ) {}
 
   /** 场景批量生成：教学文档 + 知识点训练，逐话题检查缺失后补齐 */
-  async run(taskId: string, sceneId: string, createdById?: string) {
+  async run(taskId: string, sceneId: string, _createdById?: string) {
     const started = await this.tasks.markRunning(taskId, 'collecting-topics');
     if (!started) {
       const task = await this.prisma.adminTask.findUnique({ where: { id: taskId }, select: { status: true } });
@@ -115,20 +111,6 @@ export class SceneTopicBatchGenerateService {
       actionUrl: `/admin/learning-content?sceneId=${encodeURIComponent(scene.id)}`,
     };
     await this.tasks.markCompleted(taskId, summary);
-
-    if (createdById) {
-      try {
-        await this.notifications.createSystemTargetedNotification(
-          createdById,
-          createdById,
-          `学习包内容批量生成完成：${scene.title}`,
-          `共处理 ${topics.length} 个话题：教学文档生成 ${teachingGenerated} 篇${teachingSkipped ? `（${teachingSkipped} 篇已达标跳过）` : ''}，知识点训练生成 ${warmupGenerated} 组${warmupSkipped ? `（${warmupSkipped} 组已有跳过）` : ''}${errors.length ? `，${errors.length} 项失败：${errors.slice(0, 3).map((e) => `${e.topicTitle}-${e.item}`).join('、')}${errors.length > 3 ? ' 等' : ''}` : ''}。`,
-          `/admin/learning-content?sceneId=${encodeURIComponent(scene.id)}`,
-        );
-      } catch (error) {
-        this.logger.warn(`批量生成完成但通知发送失败: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
 
     return { summary };
   }

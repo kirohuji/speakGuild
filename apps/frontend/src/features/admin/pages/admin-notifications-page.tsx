@@ -31,6 +31,7 @@ import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { useAuth } from '@/providers/auth-provider'
 import { AdminPagination } from '@/features/admin/components/admin-pagination'
 import { NotificationAiWriter } from '@/features/admin/components/notification-ai-writer'
+import { NotificationStickerPreview } from '@/features/notification/components/notification-sticker'
 
 const noRingInput = 'focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
 
@@ -146,7 +147,10 @@ function ViewNotificationDialog({ item, open, onClose }: { item: AdminNotificati
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          {item.imageUrl && (
+            <NotificationStickerPreview src={item.imageUrl} alt={item.title} />
+          )}
           <MarkdownRenderer content={item.content} />
         </div>
       </DialogContent>
@@ -250,16 +254,19 @@ function EditNotificationDialog({
               <MDEditor value={content} onChange={(val) => setContent(val || '')} height={300} preview="live" visibleDragbar={false} hideToolbar={false} />
             </div>
           </div>
-          {/* 活动图片 */}
+          {/* 活动贴图 */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">活动图片（可选）</label>
+            <label className="text-xs font-medium">首页活动贴图（可选）</label>
+            <p className="text-[11px] text-muted-foreground">
+              建议上传透明底 PNG/WebP；首页会按贴纸浮层展示，不规则边缘由素材透明度决定。
+            </p>
             {imageUrl ? (
-              <div className="relative overflow-hidden rounded-lg border border-border/60">
-                <img src={imageUrl} alt="活动图片预览" className="max-h-32 w-full object-cover" />
+              <div className="relative">
+                <NotificationStickerPreview src={imageUrl} alt="活动贴图预览" />
                 <button
                   type="button"
                   onClick={() => setImageUrl('')}
-                  className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                  className="absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -279,12 +286,12 @@ function EditNotificationDialog({
                   ) : (
                     <ImageIcon className="size-3.5" />
                   )}
-                  {uploadingEditImage ? '上传中...' : '上传图片'}
+                  {uploadingEditImage ? '上传中...' : '上传贴图'}
                 </Button>
                 <input
                   ref={editImageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/webp,image/jpeg,image/*"
                   className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEditImageUpload(f); e.target.value = '' }}
                 />
@@ -329,7 +336,7 @@ function EditNotificationDialog({
             <Megaphone className="size-4 text-amber-500" />
             <div className="flex-1">
               <p className="text-sm font-medium">特殊消息</p>
-              <p className="text-[11px] text-muted-foreground">首页横幅展示，点击查看后消失</p>
+              <p className="text-[11px] text-muted-foreground">首页弹出贴图/横幅，查看后自动消失</p>
             </div>
             <button
               type="button"
@@ -819,16 +826,19 @@ export function AdminNotificationsPage() {
                 <MDEditor value={formContent} onChange={(val) => setFormContent(val || '')} height={360} preview="live" visibleDragbar={false} hideToolbar={false} />
               </div>
             </div>
-            {/* 活动图片 */}
+            {/* 活动贴图 */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">活动图片（可选）</label>
+              <label className="text-xs font-medium">首页活动贴图（可选）</label>
+              <p className="text-[11px] text-muted-foreground">
+                建议上传透明底 PNG/WebP；开启「特殊消息」后会在用户首页以贴纸浮层展示。
+              </p>
               {formImageUrl ? (
-                <div className="relative overflow-hidden rounded-lg border border-border/60">
-                  <img src={formImageUrl} alt="活动图片预览" className="max-h-32 w-full object-cover" />
+                <div className="relative">
+                  <NotificationStickerPreview src={formImageUrl} alt="活动贴图预览" />
                   <button
                     type="button"
                     onClick={() => setFormImageUrl('')}
-                    className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                    className="absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -848,12 +858,12 @@ export function AdminNotificationsPage() {
                     ) : (
                       <ImageIcon className="size-3.5" />
                     )}
-                    {uploadingActivityImage ? '上传中...' : '上传图片'}
+                    {uploadingActivityImage ? '上传中...' : '上传贴图'}
                   </Button>
                   <input
                     ref={activityImageInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/webp,image/jpeg,image/*"
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleActivityImageUpload(f); e.target.value = '' }}
                   />
@@ -896,7 +906,7 @@ export function AdminNotificationsPage() {
               <Megaphone className="size-4 text-amber-500" />
               <div className="flex-1">
                 <p className="text-sm font-medium">特殊消息</p>
-                <p className="text-[11px] text-muted-foreground">设为特殊消息后，用户首页会出现横幅提示，点击查看后自动消失</p>
+                <p className="text-[11px] text-muted-foreground">设为特殊消息后，用户首页会出现贴图浮层或横幅，查看后自动消失</p>
               </div>
               <button
                 type="button"
