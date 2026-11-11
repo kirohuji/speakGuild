@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 
 export function NotificationDetailPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
@@ -35,7 +35,7 @@ export function NotificationDetailPage() {
     )
   }
 
-  const formattedDate = new Date(item.createdAt).toLocaleString('zh-CN', {
+  const formattedDate = new Date(item.createdAt).toLocaleString(i18n.language, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -103,7 +103,7 @@ export function NotificationDetailPage() {
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/[0.03] px-3.5 py-2.5">
               <CheckCircle2 className="h-4 w-4 text-primary/60" />
               <span className="text-xs text-muted-foreground/70">
-                {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString('zh-CN', {
+                {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(i18n.language, {
                   hour: '2-digit',
                   minute: '2-digit',
                 }) })}

@@ -2378,7 +2378,7 @@ function SquareWorkCard({
         </Avatar>
         <div className="min-w-0 flex-1">
           <CardTitle className="truncate text-sm">{work.user.name}</CardTitle>
-          <CardDescription className="truncate text-[11px]">Lv.{work.user.userLevel} · {work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
+          <CardDescription className="truncate text-[11px]">{work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
         </div>
         <Badge variant="secondary" className="h-5 px-2 text-[10px] font-medium">
           {work.kind === 'progress_card' ? t('scripts.learningProgress') : work.kind === 'vn_video' ? t('scripts.workKindVn') : t('scripts.workKindRepeat')}
@@ -2500,7 +2500,6 @@ function SquareWorkCard({
               sideOffset={8}
               className="w-[min(19rem,calc(100vw-2rem))] rounded-xl border-0 bg-background p-2 shadow-none"
             >
-              <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium text-muted-foreground">{t('scripts.sendReaction')}</p>
               <div className="grid grid-cols-2 gap-1">
                 {getReactions().map((reaction) => (
                   <button

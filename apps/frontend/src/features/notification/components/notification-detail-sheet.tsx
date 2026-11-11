@@ -21,12 +21,12 @@ interface Props {
 }
 
 export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
 
   if (!item) return null
 
-  const formattedDate = new Date(item.createdAt).toLocaleString(undefined, {
+  const formattedDate = new Date(item.createdAt).toLocaleString(i18n.language, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -156,7 +156,7 @@ function NotificationDetailContent({
   item: NotificationItem
   className?: string
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   return (
     <div className={cn('min-h-0 flex-1 overflow-y-auto', className)}>
@@ -166,7 +166,7 @@ function NotificationDetailContent({
         <div className="mt-6 flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
           <CheckCircle2 className="h-4 w-4 text-primary/60" />
           <span className="text-xs text-muted-foreground/70">
-            {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(undefined, {
+            {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(i18n.language, {
               hour: '2-digit',
               minute: '2-digit',
             }) })}
