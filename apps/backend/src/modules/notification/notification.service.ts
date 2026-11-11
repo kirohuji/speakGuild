@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
-import { generateObject } from 'ai';
+import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { generateText } from 'ai';
 import { z } from 'zod';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
@@ -19,6 +19,8 @@ import { FileAssetGroup } from '@prisma/client';
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: NotificationGateway,
@@ -29,19 +31,35 @@ export class NotificationService {
 
   /** AI 通知草稿输出结构 */
   private notificationDraftSchema = z.object({
-    title: z.string(),
-    content: z.string(),
+    title: z.string().min(1),
+    content: z.string().min(1),
   });
 
-  /** 管理员：AI 撰写通知草稿 */
+  private extractJsonObject(text: string): unknown {
+    const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+
+  /** 管理员：AI 撰写通知草稿（使用后台启用的 LLM 配置） */
   async aiWriteNotification(dto: AiWriteNotificationDto) {
     const config = await this.aiModel.getLlmConfig();
-    const model = this.llmFactory.create(config);
+    if (!config.apiKey) {
+      throw new ServiceUnavailableException('未配置 LLM API Key，请先在「大模型配置」中设置');
+    }
 
     try {
-      const result = await generateObject({
+      // deepseek-v4-flash 等模型不支持 generateObject 的 json_schema response_format，
+      // 与其他管理端 AI 一样走 generateText + JSON 解析。
+      const model = this.llmFactory.create(config, { thinking: 'disabled' });
+      const { text } = await generateText({
         model,
-        schema: this.notificationDraftSchema as any,
         system: NOTIFICATION_AI_SYSTEM_PROMPT,
         prompt: buildNotificationAiPrompt({
           scene: dto.type,
@@ -52,12 +70,22 @@ export class NotificationService {
         maxOutputTokens: 1200,
       });
 
-      const draft = result.object as { title: string; content: string };
+      const parsed = this.notificationDraftSchema.safeParse(this.extractJsonObject(text));
+      if (!parsed.success) {
+        throw new Error(`模型返回无法解析为通知草稿: ${text.slice(0, 200)}`);
+      }
+
       return {
-        title: draft.title.trim(),
-        content: draft.content.trim(),
+        title: parsed.data.title.trim(),
+        content: parsed.data.content.trim(),
       };
     } catch (error) {
+      this.logger.error(
+        `AI 撰写通知失败 provider=${config.provider} model=${config.model}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new ServiceUnavailableException('AI 生成失败，请稍后重试');
     }
   }
@@ -171,6 +199,7 @@ export class NotificationService {
         content: n.content,
         type: n.type,
         imageUrl: (n as any).imageUrl ?? undefined,
+        isSpecial: Boolean((n as any).isSpecial),
         sentById: n.sentById,
         createdAt: n.createdAt,
         updatedAt: n.updatedAt,

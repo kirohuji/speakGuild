@@ -6,6 +6,7 @@ export interface NotificationItem {
   content: string;
   type: 'broadcast' | 'targeted';
   imageUrl?: string;
+  isSpecial?: boolean;
   actionUrl?: string;
   sentById: string;
   createdAt: string;
@@ -16,7 +17,10 @@ export interface NotificationItem {
 
 export function getNotificationActionUrl(item: NotificationItem): string | undefined {
   if (item.actionUrl?.startsWith('/')) return item.actionUrl
-  return item.content.match(/\]\((\/admin\/learning-content[^)]+)\)/)?.[1]
+  // Prefer in-app hash/path links embedded in markdown
+  const markdownLink = item.content.match(/\]\((#[^)]+|\/[^)\s]+)\)/)?.[1]
+  if (markdownLink?.startsWith('#') || markdownLink?.startsWith('/')) return markdownLink
+  return undefined
 }
 
 export interface NotificationListResult {

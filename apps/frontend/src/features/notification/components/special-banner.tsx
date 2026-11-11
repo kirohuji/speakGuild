@@ -21,6 +21,7 @@ function toNotificationItem(item: SpecialNotification | null): NotificationItem 
   return {
     ...item,
     type: 'broadcast',
+    isSpecial: true,
     sentById: '',
     updatedAt: item.createdAt,
     isRead: false,
