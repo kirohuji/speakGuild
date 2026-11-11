@@ -74,17 +74,26 @@ export function SpecialBanner() {
   const currentNotification = notifs[currentIndex] ?? null
   const detailItem = toNotificationItem(currentNotification)
 
+  // 用稳定的 id 做依赖，避免 filter 每次新建数组导致 effect 清理掉 600ms 定时器
+  const popupCandidateId =
+    notifs.find((n) => Boolean(n.imageUrl))?.id ?? null
+
   useEffect(() => {
     if (autoPopped.current) return
-    if (notifs.length === 0) return
-    const firstWithImage = notifs.findIndex((n) => n.imageUrl)
-    if (firstWithImage !== -1) {
-      autoPopped.current = true
-      setCurrentIndex(firstWithImage)
-      const timer = setTimeout(() => setPopupOpen(true), 600)
-      return () => clearTimeout(timer)
-    }
-  }, [notifs])
+    if (!popupCandidateId) return
+
+    const list = useHomeStore
+      .getState()
+      .specialNotifications
+      .filter((n) => !dismissedIds.has(n.id))
+    const idx = list.findIndex((n) => n.id === popupCandidateId)
+    if (idx === -1) return
+
+    autoPopped.current = true
+    setCurrentIndex(idx)
+    const timer = setTimeout(() => setPopupOpen(true), 600)
+    return () => clearTimeout(timer)
+  }, [popupCandidateId, dismissedIds])
 
   const dismissAndMarkRead = useCallback(async () => {
     if (!currentNotification) return
