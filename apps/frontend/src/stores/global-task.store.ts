@@ -8,6 +8,8 @@ export interface GlobalTask {
   status: 'running' | 'done' | 'error'
   stepLabel: string
   error?: string
+  /** Epoch ms when the task entered running — used for stepped polling. */
+  startedAt: number
 }
 
 interface GlobalTaskStore {
@@ -22,7 +24,13 @@ export const useGlobalTaskStore = create<GlobalTaskStore>((set) => ({
   startTask: (task) => set((state) => ({
     tasks: [
       ...state.tasks.filter((item) => item.id !== task.id),
-      { ...task, progress: 0, status: 'running', stepLabel: '准备视频素材' },
+      {
+        ...task,
+        progress: 0,
+        status: 'running',
+        stepLabel: '准备视频素材',
+        startedAt: Date.now(),
+      },
     ],
   })),
   updateTask: (id, patch) => set((state) => ({

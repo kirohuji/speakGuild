@@ -16,6 +16,7 @@ import { RootLayout } from '@/layout/root-layout'
 import { ErrorBoundary } from '@/components/common/error-boundary'
 import { CellularDownloadConfirmDialog } from '@/components/common/cellular-download-confirm-dialog'
 import { installMediaPlaybackTracking, stopTransientMediaPlayback } from '@/lib/media-playback-lifecycle'
+import { ScriptVideoTaskMonitor } from '@/features/scripts/components/script-video-task-monitor'
 // ── 首屏必需：静态导入 ──
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
@@ -96,7 +97,10 @@ function LearningClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <StartupWarmupProvider>
       <MobileGestureProvider>
-        <OnboardingProvider>{children}</OnboardingProvider>
+        <OnboardingProvider>
+          <ScriptVideoTaskMonitor />
+          {children}
+        </OnboardingProvider>
       </MobileGestureProvider>
     </StartupWarmupProvider>
   )

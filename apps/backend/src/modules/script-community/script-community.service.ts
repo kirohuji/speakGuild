@@ -154,8 +154,22 @@ export class ScriptCommunityService {
     }
   }
 
-  /** Match frontend NQTR_VIDEO_FPS — keep encode/timeline in sync. */
-  private static readonly SCRIPT_VIDEO_FPS = 24
+  /** Soft read for TTS / already-signed URLs — falls back to text estimate. */
+  private async getAudioDurationMs(url: string): Promise<number | undefined> {
+    try {
+      const { durationInSeconds } = await parseMedia({
+        src: url,
+        fields: { durationInSeconds: true },
+        acknowledgeRemotionLicense: true,
+      })
+      if (!Number.isFinite(durationInSeconds) || !durationInSeconds || durationInSeconds <= 0) {
+        return undefined
+      }
+      return Math.ceil(durationInSeconds * 1000)
+    } catch {
+      return undefined
+    }
+  }
 
   /**
    * Remotion fetches media without cookies. Rewrite asset:// and
@@ -167,7 +181,6 @@ export class ScriptCommunityService {
       for (const url of [
         frame?.background?.url,
         frame?.sprite?.url,
-        frame?.sprite?.avatarUrl,
         frame?.resolvedAudioUrl,
         frame?.audioUrl,
       ]) {
@@ -200,9 +213,6 @@ export class ScriptCommunityService {
       const spriteUrl = resolveUrl(
         typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined,
       )
-      const avatarUrl = resolveUrl(
-        typeof frame?.sprite?.avatarUrl === 'string' ? frame.sprite.avatarUrl : undefined,
-      )
       const rawAudio = typeof frame?.resolvedAudioUrl === 'string'
         ? frame.resolvedAudioUrl
         : typeof frame?.audioUrl === 'string'
@@ -214,18 +224,17 @@ export class ScriptCommunityService {
         background: frame.background
           ? { ...frame.background, url: backgroundUrl }
           : frame.background,
+        // Drop avatarUrl — Remotion video does not render avatars for now.
         sprite: frame.sprite
-          ? { ...frame.sprite, url: spriteUrl, avatarUrl }
+          ? { speaker: frame.sprite.speaker, expression: frame.sprite.expression, position: frame.sprite.position, url: spriteUrl }
           : frame.sprite,
         // Never leave asset:// / content proxies for Remotion to fetch.
         resolvedAudioUrl: audioUrl,
       }
     })
 
-    // Carry the first available background forward AND backward so opening
-    // beats before the first #bg: tag (or after a stripped local URL) are not black.
-    const seedBackground = remapped.find((frame) => frame?.background?.url)?.background
-    let lastBackground = seedBackground
+    // Forward-fill backgrounds only (do not pull a later scene onto the opening).
+    let lastBackground: { url?: string; fit?: string } | undefined
     const withBackground = remapped.map((frame: any) => {
       if (frame?.background?.url) {
         lastBackground = frame.background
@@ -248,6 +257,74 @@ export class ScriptCommunityService {
     return withBackground
   }
 
+  /**
+   * Rebuild the timeline from real audio lengths so TTS lines (often the
+   * opening beat) stay in sync with recordings that already carry durationMs.
+   */
+  private async rebuildTimelineFromAudio(
+    frames: any[],
+    fps: number,
+    ttsDurationHints: Record<string, unknown> = {},
+  ) {
+    const cache = new Map<string, number>()
+    let reusedHints = 0
+    let parsedRemote = 0
+    const measure = async (url: string) => {
+      const cached = cache.get(url)
+      if (cached) return cached
+      const ms = await this.getAudioDurationMs(url)
+      if (ms) {
+        cache.set(url, ms)
+        parsedRemote += 1
+      }
+      return ms
+    }
+
+    const padFrames = Math.max(1, Math.round(0.12 * fps))
+    let cursor = 0
+    const timed: any[] = []
+    for (const frame of frames) {
+      const indexKey = String(frame.index)
+      const hintRaw = ttsDurationHints[indexKey] ?? ttsDurationHints[frame.index]
+      const hintMs = typeof hintRaw === 'number' ? hintRaw : Number(hintRaw)
+      let durationMs = Number(frame.recordingDurationMs)
+      let durationSource: 'recording' | 'frame' | 'snapshot' | 'parseMedia' | 'none' = 'none'
+      if (Number.isFinite(durationMs) && durationMs > 0) {
+        durationSource = 'recording'
+      } else {
+        const frameHint = Number(frame.audioDurationMs ?? frame.ttsDurationMs)
+        if (Number.isFinite(frameHint) && frameHint > 0) {
+          durationMs = frameHint
+          durationSource = 'frame'
+          reusedHints += 1
+        } else if (Number.isFinite(hintMs) && hintMs > 0) {
+          durationMs = Math.ceil(hintMs)
+          durationSource = 'snapshot'
+          reusedHints += 1
+        } else if (typeof frame.resolvedAudioUrl === 'string') {
+          durationMs = (await measure(frame.resolvedAudioUrl)) ?? 0
+          if (Number.isFinite(durationMs) && durationMs > 0) durationSource = 'parseMedia'
+        }
+      }
+      const fromAudio = Number.isFinite(durationMs) && durationMs > 0
+        ? Math.ceil((durationMs / 1000) * fps) + padFrames
+        : 0
+      // Prefer real media length. Text estimates only kick in for silent beats.
+      const durationFrames = Math.max(1, fromAudio || Number(frame.durationFrames) || 1)
+      timed.push({
+        ...frame,
+        startFrame: cursor,
+        durationFrames,
+        endFrame: cursor + durationFrames,
+        fps,
+        audioDurationMs: Number.isFinite(durationMs) && durationMs > 0 ? durationMs : undefined,
+        durationSource,
+      })
+      cursor += durationFrames
+    }
+    return { frames: timed, reusedHints, parsedRemote }
+  }
+
   async requestRender(userId: string, workId: string, frames: Record<string, unknown>[]) {
     if (!frames.length) throw new BadRequestException('没有可渲染的视频帧')
     const work = await this.prisma.scriptWork.findFirst({
@@ -266,6 +343,14 @@ export class ScriptCommunityService {
     )
       ? recordSnapshot.recordingDurationsMs as Record<string, unknown>
       : {}
+    const ttsDurationHints = (
+      recordSnapshot.ttsDurationsMs
+      && typeof recordSnapshot.ttsDurationsMs === 'object'
+    )
+      ? recordSnapshot.ttsDurationsMs as Record<string, unknown>
+      : {}
+    const renderOptions = await this.adminTasksService.getScriptVideoRenderOptions()
+    const fps = renderOptions.fps
 
     const recordingEntries = recordingAssets && typeof recordingAssets === 'object'
       ? Object.entries(recordingAssets as Record<string, unknown>)
@@ -323,38 +408,17 @@ export class ScriptCommunityService {
           }
         : frame
     })
-    // The client can only estimate TTS duration from text. Recorded speech is
-    // often much longer, so rebuild the sequential timeline after injection
-    // and give the recording its complete duration instead of cutting Audio at
-    // the original text-derived Sequence boundary.
-    const fps = ScriptCommunityService.SCRIPT_VIDEO_FPS
-    let cursor = 0
-    const renderFrames = framesWithRecordingAudio.map((frame: any) => {
-      const recordingFrames = frame.recordingDurationMs
-        ? Math.ceil((frame.recordingDurationMs / 1000) * fps)
-        : 0
-      // Client timeline already uses the same community fps; extend only when
-      // a recording is longer than the text-estimated beat.
-      const durationFrames = Math.max(1, Number(frame.durationFrames) || 1, recordingFrames)
-      const next = {
-        ...frame,
-        startFrame: cursor,
-        durationFrames,
-        endFrame: cursor + durationFrames,
-        fps,
-      }
-      cursor = next.endFrame
-      return next
-    })
-    // Sign private assets Remotion can fetch, drop device-local URLs, and
-    // forward-fill backgrounds so the opening beat is never a black stage.
-    const sanitizedFrames = await this.remapFramesForRemotion(renderFrames)
+    // Sign media first so parseMedia can read TTS the same way Remotion will.
+    const remappedFrames = await this.remapFramesForRemotion(framesWithRecordingAudio)
+    // Rebuild from real audio lengths — text estimates on the opening TTS beat
+    // were desyncing the first few lines against accurate recording durations.
+    const rebuilt = await this.rebuildTimelineFromAudio(remappedFrames, fps, ttsDurationHints)
+    const sanitizedFrames = rebuilt.frames
     const skippedBackgroundFrames = sanitizedFrames.filter((frame: any) => !frame.background?.url).map((frame: any) => frame.index)
     const skippedSpriteFrames = sanitizedFrames.filter((frame: any) => (
       frame.kind !== 'choice'
       && frame.sprite?.speaker
       && !frame.sprite?.url
-      && !frame.sprite?.avatarUrl
     )).map((frame: any) => frame.index)
     const missingAudioFrames = sanitizedFrames.filter((frame: any) => (
       !frame.resolvedAudioUrl
@@ -362,7 +426,7 @@ export class ScriptCommunityService {
       && Boolean(frame.text)
     )).map((frame: any) => frame.index)
     const stillAssetScheme = sanitizedFrames.flatMap((frame: any) => {
-      const urls = [frame?.background?.url, frame?.sprite?.url, frame?.sprite?.avatarUrl, frame?.resolvedAudioUrl]
+      const urls = [frame?.background?.url, frame?.sprite?.url, frame?.resolvedAudioUrl]
       return urls.some((url) => typeof url === 'string' && (url.startsWith('asset://') || /\/file-assets\/[^/]+\/content/i.test(url)))
         ? [frame.index]
         : []
@@ -378,12 +442,15 @@ export class ScriptCommunityService {
     }
     console.log('[script-video] resolved media for render', {
       workId,
+      renderOptions,
       fps,
       frames: sanitizedFrames.length,
       backgrounds: sanitizedFrames.filter((frame: any) => Boolean(frame.background?.url)).length,
       sprites: sanitizedFrames.filter((frame: any) => Boolean(frame.sprite?.url)).length,
-      avatars: sanitizedFrames.filter((frame: any) => Boolean(frame.sprite?.avatarUrl)).length,
       audio: sanitizedFrames.filter((frame: any) => Boolean(frame.resolvedAudioUrl)).length,
+      measuredAudio: sanitizedFrames.filter((frame: any) => Number(frame.audioDurationMs) > 0).length,
+      reusedTtsHints: rebuilt.reusedHints,
+      parseMediaCount: rebuilt.parsedRemote,
       savedRecordings: recordingUrls.size,
       reusedDurationHints: recordingsByFrame.filter((entry) => {
         if (!entry) return false
@@ -394,6 +461,7 @@ export class ScriptCommunityService {
       }).length,
       injectedFrames: sanitizedFrames.filter((frame: any) => frame.audioSource === 'userRecording').map((frame: any) => frame.index),
       openingBackground: sanitizedFrames[0]?.background?.url ? 'present' : 'missing',
+      openingDurationFrames: sanitizedFrames[0]?.durationFrames,
     })
     await this.adminTasksService.cancelScriptVideoTasks(workId, userId)
     await this.prisma.scriptWork.update({

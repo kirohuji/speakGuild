@@ -12,6 +12,9 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 import { FileAssetsService } from '../../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks.service';
 import { SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from '../admin-tasks.constants';
+import { compressScriptVideoVisuals } from '../remotion/compress-script-video-visuals';
+import { renderScriptVideoWithFfmpeg } from '../remotion/script-video-ffmpeg.render';
+import { type ScriptVideoRenderOptions } from '../remotion/script-video-render-options';
 
 @Injectable()
 @Processor(SCRIPT_VIDEO_QUEUE, { concurrency: 1 })
@@ -70,6 +73,11 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     return this.browserReady;
   }
 
+  /** Always read live admin settings so force-run / retry pick up engine changes. */
+  private async resolveRenderOptions(_jobData: any): Promise<ScriptVideoRenderOptions> {
+    return this.tasks.getScriptVideoRenderOptions();
+  }
+
   async process(job: Job<any>) {
     if (job.name === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.processNarrativeVideo(job);
@@ -77,78 +85,180 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     if (job.name !== SCRIPT_VIDEO_RENDER_JOB) return null;
     const { taskId, workId, userId, frames } = job.data;
     const output = join(tmpdir(), `script-video-${taskId}.mp4`);
+    let cleanupVisuals: (() => Promise<void>) | undefined;
     try {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
-      const browserExecutable = await this.resolveBrowserExecutable();
-      if (!await this.tasks.markRunning(taskId, 'bundling')) return { canceled: true };
-      await this.prisma.adminTask.updateMany({
-        where: { id: taskId, status: { not: 'canceled' } },
-        data: { progress: 2, currentStep: 'bundling' },
-      });
-      const serveUrl = await this.getBundle();
-      await this.prisma.adminTask.updateMany({
-        where: { id: taskId, status: { not: 'canceled' } },
-        data: { progress: 6, currentStep: 'initializing-renderer' },
-      });
-      const fps = Number(frames?.[0]?.fps) || 24;
-      const inputProps = {
-        timeline: {
-          frames,
-          durationInFrames: frames.at(-1)?.endFrame ?? fps,
-          fps,
-          width: 1280,
-          height: 720,
-        },
-      };
-      console.log('[script-video] initializing renderer', {
+      const renderOptions = await this.resolveRenderOptions(job.data);
+      if (!await this.tasks.markRunning(taskId, 'preparing-media')) return { canceled: true };
+      await this.tasks.log(
         taskId,
-        workId,
-        frameCount: frames?.length ?? 0,
-        fps,
-        size: '1280x720',
-        browserExecutable: browserExecutable || 'remotion-default',
-        sampleBackground: frames?.[0]?.background?.url,
-        sampleSprite: frames?.[0]?.sprite?.url,
-        sampleAvatar: frames?.[0]?.sprite?.avatarUrl,
-        sampleAudio: frames?.[0]?.resolvedAudioUrl || frames?.[0]?.audioUrl,
-      });
-      const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
-      await this.prisma.adminTask.updateMany({
-        where: { id: taskId, status: { not: 'canceled' } },
-        data: { progress: 10, currentStep: 'rendering' },
-      });
-      let lastProgress = -1;
-      await renderMedia({
-        serveUrl,
-        composition,
-        codec: 'h264',
-        // Community clips: fast encode, acceptable quality (not archival).
-        x264Preset: 'ultrafast',
-        crf: 28,
-        // Let Remotion pick a concurrency based on available cores.
-        concurrency: null,
-        outputLocation: output,
-        inputProps,
-        browserExecutable,
-        onProgress: ({ progress }) => {
-          // Reserve the first 10% for bundling/browser initialization so a
-          // healthy worker never looks stuck at 0% before renderMedia emits
-          // its first progress callback.
-          const value = Math.min(95, 10 + Math.round(progress * 85));
-          if (value === lastProgress) return;
-          lastProgress = value;
-          void this.prisma.adminTask.updateMany({
-            where: { id: taskId, status: { not: 'canceled' } },
-            data: { progress: value, currentStep: 'rendering', processedItems: value },
-          });
-          void job.updateProgress(value);
-        },
-      });
+        'info',
+        `开始处理 · 引擎=${renderOptions.engine} · ${renderOptions.width}x${renderOptions.height}@${renderOptions.fps} · 帧数=${frames?.length ?? 0}`,
+        { step: 'preparing-media', meta: { workId, userId, renderOptions } },
+      );
+
+      let renderFrames = frames ?? [];
+      if (renderOptions.engine === 'ffmpeg') {
+        await this.prisma.adminTask.updateMany({
+          where: { id: taskId, status: { not: 'canceled' } },
+          data: { progress: 5, currentStep: 'compressing-visuals' },
+        });
+        await this.tasks.log(taskId, 'info', '压缩背景 JPEG / 立绘 PNG…', { step: 'compressing-visuals' });
+        const compressed = await compressScriptVideoVisuals(renderFrames, {
+          jobKey: String(taskId),
+          outputDir: join(tmpdir(), `sv-visuals-${taskId}`),
+          maxWidth: renderOptions.width,
+          maxHeight: renderOptions.height,
+        });
+        cleanupVisuals = compressed.cleanup;
+        renderFrames = compressed.frames;
+        await this.tasks.log(
+          taskId,
+          'info',
+          `视觉压缩完成 · 成功 ${compressed.stats.compressed}/${compressed.stats.unique} · ${compressed.stats.totalKb}KB`,
+          { step: 'compressing-visuals', meta: compressed.stats },
+        );
+
+        if (await this.tasks.isCanceled(taskId)) return { canceled: true };
+        await this.prisma.adminTask.updateMany({
+          where: { id: taskId, status: { not: 'canceled' } },
+          data: { progress: 12, currentStep: 'rendering-ffmpeg' },
+        });
+        await this.tasks.log(
+          taskId,
+          'info',
+          `FFmpeg 静帧合成开始 · ${renderFrames.length} 拍`,
+          { step: 'rendering-ffmpeg', meta: { width: renderOptions.width, height: renderOptions.height, fps: renderOptions.fps } },
+        );
+
+        let lastProgress = -1;
+        await renderScriptVideoWithFfmpeg({
+          frames: renderFrames,
+          outputPath: output,
+          width: renderOptions.width,
+          height: renderOptions.height,
+          fps: renderOptions.fps,
+          jobKey: String(taskId),
+          onProgress: async ({ phase, current, total }) => {
+            const base = phase === 'compositing' ? 12 : phase === 'encoding' ? 35 : 88;
+            const span = phase === 'compositing' ? 20 : phase === 'encoding' ? 50 : 6;
+            const value = Math.min(94, base + Math.round((current / Math.max(1, total)) * span));
+            if (value === lastProgress) return;
+            lastProgress = value;
+            await this.prisma.adminTask.updateMany({
+              where: { id: taskId, status: { not: 'canceled' } },
+              data: {
+                progress: value,
+                currentStep: `rendering-ffmpeg:${phase} ${current}/${total}`,
+                processedItems: current,
+              },
+            });
+            await job.updateProgress(value);
+          },
+        });
+      } else {
+        const browserExecutable = await this.resolveBrowserExecutable();
+        await this.prisma.adminTask.updateMany({
+          where: { id: taskId, status: { not: 'canceled' } },
+          data: { progress: 2, currentStep: 'bundling' },
+        });
+        await this.tasks.log(taskId, 'info', '准备 Remotion bundle…', { step: 'bundling' });
+        const serveUrl = await this.getBundle();
+        await this.prisma.adminTask.updateMany({
+          where: { id: taskId, status: { not: 'canceled' } },
+          data: { progress: 5, currentStep: 'compressing-visuals' },
+        });
+        await this.tasks.log(taskId, 'info', '压缩背景 JPEG / 立绘 PNG（写入 Remotion serve root）…', {
+          step: 'compressing-visuals',
+        });
+        const compressed = await compressScriptVideoVisuals(renderFrames, {
+          serveRoot: serveUrl,
+          jobKey: String(taskId),
+          maxWidth: renderOptions.width,
+          maxHeight: renderOptions.height,
+        });
+        cleanupVisuals = compressed.cleanup;
+        renderFrames = compressed.frames;
+        await this.tasks.log(
+          taskId,
+          'info',
+          `视觉压缩完成 · 成功 ${compressed.stats.compressed}/${compressed.stats.unique} · ${compressed.stats.totalKb}KB`,
+          { step: 'compressing-visuals', meta: { ...compressed.stats, publicUrlPrefix: compressed.publicUrlPrefix } },
+        );
+
+        await this.prisma.adminTask.updateMany({
+          where: { id: taskId, status: { not: 'canceled' } },
+          data: { progress: 8, currentStep: 'initializing-renderer' },
+        });
+        const fps = renderOptions.fps || Number(renderFrames?.[0]?.fps) || 24;
+        const inputProps = {
+          timeline: {
+            frames: renderFrames.map((frame: any) => ({ ...frame, fps })),
+            durationInFrames: renderFrames.at(-1)?.endFrame ?? fps,
+            fps,
+            width: renderOptions.width,
+            height: renderOptions.height,
+          },
+        };
+        await this.tasks.log(
+          taskId,
+          'info',
+          `初始化 Remotion · ${renderOptions.width}x${renderOptions.height}@${fps} · concurrency=${renderOptions.remotionConcurrency ?? 'auto'}`,
+          {
+            step: 'initializing-renderer',
+            meta: {
+              frameCount: renderFrames?.length ?? 0,
+              browserExecutable: browserExecutable || 'remotion-default',
+              sampleBackground: renderFrames?.[0]?.background?.url,
+              sampleSprite: renderFrames?.[0]?.sprite?.url,
+              sampleAudio: renderFrames?.[0]?.resolvedAudioUrl || renderFrames?.[0]?.audioUrl,
+            },
+          },
+        );
+        console.log('[script-video] initializing remotion renderer', {
+          taskId,
+          workId,
+          renderOptions,
+          frameCount: renderFrames?.length ?? 0,
+          publicUrlPrefix: compressed.publicUrlPrefix,
+          browserExecutable: browserExecutable || 'remotion-default',
+        });
+        const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
+        await this.prisma.adminTask.updateMany({
+          where: { id: taskId, status: { not: 'canceled' } },
+          data: { progress: 10, currentStep: 'rendering-remotion' },
+        });
+        await this.tasks.log(taskId, 'info', 'Remotion renderMedia 开始…', { step: 'rendering-remotion' });
+        let lastProgress = -1;
+        await renderMedia({
+          serveUrl,
+          composition,
+          codec: 'h264',
+          x264Preset: 'ultrafast',
+          crf: 28,
+          concurrency: renderOptions.remotionConcurrency,
+          outputLocation: output,
+          inputProps,
+          browserExecutable,
+          onProgress: ({ progress }) => {
+            const value = Math.min(95, 10 + Math.round(progress * 85));
+            if (value === lastProgress) return;
+            lastProgress = value;
+            void this.prisma.adminTask.updateMany({
+              where: { id: taskId, status: { not: 'canceled' } },
+              data: { progress: value, currentStep: 'rendering-remotion', processedItems: value },
+            });
+            void job.updateProgress(value);
+          },
+        });
+      }
+
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
       await this.prisma.adminTask.updateMany({
         where: { id: taskId, status: { not: 'canceled' } },
         data: { progress: 96, currentStep: 'uploading' },
       });
+      await this.tasks.log(taskId, 'info', '上传成片到对象存储…', { step: 'uploading' });
       const buffer = await readFile(output);
       const asset = await this.files.createAssetFromBuffer({
         buffer,
@@ -168,7 +278,13 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
             status: AdminTaskStatus.completed,
             progress: 100,
             currentStep: 'completed',
-            summary: { workId, videoAssetId: asset.id },
+            summary: {
+              workId,
+              videoAssetId: asset.id,
+              renderOptions,
+              engine: renderOptions.engine,
+              bytes: buffer.byteLength,
+            },
             finishedAt: new Date(),
           },
         });
@@ -177,8 +293,6 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
           where: { id: workId },
           data: {
             videoAssetId: asset.id,
-            // Rendering creates a private work. Publishing to the community is
-            // an explicit, separate user action.
             status: ScriptWorkStatus.ready,
             publishedAt: null,
             hiddenAt: null,
@@ -188,7 +302,13 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         return true;
       });
       if (!published) return { canceled: true };
-      return { workId, videoAssetId: asset.id };
+      await this.tasks.log(
+        taskId,
+        'info',
+        `完成 · 引擎=${renderOptions.engine} · 资源=${asset.id} · ${Math.round(buffer.byteLength / 1024)}KB`,
+        { step: 'completed', meta: { videoAssetId: asset.id, renderOptions } },
+      );
+      return { workId, videoAssetId: asset.id, engine: renderOptions.engine };
     } catch (error) {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
       await this.prisma.scriptWork.updateMany({
@@ -198,6 +318,7 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
       await this.tasks.markFailed(taskId, error);
       throw error;
     } finally {
+      await cleanupVisuals?.().catch(() => undefined);
       await rm(output, { force: true }).catch(() => undefined);
     }
   }

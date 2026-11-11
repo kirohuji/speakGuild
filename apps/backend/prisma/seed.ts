@@ -31,6 +31,9 @@ const defaultConfigs = [
   { key: 'api_rate_limit',      value: '60',                   group: 'technical', label: 'API 限流（次/分钟）', type: 'number', description: '每个 IP 每分钟最大请求数' },
   { key: 'upload_max_size_mb',  value: '10',                   group: 'technical', label: '文件上传限制（MB）', type: 'number', description: '单文件最大上传大小' },
   { key: 'session_timeout_min', value: '4320',                 group: 'technical', label: '会话超时（分钟）', type: 'number', description: '用户会话过期时间（默认 3 天）' },
+  { key: 'script_video_engine', value: 'ffmpeg', group: 'technical', label: '剧本视频渲染引擎', type: 'select', description: '社区短片生成引擎：ffmpeg（静帧+音频，快）| remotion（浏览器逐帧）' },
+  { key: 'script_video_preset', value: '960x540@15', group: 'technical', label: '剧本视频分辨率/帧率', type: 'select', description: '输出预设：1280x720@24 | 960x540@15 | 854x480@12' },
+  { key: 'script_video_remotion_concurrency', value: '0', group: 'technical', label: 'Remotion 并发（0=自动）', type: 'number', description: '仅 Remotion 引擎生效；0 表示由 Remotion 按 CPU 自动选择' },
 
   // ── AI 配额 ──
   { key: 'free_ai_corrections', value: '5',                    group: 'quota',   label: '免费每日纠错次数', type: 'number', description: '免费用户每日对话判定次数上限' },

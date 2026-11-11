@@ -4,6 +4,59 @@ import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
+/** Measure remote/local audio duration for TTS lines so the server can skip parseMedia. */
+function measureAudioUrlDurationMs(url: string) {
+  return new Promise<number>((resolve) => {
+    const audio = new Audio()
+    const finish = (durationMs = 0) => {
+      audio.onloadedmetadata = null
+      audio.onerror = null
+      audio.removeAttribute('src')
+      audio.load()
+      resolve(durationMs)
+    }
+    audio.preload = 'metadata'
+    audio.crossOrigin = 'anonymous'
+    audio.onloadedmetadata = () => {
+      finish(Number.isFinite(audio.duration) && audio.duration > 0
+        ? Math.ceil(audio.duration * 1000)
+        : 0)
+    }
+    audio.onerror = () => finish()
+    window.setTimeout(() => finish(), 8_000)
+    audio.src = url
+  })
+}
+
+async function attachMeasuredAudioDurations(frames: MixedTimelineFrame[]) {
+  const cache = new Map<string, number>()
+  return Promise.all(frames.map(async (frame) => {
+    const existing = Number((frame as any).audioDurationMs ?? (frame as any).recordingDurationMs ?? (frame as any).ttsDurationMs)
+    if (Number.isFinite(existing) && existing > 0) {
+      return { ...frame, audioDurationMs: Math.ceil(existing) }
+    }
+    const url = (frame as any).resolvedAudioUrl || frame.audioUrl
+    if (!url || typeof url !== 'string') return frame
+    if (
+      url.startsWith('capacitor://')
+      || url.includes('/_capacitor_file_/')
+      || url.startsWith('file:')
+      || url.startsWith('blob:')
+      || url.startsWith('asset://')
+    ) {
+      return frame
+    }
+    let durationMs = cache.get(url)
+    if (durationMs == null) {
+      durationMs = await measureAudioUrlDurationMs(url)
+      if (durationMs > 0) cache.set(url, durationMs)
+    }
+    return durationMs > 0
+      ? { ...frame, audioDurationMs: durationMs, ttsDurationMs: durationMs }
+      : frame
+  }))
+}
+
 /** Polls the server-owned render task and stops itself once it reaches a terminal state. */
 export function watchScriptVideoRender({
   workId,
@@ -34,7 +87,7 @@ export function watchScriptVideoRender({
   return () => { stopped = true }
 }
 
-/** Submit the Remotion job and return immediately; rendering is server-side. */
+/** Submit the render job and return immediately; rendering is server-side. */
 export async function enqueueScriptVideoRender({
   workId,
   frames,
@@ -42,9 +95,10 @@ export async function enqueueScriptVideoRender({
   workId: string
   frames: MixedTimelineFrame[]
 }) {
+  const framesWithDurations = await attachMeasuredAudioDurations(frames)
   // Do not invent a one-second pause between lines. The timeline may still
   // use its per-line duration estimate, but there is no artificial silence.
-  const timeline = buildNqtrVideoTimeline(frames, { gapSeconds: 0 })
+  const timeline = buildNqtrVideoTimeline(framesWithDurations, { gapSeconds: 0 })
   const isLocal = (url?: string) => Boolean(url && (
     url.startsWith('capacitor://')
     || url.includes('/_capacitor_file_/')
@@ -56,8 +110,9 @@ export async function enqueueScriptVideoRender({
     || /\/file-assets\/[^/]+\/content/i.test(url)
   ))
   const localVisualFrames = timeline.frames.filter((frame) =>
-    [frame.background?.url, frame.sprite?.url, frame.sprite?.avatarUrl].some(isLocal),
+    [frame.background?.url, frame.sprite?.url].some(isLocal),
   )
+  const measuredDurations = timeline.frames.filter((frame) => Number((frame as any).audioDurationMs) > 0).length
   console.log('[script-video] submit render timeline', {
     workId,
     frames: timeline.frames.length,
@@ -65,10 +120,10 @@ export async function enqueueScriptVideoRender({
     size: `${timeline.width}x${timeline.height}`,
     backgrounds: timeline.frames.filter((frame) => Boolean(frame.background?.url)).length,
     sprites: timeline.frames.filter((frame) => Boolean(frame.sprite?.url)).length,
-    avatars: timeline.frames.filter((frame) => Boolean(frame.sprite?.avatarUrl)).length,
     audio: timeline.frames.filter((frame) => Boolean(frame.resolvedAudioUrl || frame.audioUrl)).length,
+    measuredAudioDurations: measuredDurations,
     assetRefs: timeline.frames.filter((frame) =>
-      [frame.background?.url, frame.sprite?.url, frame.sprite?.avatarUrl, frame.resolvedAudioUrl, frame.audioUrl]
+      [frame.background?.url, frame.sprite?.url, frame.resolvedAudioUrl, frame.audioUrl]
         .some(isAssetRef),
     ).length,
     localVisualFrames: localVisualFrames.map((frame) => frame.index),

@@ -558,8 +558,8 @@ export function ScriptCenterPage() {
     if (!visibleReplay) suppressWorksCloseRef.current = false
   }, [visibleReplay])
 
-  // Only the task center polls rendering work. When it reports a terminal
-  // state, refresh cloud-backed works and practice records exactly once.
+  // Background ScriptVideoTaskMonitor updates global tasks; when one settles,
+  // refresh cloud-backed works and practice records exactly once.
   useEffect(() => {
     const videoTasks = globalTasks.filter((task) => task.kind === 'script_video')
     const settled = videoTasks.filter((task) => (
@@ -567,16 +567,81 @@ export function ScriptCenterPage() {
       && observedVideoTaskStates.current.get(task.id) === 'running'
     ))
     observedVideoTaskStates.current = new Map(videoTasks.map((task) => [task.id, task.status]))
-    if (settled.length > 0) void Promise.all([loadWorks({ silent: true }), loadRecords()])
+    if (settled.length > 0) {
+      void Promise.all([loadWorks({ silent: true }), loadRecords()])
+      setGenerating((current) => {
+        const next = { ...current }
+        for (const task of settled) {
+          const workId = task.id.startsWith('script-video:') ? task.id.slice('script-video:'.length) : ''
+          if (workId) delete next[workId]
+        }
+        return next
+      })
+    }
   }, [globalTasks, loadRecords, loadWorks])
 
-  // The task drawer may be closed while a render is in progress. Keep a small
-  // fallback refresh for this page so its rendering cards still become ready.
+  // Visibility / panel enter: reconcile orphaned `rendering` works (e.g. after
+  // refresh or admin cancel) and re-attach the background monitor if needed.
   useEffect(() => {
-    if (tab !== 'mine' || !visibleWorks.some((work) => work.status === 'rendering')) return
-    const timer = window.setInterval(() => void loadWorks({ silent: true }), 15_000)
-    return () => window.clearInterval(timer)
-  }, [loadWorks, tab, visibleWorks])
+    if (tab !== 'mine' && panel !== 'works') return
+    let alive = true
+
+    const reconcile = async () => {
+      if (document.visibilityState === 'hidden') return
+      try {
+        const resetAt = await practiceRepository.getPracticeDataResetAt()
+        const refreshed = await scriptRepository.refreshMyWorks()
+        if (!alive) return
+        const nextWorks = refreshed.filter((work) => isAfterPracticeReset(work.createdAt, resetAt))
+        setWorks(nextWorks)
+        setWorksOwnerId(userId)
+        const snapshot = useGlobalTaskStore.getState().tasks
+        const rendering = nextWorks.filter((work) => work.status === 'rendering')
+        let needReload = false
+        for (const work of rendering) {
+          const taskId = `script-video:${work.id}`
+          const existing = snapshot.find((task) => task.id === taskId)
+          if (existing?.status === 'running') continue
+          try {
+            const result = await scriptCommunityApi.renderStatus(work.id)
+            if (!alive) return
+            if (
+              result.task?.status === 'completed'
+              || (result.work.status === 'ready' && Boolean(result.work.videoAssetId))
+              || result.work.status === 'failed'
+              || result.task?.status === 'failed'
+              || result.task?.status === 'canceled'
+            ) {
+              needReload = true
+              continue
+            }
+            if (result.task?.status === 'queued' || result.task?.status === 'running' || result.work.status === 'rendering') {
+              useGlobalTaskStore.getState().startTask({
+                id: taskId,
+                kind: 'script_video',
+                title: t('scripts.performanceVideo', { title: work.episode.title }),
+              })
+            }
+          } catch (error) {
+            console.warn('[scripts] reconcile rendering work failed', { workId: work.id, error })
+          }
+        }
+        if (needReload && alive) await loadWorks({ silent: true })
+      } catch (error) {
+        console.warn('[scripts] works reconcile failed', error)
+      }
+    }
+
+    void reconcile()
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void reconcile()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      alive = false
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [loadWorks, panel, t, tab, userId])
 
   useEffect(() => {
     if (tab === 'square') void loadFeed()
@@ -748,7 +813,13 @@ export function ScriptCenterPage() {
             <DrawerTitle className="text-base font-semibold">{t('scripts.practiceRecords')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <RecordList records={visibleRecords} loading={recordsLoading || !recordsReady} onOpenReplay={setReplayRecord} />
+            <RecordList
+              records={visibleRecords}
+              loading={recordsLoading || !recordsReady}
+              onOpenReplay={setReplayRecord}
+              onGenerateVideo={generateReplayVideo}
+              generating={generating}
+            />
           </div>
         </DrawerContent>
       </Drawer>
@@ -1240,9 +1311,7 @@ function MyWorks({
             <CardDescription className="truncate text-xs">{t('scripts.chapterLabel', { name: work.episode.chapterName })}</CardDescription>
           </CardHeader>
           <CardFooter className="px-2.5 pb-2.5">
-            {/* Temporarily hide generate/regenerate video; keep publish/unpublish/cancel only. */}
-            {(work.videoUrl || work.status === 'rendering' || work.status === 'published' || generating[work.id]) ? (
-            <div className="w-full">
+            <div className="flex w-full flex-col gap-1.5">
               <Button
                 size="sm"
                 variant={work.status === 'rendering' || work.status === 'published' ? 'secondary' : 'default'}
@@ -1254,9 +1323,8 @@ function MyWorks({
                   ? t('scripts.generating', { percent: generating[work.id] })
                   : workPrimaryActionLabel(work, t)}
               </Button>
-              {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
+              {generating[work.id] && <Progress value={generating[work.id]} className="h-1" />}
             </div>
-            ) : null}
           </CardFooter>
         </Card>
       ))}
@@ -1388,6 +1456,30 @@ function WorksLibraryDialog({
     }
   }
 
+  const regenerateWork = async (work: ScriptWork) => {
+    if (work.status === 'published') {
+      toast.error(t('scripts.publishedBlockRegenerate'))
+      return
+    }
+    if (work.status === 'rendering' || generating[work.id]) return
+    setGenerating((current) => ({ ...current, [work.id]: 1 }))
+    try {
+      await generateAndPublishExistingWork(work, (progress) => {
+        setGenerating((current) => ({ ...current, [work.id]: progress }))
+      })
+      toast.success(t('scripts.submittedGenerationHint'))
+      await onChanged()
+    } catch (error: any) {
+      toast.error(error?.message || t('scripts.videoGenerateFailedRetry'))
+    } finally {
+      setGenerating((current) => {
+        const next = { ...current }
+        delete next[work.id]
+        return next
+      })
+    }
+  }
+
   const deleteWork = async () => {
     if (!deleteTarget || deletingWork) return
     setDeletingWork(true)
@@ -1496,7 +1588,7 @@ function WorksLibraryDialog({
                               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                                 {t('scripts.chapterLabel', { name: work.episode.chapterName })} · {new Date(work.createdAt).toLocaleString(i18n.language)}
                               </p>
-                              <div className="mt-2 flex items-center gap-1.5">
+                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                 <Button size="sm" variant={work.status === 'rendering' || work.status === 'published' ? 'outline' : 'default'} className="h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
                                   {generating[work.id]
                                     ? t('scripts.submittingVideoTask')
@@ -1569,6 +1661,8 @@ function WorksLibraryDialog({
           works={historyWork ? works.filter((work) => work.episodeId === historyWork.episodeId) : []}
           initialKind={historyWork?.kind}
           onPublish={togglePublish}
+          onRegenerate={regenerateWork}
+          regenerating={generating}
           onDelete={setDeleteTarget}
           records={records}
           onOpenReplay={openReplayFromLibrary}
@@ -1606,6 +1700,8 @@ function EpisodeWorkHistoryDrawer({
   works,
   initialKind,
   onPublish,
+  onRegenerate,
+  regenerating = {},
   onDelete,
   records,
   onOpenReplay,
@@ -1616,6 +1712,8 @@ function EpisodeWorkHistoryDrawer({
   works: ScriptWork[]
   initialKind?: ScriptWorkKind
   onPublish: (work: ScriptWork) => Promise<void>
+  onRegenerate?: (work: ScriptWork) => Promise<void>
+  regenerating?: Record<string, number>
   onDelete: (work: ScriptWork) => void
   records: ScriptPracticeRecord[]
   onOpenReplay: (record: ScriptPracticeRecord) => void
@@ -1752,12 +1850,9 @@ function EpisodeWorkHistoryDrawer({
                           {new Date(work.createdAt).toLocaleString(i18n.language)}
                         </p>
                         <div className="mt-2 flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
-                          <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
-                          {hasVideo && (
-                            <Button size="sm" variant="ghost" className="h-6 rounded-full px-2 text-[10px]" onClick={() => setPreviewWork(work)}>
-                              {t('scripts.viewVideo')}
-                            </Button>
-                          )}
+                          {(work.status === 'published' || work.status === 'rendering' || work.status === 'failed') ? (
+                            <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
+                          ) : null}
                           {work.status === 'published' ? (
                             <Badge variant="secondary" className="h-6 rounded-full border-0 px-2 text-[10px] shadow-none">
                               {t('scripts.currentPublishVersion')}
@@ -1765,7 +1860,7 @@ function EpisodeWorkHistoryDrawer({
                           ) : work.videoUrl ? (
                             <Button
                               size="sm"
-                              className="h-6 rounded-full px-2 text-[10px]"
+                              className="h-6 rounded-full border-0 px-2 text-[10px] shadow-none"
                               disabled={Boolean(publishingId)}
                               onClick={() => {
                                 setPublishingId(work.id)
@@ -1775,6 +1870,20 @@ function EpisodeWorkHistoryDrawer({
                               {publishingId === work.id
                                 ? t('scripts.switchingVersion')
                                 : t('scripts.setPublishVersion')}
+                            </Button>
+                          ) : null}
+                          {onRegenerate && work.status !== 'published' && work.status !== 'rendering' ? (
+                            <Button
+                              size="sm"
+                              className="h-6 rounded-full border-0 bg-primary px-2 text-[10px] text-primary-foreground shadow-none hover:bg-primary/90"
+                              disabled={Boolean(regenerating[work.id])}
+                              onClick={() => void onRegenerate(work)}
+                            >
+                              {regenerating[work.id]
+                                ? t('scripts.submittingVideoTask')
+                                : work.videoUrl || work.status === 'failed'
+                                  ? t('scripts.regenerateVideo')
+                                  : t('scripts.generateVideo')}
                             </Button>
                           ) : null}
                           <Button
@@ -2426,14 +2535,19 @@ function RecordList({
   records,
   loading,
   onOpenReplay,
+  onGenerateVideo,
+  generating = {},
 }: {
   records: ScriptPracticeRecord[]
   loading: boolean
   onOpenReplay: (record: ScriptPracticeRecord) => void
+  onGenerateVideo?: (record: ScriptPracticeRecord) => Promise<void>
+  generating?: Record<string, number>
 }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState('all')
   const [page, setPage] = useState(1)
+  const [overwriteRecord, setOverwriteRecord] = useState<ScriptPracticeRecord | null>(null)
   const pageSize = 15
   const visible = records.filter((record) => {
     if (mode === 'all') return true
@@ -2441,6 +2555,18 @@ function RecordList({
   })
 
   useEffect(() => setPage(1), [mode])
+
+  const requestGenerate = (record: ScriptPracticeRecord) => {
+    if (!onGenerateVideo) return
+    if (record.works?.some((work) => work.status === 'published')) {
+      toast.error(t('scripts.publishedBlockRegenerate'))
+      return
+    }
+    if (record.works?.some((work) => work.status === 'rendering') || generating[record.id]) return
+    const hasVideo = record.works?.some((work) => work.status === 'ready' || work.status === 'failed')
+    if (hasVideo) setOverwriteRecord(record)
+    else void onGenerateVideo(record)
+  }
 
   const columns: ColumnConfig<ScriptPracticeRecord>[] = [
     {
@@ -2455,6 +2581,33 @@ function RecordList({
       key: 'createdAt', header: t('scripts.dateHeader'), width: 88, align: 'center',
       cell: (value) => <span className="whitespace-nowrap text-xs text-muted-foreground">{new Date(value).toLocaleDateString()}</span>,
     },
+    ...(onGenerateVideo ? [{
+      key: 'id' as const,
+      header: t('scripts.generateVideo'),
+      width: 72,
+      align: 'center' as const,
+      cell: (_value: unknown, record: ScriptPracticeRecord) => {
+        const busy = Boolean(generating[record.id]) || Boolean(record.works?.some((work) => work.status === 'rendering'))
+        const hasVideo = record.works?.some((work) => work.status === 'ready' || work.status === 'failed' || work.status === 'published')
+        return (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 rounded-full px-2"
+            disabled={busy}
+            onClick={(event) => {
+              event.stopPropagation()
+              requestGenerate(record)
+            }}
+            aria-label={hasVideo ? t('scripts.regenerateVideo') : t('scripts.generateVideo')}
+            title={hasVideo ? t('scripts.regenerateVideo') : t('scripts.generateVideo')}
+          >
+            <Film className={cn('size-3.5', busy && 'animate-pulse')} />
+          </Button>
+        )
+      },
+    }] : []),
   ]
 
   return (
@@ -2470,6 +2623,28 @@ function RecordList({
         isLoading={loading} emptyMessage={t('scripts.noPracticeRecords')} onRowClick={onOpenReplay}
         className="min-h-0 flex-1 text-xs [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3 [&_tr]:border-0"
       />
+      <Dialog open={Boolean(overwriteRecord)} onOpenChange={(open) => { if (!open) setOverwriteRecord(null) }}>
+        <DialogContent className="w-[90vw] max-w-sm rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle>{t('scripts.overwritePrivateTitle')}</DialogTitle>
+            <DialogDescription>{t('scripts.overwritePrivateDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 flex justify-center gap-3">
+            <Button variant="secondary" className="rounded-xl border-0 shadow-none" onClick={() => setOverwriteRecord(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={() => {
+                const target = overwriteRecord
+                setOverwriteRecord(null)
+                if (target) void onGenerateVideo?.(target)
+              }}
+            >
+              {t('scripts.regenerateOverwrite')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Tabs>
   )
 }

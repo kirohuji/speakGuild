@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectItem } from '@/components/ui/select';
 import { cn } from '@/lib/cn';
 import {
   getAllConfigs, bulkUpdateConfig,
@@ -30,9 +31,48 @@ interface GroupMeta {
 const groups: GroupMeta[] = [
   { key: 'feature',  label: '功能开关', icon: ToggleLeft,  desc: '控制注册、维护模式、排行榜等功能' },
   { key: 'growth',   label: '增长配置', icon: TrendingUp, desc: '邀请奖励天数、新人推广试用等增长参数' },
-  { key: 'technical',label: '系统参数', icon: Sliders,    desc: 'API 限流、文件上传、会话超时等技术参数' },
+  { key: 'technical',label: '系统参数', icon: Sliders,    desc: 'API 限流、文件上传、会话超时、剧本视频渲染等技术参数' },
   { key: 'quota',    label: 'AI 配额',  icon: Gauge,      desc: '免费用户 AI 纠错次数等配额控制' },
 ];
+
+const SELECT_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
+  script_video_engine: [
+    { value: 'ffmpeg', label: 'FFmpeg 静帧+音频（快）' },
+    { value: 'remotion', label: 'Remotion 浏览器渲染' },
+  ],
+  script_video_preset: [
+    { value: '1280x720@24', label: '1280×720 @ 24fps' },
+    { value: '960x540@15', label: '960×540 @ 15fps（默认）' },
+    { value: '854x480@12', label: '854×480 @ 12fps' },
+  ],
+  stt_provider: [
+    { value: 'whisper', label: 'whisper' },
+    { value: 'tencent', label: 'tencent' },
+  ],
+  tts_provider: [
+    { value: 'minimax', label: 'minimax' },
+    { value: 'cartesia', label: 'cartesia' },
+  ],
+  llm_provider: [
+    { value: 'deepseek', label: 'deepseek' },
+    { value: 'openai', label: 'openai' },
+  ],
+};
+
+function parseSelectOptionsFromDescription(description?: string | null) {
+  if (!description) return [] as Array<{ value: string; label: string }>;
+  const match = description.match(/[：:]\s*([^\n]+)$/);
+  if (!match?.[1]) return [];
+  return match[1]
+    .split('|')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const value = part.split(/[（(]/)[0]?.trim() || part;
+      return { value, label: part };
+    })
+    .filter((item) => item.value);
+}
 
 // ─── Field renderer ─────────────────────────────────────────
 
@@ -84,6 +124,25 @@ function ConfigField({
         className="min-h-[80px] font-mono text-sm"
       />
     );
+  }
+
+  if (t === 'select') {
+    const options = SELECT_OPTIONS[item.key] ?? parseSelectOptionsFromDescription(item.description);
+    if (options.length > 0) {
+      const hasValue = options.some((option) => option.value === value);
+      return (
+        <Select
+          id={item.key}
+          value={hasValue ? value : options[0].value}
+          onChange={(e) => onChange(item.key, e.target.value)}
+          className="max-w-[400px]"
+        >
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+          ))}
+        </Select>
+      );
+    }
   }
 
   // default: string

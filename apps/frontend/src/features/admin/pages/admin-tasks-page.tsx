@@ -88,9 +88,14 @@ const STEP_LABELS: Record<string, string> = {
   enrich: 'AI富化词汇',
   'definition-and-difficulty': '富化双语释义并复核难度',
   'reclassify-difficulty': '重新判断词汇难度',
+  queued: '已入队',
+  'preparing-media': '准备素材',
   bundling: '准备渲染器',
+  'compressing-visuals': '压缩画面素材',
   'initializing-renderer': '初始化渲染器',
   rendering: '生成视频',
+  'rendering-ffmpeg': 'FFmpeg 静帧渲染',
+  'rendering-remotion': 'Remotion 渲染',
   uploading: '上传成片',
   inspect: '检查资源引用',
   'recheck-and-clean': '复查并清理资源',
@@ -350,14 +355,44 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     );
   }
   if (task.type === 'script-video-render' || task.type === 'narrative-video-render') {
+    const payload = (task.payload ?? {}) as Record<string, any>;
+    const renderOptions = summary?.renderOptions ?? payload.renderOptions;
+    const framesMeta = payload.framesMeta;
     return (
-      <div className="rounded-md border border-border bg-muted/20 p-3 text-xs">
-        <p className="font-medium">视频渲染结果</p>
-        <p className="mt-1 text-muted-foreground">
+      <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3 text-xs">
+        <p className="font-medium">视频渲染详情</p>
+        <p className="text-muted-foreground">
           {summary?.videoAssetId ? '成片已上传并可播放。' : '视频由后台渲染队列处理，完成后会自动同步到对应作品。'}
         </p>
+        {renderOptions && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Metric label="引擎" value={renderOptions.engine ?? '-'} tone="muted" />
+            <Metric label="预设" value={renderOptions.preset ?? '-'} tone="muted" />
+            <Metric label="分辨率" value={renderOptions.width && renderOptions.height ? `${renderOptions.width}×${renderOptions.height}` : '-'} tone="muted" />
+            <Metric label="帧率" value={renderOptions.fps ?? '-'} tone="muted" />
+          </div>
+        )}
+        {framesMeta && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Metric label="帧数" value={framesMeta.frameCount ?? 0} tone="muted" />
+            <Metric label="音频轨" value={framesMeta.audioCount ?? 0} tone="muted" />
+            <Metric label="已知时长" value={framesMeta.measuredDurationCount ?? 0} tone="good" />
+            <Metric label="背景/立绘" value={`${framesMeta.backgroundCount ?? 0}/${framesMeta.spriteCount ?? 0}`} tone="muted" />
+          </div>
+        )}
+        {(framesMeta?.openingBackground || framesMeta?.missingAudioIndices?.length) && (
+          <p className="text-muted-foreground">
+            开场背景：{framesMeta.openingBackground ?? '-'}
+            {Array.isArray(framesMeta.missingAudioIndices) && framesMeta.missingAudioIndices.length > 0
+              ? ` · 缺音频帧：${framesMeta.missingAudioIndices.join(', ')}`
+              : ''}
+          </p>
+        )}
         {summary?.videoAssetId && (
-          <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">资源：{summary.videoAssetId}</p>
+          <p className="break-all font-mono text-[10px] text-muted-foreground">
+            资源：{summary.videoAssetId}
+            {summary?.bytes ? ` · ${Math.round(summary.bytes / 1024)}KB` : ''}
+          </p>
         )}
       </div>
     );

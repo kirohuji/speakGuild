@@ -78,6 +78,31 @@ const BUILTIN_CONFIGS = [
     type: 'string',
     description: 'LLM API 的基础地址',
   },
+  // ── 剧本视频渲染 ──
+  {
+    key: 'script_video_engine',
+    value: 'ffmpeg',
+    group: 'technical',
+    label: '剧本视频渲染引擎',
+    type: 'select',
+    description: '社区短片生成引擎：ffmpeg（静帧+音频，快）| remotion（浏览器逐帧）',
+  },
+  {
+    key: 'script_video_preset',
+    value: '960x540@15',
+    group: 'technical',
+    label: '剧本视频分辨率/帧率',
+    type: 'select',
+    description: '输出预设：1280x720@24 | 960x540@15 | 854x480@12',
+  },
+  {
+    key: 'script_video_remotion_concurrency',
+    value: '0',
+    group: 'technical',
+    label: 'Remotion 并发（0=自动）',
+    type: 'number',
+    description: '仅 Remotion 引擎生效；0 表示由 Remotion 按 CPU 自动选择',
+  },
 ];
 
 @Injectable()

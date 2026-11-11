@@ -1846,6 +1846,7 @@ const en = {
       videoGeneration: 'Video Generation',
       videoTaskCanceled: 'Video generation canceled',
       videoTaskGenerating: 'Generating in the background',
+      videoTaskTimedOut: 'Generation timed out — check My Works or retry',
       videoTaskReady: 'Video ready — publish it from My Works',
     },
     immersivePlayer: {
@@ -2454,7 +2455,7 @@ const en = {
       requestAiReview: 'AI Review',
       dialogueReplayTab: 'Replay',
       aiReviewTab: 'AI Review',
-      setPublishVersion: 'Set as Published',
+      setPublishVersion: 'Publish',
       currentPublishVersion: 'Current Version',
       switchingVersion: 'Switching…',
       scriptLabel: 'Script "{{title}}"',

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { useLearningStore, type DownloadTask } from '@/stores/learning.store'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
-import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
+import { refreshRunningScriptVideoTasks } from '@/features/scripts/lib/refresh-script-video-task'
 
 function activeTasks(tasks: DownloadTask[]) {
   return tasks.filter((task) => task.status !== 'done')
@@ -102,7 +102,6 @@ export function LearningPackDownloadDrawer({
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const globalTasks = useGlobalTaskStore((state) => state.tasks)
   const removeGlobalTask = useGlobalTaskStore((state) => state.removeTask)
-  const updateGlobalTask = useGlobalTaskStore((state) => state.updateTask)
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const pausePackTask = useLearningStore((state) => state.pausePackTask)
   const cancelPackTask = useLearningStore((state) => state.cancelPackTask)
@@ -111,63 +110,22 @@ export function LearningPackDownloadDrawer({
   const visibleGlobalTasks = useMemo(() => globalTasks.filter((task) => task.status !== 'done'), [globalTasks])
   const runningCount = tasks.filter(isRunning).length + visibleGlobalTasks.filter((task) => task.status === 'running').length
   const totalTaskCount = tasks.length + visibleGlobalTasks.length
-  const runningVideoTaskIds = useMemo(
-    () => globalTasks
-      .filter((task) => task.kind === 'script_video' && task.status === 'running')
-      .map((task) => task.id)
-      .sort()
-      .join(','),
-    [globalTasks],
-  )
-  const runningVideoTasks = useMemo(
-    () => globalTasks
-      .filter((task) => task.kind === 'script_video' && task.status === 'running')
-      .map((task) => ({ id: task.id, progress: task.progress })),
-    // Progress updates must not recreate the poller; task membership is the
-    // only input that matters here.
-    [runningVideoTaskIds],
-  )
-
-  // The task center owns video-task polling. Practice pages submit a job once
-  // and remain stable; opening this drawer checks backend AdminTask progress
-  // every 10 seconds and stops naturally on a terminal status.
+  // Background ScriptVideoTaskMonitor owns the poll loop. Opening the drawer
+  // only triggers an immediate one-shot refresh for a snappy UI.
   useEffect(() => {
     if (!open) return
-    const videoTasks = runningVideoTasks
-    if (videoTasks.length === 0) return
     let alive = true
-    const refresh = async () => {
-      await Promise.all(videoTasks.map(async (task) => {
-        const workId = task.id.startsWith('script-video:') ? task.id.slice('script-video:'.length) : ''
-        if (!workId) return
-        try {
-          const result = await scriptCommunityApi.renderStatus(workId)
-          if (!alive) return
-          const progress = result.task?.progress ?? task.progress
-          if (result.task?.status === 'completed' || (result.work.status === 'ready' && Boolean(result.work.videoAssetId))) {
-            updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: t('learning.videoTaskReady') })
-          } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
-            updateGlobalTask(task.id, {
-              status: 'error',
-              progress,
-              stepLabel: result.task?.status === 'canceled' ? t('learning.videoTaskCanceled') : t('scripts.videoGenerateFailed'),
-              error: result.work.renderError || result.task?.errorMessage || undefined,
-            })
-          } else {
-            updateGlobalTask(task.id, { progress, stepLabel: result.task?.currentStep || t('learning.videoTaskGenerating') })
-          }
-        } catch (error) {
-          console.warn('[task-center] video task status refresh failed', { workId, error })
-        }
-      }))
-    }
-    void refresh()
-    // Keep exactly one poller while the drawer is visible. Depending on the
-    // full task objects here restarted the effect after every progress update,
-    // producing an immediate request loop that could lock up the drawer.
-    const timer = window.setInterval(() => void refresh(), 15_000)
-    return () => { alive = false; window.clearInterval(timer) }
-  }, [open, runningVideoTaskIds, runningVideoTasks, updateGlobalTask, t])
+    void refreshRunningScriptVideoTasks({
+      ready: t('learning.videoTaskReady'),
+      canceled: t('learning.videoTaskCanceled'),
+      failed: t('scripts.videoGenerateFailed'),
+      generating: t('learning.videoTaskGenerating'),
+      timedOut: t('learning.videoTaskTimedOut'),
+    }).finally(() => {
+      if (!alive) return
+    })
+    return () => { alive = false }
+  }, [open, t])
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

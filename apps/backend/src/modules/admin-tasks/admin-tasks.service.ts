@@ -28,6 +28,14 @@ import {
   type TextLibraryFilter,
   type VocabularyLibraryFilter,
 } from './jobs/library-list-scope';
+import {
+  SCRIPT_VIDEO_ENGINE_KEY,
+  SCRIPT_VIDEO_PRESET_KEY,
+  SCRIPT_VIDEO_REMOTION_CONCURRENCY_KEY,
+  buildScriptVideoRenderOptions,
+  summarizeScriptVideoFrames,
+  type ScriptVideoRenderOptions,
+} from './remotion/script-video-render-options';
 
 @Injectable()
 export class AdminTasksService implements OnModuleInit {
@@ -321,16 +329,37 @@ export class AdminTasksService implements OnModuleInit {
     return { ...task, bullJobId: job.id };
   }
 
+  async getScriptVideoRenderOptions(): Promise<ScriptVideoRenderOptions> {
+    const rows = await this.prisma.systemConfig.findMany({
+      where: {
+        key: {
+          in: [
+            SCRIPT_VIDEO_ENGINE_KEY,
+            SCRIPT_VIDEO_PRESET_KEY,
+            SCRIPT_VIDEO_REMOTION_CONCURRENCY_KEY,
+          ],
+        },
+      },
+      select: { key: true, value: true },
+    });
+    const map = new Map(rows.map((row) => [row.key, row.value]));
+    return buildScriptVideoRenderOptions({
+      engine: map.get(SCRIPT_VIDEO_ENGINE_KEY),
+      preset: map.get(SCRIPT_VIDEO_PRESET_KEY),
+      remotionConcurrency: map.get(SCRIPT_VIDEO_REMOTION_CONCURRENCY_KEY),
+    });
+  }
+
   async enqueueScriptVideo(workId: string, userId: string, frames: unknown[]) {
     const work = await this.prisma.scriptWork.findFirst({
       where: { id: workId, userId },
       select: { id: true, title: true },
     });
     if (!work) throw new NotFoundException('作品不存在');
+    const renderOptions = await this.getScriptVideoRenderOptions();
     const framesForQueue = frames.map((frame: any) => {
       const backgroundUrl = typeof frame?.background?.url === 'string' ? frame.background.url : undefined;
       const spriteUrl = typeof frame?.sprite?.url === 'string' ? frame.sprite.url : undefined;
-      const avatarUrl = typeof frame?.sprite?.avatarUrl === 'string' ? frame.sprite.avatarUrl : undefined;
       const isLocal = (url?: string) => Boolean(url && (
         url.startsWith('capacitor://')
         || url.includes('/_capacitor_file_/')
@@ -344,20 +373,19 @@ export class AdminTasksService implements OnModuleInit {
           : frame?.background,
         sprite: frame?.sprite
           ? {
-              ...frame.sprite,
+              speaker: frame.sprite.speaker,
+              expression: frame.sprite.expression,
+              position: frame.sprite.position,
               url: isLocal(spriteUrl) ? undefined : spriteUrl,
-              avatarUrl: isLocal(avatarUrl) ? undefined : avatarUrl,
             }
           : frame?.sprite,
       };
     });
+    const framesMeta = summarizeScriptVideoFrames(framesForQueue);
     console.log('[script-video] queued render payload', {
       workId,
-      frames: framesForQueue.length,
-      backgrounds: framesForQueue.filter((frame: any) => Boolean(frame?.background?.url)).length,
-      sprites: framesForQueue.filter((frame: any) => Boolean(frame?.sprite?.url)).length,
-      avatars: framesForQueue.filter((frame: any) => Boolean(frame?.sprite?.avatarUrl)).length,
-      audio: framesForQueue.filter((frame: any) => Boolean(frame?.resolvedAudioUrl)).length,
+      renderOptions,
+      ...framesMeta,
     });
     const task = await this.prisma.adminTask.create({
       data: {
@@ -367,12 +395,37 @@ export class AdminTasksService implements OnModuleInit {
         targetId: work.id,
         createdById: userId,
         totalItems: framesForQueue.length,
-        payload: { workId, userId, frames: framesForQueue } as Prisma.InputJsonValue,
+        payload: {
+          workId,
+          userId,
+          frames: framesForQueue,
+          framesMeta,
+          renderOptions,
+        } as Prisma.InputJsonValue,
       },
     });
-    const job = await this.videoQueue.add(SCRIPT_VIDEO_RENDER_JOB, { taskId: task.id, workId, userId, frames: framesForQueue });
+    const job = await this.videoQueue.add(SCRIPT_VIDEO_RENDER_JOB, {
+      taskId: task.id,
+      workId,
+      userId,
+      frames: framesForQueue,
+      renderOptions,
+    });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '视频任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(
+      task.id,
+      'info',
+      `视频任务已入队 · 引擎=${renderOptions.engine} · 预设=${renderOptions.preset} · ${renderOptions.width}x${renderOptions.height}@${renderOptions.fps} · 帧=${framesMeta.frameCount} · 音频=${framesMeta.audioCount} · 已知时长=${framesMeta.measuredDurationCount}`,
+      {
+        step: 'queued',
+        meta: {
+          workId,
+          userId,
+          renderOptions,
+          framesMeta,
+        },
+      },
+    );
     return task;
   }
 
@@ -1665,6 +1718,8 @@ export class AdminTasksService implements OnModuleInit {
         retryItems: payload?.retryItems,
         topicId: payload?.topicId,
         createdById: payload?.createdById || userId,
+        // Prefer live admin settings on force-run; fall back to payload snapshot.
+        renderOptions: payload?.renderOptions,
       }, {
         lifo: true,
       });

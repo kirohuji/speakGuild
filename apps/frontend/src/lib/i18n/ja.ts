@@ -1846,6 +1846,7 @@ const ja = {
       videoGeneration: '動画生成',
       videoTaskCanceled: '動画生成をキャンセルしました',
       videoTaskGenerating: 'バックグラウンドで生成中',
+      videoTaskTimedOut: '生成がタイムアウトしました。マイ作品を確認するか再試行してください',
       videoTaskReady: '動画が生成されました。「マイ作品」から公開できます',
     },
     immersivePlayer: {
@@ -2454,7 +2455,7 @@ const ja = {
       requestAiReview: 'AI評価',
       dialogueReplayTab: '履歴再生',
       aiReviewTab: 'AI評価',
-      setPublishVersion: '公開版に設定',
+      setPublishVersion: '公開する',
       currentPublishVersion: '現在の公開版',
       switchingVersion: '切り替え中…',
       scriptLabel: '脚本「{{title}}」',

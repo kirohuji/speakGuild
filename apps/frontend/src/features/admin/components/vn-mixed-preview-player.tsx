@@ -535,7 +535,7 @@ export function VnMixedPreviewPlayer({
           {practiceMode && onGenerateVideo && (
             <button
               type="button"
-              disabled={videoSubmitting || videoQueued || videoCompleted}
+              disabled={videoSubmitting || videoQueued}
               onClick={onGenerateVideo}
               className={cn(
                 'flex size-8 shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-45',
@@ -543,9 +543,17 @@ export function VnMixedPreviewPlayer({
                   ? 'bg-muted text-muted-foreground hover:bg-muted/75 hover:text-foreground'
                   : 'bg-white/8 text-white/70 hover:bg-white/12 hover:text-white',
               )}
-              title={videoCompleted ? '演出视频已生成并发布' : videoQueued ? '视频已提交后台生成' : videoSubmitting ? '正在提交视频任务' : '生成演出视频'}
+              title={
+                videoQueued
+                  ? '视频已提交后台生成'
+                  : videoSubmitting
+                    ? '正在提交视频任务'
+                    : videoCompleted
+                      ? '重新生成视频'
+                      : '生成演出视频'
+              }
             >
-              {videoCompleted ? <CheckCircle2 className="size-4 text-emerald-500" /> : <Film className={cn('size-4', videoSubmitting && 'animate-pulse')} />}
+              <Film className={cn('size-4', videoSubmitting && 'animate-pulse')} />
             </button>
           )}
 
