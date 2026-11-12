@@ -39,3 +39,5 @@ scripts/audio-to-srt.ps1
 exports
 reports/
 /scripts/
+.delta/
+.zed/

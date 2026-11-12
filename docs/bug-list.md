@@ -29,3 +29,4 @@ http://localhost:3001/api/v1/manyu/sync/pull?cursors=%7B%22expressionItems%22:%2
 25. 有一些页面的懒加载和sleton加载可以不需要
 26. 打卡默认可以不显示,
 27. 可以增加一个功能就是,insight-dialog重新生成,在移动端,更新到后端,然后前端对应的离线缓存也更新
+28. 市场界面更新一下
