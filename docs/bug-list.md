@@ -30,3 +30,5 @@ http://localhost:3001/api/v1/manyu/sync/pull?cursors=%7B%22expressionItems%22:%2
 26. 打卡默认可以不显示,
 27. 可以增加一个功能就是,insight-dialog重新生成,在移动端,更新到后端,然后前端对应的离线缓存也更新
 28. 市场界面更新一下
+29. 尽量不要可以随便让用户在页面复制
+30. 关于写作包之类的 很多地方border 没有处理样式
