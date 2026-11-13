@@ -109,7 +109,7 @@ export function WritingSessionPage() {
           <p className="font-medium text-foreground">{t('learning.writingNotFound')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('learning.backToPackHint')}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button>
+        <Button variant="secondary" className="border-0 shadow-none" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button>
       </div>
     )
   }
@@ -277,7 +277,7 @@ function WritingPreparePage({
             ) : (
               <p className="text-sm leading-6 text-muted-foreground">{t('learning.readGuideFirst')}</p>
             )}
-            <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={onOpenGuide}>
+            <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" size="default" onClick={onOpenGuide}>
               <BookOpen className="size-4" />{t('learning.teachingGuide')}
             </Button>
           </section>
@@ -1416,7 +1416,7 @@ function WritingSupportDrawer({
         {!showAnswer ? <>
           <p className="mb-4 text-sm leading-6 text-muted-foreground"></p>
           {explanation ? <MarkdownRenderer content={explanation} className="text-sm leading-6 prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1" /> : <p className="py-5 text-sm text-muted-foreground">{t('learning.noWritingSupport')}</p>}
-          {referenceAnswer && <div className="mt-5"><Button variant="outline" className="w-full" onClick={() => setShowAnswer(true)}>{hasAttempt ? t('learning.viewReferenceAfterTry') : t('learning.viewReferenceAnyway')}</Button><p className="mt-2 text-center text-[11px] leading-5 text-muted-foreground">{t('learning.writingSupportHint')}</p></div>}
+          {referenceAnswer && <div className="mt-5"><Button variant="secondary" className="w-full border-0 shadow-none" onClick={() => setShowAnswer(true)}>{hasAttempt ? t('learning.viewReferenceAfterTry') : t('learning.viewReferenceAnyway')}</Button><p className="mt-2 text-center text-[11px] leading-5 text-muted-foreground">{t('learning.writingSupportHint')}</p></div>}
         </> : <>
           <button type="button" onClick={() => setShowAnswer(false)} className="mb-3 text-xs font-medium text-primary">{t('learning.backToWritingSupport')}</button>
           <p className="mb-3 text-sm leading-6 text-muted-foreground"></p>

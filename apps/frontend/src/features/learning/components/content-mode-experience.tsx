@@ -73,7 +73,7 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
               <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{t('learning.topicCountHint', { count: unit.trainingTopics.length })}</p>
             </div>
           </div>
-          <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">{t('learning.topicCount', { count: unit.trainingTopics.length })}</Badge>
+          <Badge variant="secondary" className="shrink-0 rounded-full border-0 text-[11px] shadow-none">{t('learning.topicCount', { count: unit.trainingTopics.length })}</Badge>
         </div>
         <div className="space-y-2">
           {topicPageItems.items.map((topic, index) => {

@@ -114,7 +114,21 @@ export const useHomeStore = create<HomeStore>()((set, getState) => ({
       }
       return result.message
     } catch (e) {
-      set({ checkInLoading: false })
+      const message = String((e as any)?.response?.data?.message || (e as Error)?.message || '')
+      // 弱网未拉到状态时用户可能点到「已签到」接口：按已打卡收敛，避免反复点
+      if (message.includes('已经签到') || /already\s*checked\s*in/i.test(message)) {
+        try {
+          const status = await pointsApi.getCheckInStatus()
+          set({ checkInStatus: status, checkInLoading: false })
+        } catch {
+          set({
+            checkInStatus: { checkedIn: true, todayPoints: 0, currentStreak: 0 },
+            checkInLoading: false,
+          })
+        }
+      } else {
+        set({ checkInLoading: false })
+      }
       throw e
     }
   },

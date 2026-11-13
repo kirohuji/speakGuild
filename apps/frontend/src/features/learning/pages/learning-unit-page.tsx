@@ -409,7 +409,7 @@ export function LearningUnitPage() {
             : t('learning.redownloadPack')}
         </Button>
       ) : (
-        <Button variant="outline" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
+        <Button variant="secondary" className="border-0 shadow-none" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
       )}
     </div>
   )
@@ -847,7 +847,7 @@ function PracticeTopicCard({
         {topic.activeChunks.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5 rounded-md bg-background/45 p-2.5">
             {topic.activeChunks.slice(0, 3).map((chunk) => (
-              <Badge key={chunk.id} variant="outline" className="rounded-full px-2 text-[10px]">
+              <Badge key={chunk.id} variant="secondary" className="rounded-full border-0 px-2 text-[10px] shadow-none">
                 {chunk.text}
               </Badge>
             ))}

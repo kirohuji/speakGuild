@@ -268,7 +268,7 @@ export function LearningNotebooksPage() {
       )}
 
       <Drawer open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
-        <DrawerContent className="rounded-t-[28px] drawer-surface">
+        <DrawerContent className="rounded-t-[28px] bg-background drawer-surface">
           {(mode === 'create' || mode === 'rename') && (
             <>
               <DrawerHeader className="text-left">
@@ -309,8 +309,8 @@ export function LearningNotebooksPage() {
               </DrawerHeader>
               <div className="flex flex-col gap-2 px-4">
                 <Button
-                  variant="outline"
-                  className="justify-start"
+                  variant="secondary"
+                  className="justify-start border-0 shadow-none"
                   onClick={() => {
                     setName(selected.name)
                     setMode('rename')
@@ -318,13 +318,13 @@ export function LearningNotebooksPage() {
                 >
                   {t('learningNotebooks.renameAction')}
                 </Button>
-                <Button variant="destructive" className="justify-start" onClick={() => setMode('delete')}>
+                <Button variant="destructive" className="justify-start border-0 shadow-none" onClick={() => setMode('delete')}>
                   <Trash2 data-icon="inline-start" />
                   {t('learningNotebooks.deleteAction')}
                 </Button>
               </div>
               <DrawerFooter className="bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="outline" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
+                <Button variant="secondary" className="border-0 shadow-none" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
           )}
@@ -338,10 +338,10 @@ export function LearningNotebooksPage() {
                 </DrawerDescription>
               </DrawerHeader>
               <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="outline" className="flex-1" onClick={() => setMode('manage')}>
+                <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setMode('manage')}>
                   {t('learningNotebooks.cancel')}
                 </Button>
-                <Button variant="destructive" className="flex-1" onClick={() => void removeNotebook()} disabled={submitting}>
+                <Button variant="destructive" className="flex-1 border-0 shadow-none" onClick={() => void removeNotebook()} disabled={submitting}>
                   {t('learningNotebooks.deleteAction')}
                 </Button>
               </DrawerFooter>

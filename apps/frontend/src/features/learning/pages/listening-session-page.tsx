@@ -68,7 +68,7 @@ export function ListeningSessionPage() {
           <p className="font-medium text-foreground">{t('learning.listeningNotFound')}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t('learning.backToPackHint')}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button>
+        <Button variant="secondary" className="border-0 shadow-none" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button>
       </div>
     )
   }
@@ -131,7 +131,7 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
           <section className="rounded-lg bg-muted/30 p-4">
             <div className="mb-2 flex items-center gap-2"><Info className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">{t('learning.topicDescription')}</p></div>
             {topic.description?.trim() && <MarkdownRenderer content={topic.description} className="text-muted-foreground prose-p:my-1" />}
-            <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={onOpenGuide}><Headphones className="size-4" />{t('learning.teachingGuide')}</Button>
+            <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" size="default" onClick={onOpenGuide}><Headphones className="size-4" />{t('learning.teachingGuide')}</Button>
           </section>
         )}
 
@@ -425,8 +425,8 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose, onPlaybackProg
 
             {/* 精听模式下的完成按钮 */}
             <Button
-              variant="outline"
-              className="mt-8"
+              variant="secondary"
+              className="mt-8 border-0 shadow-none"
               disabled={completing}
               onClick={handleComplete}
             >

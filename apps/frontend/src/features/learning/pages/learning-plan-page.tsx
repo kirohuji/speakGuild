@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseISO, startOfDay } from 'date-fns'
 import {
-  ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
+  ClipboardList, ShoppingBag, Settings, CircleCheck, CircleDashed,
   CheckCheck, ChevronDown, Filter, Sparkles,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -308,7 +308,6 @@ function WarmupRecordsContent() {
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.feedback}</p>
               )}
             </div>
-            <Eye className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" />
           </div>
         )
       },

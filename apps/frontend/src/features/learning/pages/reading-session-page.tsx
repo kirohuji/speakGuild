@@ -58,7 +58,7 @@ export function ReadingSessionPage() {
   if (loading && (!unit || unit.id !== unitId)) return <MobilePageLoading rows={5} minHeightClassName="min-h-[100dvh]" />
 
   if (!unitId || !topic || unit?.contentMode !== 'reading') {
-    return <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 px-8 text-center"><BookOpen className="size-10 text-muted-foreground/35" /><div><p className="font-medium">{t('learning.readingNotFound')}</p><p className="mt-1 text-sm text-muted-foreground">{t('learning.backToPackHint')}</p></div><Button variant="outline" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button></div>
+    return <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 px-8 text-center"><BookOpen className="size-10 text-muted-foreground/35" /><div><p className="font-medium">{t('learning.readingNotFound')}</p><p className="mt-1 text-sm text-muted-foreground">{t('learning.backToPackHint')}</p></div><Button variant="secondary" className="border-0 shadow-none" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button></div>
   }
 
   return (
@@ -89,7 +89,7 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
           <section className="rounded-lg bg-muted/30 p-4">
             <div className="mb-2 flex items-center gap-2"><BookOpen className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">{t('learning.readingGuide')}</p></div>
             {topic.description?.trim() && <MarkdownRenderer content={topic.description} className="text-muted-foreground prose-p:my-1" />}
-            <Button variant="outline" className="mt-4 min-h-11 w-full" onClick={onOpenGuide}><BookOpen className="size-4" />{t('learning.teachingGuide')}</Button>
+            <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" onClick={onOpenGuide}><BookOpen className="size-4" />{t('learning.teachingGuide')}</Button>
           </section>
         )}
 

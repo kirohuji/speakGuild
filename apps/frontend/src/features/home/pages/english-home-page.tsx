@@ -79,7 +79,14 @@ export function EnglishHomePage() {
       const message = await storeCheckIn()
       toast.success(message)
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || t('home.checkInFailed'))
+      const message = String(e?.response?.data?.message || e?.message || '')
+      // 网络差时状态可能没拉到；若服务端已签到，按已打卡处理并隐藏按钮
+      if (message.includes('已经签到') || /already\s*checked\s*in/i.test(message)) {
+        await fetchCheckInStatus()
+        toast.success(message)
+        return
+      }
+      toast.error(message || t('home.checkInFailed'))
     }
   }
 
@@ -178,8 +185,8 @@ export function EnglishHomePage() {
         {/* 特殊消息横幅 */}
         <SpecialBanner />
 
-        {/* 签到按钮 — 签过则隐藏 */}
-        {!checkInStatus?.checkedIn && (
+        {/* 签到按钮 — 仅在明确未签到时显示；状态未知时默认隐藏，避免弱网误显 */}
+        {checkInStatus?.checkedIn === false && (
         <motion.div
           className="relative z-10"
           initial={{ opacity: 0, y: 12 }}

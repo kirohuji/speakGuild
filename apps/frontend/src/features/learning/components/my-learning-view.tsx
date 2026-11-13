@@ -143,7 +143,7 @@ export function MyLearningView({
       <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="mt-4 text-sm text-muted-foreground">{t('learning.notStarted')}</p>
-        <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={(e) => { e.currentTarget.blur(); onGoToShop() }} data-spotlight="go-to-shop">
+        <Button variant="secondary" size="sm" className="mt-4 rounded-full border-0 shadow-none" onClick={(e) => { e.currentTarget.blur(); onGoToShop() }} data-spotlight="go-to-shop">
           {t('learning.goToShop')}
         </Button>
       </div>
@@ -657,7 +657,7 @@ function MyUnitCard({
             </DialogDescription>
           </DialogHeader>
           <div className="mt-5 flex gap-3">
-            <Button variant="outline" className="flex-1 rounded-xl" disabled={restarting} onClick={() => setConfirmRestart(false)}>
+            <Button variant="secondary" className="flex-1 rounded-xl border-0 shadow-none" disabled={restarting} onClick={() => setConfirmRestart(false)}>
               {t('common.cancel')}
             </Button>
             <Button className="flex-1 rounded-xl" disabled={restarting} onClick={handleRestart}>

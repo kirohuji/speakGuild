@@ -1135,16 +1135,16 @@ export function ExpressionLibraryPage() {
       </Dialog>
 
       <Drawer open={batchOpen} onOpenChange={(open) => { setBatchOpen(open); if (!open) setBatchCreatingNotebook(false) }}>
-        <DrawerContent className="max-h-[86svh] rounded-t-[28px] drawer-surface">
+        <DrawerContent className="max-h-[86svh] rounded-t-[28px] bg-background drawer-surface">
           <DrawerHeader className="text-left"><DrawerTitle>{t('expressionLib.batchEdit')}</DrawerTitle><DrawerDescription>{t('expressionLib.selectedCount', { count: selectedNotebookItemIds.length })}</DrawerDescription></DrawerHeader>
           {!batchAction ? (
             <div className="grid gap-2 px-4">
-              <Button variant="outline" className="justify-start" onClick={() => setBatchAction('notebook')}>{t('expressionLib.addToNotebook')}</Button>
-              <Button variant="outline" className="justify-start" onClick={() => setBatchAction('status')}>{t('expressionLib.changeStatus')}</Button>
+              <Button variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchAction('notebook')}>{t('expressionLib.addToNotebook')}</Button>
+              <Button variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchAction('status')}>{t('expressionLib.changeStatus')}</Button>
             </div>
           ) : batchAction === 'status' ? (
             <div className="grid grid-cols-3 gap-2 px-4">
-              {(['learning', 'reviewing', 'mastered'] as MasteryStatus[]).map((status) => <button key={status} type="button" onClick={() => setBatchStatus(status)} className={cn('rounded-xl border px-2 py-3 text-xs font-medium', batchStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>{status === 'learning' ? t('expressionLib.learning') : status === 'reviewing' ? t('expressionLib.reviewing') : t('expressionLib.mastered')}</button>)}
+              {(['learning', 'reviewing', 'mastered'] as MasteryStatus[]).map((status) => <button key={status} type="button" onClick={() => setBatchStatus(status)} className={cn('rounded-xl px-2 py-3 text-xs font-medium transition-colors', batchStatus === status ? 'bg-primary/10 text-primary' : 'bg-muted/40 text-muted-foreground')}>{status === 'learning' ? t('expressionLib.learning') : status === 'reviewing' ? t('expressionLib.reviewing') : t('expressionLib.mastered')}</button>)}
             </div>
           ) : batchCreatingNotebook ? (
             <div className="px-4">
@@ -1166,14 +1166,14 @@ export function ExpressionLibraryPage() {
                     </span>
                   </button>
                 })}
-                <Button type="button" variant="outline" className="justify-start" onClick={() => setBatchCreatingNotebook(true)}><Plus data-icon="inline-start" />{t('learningNotebooks.createNew')}</Button>
+                <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchCreatingNotebook(true)}><Plus data-icon="inline-start" />{t('learningNotebooks.createNew')}</Button>
               </div>
             </div>
           )}
           <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <Button
-              variant={batchCreatingNotebook ? 'secondary' : 'outline'}
-              className={cn('flex-1', batchCreatingNotebook && 'border-0 shadow-none')}
+              variant="secondary"
+              className="flex-1 border-0 shadow-none"
               onClick={() => batchCreatingNotebook ? setBatchCreatingNotebook(false) : batchAction ? setBatchAction(null) : setBatchOpen(false)}
             >
               {batchCreatingNotebook || batchAction ? t('learningNotebooks.back') : t('learningNotebooks.cancel')}
