@@ -1,67 +1,40 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { motion, useInView } from 'motion/react'
 import {
-  Mic, BookOpen, TrendingUp,
-  ArrowRight, Star, GraduationCap,
-  MessageSquare, Play, Globe, CheckCircle,
-  Smartphone,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'motion/react'
+import {
+  ArrowRight,
+  AudioLines,
+  BrainCircuit,
+  CalendarRange,
+  Footprints,
+  Gauge,
+  Gem,
+  MicVocal,
+  Route,
+  Speech,
+  Telescope,
+  VenetianMask,
+  WholeWord,
+  Workflow,
 } from 'lucide-react'
-import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/providers/auth-provider'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
-
-/* ═══════════════════════════════════════════════════════════════
-   动画工具
-   ═══════════════════════════════════════════════════════════════ */
-
-function Reveal({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: React.ReactNode
-  className?: string
-  delay?: number
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-100px' })
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Hero 背景装饰
-   ═══════════════════════════════════════════════════════════════ */
-
-function HeroBg() {
-  return (
-    <>
-      <div className="absolute right-[-8rem] top-[-12rem] size-[36rem] rounded-full bg-primary/[0.08] blur-3xl" />
-      <div className="absolute bottom-[-10rem] left-[-8rem] size-[28rem] rounded-full bg-amber-300/[0.09] blur-3xl" />
-      <div className="absolute left-[38%] top-[18%] size-48 rounded-full bg-sky-300/[0.08] blur-3xl" />
-      <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_center,rgba(148,163,184,.32)_1px,transparent_1px)] [background-size:22px_22px]" />
-    </>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   主组件
-   ═══════════════════════════════════════════════════════════════ */
+import { LandingFooter, LandingHeader } from '@/features/system/components/landing-shell'
+import {
+  DriftAtmosphere,
+  Float,
+  Reveal,
+  StaggerText,
+  landingEase,
+} from '@/features/system/components/landing-motion'
 
 export function PortalPage() {
   const { t } = useTranslation()
@@ -69,20 +42,29 @@ export function PortalPage() {
   const { session } = useAuth()
   const isLoggedIn = !!session
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const reduce = useReducedMotion()
+
+  const heroRef = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  })
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 40])
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.9], [1, reduce ? 1 : 0.45])
 
   const whatWeHave = [
-    { icon: Mic, title: t('portal.whatWeHave1Title'), desc: t('portal.whatWeHave1Desc') },
-    { icon: BookOpen, title: t('portal.whatWeHave2Title'), desc: t('portal.whatWeHave2Desc') },
-    { icon: Play, title: t('portal.whatWeHave3Title'), desc: t('portal.whatWeHave3Desc') },
+    { icon: CalendarRange, title: t('portal.whatWeHave1Title'), desc: t('portal.whatWeHave1Desc') },
+    { icon: WholeWord, title: t('portal.whatWeHave2Title'), desc: t('portal.whatWeHave2Desc') },
+    { icon: BrainCircuit, title: t('portal.whatWeHave3Title'), desc: t('portal.whatWeHave3Desc') },
   ]
 
   const features = [
-    { icon: Mic, title: t('portal.feature1Title'), desc: t('portal.feature1Desc') },
-    { icon: BookOpen, title: t('portal.feature2Title'), desc: t('portal.feature2Desc') },
-    { icon: Play, title: t('portal.feature3Title'), desc: t('portal.feature3Desc') },
-    { icon: Globe, title: t('portal.feature4Title'), desc: t('portal.feature4Desc') },
-    { icon: TrendingUp, title: t('portal.feature5Title'), desc: t('portal.feature5Desc') },
-    { icon: Star, title: t('portal.feature6Title'), desc: t('portal.feature6Desc') },
+    { icon: CalendarRange, title: t('portal.feature1Title'), desc: t('portal.feature1Desc') },
+    { icon: MicVocal, title: t('portal.feature2Title'), desc: t('portal.feature2Desc') },
+    { icon: WholeWord, title: t('portal.feature3Title'), desc: t('portal.feature3Desc') },
+    { icon: Route, title: t('portal.feature4Title'), desc: t('portal.feature4Desc') },
+    { icon: AudioLines, title: t('portal.feature5Title'), desc: t('portal.feature5Desc') },
+    { icon: Gauge, title: t('portal.feature6Title'), desc: t('portal.feature6Desc') },
   ]
 
   const steps = [
@@ -93,69 +75,71 @@ export function PortalPage() {
   ]
 
   const audience = [
-    { icon: GraduationCap, title: t('portal.audience1Title'), desc: t('portal.audience1Desc') },
-    { icon: Globe, title: t('portal.audience2Title'), desc: t('portal.audience2Desc') },
-    { icon: MessageSquare, title: t('portal.audience3Title'), desc: t('portal.audience3Desc') },
-    { icon: Star, title: t('portal.audience4Title'), desc: t('portal.audience4Desc') },
-  ]
-
-  const platforms = [
-    { icon: Smartphone, label: 'iOS' },
-    { icon: Smartphone, label: 'Android' },
+    { icon: Telescope, title: t('portal.audience1Title'), desc: t('portal.audience1Desc') },
+    { icon: Footprints, title: t('portal.audience2Title'), desc: t('portal.audience2Desc') },
+    { icon: Speech, title: t('portal.audience3Title'), desc: t('portal.audience3Desc') },
+    { icon: Gem, title: t('portal.audience4Title'), desc: t('portal.audience4Desc') },
   ]
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">
+      <LandingHeader />
+
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-40 top-[32%] size-80 rounded-full bg-primary/[0.04] blur-3xl" />
-        <div className="absolute -left-40 top-[62%] size-80 rounded-full bg-amber-300/[0.05] blur-3xl" />
+        <motion.div
+          className="absolute -right-40 top-[32%] size-80 rounded-full bg-primary/[0.04] blur-3xl"
+          animate={reduce ? undefined : { x: [0, -20, 10, 0], y: [0, 16, -10, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute -left-40 top-[62%] size-80 rounded-full bg-amber-300/[0.05] blur-3xl"
+          animate={reduce ? undefined : { x: [0, 18, -12, 0], y: [0, -14, 12, 0] }}
+          transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
+        />
       </div>
 
-      {/* ═══════════════════════════════════════════════════════
-          HERO — minimals 风格：左右双栏
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-32 sm:pb-24 lg:pt-40 lg:pb-32 overflow-hidden">
-        <HeroBg />
+      <section
+        ref={heroRef}
+        className="relative overflow-hidden px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16 lg:px-8 lg:pb-32 lg:pt-24"
+      >
+        <DriftAtmosphere variant="dots" />
 
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-            {/* ── 左栏：文字 ── */}
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 mx-auto max-w-6xl">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+              <motion.p
+                initial={reduce ? false : { opacity: 0, y: 10, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.55, ease: landingEase }}
+                className="mb-6 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground"
               >
-                <Badge variant="secondary" className="mb-6 text-[11px] font-medium tracking-wide uppercase">
-                  {t('portal.heroBadge')}
-                </Badge>
+                {t('portal.coreCapabilities')}
+              </motion.p>
 
-                {/* Logo */}
-                <img
-                  src="/logo.png"
-                  alt="漫语町"
-                  className="mb-5 h-12 w-auto dark:invert"
+              <h1 className="text-[2.5rem] font-extrabold leading-[1.06] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                <StaggerText text={t('portal.heroTitle1')} className="block" delay={0.06} />
+                <StaggerText
+                  text={t('portal.heroTitle2')}
+                  delay={0.22}
+                  className="block"
+                  unitClassName="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
                 />
+              </h1>
 
-                <h1 className="text-[2.5rem] sm:text-5xl lg:text-6xl font-extrabold leading-[1.06] tracking-tight text-foreground">
-                  {t('portal.heroTitle1')}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                    {t('portal.heroTitle2')}
-                  </span>
-                </h1>
+              <motion.p
+                initial={reduce ? false : { opacity: 0, y: 14, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.65, delay: 0.45, ease: landingEase }}
+                className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg"
+              >
+                {t('portal.heroDesc')}
+              </motion.p>
 
-                <p className="mt-6 max-w-lg text-base sm:text-lg text-muted-foreground leading-relaxed">
-                  {t('portal.heroDesc')}
-                </p>
-              </motion.div>
-
-              {/* CTA */}
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
+                initial={reduce ? false : { opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="mt-10 flex flex-col sm:flex-row gap-3"
+                transition={{ delay: 0.6, duration: 0.5, ease: landingEase }}
+                className="mt-10 flex flex-col gap-3 sm:flex-row"
               >
                 <Button
                   size="primary-lg"
@@ -163,158 +147,154 @@ export function PortalPage() {
                   onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
                 >
                   {isLoggedIn ? t('portal.startPractice') : t('portal.startFree')}
-                  <ArrowRight className="size-5" />
+                  <ArrowRight data-icon="inline-end" />
                 </Button>
-                {/* <Button
-                  variant="secondary"
-                  size="lg"
-                  className="border-0 shadow-none"
-                  onClick={() => navigate(isLoggedIn ? '/script' : '/auth/register')}
-                >
-                  <Play className="size-5" />
-                  {t('portal.tryScript')}
-                </Button> */}
               </motion.div>
 
-              {/* 平台支持 — minimals "Available For" 风格 */}
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={reduce ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="mt-12"
+                transition={{ delay: 0.75, duration: 0.5 }}
+                className="mt-12 flex items-center gap-6 text-sm text-muted-foreground"
               >
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  {t('portal.availableLabel')}
-                </p>
-                <div className="flex items-center gap-5">
-                  {platforms.map(({ icon: Icon, label }) => (
-                    <div key={label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Icon className="size-4" />
-                      <span>{label}</span>
-                    </div>
-                  ))}
-                </div>
+                <span className="inline-flex items-center gap-2">
+                  <AudioLines className="size-4" />
+                  {t('portal.platformIos')}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Workflow className="size-4" />
+                  {t('portal.platformIpad')}
+                </span>
               </motion.div>
             </div>
 
-            {/* ── 右栏：视觉区 — 简洁的装饰性卡片群 ── */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="hidden lg:block relative"
+              initial={reduce ? false : { opacity: 0, x: 28, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.28, duration: 0.75, ease: landingEase }}
+              className="relative hidden lg:block"
             >
               <div className="relative aspect-[4/3]">
-                {/* 主卡片 */}
                 <div className="absolute inset-0 flex flex-col justify-center rounded-2xl border-0 bg-muted/30 p-8 shadow-none">
-                  <div className="space-y-4">
+                  <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="size-12 rounded-xl bg-primary/[0.07] flex items-center justify-center">
-                        <Mic className="size-6 text-primary" />
-                      </div>
+                      <Float className="flex size-12 items-center justify-center rounded-xl bg-primary/[0.07]">
+                        <MicVocal className="size-6 text-primary" />
+                      </Float>
                       <div>
                         <div className="text-sm font-bold text-foreground">{t('portal.scenePractice')}</div>
                         <div className="text-xs text-muted-foreground">{t('portal.aiFeedback')}</div>
                       </div>
                     </div>
 
-                    {/* 模拟对话气泡 */}
-                    <div className="space-y-3 mt-6">
-                      <div className="flex items-start gap-2.5">
-                        <div className="shrink-0 size-8 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700">Q</div>
+                    <div className="mt-6 flex flex-col gap-3">
+                      <motion.div
+                        initial={reduce ? false : { opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.55, duration: 0.5, ease: landingEase }}
+                        className="flex items-start gap-2.5"
+                      >
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
+                          Q
+                        </div>
                         <div className="rounded-2xl rounded-tl-sm bg-muted/60 px-4 py-2.5 text-sm text-foreground">
                           Can you tell me about your travel experience?
                         </div>
-                      </div>
-                      <div className="flex items-start gap-2.5 justify-end">
+                      </motion.div>
+                      <motion.div
+                        initial={reduce ? false : { opacity: 0, x: 12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.75, duration: 0.5, ease: landingEase }}
+                        className="flex items-start justify-end gap-2.5"
+                      >
                         <div className="rounded-2xl rounded-tr-sm bg-primary/10 px-4 py-2.5 text-sm text-foreground">
                           I went to Japan last year. It was very interesting...
                         </div>
-                        <div className="shrink-0 size-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">A</div>
-                      </div>
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                          A
+                        </div>
+                      </motion.div>
                     </div>
                   </div>
                 </div>
 
-                {/* 浮动小卡片 */}
-                <div className="absolute -bottom-4 -right-4 flex items-center gap-3 rounded-xl border-0 bg-background px-4 py-3 shadow-none">
-                  <div className="size-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle className="size-4 text-emerald-600" />
+                <motion.div
+                  initial={reduce ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.95, duration: 0.5, ease: landingEase }}
+                  className="absolute -bottom-4 -right-4 flex items-center gap-3 rounded-xl border-0 bg-background px-4 py-3 shadow-none"
+                >
+                  <div className="flex size-8 items-center justify-center rounded-full bg-emerald-100">
+                    <BrainCircuit className="size-4 text-emerald-600" />
                   </div>
                   <div className="text-xs font-medium text-foreground">{t('portal.scoreCard')}</div>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          WHAT'S IN MANYUDING — minimals "What's in Minimal" 风格
-          ═══════════════════════════════════════════════════════ */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 lg:pb-36">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-            {/* ── 左栏：迷你功能卡 ── */}
+      <section className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <Reveal>
               <div>
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  {t('portal.coreCapabilities')}
-                </p>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight mb-10">
+                <h2 className="mb-10 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
                   {t('portal.whatsInTitle1')}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.whatsInTitle2')}</span>
+                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    {' '}
+                    {t('portal.whatsInTitle2')}
+                  </span>
                 </h2>
 
-                <div className="space-y-4">
+                <div className="flex flex-col gap-4">
                   {whatWeHave.map((item, i) => (
-                    <motion.div
-                      key={item.title}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1, duration: 0.5 }}
-                      className="flex gap-4 rounded-lg bg-muted/30 p-4 transition-colors duration-200 hover:bg-muted/50"
-                    >
-                      <div className="shrink-0 flex size-10 items-center justify-center rounded-lg bg-primary/[0.06]">
-                        <item.icon className="size-5 text-primary" />
+                    <Reveal key={item.title} delay={i * 0.1} y={16}>
+                      <div className="flex gap-4 rounded-lg bg-muted/30 p-4 transition-colors duration-200 hover:bg-muted/50">
+                        <Float
+                          delay={i * 0.25}
+                          className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/[0.06]"
+                        >
+                          <item.icon className="size-5 text-primary" />
+                        </Float>
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">{item.title}</h3>
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.desc}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-foreground text-sm">{item.title}</h3>
-                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                      </div>
-                    </motion.div>
+                    </Reveal>
                   ))}
                 </div>
               </div>
             </Reveal>
 
-            {/* ── 右栏：统计数据可视化 ── */}
             <Reveal delay={0.15}>
-              <div className="hidden lg:block relative">
+              <div className="relative hidden lg:block">
                 <div className="rounded-2xl border-0 bg-muted/30 p-10 shadow-none">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-8">{t('portal.learningData')}</p>
-                  <div className="space-y-8">
+                  <p className="mb-8 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {t('portal.learningData')}
+                  </p>
+                  <div className="flex flex-col gap-8">
                     {[
-                      { label: t('portal.statScenes'), value: '50+', pct: '100%' },
-                      { label: t('portal.statChunks'), value: '300+', pct: '100%' },
-                      { label: t('portal.statLevels'), value: '6', pct: '100%' },
-                      { label: t('portal.statUsers'), value: '10,000+', pct: '100%' },
-                    ].map((stat) => (
+                      { label: t('portal.statScenes'), value: t('portal.statScenesValue'), pct: '88%' },
+                      { label: t('portal.statChunks'), value: t('portal.statChunksValue'), pct: '72%' },
+                      { label: t('portal.statLevels'), value: t('portal.statLevelsValue'), pct: '64%' },
+                      { label: t('portal.statUsers'), value: t('portal.statUsersValue'), pct: '80%' },
+                    ].map((stat, i) => (
                       <div key={stat.label}>
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="mb-1.5 flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">{stat.label}</span>
                           <span className="text-sm font-bold text-foreground">{stat.value}</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                           <motion.div
                             initial={{ width: 0 }}
                             whileInView={{ width: stat.pct }}
                             viewport={{ once: true }}
-                            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                            transition={{ duration: 1, delay: i * 0.08, ease: landingEase }}
                             className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
                           />
                         </div>
@@ -323,82 +303,78 @@ export function PortalPage() {
                   </div>
                 </div>
 
-                {/* 浮动小卡片 */}
-                <div className="absolute -bottom-3 -left-3 flex items-center gap-3 rounded-xl border-0 bg-background px-4 py-3 shadow-none">
-                  <TrendingUp className="size-4 text-emerald-500" />
+                <Float
+                  amplitude={3}
+                  className="absolute -bottom-3 -left-3 flex items-center gap-3 rounded-xl border-0 bg-background px-4 py-3 shadow-none"
+                >
+                  <VenetianMask className="size-4 text-primary" />
                   <span className="text-xs font-medium text-foreground">{t('portal.progressFloat')}</span>
-                </div>
+                </Float>
               </div>
             </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          FEATURES GRID — minimals "Highlight features" 风格
-          ═══════════════════════════════════════════════════════ */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 lg:pb-36">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="text-center mb-14 lg:mb-20">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              {t('portal.featuresLabel')}
-            </p>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
+      <section className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36">
+        <div className="mx-auto max-w-6xl">
+          <Reveal className="mb-14 text-center lg:mb-20">
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
               {t('portal.featuresTitle1')}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.featuresTitle2')}</span>
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {' '}
+                {t('portal.featuresTitle2')}
+              </span>
             </h2>
-            <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
-              {t('portal.featuresDesc')}
-            </p>
+            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">{t('portal.featuresDesc')}</p>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {features.map((f, i) => (
-              <Reveal key={f.title} delay={i * 0.05}>
-                <Card className="group h-full rounded-lg border-0 bg-muted/30 shadow-none ring-0 transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
-                  <CardContent className="p-5 lg:p-6">
-                    <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-background/70 transition-colors group-hover:bg-background">
-                      <f.icon className="size-5 text-primary" />
-                    </div>
-                    <h4 className="text-base font-bold text-foreground mb-2">{f.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                  </CardContent>
-                </Card>
+              <Reveal key={f.title} delay={i * 0.05} y={18}>
+                <motion.div whileHover={reduce ? undefined : { y: -3 }} transition={{ duration: 0.25 }}>
+                  <Card className="group h-full rounded-lg border-0 bg-muted/30 shadow-none ring-0 transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
+                    <CardContent className="p-5 lg:p-6">
+                      <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-background/70 transition-colors group-hover:bg-background">
+                        <f.icon className="size-5 text-primary" />
+                      </div>
+                      <h4 className="mb-2 text-base font-bold text-foreground">{f.title}</h4>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          HOW IT WORKS — minimals 双栏风格
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 lg:pb-36">
+      <section className="relative px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36">
         <div className="absolute inset-0 bg-muted/30" />
-        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent" />
+        <div className="absolute left-0 right-0 top-0 h-16 bg-gradient-to-b from-background to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
 
-        <div className="relative max-w-6xl mx-auto">
-          <Reveal className="text-center mb-14 lg:mb-20">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              {t('portal.stepsLabel')}
-            </p>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
+        <div className="relative mx-auto max-w-6xl">
+          <Reveal className="mb-14 text-center lg:mb-20">
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
               {t('portal.stepsTitle1')}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.stepsTitle2')}</span>
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {' '}
+                {t('portal.stepsTitle2')}
+              </span>
             </h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
             {steps.map((s, i) => (
-              <Reveal key={s.num} delay={i * 0.08}>
+              <Reveal key={s.num} delay={i * 0.08} y={20}>
                 <Card className="relative h-full overflow-hidden rounded-lg border-0 bg-background shadow-none ring-0 transition-colors duration-300 hover:bg-background dark:ring-0">
                   <CardContent className="p-5 lg:p-6">
-                    <div className="text-5xl font-extrabold text-primary/[0.12] mb-4 leading-none select-none">
+                    <div className="mb-4 select-none text-5xl font-extrabold leading-none text-primary/[0.12]">
                       {s.num}
                     </div>
-                    <h4 className="text-base font-bold text-foreground mb-2">{s.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                    <h4 className="mb-2 text-base font-bold text-foreground">{s.title}</h4>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
                   </CardContent>
                 </Card>
               </Reveal>
@@ -407,26 +383,19 @@ export function PortalPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          FOR YOU — 双栏布局
-          ═══════════════════════════════════════════════════════ */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 lg:pb-36">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-            {/* 左栏：标题 */}
+      <section className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <Reveal>
               <div>
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  {t('portal.audienceLabel')}
-                </p>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight mb-6">
+                <h2 className="mb-6 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
                   {t('portal.audienceTitle1')}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.audienceTitle2')}</span>
+                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    {' '}
+                    {t('portal.audienceTitle2')}
+                  </span>
                 </h2>
-                <p className="text-muted-foreground leading-relaxed max-w-md">
-                  {t('portal.audienceDesc')}
-                </p>
+                <p className="max-w-md leading-relaxed text-muted-foreground">{t('portal.audienceDesc')}</p>
 
                 <Button
                   variant="secondary"
@@ -435,23 +404,22 @@ export function PortalPage() {
                   onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
                 >
                   {t('portal.startWhere')}
-                  <ArrowRight className="size-4" />
+                  <ArrowRight data-icon="inline-end" />
                 </Button>
               </div>
             </Reveal>
 
-            {/* 右栏：人群卡片 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {audience.map((a, i) => (
-                <Reveal key={a.title} delay={i * 0.08}>
+                <Reveal key={a.title} delay={i * 0.08} y={16}>
                   <div className="rounded-lg bg-muted/30 p-4 transition-colors duration-200 hover:bg-muted/50">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="mb-3 flex items-center gap-3">
                       <div className="flex size-9 items-center justify-center rounded-lg bg-primary/[0.06]">
                         <a.icon className="size-4 text-primary" />
                       </div>
-                      <h4 className="font-bold text-foreground text-sm">{a.title}</h4>
+                      <h4 className="text-sm font-bold text-foreground">{a.title}</h4>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{a.desc}</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{a.desc}</p>
                   </div>
                 </Reveal>
               ))}
@@ -460,42 +428,17 @@ export function PortalPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          FOOTER
-          ═══════════════════════════════════════════════════════ */}
-      <footer>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
-                <span className="font-extrabold text-foreground">漫语町</span>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">{t('portal.footerDesc')}</p>
-            </div>
-
-            {/* Links */}
-            <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground">
-              <button onClick={() => navigate('/system/terms')} className="hover:text-foreground transition-colors">
-                {t('portal.terms')}
-              </button>
-              <button onClick={() => navigate('/system/privacy')} className="hover:text-foreground transition-colors">
-                {t('portal.privacy')}
-              </button>
-              <button onClick={() => setFeedbackOpen(true)} className="hover:text-foreground transition-colors">
-                {t('portal.feedback')}
-              </button>
-            </div>
-          </div>
-
-          <Separator className="my-6" />
-
-          <p className="text-center text-[11px] text-muted-foreground/50">
-            &copy; {new Date().getFullYear()} 漫语町 ManYuDing. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <LandingFooter
+        extraLinks={
+          <button
+            type="button"
+            onClick={() => setFeedbackOpen(true)}
+            className="transition-colors hover:text-foreground"
+          >
+            {t('portal.feedback')}
+          </button>
+        }
+      />
 
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>

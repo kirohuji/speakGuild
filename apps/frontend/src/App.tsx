@@ -158,8 +158,6 @@ export default function App() {
                 <Route path="/invite" element={<InvitePage />} />
 
                 {/* 系统文档 — 懒加载 */}
-                <Route path="/system/terms" element={<SystemTermsPage />} />
-                <Route path="/system/privacy" element={<SystemPrivacyPage />} />
                 <Route path="/system/privacy-children" element={<SystemChildrenPrivacyPage />} />
                 <Route path="/system/permissions" element={<SystemPermissionsPage />} />
                 <Route path="/system/sdk-list" element={<SystemSdkListPage />} />
@@ -175,6 +173,9 @@ export default function App() {
               {!isNative() && <Route path="/company" element={<CompanyPage />} />}
               {!isNative() && <Route path="/marketing" element={<MarketingPage />} />}
               <Route path="/support" element={<SupportPage />} />
+              {/* 隐私政策 / 服务条款 — 与 Marketing、Support 共用官网 Header */}
+              <Route path="/system/privacy" element={<SystemPrivacyPage />} />
+              <Route path="/system/terms" element={<SystemTermsPage />} />
 
               {/* 认证页 — 静态（登录是高频入口） */}
               <Route path="/auth/login" element={<LoginPage />} />

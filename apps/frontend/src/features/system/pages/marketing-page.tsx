@@ -1,35 +1,110 @@
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'motion/react'
 import {
   ArrowRight,
-  BookOpen,
-  CheckCircle2,
+  BookMarked,
   Download,
-  MessageCircle,
-  Mic2,
-  Sparkles,
+  Drama,
+  Headset,
+  Library,
+  MapPinned,
+  MessagesSquare,
+  Orbit,
+  ScrollText,
+  Store,
 } from 'lucide-react'
+import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
+import { LandingFooter, LandingHeader } from '../components/landing-shell'
+import {
+  DriftAtmosphere,
+  Float,
+  Reveal,
+  StaggerText,
+  landingEase,
+} from '../components/landing-motion'
+
+function MomentCarousel({ moments }: { moments: string[] }) {
+  const [active, setActive] = useState(0)
+  const reduce = useReducedMotion()
+
+  useEffect(() => {
+    if (reduce || moments.length === 0) return
+    const id = window.setInterval(() => {
+      setActive((i) => (i + 1) % moments.length)
+    }, 2200)
+    return () => window.clearInterval(id)
+  }, [moments.length, reduce])
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+      {moments.map((moment, i) => {
+        const isActive = i === active
+        return (
+          <motion.span
+            key={moment}
+            initial={reduce ? false : { opacity: 0, y: 12, filter: 'blur(6px)' }}
+            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.06, duration: 0.5, ease: landingEase }}
+            animate={reduce ? undefined : { scale: isActive ? 1.045 : 1 }}
+            className={cn(
+              'rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-500',
+              isActive
+                ? 'bg-primary/[0.12] text-primary'
+                : 'bg-muted/45 text-foreground',
+            )}
+          >
+            {moment}
+          </motion.span>
+        )
+      })}
+    </div>
+  )
+}
 
 export function MarketingPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const embedded = pathname === '/system/marketing'
+  const reduce = useReducedMotion()
+
+  const heroRef = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  })
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 56])
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.85], [1, reduce ? 1 : 0.35])
 
   const pillars = [
-    {
-      icon: BookOpen,
-      title: t('system.marketing.pillarSceneTitle'),
-      text: t('system.marketing.pillarSceneText'),
-    },
-    {
-      icon: Mic2,
-      title: t('system.marketing.pillarAiTitle'),
-      text: t('system.marketing.pillarAiText'),
-    },
-    {
-      icon: MessageCircle,
-      title: t('system.marketing.pillarScriptTitle'),
-      text: t('system.marketing.pillarScriptText'),
-    },
+    { icon: Store, title: t('system.marketing.pillarSceneTitle'), desc: t('system.marketing.pillarSceneText') },
+    { icon: Drama, title: t('system.marketing.pillarAiTitle'), desc: t('system.marketing.pillarAiText') },
+    { icon: Orbit, title: t('system.marketing.pillarScriptTitle'), desc: t('system.marketing.pillarScriptText') },
+  ]
+
+  const features = [
+    { icon: Drama, title: t('system.marketing.feature1Title'), desc: t('system.marketing.feature1Desc') },
+    { icon: MapPinned, title: t('system.marketing.feature2Title'), desc: t('system.marketing.feature2Desc') },
+    { icon: ScrollText, title: t('system.marketing.feature3Title'), desc: t('system.marketing.feature3Desc') },
+    { icon: Download, title: t('system.marketing.feature4Title'), desc: t('system.marketing.feature4Desc') },
+    { icon: MessagesSquare, title: t('system.marketing.feature5Title'), desc: t('system.marketing.feature5Desc') },
+    { icon: Library, title: t('system.marketing.feature6Title'), desc: t('system.marketing.feature6Desc') },
+  ]
+
+  const steps = [
+    { icon: Store, num: '01', title: t('system.marketing.step1Title'), desc: t('system.marketing.step1Desc') },
+    { icon: Download, num: '02', title: t('system.marketing.step2Title'), desc: t('system.marketing.step2Desc') },
+    { icon: MapPinned, num: '03', title: t('system.marketing.step3Title'), desc: t('system.marketing.step3Desc') },
+    { icon: BookMarked, num: '04', title: t('system.marketing.step4Title'), desc: t('system.marketing.step4Desc') },
   ]
 
   const moments = [
@@ -42,115 +117,210 @@ export function MarketingPage() {
   ]
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#101714] text-[#f9f2e8]">
-      <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
-        <Link to="/marketing" className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-2xl bg-[#f9f2e8]">
-            <img src="/logo.png" alt={t('app.name')} className="size-7 object-contain" />
-          </span>
-          <span className="text-sm font-semibold tracking-wide">{t('system.marketing.brand')}</span>
-        </Link>
-        <nav className="flex items-center gap-4 text-sm text-[#d8cab7]/72">
-          <Link to="/support" className="transition-colors hover:text-[#f9f2e8]">{t('system.marketing.navSupport')}</Link>
-          <Link to="/system/privacy" className="hidden transition-colors hover:text-[#f9f2e8] sm:inline">{t('system.marketing.navPrivacy')}</Link>
-        </nav>
-      </header>
+    <div className="relative min-h-screen overflow-x-hidden bg-background">
+      {!embedded && <LandingHeader />}
 
-      <main>
-        <section className="relative px-5 pb-16 pt-10 sm:pb-20 lg:pb-28">
-          <div className="pointer-events-none absolute left-1/2 top-10 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-[#ff7a59]/20 blur-3xl" />
-          <div className="pointer-events-none absolute -right-20 top-48 h-80 w-80 rounded-full bg-[#8bd7b5]/16 blur-3xl" />
+      <section
+        ref={heroRef}
+        className={cn(
+          'relative overflow-hidden px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36',
+          embedded ? 'pt-8 sm:pt-12' : 'pt-16 sm:pt-24 lg:pt-28',
+        )}
+      >
+        <DriftAtmosphere />
 
-          <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-            <div className="max-w-3xl">
-              <p className="mb-5 inline-flex rounded-full border border-[#f9f2e8]/12 bg-[#f9f2e8]/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#ffb199]">
-                {t('system.marketing.badge')}
-              </p>
-              <h1 className="text-5xl font-black leading-[0.98] tracking-tight sm:text-7xl lg:text-8xl">
-                {t('app.name')}
-                <span className="mt-2 block text-[#ff8d70]">{t('system.marketing.heroTagline')}</span>
-              </h1>
-              <p className="mt-7 max-w-2xl text-base leading-8 text-[#d8cab7]/78 sm:text-lg">
-                {t('system.marketing.heroDesc')}
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <Button asChild className="h-12 rounded-full bg-[#ff8d70] px-6 text-[#101714] hover:bg-[#ff9f86]">
-                  <Link to="/">
-                    {t('system.marketing.openApp')}
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-12 rounded-full border-[#f9f2e8]/18 bg-transparent px-6 text-[#f9f2e8] hover:bg-[#f9f2e8]/10 hover:text-[#f9f2e8]">
-                  <Link to="/support">
-                    {t('system.marketing.supportCenter')}
-                    <Sparkles className="size-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
+        <motion.div
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="relative z-10 mx-auto max-w-3xl text-center"
+        >
+          <motion.p
+            initial={reduce ? false : { opacity: 0, y: 10, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.6, ease: landingEase }}
+            className="mb-5 text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground"
+          >
+            {t('system.marketing.heroBadge')}
+          </motion.p>
 
-            <div className="relative mx-auto w-full max-w-[26rem]">
-              <div className="absolute -inset-8 rounded-[3rem] bg-[#f9f2e8]/8 blur-2xl" />
-              <div className="relative rounded-[2.5rem] border border-[#f9f2e8]/12 bg-[#1b2520] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-                <div className="rounded-[2rem] bg-[#f9f2e8] p-5 text-[#17211d]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img src="/logo.png" alt="" className="size-9 object-contain" />
-                      <div>
-                        <p className="text-sm font-black">{t('system.marketing.momentAirport')}</p>
-                        <p className="text-xs text-[#66736d]">{t('system.marketing.scenarioPack')}</p>
-                      </div>
-                    </div>
-                    <Download className="size-5 text-[#d65f4b]" />
-                  </div>
-                  <div className="mt-7 rounded-2xl bg-[#e8f4ee] p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2d7f5e]">{t('system.marketing.todaysChunk')}</p>
-                    <p className="mt-3 text-2xl font-black tracking-tight">{t('system.marketing.mockChunk')}</p>
-                    <p className="mt-2 text-sm leading-6 text-[#596761]">{t('system.marketing.mockHint')}</p>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    {[t('system.marketing.feedbackTranscribed'), t('system.marketing.feedbackOptimizable'), t('system.marketing.feedbackAddedToLibrary')].map((item) => (
-                      <div key={item} className="flex items-center gap-3 rounded-2xl border border-[#17211d]/8 px-4 py-3 text-sm">
-                        <CheckCircle2 className="size-4 text-[#2d7f5e]" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
+          <h1 className="text-[2.75rem] font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+            <StaggerText text={t('system.marketing.brand')} className="block" delay={0.08} />
+            <StaggerText
+              text={t('system.marketing.heroTagline')}
+              delay={0.28}
+              className="mt-2 block"
+              unitClassName="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
+            />
+          </h1>
+
+          <motion.p
+            initial={reduce ? false : { opacity: 0, y: 16, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.7, delay: 0.55, ease: landingEase }}
+            className="mx-auto mt-7 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+          >
+            {t('system.marketing.heroDesc')}
+          </motion.p>
+
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.72, duration: 0.55, ease: landingEase }}
+            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          >
+            <Button
+              size="primary-lg"
+              className="shadow-[0_4px_24px_rgba(0,46,95,0.16)]"
+              onClick={() => navigate('/')}
+            >
+              {t('system.marketing.openApp')}
+              <ArrowRight data-icon="inline-end" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="border-0 shadow-none"
+              onClick={() => navigate('/support')}
+            >
+              <Headset data-icon="inline-start" />
+              {t('system.marketing.supportCenter')}
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        <div className="relative z-10 mx-auto mt-16 max-w-5xl sm:mt-20">
+          <Reveal delay={0.1}>
+            <p className="mb-5 text-center text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {t('system.marketing.practiceMoments')}
+            </p>
+            <MomentCarousel moments={moments} />
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="relative px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36">
+        <div className="mx-auto max-w-3xl">
+          <Reveal className="mb-12 text-center sm:mb-16">
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              {t('system.marketing.whatsInTitle1')}
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {' '}
+                {t('system.marketing.whatsInTitle2')}
+              </span>
+            </h2>
+          </Reveal>
+
+          <div className="flex flex-col gap-8">
+            {pillars.map((item, i) => (
+              <Reveal key={item.title} delay={0.15 + i * 0.12} y={20}>
+                <div className="flex gap-5 sm:gap-7">
+                  <Float
+                    delay={i * 0.3}
+                    duration={3.6 + i * 0.4}
+                    className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.08] sm:size-12"
+                  >
+                    <item.icon className="size-5 text-primary" />
+                  </Float>
+                  <div className="min-w-0 pt-1.5">
+                    <h3 className="text-lg font-bold text-foreground sm:text-xl">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                      {item.desc}
+                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
+              </Reveal>
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="mx-auto grid max-w-7xl gap-4 px-5 pb-16 md:grid-cols-3">
-          {pillars.map(({ icon: Icon, title, text }) => (
-            <article key={title} className="rounded-[1.5rem] border border-[#f9f2e8]/10 bg-[#f9f2e8]/7 p-6">
-              <Icon className="mb-5 size-6 text-[#ff8d70]" />
-              <h2 className="text-lg font-bold">{title}</h2>
-              <p className="mt-3 text-sm leading-7 text-[#d8cab7]/72">{text}</p>
-            </article>
-          ))}
-        </section>
+      {/* Features：居中标题 + 双列网格，接在能力叙事之后 */}
+      <section className="relative overflow-hidden px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8 lg:pb-36">
+        <div className="absolute inset-0 bg-muted/25" />
+        <div className="absolute left-0 right-0 top-0 h-20 bg-gradient-to-b from-background to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
 
-        <section className="mx-auto max-w-7xl px-5 pb-20">
-          <div className="grid gap-8 rounded-[2rem] border border-[#f9f2e8]/10 bg-[#f9f2e8] p-6 text-[#17211d] lg:grid-cols-[0.8fr_1fr] lg:p-8">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#d65f4b]">{t('system.marketing.practiceMoments')}</p>
-              <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">{t('system.marketing.momentsTitle')}</h2>
-              <p className="mt-4 text-sm leading-7 text-[#5d6a64]">
-                {t('system.marketing.momentsDesc')}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {moments.map((moment) => (
-                <div key={moment} className="rounded-2xl bg-[#17211d] px-4 py-5 text-sm font-bold text-[#f9f2e8]">
-                  {moment}
+        <div className="relative mx-auto max-w-5xl">
+          <Reveal className="mx-auto mb-12 max-w-2xl text-center sm:mb-16">
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              {t('system.marketing.featuresTitle1')}
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {' '}
+                {t('system.marketing.featuresTitle2')}
+              </span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+              {t('system.marketing.featuresDesc')}
+            </p>
+          </Reveal>
+
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 0.05} y={18}>
+                <motion.div
+                  whileHover={reduce ? undefined : { y: -2 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex h-full gap-4 rounded-2xl bg-background/70 p-5 transition-colors duration-300 hover:bg-background sm:p-6"
+                >
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.07]">
+                    <f.icon className="size-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-foreground sm:text-lg">{f.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                  </div>
+                </motion.div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-24 sm:px-6 sm:pb-32 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <Reveal className="mb-12 text-center sm:mb-16">
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              {t('system.marketing.stepsTitle1')}
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {' '}
+                {t('system.marketing.stepsTitle2')}
+              </span>
+            </h2>
+          </Reveal>
+
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {steps.map((s, i) => (
+              <Reveal key={s.num} delay={i * 0.1} y={22}>
+                <div className="relative">
+                  {i < steps.length - 1 && (
+                    <motion.div
+                      className="absolute left-[calc(50%+2rem)] right-[-1.5rem] top-5 hidden h-px origin-left bg-border/70 lg:block"
+                      initial={reduce ? false : { scaleX: 0 }}
+                      whileInView={{ scaleX: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.7, delay: 0.25 + i * 0.1, ease: landingEase }}
+                    />
+                  )}
+                  <div className="mb-4 flex items-center gap-3">
+                    <Float
+                      duration={3.2 + i * 0.25}
+                      className="flex size-10 items-center justify-center rounded-xl bg-primary/[0.08]"
+                    >
+                      <s.icon className="size-4 text-primary" />
+                    </Float>
+                    <span className="text-xs font-bold tracking-widest text-muted-foreground">
+                      {s.num}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-foreground">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
                 </div>
-              ))}
-            </div>
+              </Reveal>
+            ))}
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+
+      {!embedded && <LandingFooter />}
     </div>
   )
 }
