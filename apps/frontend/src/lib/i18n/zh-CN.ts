@@ -372,6 +372,8 @@ const zhCN = {
       deleteCancelApplication: '取消注销申请',
       deleteCancelSuccess: '注销申请已取消。',
       deleteCancelFailed: '取消注销失败',
+      statsReadError: '读取本地学习统计失败，请重试',
+      statsHistoryPending: '当前显示本机学习记录，历史数据将在联网同步后补齐',
       stats: {
         practiceDays: '练习天数',
         totalQuestions: '累计做题',

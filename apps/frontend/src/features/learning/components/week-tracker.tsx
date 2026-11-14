@@ -1,3 +1,4 @@
+import { useLearningStatistics } from '@/stores/learning-statistics.store'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { addMonths, addWeeks, addYears, eachDayOfInterval, endOfMonth, endOfWeek, endOfYear, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
@@ -127,17 +128,18 @@ function CheckInCalendarDrawer({
       endDate: format(endOfWeek(endOfMonth(month), { locale: calendarLocale, weekStartsOn: 1 }), 'yyyy-MM-dd'),
     }
   }, [calendarLocale, month, view, weekStart, year])
+  const { data: statistics } = useLearningStatistics(visibleRange.startDate, visibleRange.endDate, open)
   const checkedInDates = useMemo<Date[]>(
     () => data?.dates.map((date) => parseISO(date)) ?? [],
     [data],
   )
-  const dailyStats = useMemo(() => new Map((data?.dailyStats ?? []).map((item) => [item.date, item])), [data?.dailyStats])
+  const dailyStats = useMemo(() => new Map((statistics?.dailyStats ?? []).map((item) => [item.date, item])), [statistics])
   const visibleDays = useMemo(() => eachDayOfInterval({ start: parseISO(visibleRange.startDate), end: parseISO(visibleRange.endDate) }), [visibleRange])
   const summary = useMemo(() => visibleDays.reduce((total, day) => {
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     if (!stat) return total
     return {
-      activeDays: total.activeDays + (stat.questionCount > 0 || stat.activeSeconds > 0 ? 1 : 0),
+      activeDays: total.activeDays + (stat.active ? 1 : 0),
       questionCount: total.questionCount + stat.questionCount,
       activeSeconds: total.activeSeconds + stat.activeSeconds,
     }

@@ -1,17 +1,14 @@
+import { learningStatisticsRepository } from '@/lib/offline/learning-statistics.repository'
 import { get, patch, post } from '@/lib/request'
-import { isCalendarDate, utcDateKey } from '@/lib/date/calendar-date'
 
 export interface ProfileOverview {
-  userId: string
-  nickname?: string
-  avatar?: string
-  currentBank?: { bankId: string; bankName: string }
-  totalPracticeDays: number
-  totalQuestionsAnswered: number
-  totalFavorites: number
-  totalWords: number
-  streakDays: number
+  activeDays: number
+  uniqueQuestionsAnswered: number
+  favoriteCount: number
+  wordCount: number
+  currentStreakDays: number
   avgDailyQuestions: number
+  historyComplete: boolean
 }
 
 export interface ActivityDay {
@@ -93,36 +90,17 @@ export interface PlacementAssessmentResult {
   }
 }
 
-export const getProfileOverview = (): Promise<ProfileOverview> =>
-  get<any>('/profile/overview').then((res) => ({
-    userId: res.userId,
-    currentBank: res.bank ? { bankId: res.bank.id, bankName: res.bank.name } : undefined,
-    totalPracticeDays: res.stats?.totalPracticed ?? 0,
-    totalQuestionsAnswered: res.stats?.totalPracticed ?? 0,
-    totalFavorites: res.stats?.favoritesCount ?? 0,
-    totalWords: res.stats?.wordsCount ?? 0,
-    streakDays: res.stats?.streakDays ?? 0,
-    avgDailyQuestions: res.stats?.totalPracticed ? Math.round(res.stats.totalPracticed / Math.max(1, res.stats.streakDays || 7)) : 0,
-  }))
+export const getProfileOverview = (): Promise<ProfileOverview> => learningStatisticsRepository.read()
 
-export const getActivityHeatmap = async (year?: number): Promise<ActivityDay[]> => {
-  try {
-    const res = await get<{ activities: { date: string; count: number; questionCount?: number; activeSeconds?: number }[] }>(
-      '/profile/activity-heatmap',
-      { year: year || new Date().getFullYear() },
-    )
-    const raw = Array.isArray(res) ? res : res?.activities ?? []
-    const max = Math.max(1, ...raw.map((a) => a.count))
-    return raw.map((a) => ({
-      date: isCalendarDate(a.date) ? a.date : utcDateKey(a.date),
-      count: a.count,
-      level: (Math.min(4, Math.ceil((a.count / max) * 4)) as ActivityDay['level']),
-      questionCount: a.questionCount ?? a.count,
-      activeSeconds: a.activeSeconds ?? 0,
-    }))
-  } catch {
-    return []
-  }
+export function toActivityHeatmap(days: Array<{ date: string; questionCount: number; activeSeconds: number; active?: boolean }>, year: number): ActivityDay[] {
+  const raw = days.filter(day => day.date.startsWith(`${year}-`)).map(day => ({ ...day, count: day.questionCount || (day.active || day.activeSeconds > 0 ? 1 : 0) }))
+  const max = Math.max(1, ...raw.map(day => day.count))
+  return raw.map(day => ({ ...day, level: Math.min(4, Math.ceil(day.count / max * 4)) as ActivityDay['level'] }))
+}
+
+export const getActivityHeatmap = async (year = new Date().getFullYear()): Promise<ActivityDay[]> => {
+  const statistics = await learningStatisticsRepository.read(`${year}-01-01`, `${year}-12-31`)
+  return toActivityHeatmap(statistics.dailyStats, year)
 }
 
 export const getPracticeRecords = (params: {

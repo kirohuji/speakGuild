@@ -9,6 +9,7 @@ export type SyncEntityType =
   | 'practice_session'
   | 'practice_turn'
   | 'daily_practice'
+  | 'learning_activity'
   | 'topic_session'
   | 'topic_submission'
   | 'novel_progress'
@@ -28,6 +29,7 @@ export interface SyncOutboxItem<TPayload = unknown> {
   updatedAt: string
   /** Monotonic local revision used to acknowledge exactly one sent payload. */
   revision?: number
+  nextRetryAt?: string
   retryCount: number
   status: 'pending' | 'syncing' | 'synced' | 'failed'
   lastError?: string
@@ -41,6 +43,10 @@ export const syncOutbox = {
     operation: SyncOperation
     payload: TPayload
   }): Promise<SyncOutboxItem<TPayload>> {
+    if (input.entityType === 'daily_practice') {
+      await localDb.saveDailyPracticeOutbox(input.entityId, input.operation, input.payload)
+      return (await localDb.get<SyncOutboxItem<TPayload>>('outbox', `daily-practice:${input.entityId}`))!
+    }
     const now = new Date().toISOString()
     const existing = (await localDb.findByIndex<SyncOutboxItem<TPayload>>('outbox', 'entity_id', input.entityId)).find((item) =>
       item.entityType === input.entityType
@@ -49,17 +55,6 @@ export const syncOutbox = {
       && (item.status === 'pending' || item.status === 'failed'),
     )
     if (existing) {
-      const existingRevision = input.entityType === 'daily_practice'
-        ? String((existing.payload as any)?.run?.clientUpdatedAt ?? '')
-        : ''
-      const incomingRevision = input.entityType === 'daily_practice'
-        ? String((input.payload as any)?.run?.clientUpdatedAt ?? '')
-        : ''
-      // A delayed completion snapshot must never replace a newer retry
-      // snapshot merely because it reaches the outbox later.
-      if (existingRevision && incomingRevision && existingRevision > incomingRevision) {
-        return existing
-      }
       const merged: SyncOutboxItem<TPayload> = {
         ...existing,
         payload: input.payload,
@@ -67,6 +62,7 @@ export const syncOutbox = {
         revision: (existing.revision ?? 0) + 1,
         status: 'pending',
         lastError: undefined,
+        nextRetryAt: now,
       }
       await localDb.put('outbox', merged)
       return merged
@@ -81,6 +77,7 @@ export const syncOutbox = {
       createdAt: now,
       updatedAt: now,
       revision: 1,
+      nextRetryAt: now,
       retryCount: 0,
       status: 'pending',
     }
@@ -88,14 +85,8 @@ export const syncOutbox = {
     return item
   },
 
-  async listPending(): Promise<SyncOutboxItem[]> {
-    const items = await localDb.findByIndexIn<SyncOutboxItem>('outbox', 'status', ['pending', 'failed'])
-    return items
-      // Older app versions briefly wrote device-local learning-pack events to
-      // the sync outbox. Never replay those records as remote mutations.
-      .filter((item) => String(item.entityType) !== 'learning_pack')
-      .filter((item) => item.status === 'pending' || item.status === 'failed')
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  async listPending(types?: ReadonlySet<SyncEntityType>): Promise<SyncOutboxItem[]> {
+    return localDb.listDueOutbox(new Date().toISOString(), 100, types ? [...types] : undefined)
   },
 
   /**
@@ -111,12 +102,7 @@ export const syncOutbox = {
       if (expected?.revision !== undefined) {
         if (item.revision !== expected.revision) return false
       } else if (expected?.updatedAt && item.updatedAt !== expected.updatedAt) return false
-      await localDb.put('outbox', {
-        ...item,
-        status: 'synced',
-        syncedAt: new Date().toISOString(),
-      })
-      return true
+      return await localDb.patchOutbox(id, item.revision ?? 0, 'synced')
     } catch (error) {
       console.warn('[sync-outbox] markSynced update failed:', error)
       return false
@@ -138,39 +124,16 @@ export const syncOutbox = {
   },
 
   async markDiscarded(id: string): Promise<void> {
-    // 永久失败项（例如服务端内容已删除）不应继续重试。
-    // 与 markSynced 对称：标记而非删除，由 cleanup() 统一清理。
-    try {
-      const item = await localDb.get<SyncOutboxItem>('outbox', id)
-      if (!item) return
-      await localDb.put('outbox', {
-        ...item,
-        status: 'synced',
-        lastError: 'discarded: permanent failure',
-        syncedAt: new Date().toISOString(),
-      })
-    } catch (error) {
-      console.warn('[sync-outbox] markDiscarded update failed:', error)
-    }
+    // Permanent failures were removed by cleanup immediately; keep that behavior without scanning failures.
+    try { await localDb.delete('outbox', id) }
+    catch (error) { console.warn('[sync-outbox] markDiscarded failed:', error) }
   },
 
-  /** 清理历史上残留的 synced 记录和过期失败记录 */
+  /** 清理已同步记录和永久失败记录；普通失败记录不按时间过期。 */
   async cleanup(): Promise<number> {
     try {
-      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) =>
-        String(item.entityType) === 'learning_pack',
-      )
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      // 清理 7 天前的已同步记录（正常完成，无需保留）
-      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) =>
-        item.status === 'synced' && (item.syncedAt ?? item.updatedAt) < sevenDaysAgo,
-      )
-      // 清理永久失败的记录
-      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) => isPermanentFailure(item.lastError))
-      // 清理 7 天前仍然失败的记录（重试无意义）
-      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) =>
-        item.status === 'failed' && item.updatedAt < sevenDaysAgo,
-      )
+      await localDb.pruneSyncedOutbox(new Date(Date.now() - 7 * 86400000).toISOString())
+      // Ordinary failures are never deleted by age.
       return 0
     } catch {
       return 0
@@ -183,14 +146,8 @@ export const syncOutbox = {
     if (expected?.revision !== undefined) {
       if (item.revision !== expected.revision) return false
     } else if (expected?.updatedAt && item.updatedAt !== expected.updatedAt) return false
-    await localDb.put('outbox', {
-      ...item,
-      status: 'failed',
-      retryCount: item.retryCount + 1,
-      updatedAt: new Date().toISOString(),
-      lastError: serializeError(error),
-    })
-    return true
+    return localDb.patchOutbox(id, item.revision ?? 0, 'failed', serializeError(error),
+      new Date(Date.now() + Math.min(3600000, 30000 * 2 ** Math.min(item.retryCount, 7))).toISOString())
   },
 }
 
@@ -208,17 +165,4 @@ function serializeError(error: unknown): string {
   } catch {
     return String(error)
   }
-}
-
-function isPermanentFailure(error?: string): boolean {
-  if (!error) return false
-  return [
-    '练习话题不存在',
-    '话题不存在',
-    '练习会话不存在',
-    'Topic not found',
-    'Session not found',
-    'Not Found',
-    '404',
-  ].some((marker) => error.includes(marker))
 }

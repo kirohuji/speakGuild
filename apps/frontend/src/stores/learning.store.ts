@@ -46,6 +46,9 @@ export interface DownloadTask {
 }
 
 /** 最大并发下载数 */
+let checkInRequestGeneration = 0
+let checkInCacheWrites: Promise<void> = Promise.resolve()
+export async function waitForCheckInCacheWrites() { await checkInCacheWrites }
 const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
 const activePackTaskIds = new Set<string>()
 const activePackTaskControllers = new Map<string, AbortController>()
@@ -308,15 +311,23 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async fetchCheckInCalendar(startDate, endDate) {
+    const generation = ++checkInRequestGeneration
+    const cacheId = `user_profile:checkin:${startDate}:${endDate}`
     set({ checkInLoading: true })
     try {
+      const cached = await localDb.get<{ id: string; value: CheckInCalendar }>('kv', cacheId)
+      if (generation !== checkInRequestGeneration) return
+      if (cached) set({ checkInData: cached.value, checkInLoading: false })
       const data = await pointsApi.getCheckInCalendar(startDate, endDate)
+      if (generation !== checkInRequestGeneration) return
+      checkInCacheWrites = checkInCacheWrites.catch(() => undefined).then(async () => {
+        if (generation === checkInRequestGeneration) await localDb.put('kv', { id: cacheId, value: data })
+      })
+      await checkInCacheWrites
+      if (generation !== checkInRequestGeneration) return
       set({ checkInData: data, checkInLoading: false })
     } catch {
-      set((s) => ({
-        checkInData: { dates: [], totalCheckIns: 0, currentStreak: 0, dailyStats: [] },
-        checkInLoading: false,
-      }))
+      if (generation === checkInRequestGeneration) set({ checkInLoading: false })
     }
   },
 
@@ -581,6 +592,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   resetUserState() {
+    checkInRequestGeneration++
     set({
       myUnits: [],
       myLoading: true,

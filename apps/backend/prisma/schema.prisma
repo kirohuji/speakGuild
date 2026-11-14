@@ -89,6 +89,12 @@ model AdminTaskLog {
 }
 
 model User {
+  learningStatDays LearningStatisticsDay[]
+  learningStatQuestions LearningStatisticsQuestion[]
+  learningStatDayQuestions LearningStatisticsDayQuestion[]
+  learningStatSources LearningStatisticsSource[]
+  learningStatTotal LearningStatisticsTotal?
+
   id                      String                 @id
   name                    String
   email                   String
@@ -2536,4 +2542,47 @@ model DictionaryEntry {
   @@index([language])
   @@index([updatedAt])
   @@map("dictionary_entry")
+}
+
+model LearningStatisticsDay {
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date DateTime @db.Date
+  questionCount Int @default(0) @map("question_count")
+  activeSeconds Int @default(0) @map("active_seconds")
+  @@id([userId, date])
+  @@map("learning_stat_days")
+}
+model LearningStatisticsQuestion {
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String @map("question_id")
+  @@id([userId, questionId])
+  @@map("learning_stat_questions")
+}
+model LearningStatisticsDayQuestion {
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date DateTime @db.Date
+  questionId String @map("question_id")
+  @@id([userId, date, questionId])
+  @@map("learning_stat_day_questions")
+}
+model LearningStatisticsSource {
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date DateTime @db.Date
+  sourceId String @map("source_id")
+  seconds Int
+  @@id([userId, date, sourceId])
+  @@map("learning_stat_sources")
+}
+model LearningStatisticsTotal {
+  userId String @id @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeDays Int @default(0) @map("active_days")
+  uniqueQuestions Int @default(0) @map("unique_questions")
+  questionDays Int @default(0) @map("question_days")
+  activeSeconds Int @default(0) @map("active_seconds")
+  @@map("learning_stat_totals")
 }

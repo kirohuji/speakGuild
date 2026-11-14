@@ -1,3 +1,4 @@
+import { localDateKey } from '@/lib/date/calendar-date'
 import { create } from 'zustand'
 import { createId } from '@/lib/offline/utils'
 
@@ -53,6 +54,8 @@ export interface AttemptHistoryEntry {
   score: InitialRecallScore | 'weak'
   cycle?: number
   createdAt: string
+  /** Calendar day at the time of the answer; stable across timezone changes and delayed sync. */
+  date?: string
 }
 
 export interface StoredTodayRunFacts {
@@ -147,7 +150,7 @@ function appendHistory(state: TodayPracticeState, input: Omit<AttemptHistoryEntr
   const { now: _now, ...entry } = input
   // An ordinal is only unique on one device.  History is synchronized as an
   // event set, so every event needs a device-independent identity.
-  return [...state.attemptHistory, { ...entry, id: createId('today_attempt'), createdAt }]
+  return [...state.attemptHistory, { ...entry, id: createId('today_attempt'), createdAt, date: localDateKey(new Date(createdAt)) }]
 }
 
 function dirty(state: TodayPracticeState): TodayPracticeState {

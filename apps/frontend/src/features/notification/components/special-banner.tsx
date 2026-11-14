@@ -32,6 +32,7 @@ function toNotificationItem(item: SpecialNotification | null): NotificationItem 
 export function SpecialBanner() {
   const { t } = useTranslation()
   const storeNotifs = useHomeStore((s) => s.specialNotifications)
+  const loading = useHomeStore((s) => s.specialNotificationsLoading)
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
 
   const location = useLocation()
@@ -64,36 +65,35 @@ export function SpecialBanner() {
   }, [isTestMode])
 
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [popupOpen, setPopupOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
   const autoPopped = useRef(false)
 
-  const notifs = storeNotifs.filter((n) => !dismissedIds.has(n.id))
-
-  const currentNotification = notifs[currentIndex] ?? null
+  // 先选最新一条，再过滤本次已关闭的消息，避免关闭后继续弹出旧消息。
+  const latestNotification = [...storeNotifs]
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0] ?? null
+  const currentNotification = latestNotification && !dismissedIds.has(latestNotification.id)
+    ? latestNotification
+    : null
   const detailItem = toNotificationItem(currentNotification)
-
-  // 用稳定的 id 做依赖，避免 filter 每次新建数组导致 effect 清理掉 600ms 定时器
-  const popupCandidateId =
-    notifs.find((n) => Boolean(n.imageUrl))?.id ?? null
+  const popupCandidateId = currentNotification?.id ?? null
+  const hasImage = Boolean(currentNotification?.imageUrl)
 
   useEffect(() => {
-    if (autoPopped.current) return
-    if (!popupCandidateId) return
+    if (loading) return
+    useHomeStore.setState({ specialNotificationPending: Boolean(popupCandidateId) })
+  }, [loading, popupCandidateId])
 
-    const list = useHomeStore
-      .getState()
-      .specialNotifications
-      .filter((n) => !dismissedIds.has(n.id))
-    const idx = list.findIndex((n) => n.id === popupCandidateId)
-    if (idx === -1) return
-
-    autoPopped.current = true
-    setCurrentIndex(idx)
-    const timer = setTimeout(() => setPopupOpen(true), 600)
+  useEffect(() => {
+    if (loading || autoPopped.current || !popupCandidateId) return
+    const timer = setTimeout(() => {
+      if (autoPopped.current) return
+      autoPopped.current = true
+      if (hasImage) setPopupOpen(true)
+      else setDetailOpen(true)
+    }, 600)
     return () => clearTimeout(timer)
-  }, [popupCandidateId, dismissedIds])
+  }, [loading, popupCandidateId, hasImage])
 
   const dismissAndMarkRead = useCallback(async () => {
     if (!currentNotification) return
@@ -102,8 +102,6 @@ export function SpecialBanner() {
     setDismissedIds((prev) => new Set(prev).add(currentNotification.id))
     setPopupOpen(false)
     setDetailOpen(false)
-    setCurrentIndex(0)
-    autoPopped.current = false
   }, [currentNotification, fetchUnreadCount])
 
   const handleViewDetail = useCallback(() => {
@@ -111,7 +109,7 @@ export function SpecialBanner() {
     setTimeout(() => setDetailOpen(true), 200)
   }, [])
 
-  const bannerNotifs = notifs.filter((n) => !n.imageUrl)
+  const bannerNotifs = currentNotification && !currentNotification.imageUrl ? [currentNotification] : []
   const showBanner = bannerNotifs.length > 0 && !popupOpen && !detailOpen
   const bannerNotification = bannerNotifs[0] ?? null
 
@@ -123,8 +121,7 @@ export function SpecialBanner() {
             key={bannerNotification.id}
             type="button"
             onClick={() => {
-              const idx = notifs.findIndex((n) => n.id === bannerNotification.id)
-              if (idx !== -1) setCurrentIndex(idx)
+              autoPopped.current = true
               setDetailOpen(true)
             }}
             initial={{ opacity: 0, y: -10 }}

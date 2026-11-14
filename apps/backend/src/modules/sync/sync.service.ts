@@ -440,7 +440,8 @@ export class SyncService {
     const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
     const sincePracticeSession = cursors.practiceSessions ? new Date(cursors.practiceSessions) : new Date(0);
     const sinceWarmupRecord = cursors.practiceWarmupRecords ? new Date(cursors.practiceWarmupRecords) : new Date(0);
-    const sinceDailyPracticeRun = cursors.dailyPracticeRuns ? new Date(cursors.dailyPracticeRuns) : new Date(0);
+    const [runTime, runId = ''] = (cursors.dailyPracticeRuns ?? '').split('|');
+    const sinceDailyPracticeRun = runTime ? new Date(runTime) : new Date(0);
     const sinceTopicSession = cursors.topicSessions ? new Date(cursors.topicSessions) : new Date(0);
     const sinceDeletedExpression = cursors.deletedExpressionItems ? new Date(cursors.deletedExpressionItems) : new Date(0);
     const sinceNotebook = cursors.learningNotebooks ? new Date(cursors.learningNotebooks) : new Date(0);
@@ -514,10 +515,11 @@ export class SyncService {
         },
       }) : Promise.resolve([]),
       want('dailyPracticeRuns') ? (this.prisma as any).userDailyPracticeRun.findMany({
-        where: { userId, updatedAt: { gt: sinceDailyPracticeRun } },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceDailyPracticeRun } }, { updatedAt: sinceDailyPracticeRun, id: { gt: runId } }] },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
         select: {
+          id: true,
           clientRunId: true,
           date: true,
           mode: true,
@@ -622,7 +624,7 @@ export class SyncService {
       chunkProgresses: want('chunkProgresses') ? (maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null) : (cursors.chunkProgresses ?? null),
       practiceSessions: want('practiceSessions') ? (maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null) : (cursors.practiceSessions ?? null),
       practiceWarmupRecords: want('practiceWarmupRecords') ? (maxTime(practiceWarmupRecords, 'updatedAt') ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
-      dailyPracticeRuns: want('dailyPracticeRuns') ? (maxTime(dailyPracticeRuns, 'updatedAt') ?? cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
+      dailyPracticeRuns: want('dailyPracticeRuns') ? (dailyPracticeRuns.length ? `${dailyPracticeRuns.at(-1).updatedAt.toISOString()}|${dailyPracticeRuns.at(-1).id}` : cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
       topicSessions: want('topicSessions') ? (maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
       deletedExpressionItems: want('expressionItems') ? (maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),
       learningNotebooks: want('learningNotebooks') ? (maxTime(learningNotebooks, 'updatedAt') ?? cursors.learningNotebooks ?? null) : (cursors.learningNotebooks ?? null),

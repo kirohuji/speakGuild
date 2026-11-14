@@ -1,3 +1,6 @@
+import { getOutboxVersion, subscribeOutboxChanged } from '@/lib/offline/storage-events'
+import { waitForActivityWrites } from '@/stores/practice-activity.store'
+import { useLearningStatisticsStore } from '@/stores/learning-statistics.store'
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { authClient, clearBearerToken } from '@/features/auth/client'
@@ -15,7 +18,7 @@ import { flushPracticeActivityRecords, usePracticeActivityStore } from '@/stores
 import { activateAccountLearningPreferences } from '@/stores/preferences.store'
 import { useThemePresetStore } from '@/stores/theme-preset.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
-import { useLearningStore } from '@/stores/learning.store'
+import { useLearningStore, waitForCheckInCacheWrites } from '@/stores/learning.store'
 import { isManagementHashRoute, useManagementHashRoute } from '@/hooks/use-management-route'
 import { setCurrentSessionSnapshot } from '@/providers/auth-session'
 
@@ -44,6 +47,7 @@ function useAppForegroundSync(userId: string | undefined, enabled: boolean) {
     })
 
     const doSync = () => {
+      if (document.visibilityState !== 'visible' || !navigator.onLine) return
       const now = Date.now()
       // 30 秒内不重复同步
       if (now - lastSyncRef.current < 30_000) return
@@ -82,7 +86,27 @@ function useAppForegroundSync(userId: string | undefined, enabled: boolean) {
       if (document.visibilityState === 'visible') doSync()
     }
     document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    let queueDirty = true
+    let checkingPending = false
+    const unsubscribeOutbox = subscribeOutboxChanged(() => { queueDirty = true })
+    const onOnline = async () => {
+      if (!queueDirty || checkingPending || document.visibilityState !== 'visible' || !navigator.onLine) return
+      const revision = getOutboxVersion()
+      checkingPending = true
+      try {
+        const pending = await offlineSyncService.syncPending(userId)
+        if (pending !== undefined) queueDirty = pending || revision !== getOutboxVersion()
+      } catch { /* retry on a later eligible interval */ }
+      finally { checkingPending = false }
+    }
+    const pendingTimer = setInterval(() => { void onOnline() }, 30_000)
+    window.addEventListener('online', onOnline)
+    return () => {
+      clearInterval(pendingTimer)
+      unsubscribeOutbox()
+      window.removeEventListener('online', onOnline)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [enabled, userId])
 }
 
@@ -150,8 +174,14 @@ function setOfflineDataOwner(userId: string | null) {
 }
 
 async function clearUserScopedClientData(options: { preservePersistentData?: boolean } = {}) {
+  offlineSyncService.pauseForAccountReset()
+  await offlineSyncService.waitForIdle()
+  if (!options.preservePersistentData) usePracticeActivityStore.getState().reset()
+  await waitForActivityWrites().catch(() => undefined)
+  useLearningStatisticsStore.getState().reset()
   useDailyPracticeStore.getState().reset()
   useLearningStore.getState().resetUserState()
+  await waitForCheckInCacheWrites().catch(() => undefined)
   if (!options.preservePersistentData) {
     try {
       await offlineStorageService.clearUserData()
@@ -159,9 +189,9 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
       console.warn('[auth] clear user offline data failed:', error)
     }
   }
+  useLearningStatisticsStore.getState().reset()
   useOfflineSyncStore.getState().reset()
   useSearchStore.getState().clearHistory()
-  if (!options.preservePersistentData) usePracticeActivityStore.getState().reset()
   useThemePresetStore.getState().reset()
   activateAccountLearningPreferences(null)
   await cancelLearningReminders().catch((error) => {
@@ -192,6 +222,7 @@ async function prepareOfflineDataForUser(userId: string) {
   if (ownerId && ownerId !== userId) await clearUserScopedClientData()
   activateAccountLearningPreferences(userId, { migrateCurrentDeviceValues: ownerId === userId })
   setOfflineDataOwner(userId)
+  offlineSyncService.resumeForAccount()
   if (!ownerId || ownerId === userId) {
     await flushPracticeActivityRecords().catch((error) => {
       console.warn('[auth] flush practice activity failed:', error)
@@ -436,7 +467,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await useDailyPracticeStore.getState().waitForPendingWrites()
       await flushPracticeActivityRecords()
       const syncResult = await offlineSyncService.sync(session.user.id)
-      if (syncResult.push.failed > 0) {
+      if (syncResult.push.failed > 0 || (syncResult.push.remaining ?? 0) > 0) {
         throw new Error('练习数据尚未同步，请联网后再退出登录')
       }
     }

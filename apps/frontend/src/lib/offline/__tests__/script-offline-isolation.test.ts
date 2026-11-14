@@ -3,8 +3,8 @@ import { TABLE_NAMES, DB_VERSION } from '../sqlite/schema'
 import type { SyncEntityType } from '../sync-outbox'
 
 describe('script offline isolation schema', () => {
-  it('registers script cache tables in DB v15', () => {
-    expect(DB_VERSION).toBe(15)
+  it('keeps script cache tables in the current schema', () => {
+    expect(DB_VERSION).toBeGreaterThanOrEqual(15)
     expect(TABLE_NAMES).toContain('script_practice_records')
     expect(TABLE_NAMES).toContain('script_works')
   })

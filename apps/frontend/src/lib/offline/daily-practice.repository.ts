@@ -1,8 +1,9 @@
+import { upsertWarmupRecordEntries } from './warmup-record-index'
 import type { UnitDetail } from '@/features/learning/api/learning-api'
 import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import type { WarmupRecordEntry, WarmupScore } from '@/stores/warmup-session.store'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { setLearningBadgeCount } from '@/lib/native/learning-reminder'
+import { refreshLearningBadgeFromTodayRun } from '@/lib/native/learning-reminder'
 import { learningPackService } from './learning-pack.service'
 import { learningRepository } from './learning.repository'
 import { ensurePackProjection, readPracticeSource, readUnitSummary } from './learning-pack-read-model'
@@ -239,6 +240,16 @@ function attributeWarmupRecords(steps: ScheduledDailyPracticeItem[], records: Wa
   })
 }
 
+function todayWarmupSnapshot(plan: DailyPracticePlan, records: WarmupRecordEntry[], existingItems: WarmupRecordEntry[] = []) {
+  if (!records.length) return null
+  const topic = plan.topicStats.find(item => item.scheduledTodayCount > 0) ?? plan.topicStats[0]
+  if (!topic) return null
+  const attributed = attributeWarmupRecords(plan.steps, records)
+  const incomingIds = new Set(attributed.map(item => item.stepId))
+  return { topicId: topic.topicId, topicTitle: topic.topicTitle,
+    items: [...attributed, ...existingItems.filter(item => !incomingIds.has(item.stepId))] }
+}
+
 function scoreRankForMerge(score?: string | null) {
   if (score === 'strong') return 3
   if (score === 'ok') return 2
@@ -306,7 +317,7 @@ async function appliedReviewItemIds(runs: StoredDailyPracticeRun[]): Promise<Set
   // The journal is the durable SRS fact. A run snapshot can lag behind it
   // briefly while an answer is being persisted, so both projections must use
   // this union rather than disagreeing about what was already reviewed.
-  const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+  const attempts = await localDb.findByIndexIn<DailyPracticeAttempt>('daily_practice_attempts', 'run_id', [...runIds])
   for (const attempt of attempts) {
     if (attempt.runId && runIds.has(attempt.runId) && attempt.applyStatus === 'applied') {
       applied.add(attempt.itemId)
@@ -792,7 +803,7 @@ function shuffleWithinTrainingStages<T>(items: T[], getType: (item: T) => string
 export async function pullRemoteDailyProgress(itemIds?: string[]): Promise<void> {
   try {
     const remote = await dailyPracticeApi.progress(itemIds)
-    const pendingAttempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const pendingAttempts = await localDb.findByIndex<DailyPracticeAttempt>('daily_practice_attempts', 'sync_status', 'pending')
     const pendingItemIds = new Set(
       pendingAttempts.filter((attempt) => attempt.syncStatus !== 'synced').map((attempt) => attempt.itemId),
     )
@@ -898,13 +909,14 @@ export const dailyPracticeRepository = {
       throw new Error('当前学习包没有可执行的知识点练习')
     }
     await setActivePracticePackId(packId)
+    void refreshLearningBadgeFromTodayRun().catch(() => {})
   },
 
   async buildTodayPlan(
     targetPackId?: string | null,
     targetDate?: string | null,
     mode: DailyPracticePlanMode = 'practice',
-    options: { forceNew?: boolean } = {},
+    options: { forceNew?: boolean; readOnly?: boolean } = {},
   ): Promise<DailyPracticePlan> {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
@@ -959,7 +971,7 @@ export const dailyPracticeRepository = {
       mixed: preferences.dailyPracticeMixedPacks,
     })
     if (units.length === 0 || candidates.length === 0) {
-      if (date === todayKey()) setLearningBadgeCount(0).catch(() => {})
+      if (!options.readOnly && date === todayKey()) void refreshLearningBadgeFromTodayRun().catch(() => {})
       return {
         runId: createId('today_run'),
         date,
@@ -1086,14 +1098,14 @@ export const dailyPracticeRepository = {
       createdAt: now, updatedAt: now, syncStatus: 'pending', submissionStatus: 'idle', activityMarked: false,
       stats: { reviewDebt: reviewBacklog.length, carryover: carryoverUnresolved.length + carryoverUnattempted.length },
     }
-    if (!canReuseCachedRun) {
+    if (!options.readOnly && !canReuseCachedRun) {
       await localDb.put('daily_practice_runs', run)
       await localDb.put('daily_practice_runs', { id: pointerId, runId: run.id, updatedAt: now } satisfies StoredActiveRunPointer)
-    } else if (pointer?.runId !== run.id) {
+    } else if (!options.readOnly && pointer?.runId !== run.id) {
       await localDb.put('daily_practice_runs', { id: pointerId, runId: run.id, updatedAt: now } satisfies StoredActiveRunPointer)
     }
-    if (date === todayKey()) {
-      setLearningBadgeCount(Math.max(0, run.scheduledItemIds.length - run.attemptedItemIds.length)).catch(() => {})
+    if (!options.readOnly && date === todayKey()) {
+      void refreshLearningBadgeFromTodayRun().catch(() => {})
     }
 
     return {
@@ -1139,10 +1151,10 @@ export const dailyPracticeRepository = {
     }
   },
 
-  async persistRunFacts(facts: StoredTodayRunFacts): Promise<void> {
+  async persistRunFacts(facts: StoredTodayRunFacts, answer?: { plan: DailyPracticePlan; records: WarmupRecordEntry[] }): Promise<void> {
     const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', facts.id)
     if (!run) throw new Error(`Today run not found: ${facts.id}`)
-    await localDb.put('daily_practice_runs', {
+    const nextRun = {
       ...run,
       attemptedItemIds: [...facts.attemptedItemIds],
       unresolvedItemIds: facts.unresolvedItemIds.filter((id) => facts.attemptedItemIds.includes(id)),
@@ -1159,7 +1171,23 @@ export const dailyPracticeRepository = {
       // remains pending until replayItem receives the server acknowledgement.
       syncStatus: run.syncStatus,
       updatedAt: new Date().toISOString(),
-    })
+    }
+    if (!answer && (nextRun.attemptHistory?.length ?? 0) === (run.attemptHistory?.length ?? 0)) {
+      await localDb.put('daily_practice_runs', nextRun)
+      return
+    }
+    nextRun.syncStatus = 'pending'
+    const localWarmupRecordId = `today-warmup:${nextRun.id}`
+    const existing = answer ? await localDb.get<any>('warmup_records', localWarmupRecordId) : null
+    const snapshot = answer ? todayWarmupSnapshot(answer.plan, answer.records, existing?.items ?? []) : null
+    const now = new Date().toISOString()
+    const warmup = snapshot ? { ...existing, ...snapshot, id: localWarmupRecordId,
+      createdAt: existing?.createdAt ?? now, updatedAt: now, practicedDate: existing?.practicedDate ?? localDateKey(), syncStatus: 'pending' } : undefined
+    const payload = createTodayRunSyncPayload({ run: nextRun, attempts: [], records: snapshot?.items ?? [], topic: snapshot,
+      localWarmupRecordId, submissionStatus: nextRun.submissionStatus, stats: nextRun.stats ?? {} })
+    // The first uploadable version already includes the original answer text.
+    await localDb.saveRunFacts(nextRun, payload, warmup)
+    if (warmup) await upsertWarmupRecordEntries(warmup)
   },
 
   async applySrsRatingOnce(params: {
@@ -1336,41 +1364,11 @@ export const dailyPracticeRepository = {
    */
   async persistTodayWarmup(plan: DailyPracticePlan, records: WarmupRecordEntry[], localWarmupRecordId?: string | null) {
     if (!localWarmupRecordId || records.length === 0) return null
-    const topic = plan.topicStats.find((item) => item.scheduledTodayCount > 0) ?? plan.topicStats[0]
-    if (!topic) return null
-    const attributed = attributeWarmupRecords(plan.steps, records)
-    const existing = await practiceRepository.getLocalWarmupRecord(localWarmupRecordId).catch(() => null) as { items?: WarmupRecordEntry[] } | null
-    const existingItems = Array.isArray(existing?.items) ? existing.items : []
-    const incomingIds = new Set(attributed.map((item) => item.stepId))
-    const items = [...attributed, ...existingItems.filter((item) => !incomingIds.has(item.stepId))]
-    await practiceRepository.upsertLocalWarmupRecord({
-      id: localWarmupRecordId,
-      topicId: topic.topicId,
-      topicTitle: topic.topicTitle,
-      items,
-      syncStatus: 'pending',
-    })
-    return { topicId: topic.topicId, topicTitle: topic.topicTitle, items }
-  },
-
-  /**
-   * Put any local run with undelivered history back into the outbox.
-   * The answer text is already in the warmup row; this only rebuilds the queue.
-   */
-  async requeueUnsyncedSnapshots(): Promise<void> {
-    const [runs, attempts] = await Promise.all([
-      localDb.list<StoredDailyPracticeRun>('daily_practice_runs'),
-      localDb.list<DailyPracticeAttempt>('daily_practice_attempts'),
-    ])
-    for (const run of runs) {
-      if (!run?.id || run.id === ACTIVE_DAILY_PRACTICE_PACK_ID || !Array.isArray(run.attemptHistory)) continue
-      const delivered = new Set(run.incrementalSyncReady ? (run.syncedHistoryEventIds ?? []) : [])
-      const undelivered = run.attemptHistory.some((entry) => entry?.id && !delivered.has(entry.id))
-      const pendingAttempts = attempts.some((attempt) =>
-        attempt.runId === run.id && attempt.syncStatus !== 'synced' && attempt.applyStatus === 'applied')
-      if (!undelivered && !pendingAttempts) continue
-      await this.syncRunSnapshot(run.id)
-    }
+    const existing = await practiceRepository.getLocalWarmupRecord(localWarmupRecordId)
+    const snapshot = todayWarmupSnapshot(plan, records, existing?.items ?? [])
+    if (!snapshot) return null
+    await practiceRepository.upsertLocalWarmupRecord({ id: localWarmupRecordId, ...snapshot, syncStatus: 'pending' })
+    return snapshot
   },
 
   /**
@@ -1388,12 +1386,12 @@ export const dailyPracticeRepository = {
     const records = Array.isArray(warmup?.items) ? warmup.items : []
     if (records.length === 0) {
       // 没有作答原文时，不要用空记录替换队列里已经带着答案的快照。
-      const pending = await syncOutbox.listPending()
+      const pending = await localDb.findByIndex<any>('outbox', 'entity_id', runId)
       const hasPendingSnapshot = pending.some((entry) =>
-        entry.entityType === 'daily_practice' && entry.entityId === runId)
+        entry.entityType === 'daily_practice' && entry.entityId === runId && entry.status !== 'synced' && entry.payload?.warmupRecord?.items?.length > 0)
       if (hasPendingSnapshot) return
     }
-    const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const attempts = await localDb.findByIndex<DailyPracticeAttempt>('daily_practice_attempts', 'run_id', runId)
     const pendingAttempts = attempts.filter((attempt) =>
       attempt.runId === runId
       && attempt.syncStatus !== 'synced'
@@ -1423,7 +1421,7 @@ export const dailyPracticeRepository = {
   async completeRun(plan: DailyPracticePlan, records: WarmupRecordEntry[], localWarmupRecordId?: string | null) {
     let run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', plan.runId)
     if (!run) throw new Error(`Today run not found: ${plan.runId}`)
-    const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const attempts = await localDb.findByIndex<DailyPracticeAttempt>('daily_practice_attempts', 'run_id', plan.runId)
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && attempt.runId === plan.runId && attempt.applyStatus === 'applied')
     const completedIds = run.attemptedItemIds.filter((id) => !run.unresolvedItemIds.includes(id))
     const savedWarmup = await this.persistTodayWarmup(plan, records, localWarmupRecordId)

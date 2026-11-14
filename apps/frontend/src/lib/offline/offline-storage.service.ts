@@ -1,3 +1,4 @@
+import { STATISTICS_TABLES } from './sqlite/statistics-schema'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
@@ -31,6 +32,7 @@ const USER_SCOPED_TABLES: TableName[] = [
   'topic_sessions',
   'topic_submissions',
   'outbox',
+  ...STATISTICS_TABLES,
 ]
 
 const USER_SCOPED_KV_KEYS = new Set([

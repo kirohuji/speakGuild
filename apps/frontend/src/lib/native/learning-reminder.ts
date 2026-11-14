@@ -155,24 +155,37 @@ export async function cancelTodayLearningReminder() {
   await LocalNotifications.cancel({ notifications: [{ id: reminderId(new Date()) }] }).catch(() => undefined)
 }
 
-export async function setLearningBadgeCount(count: number): Promise<boolean> {
+async function setLearningBadgeCount(count: number): Promise<boolean> {
   if (!isNativeRuntime()) return false
   if (!await ensureBadgePermission()) return false
   await Badge.set({ count: Math.max(0, Math.floor(count)) })
   return true
 }
 
-export async function refreshLearningBadgeFromTodayRun(): Promise<boolean> {
-  if (!isNativeRuntime()) return false
-  const today = dateKey(new Date())
-  const runs = await localDb.list<{ date?: string; mode?: string; scheduledItemIds?: string[]; attemptedItemIds?: string[] }>('daily_practice_runs')
-  const remaining = runs
-    .filter((run) => run.date === today && (run.mode === 'practice' || run.mode === 'review'))
-    .reduce((total, run) => {
-      const attempted = new Set(run.attemptedItemIds ?? [])
-      return total + (run.scheduledItemIds ?? []).filter((id) => !attempted.has(id)).length
-    }, 0)
-  return setLearningBadgeCount(remaining)
+let badgeRefreshGeneration = 0
+let badgeRefreshTail: Promise<boolean> = Promise.resolve(false)
+
+/** 唯一角标入口：复习优先，清零后才显示今日学习；串行写入防止旧请求覆盖。 */
+export function refreshLearningBadgeFromTodayRun(): Promise<boolean> {
+  if (!isNativeRuntime()) return Promise.resolve(false)
+  const generation = ++badgeRefreshGeneration
+  const refresh = badgeRefreshTail.catch(() => false).then(async () => {
+    if (generation !== badgeRefreshGeneration) return false
+    const { dailyPracticeRepository } = await import('@/lib/offline/daily-practice.repository')
+    const reviewCount = await dailyPracticeRepository.getReviewDebtCount()
+    let count = reviewCount
+    if (reviewCount === 0) {
+      // 只预览计划，不创建 run、不改变当前队列，也不触发嵌套角标刷新。
+      const plan = await dailyPracticeRepository.buildTodayPlan(undefined, undefined, 'practice', { readOnly: true })
+      const facts = await dailyPracticeRepository.getRunFacts(plan.runId)
+      const attempted = new Set(facts?.attemptedItemIds ?? [])
+      count = new Set(plan.scheduledItemIds.filter((id) => !attempted.has(id))).size
+    }
+    if (generation !== badgeRefreshGeneration) return false
+    return setLearningBadgeCount(count)
+  })
+  badgeRefreshTail = refresh
+  return refresh
 }
 
 export async function scheduleLearningReminderTestNotification(delaySeconds = 5): Promise<LearningReminderTestResult> {

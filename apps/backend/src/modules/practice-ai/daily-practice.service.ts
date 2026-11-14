@@ -269,28 +269,34 @@ export class DailyPracticeService {
       return { accepted: false };
     }
 
-    // Keep activity separate from practice/review snapshots. The prior
-    // find-first/update path could attach a timer update to an arbitrary run.
-    const clientRunId = `activity:${formatDateKey(date)}`;
-    const existing = await (this.prisma as any).userDailyPracticeRun.findUnique({
-      where: { userId_clientRunId: { userId, clientRunId } },
-      select: { stats: true },
-    });
-    const activity = toActivityStats(existing?.stats);
-    const previous = activity[sourceId];
-    activity[sourceId] = {
-      scope,
-      activeSeconds: Math.max(previous?.activeSeconds ?? 0, activeSeconds),
-      questionCount: Math.max(previous?.questionCount ?? 0, Math.floor(Number(body.questionCount) || 0)),
-    };
-    const currentStats = existing?.stats && typeof existing.stats === 'object' && !Array.isArray(existing.stats)
-      ? existing.stats as Record<string, unknown>
-      : {};
+    // Serialize updates for the same source across devices/retries. Independent
+    // sources get independent rows; old daily activity rows remain readable.
+    await this.prisma.$transaction(async (tx) => {
+      const lockKey = `${userId}:${formatDateKey(date)}:${sourceId}`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))::text`;
+      // Keep activity separate from practice/review snapshots. The prior
+      // find-first/update path could attach a timer update to an arbitrary run.
+      const clientRunId = `activity:${formatDateKey(date)}:${sourceId}`;
+      const existing = await tx.userDailyPracticeRun.findUnique({
+        where: { userId_clientRunId: { userId, clientRunId } },
+        select: { stats: true },
+      });
+      const activity = toActivityStats(existing?.stats);
+      const previous = activity[sourceId];
+      activity[sourceId] = {
+        scope,
+        activeSeconds: Math.max(previous?.activeSeconds ?? 0, activeSeconds),
+        questionCount: Math.max(previous?.questionCount ?? 0, Math.floor(Number(body.questionCount) || 0)),
+      };
+      const currentStats = existing?.stats && typeof existing.stats === 'object' && !Array.isArray(existing.stats)
+        ? existing.stats as Record<string, unknown>
+        : {};
 
-    await (this.prisma as any).userDailyPracticeRun.upsert({
-      where: { userId_clientRunId: { userId, clientRunId } },
-      create: { userId, date, clientRunId, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
-      update: { stats: { ...currentStats, activity } },
+      await tx.userDailyPracticeRun.upsert({
+        where: { userId_clientRunId: { userId, clientRunId } },
+        create: { userId, date, clientRunId, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
+        update: { stats: { ...currentStats, activity } },
+      });
     });
     return { accepted: true };
   }

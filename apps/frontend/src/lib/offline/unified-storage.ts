@@ -1,3 +1,4 @@
+import { notifyStatisticsChanged } from './storage-events'
 /**
  * Unified offline storage — auto-selects SQLite backend by platform.
  *
@@ -20,6 +21,14 @@ import { Capacitor } from '@capacitor/core'
 // ── Storage interface (shared by all backends) ──────────
 
 export interface ILocalDb {
+  applyStatisticsRuns(runs: any[]): Promise<void>
+  saveDailyPracticeOutbox(entityId: string, operation: string, payload: any): Promise<void>
+  patchOutbox(id: string, revision: number, status: 'synced' | 'failed', error?: string, retryAt?: string): Promise<boolean>
+  saveRunFacts(run: any, payload: any, warmup?: any): Promise<void>
+  saveLearningActivity(record: { date: string; sourceId: string; scope: string; activeSeconds: number }): Promise<void>
+  readLearningStatistics(start: string, end: string, today: string): Promise<import('./statistics-types').LearningStatistics>
+  pruneSyncedOutbox(before: string): Promise<void>
+  listDueOutbox(now: string, limit: number, types?: string[]): Promise<any[]>
   get<T>(storeName: TableName, id: string): Promise<T | null>
   put<T>(storeName: TableName, value: T & { id: string }): Promise<void>
   putMany<T>(storeName: TableName, values: (T & { id: string })[]): Promise<void>
@@ -93,20 +102,32 @@ async function getBackend(): Promise<ILocalDb> {
 // ── Public API ────────────────────────────────────────
 
 export const localDb: ILocalDb = {
+  async applyStatisticsRuns(runs) { if (!runs.length) return; await (await getBackend()).applyStatisticsRuns(runs); notifyStatisticsChanged('daily_activity') },
+  async saveDailyPracticeOutbox(entityId, operation, payload) { await (await getBackend()).saveDailyPracticeOutbox(entityId, operation, payload); notifyStatisticsChanged('outbox') },
+  async patchOutbox(id, revision, status, error, retryAt) { const result = await (await getBackend()).patchOutbox(id, revision, status, error, retryAt); notifyStatisticsChanged('outbox'); return result },
+  async saveRunFacts(run, payload, warmup) { await (await getBackend()).saveRunFacts(run, payload, warmup); notifyStatisticsChanged('daily_practice_runs'); notifyStatisticsChanged('outbox') },
+  async saveLearningActivity(record) { await (await getBackend()).saveLearningActivity(record); notifyStatisticsChanged('daily_activity'); notifyStatisticsChanged('outbox') },
+  async readLearningStatistics(start, end, today) { return (await getBackend()).readLearningStatistics(start, end, today) },
+  async pruneSyncedOutbox(before) { await (await getBackend()).pruneSyncedOutbox(before) },
+  async listDueOutbox(now, limit, types) { return (await getBackend()).listDueOutbox(now, limit, types) },
+
   async get<T>(storeName: TableName, id: string): Promise<T | null> {
     return (await getBackend()).get<T>(storeName, id)
   },
 
   async put<T>(storeName: TableName, value: T & { id: string }): Promise<void> {
-    return (await getBackend()).put(storeName, value)
+    await (await getBackend()).put(storeName, value)
+    notifyStatisticsChanged(storeName)
   },
 
   async putMany<T>(storeName: TableName, values: (T & { id: string })[]): Promise<void> {
-    return (await getBackend()).putMany(storeName, values)
+    await (await getBackend()).putMany(storeName, values)
+    notifyStatisticsChanged(storeName)
   },
 
   async delete(storeName: TableName, id: string): Promise<void> {
-    return (await getBackend()).delete(storeName, id)
+    await (await getBackend()).delete(storeName, id)
+    notifyStatisticsChanged(storeName)
   },
 
   async list<T>(storeName: TableName): Promise<T[]> {
@@ -150,18 +171,21 @@ export const localDb: ILocalDb = {
   },
 
   async clear(storeName: TableName): Promise<void> {
-    return (await getBackend()).clear(storeName)
+    await (await getBackend()).clear(storeName)
+    notifyStatisticsChanged(storeName)
   },
 
   async deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void> {
-    return (await getBackend()).deleteByIndex(storeName, columnName, value)
+    await (await getBackend()).deleteByIndex(storeName, columnName, value)
+    notifyStatisticsChanged(storeName)
   },
 
   async deleteWhere<T>(
     storeName: TableName,
     predicate: (value: T & { id: string }) => boolean,
   ): Promise<void> {
-    return (await getBackend()).deleteWhere(storeName, predicate)
+    await (await getBackend()).deleteWhere(storeName, predicate)
+    notifyStatisticsChanged(storeName)
   },
 
   async close(): Promise<void> {

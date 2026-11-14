@@ -372,6 +372,8 @@ const en = {
       deleteCancelApplication: 'Cancel Deletion Request',
       deleteCancelSuccess: 'Deletion request has been cancelled.',
       deleteCancelFailed: 'Failed to cancel deletion',
+      statsReadError: 'Unable to read local learning statistics. Please try again.',
+      statsHistoryPending: 'Showing records on this device. Earlier history will be restored when you sync online.',
       stats: {
         practiceDays: 'Practice Days',
         totalQuestions: 'Total Questions',

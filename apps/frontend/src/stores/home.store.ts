@@ -40,6 +40,7 @@ interface HomeStore {
   // 特殊通知（首页横幅/弹窗）
   specialNotifications: SpecialNotification[]
   specialNotificationsLoading: boolean
+  specialNotificationPending: boolean
 
   // Actions
   fetchDailySentence: () => Promise<void>
@@ -58,6 +59,7 @@ export const useHomeStore = create<HomeStore>()((set, getState) => ({
 
   specialNotifications: [],
   specialNotificationsLoading: false,
+  specialNotificationPending: true,
 
   async fetchDailySentence() {
     const { sentenceDate, sentenceLoading } = getState()
@@ -90,7 +92,7 @@ export const useHomeStore = create<HomeStore>()((set, getState) => ({
   },
 
   async fetchSpecialNotifications() {
-    set({ specialNotificationsLoading: true })
+    set({ specialNotificationsLoading: true, specialNotificationPending: true })
     try {
       const data = await getSpecialNotifications()
       set({ specialNotifications: data })

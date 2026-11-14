@@ -1,3 +1,4 @@
+import { useLearningStatistics } from '@/stores/learning-statistics.store'
 import React, { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
@@ -5,7 +6,7 @@ import { localDateKey } from '@/lib/date/calendar-date'
 import { ActivityCalendar } from 'react-activity-calendar'
 import 'react-activity-calendar/tooltips.css'
 import {
-  Calendar, CheckSquare, Star, BookMarked, Flame, TrendingUp, GraduationCap,
+  Calendar, CheckSquare, Star, BookMarked, Flame, TrendingUp,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,49 +14,32 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/cn'
 import {
-  getProfileOverview,
-  getActivityHeatmap,
-  type ProfileOverview,
+  toActivityHeatmap,
   type ActivityDay,
 } from '@/features/profile/api'
 
 export function OverviewTab() {
   const { t } = useTranslation()
-  const [overview, setOverview] = useState<ProfileOverview | null>(null)
-  const [heatmap, setHeatmap] = useState<ActivityDay[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [hmLoading, setHmLoading] = useState(true)
   const [year, setYear] = useState(new Date().getFullYear())
   const maxYear = new Date().getFullYear()
-
-  // Load overview stats once on mount
-  useEffect(() => {
-    getProfileOverview()
-      .then(setOverview)
-      .catch(() => {})
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  // Load activity heatmap; reload when year changes
-  useEffect(() => {
-    setHmLoading(true)
-    getActivityHeatmap(year)
-      .then(setHeatmap)
-      .catch(() => {})
-      .finally(() => setHmLoading(false))
-  }, [year])
+  const { data: overview, error } = useLearningStatistics(`${year}-01-01`, `${year}-12-31`)
+  const isLoading = !overview && !error
+  const hmLoading = isLoading
+  const heatmap = useMemo(() => toActivityHeatmap(overview?.dailyStats ?? [], year), [overview, year])
 
   const stats = [
-    { label: t('profile.stats.practiceDays'), value: overview?.totalPracticeDays ?? 0, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: t('profile.stats.totalQuestions'), value: overview?.totalQuestionsAnswered ?? 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: t('profile.stats.favorites'), value: overview?.totalFavorites ?? 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: t('profile.stats.words'), value: overview?.totalWords ?? 0, icon: BookMarked, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: t('profile.stats.streakDays'), value: `${overview?.streakDays ?? 0}`, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { label: t('profile.stats.practiceDays'), value: overview?.activeDays ?? 0, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: t('profile.stats.totalQuestions'), value: overview?.uniqueQuestionsAnswered ?? 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: t('profile.stats.favorites'), value: overview?.favoriteCount ?? 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: t('profile.stats.words'), value: overview?.wordCount ?? 0, icon: BookMarked, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: t('profile.stats.streakDays'), value: `${overview?.currentStreakDays ?? 0}`, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     { label: t('profile.stats.dailyAvg'), value: overview?.avgDailyQuestions ?? 0, icon: TrendingUp, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
   ]
 
   return (
     <div className="space-y-6">
+      {error && <p className="text-sm text-destructive">{t('profile.statsReadError', { defaultValue: '读取本地学习统计失败，请重试' })}</p>}
+      {overview && !overview.historyComplete && <p className="text-xs text-muted-foreground">{t('profile.statsHistoryPending', { defaultValue: '当前显示本机学习记录，历史数据将在联网同步后补齐' })}</p>}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">{t('profile.practiceStats')}</CardTitle>
@@ -77,7 +61,7 @@ export function OverviewTab() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xl font-bold leading-tight tracking-tight tabular-nums">
-                      {value}
+                      {overview ? value : '—'}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
                   </div>
@@ -87,25 +71,6 @@ export function OverviewTab() {
           )}
         </CardContent>
       </Card>
-
-      {overview?.currentBank && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('profile.currentBank')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <GraduationCap className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold">{overview.currentBank.bankName}</p>
-                <p className="text-xs text-muted-foreground">{t('profile.stats.currentBankDesc')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader className="pb-3">

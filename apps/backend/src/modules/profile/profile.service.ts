@@ -1,12 +1,12 @@
+import { LearningStatisticsService } from '../../common/learning-statistics/learning-statistics.service';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import { addDateKeyDays, formatDateKey, parseDateKey, todayDateKey, DEFAULT_CLIENT_TIME_ZONE } from '../../common/calendar-date';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly learningStatistics: LearningStatisticsService) {}
 
   private normalizeLearningGoals(goals?: string[]) {
     const aliases: Record<string, string> = {
@@ -95,104 +95,18 @@ export class ProfileService {
   }
 
   async getOverview(userId: string) {
-    const sessionCount = await this.prisma.practiceSession.count({
-      where: { userId },
-    });
-
-    const wordsCount = await this.prisma.expressionItem.count({
-      where: { userId },
-    });
-
-    const expressionCount = await this.prisma.expressionItem.count({
-      where: { userId },
-    });
-
-    const chunkProgressCount = await this.prisma.userChunkProgress.count({
-      where: { userId, status: { in: ['can_output', 'mastered'] } },
-    });
-
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const recentActivity = await this.prisma.dailyActivity.findMany({
-      where: {
-        userId,
-        date: { gte: sevenDaysAgo },
-      },
-      orderBy: { date: 'desc' },
-    });
-
-    const streakDays = this.calculateStreak(recentActivity);
-
-    return {
-      userId,
-      stats: {
-        totalSessions: sessionCount,
-        wordsCount,
-        expressionCount,
-        chunkMastered: chunkProgressCount,
-        streakDays,
-      },
-    };
-  }
-
-  private calculateStreak(activities: { date: Date; count: number }[]): number {
-    if (activities.length === 0) return 0;
-
-    const dates = new Set(activities.map((activity) => formatDateKey(activity.date)));
-
-    let streak = 0;
-    let currentDate = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
-
-    while (dates.has(formatDateKey(currentDate))) {
-        streak++;
-        currentDate = addDateKeyDays(currentDate, -1);
-    }
-
-    return streak;
+    const [statistics, favoriteCount, wordCount] = await Promise.all([
+      this.learningStatistics.get(userId),
+      this.prisma.expressionItem.count({ where: { userId, deletedAt: null } }),
+      this.prisma.expressionItem.count({ where: { userId, type: 'word', deletedAt: null } }),
+    ]);
+    return { userId, stats: { ...statistics, favoriteCount, wordCount } };
   }
 
   async getActivityHeatmap(userId: string, year?: number) {
-    const targetYear = Number.isInteger(year) && year! >= 2020 && year! <= new Date().getFullYear()
-      ? year!
-      : new Date().getFullYear();
-    const start = parseDateKey(`${targetYear}-01-01`)!;
-    const end = parseDateKey(`${targetYear + 1}-01-01`)!;
-    const [activities, runs] = await Promise.all([
-      this.prisma.dailyActivity.findMany({
-      where: {
-        userId,
-        date: { gte: start, lt: end },
-      },
-      orderBy: { date: 'asc' },
-      }),
-      (this.prisma as any).userDailyPracticeRun.findMany({
-        where: { userId, date: { gte: start, lt: end } },
-        select: { date: true, completedItemIds: true, stats: true },
-      }),
-    ]);
-
-    const byDate = new Map<string, { count: number; questionCount: number; activeSeconds: number }>();
-    for (const activity of activities) {
-      const key = formatDateKey(activity.date);
-      byDate.set(key, { count: activity.count, questionCount: activity.count, activeSeconds: 0 });
-    }
-    for (const run of runs) {
-      const key = formatDateKey(run.date);
-      const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
-      const sources = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
-      const dialogueQuestions = sources.filter((item) => item?.scope === 'dialogue').reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
-      const activeSeconds = sources.reduce((total, item) => total + Math.max(0, Math.min(4 * 60 * 60, Number(item?.activeSeconds) || 0)), 0);
-      const previous = byDate.get(key) ?? { count: 0, questionCount: 0, activeSeconds: 0 };
-      byDate.set(key, {
-        count: Math.max(previous.count, run.completedItemIds?.length ?? 0, dialogueQuestions),
-        questionCount: (run.completedItemIds?.length ?? 0) + dialogueQuestions,
-        activeSeconds,
-      });
-    }
-
-    return {
-      activities: [...byDate.entries()].map(([date, item]) => ({ date, ...item })),
-    };
+    const targetYear = Number.isInteger(year) && year! >= 2020 && year! <= new Date().getFullYear() ? year! : new Date().getFullYear();
+    const statistics = await this.learningStatistics.get(userId, `${targetYear}-01-01`, `${targetYear}-12-31`);
+    return { activities: statistics.dailyStats.filter(day => day.date.startsWith(`${targetYear}-`)).map(day => ({ ...day, count: day.questionCount || (day.active ? 1 : 0) })) };
   }
 
   async getPracticeRecords(userId: string, pagination: PaginationDto) {

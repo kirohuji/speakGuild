@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 import { useOnboardingStore, ONBOARDING_SEGMENTS } from '@/stores/onboarding.store'
 import { getUserProfile, updateUserProfile, type UserProfile } from '@/features/profile/api'
+import { useHomeStore } from '@/stores/home.store'
 import { useUserStore } from '@/stores/user.store'
 import { LearningAssessmentDialog } from '@/features/profile/components/placement-assessment-dialog'
 import { SpotlightOverlay } from '@/components/common/spotlight-overlay'
@@ -17,6 +18,10 @@ interface OnboardingProviderProps {
 export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const specialNotificationsLoading = useHomeStore((s) => s.specialNotificationsLoading)
+  const specialNotificationPending = useHomeStore((s) => s.specialNotificationPending)
+  const deferHomeGuidance = location.pathname === '/' &&
+    (specialNotificationsLoading || specialNotificationPending)
   const { session, isAuthenticated } = useAuth()
   const storeMode = useOnboardingStore((s) => s.mode)
   const storeActiveSegmentId = useOnboardingStore((s) => s.activeSegmentId)
@@ -189,14 +194,14 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       {children}
 
       <LearningAssessmentDialog
-        open={placementOpen}
+        open={placementOpen && !deferHomeGuidance}
         onOpenChange={setPlacementOpen}
         profile={placementProfile}
         onCompleted={handlePlacementCompleted}
         onDismissed={handlePlacementDismissed}
       />
 
-      {storeMode && overlayVisible && currentStep && (
+      {!deferHomeGuidance && storeMode && overlayVisible && currentStep && (
         <SpotlightOverlay
           key={currentStep.id}
           step={currentStep}

@@ -1,3 +1,4 @@
+import { STATISTICS_TABLES, STATISTICS_DDL, STATISTICS_TRIGGERS } from './statistics-schema'
 /**
  * SQLite schema for Capacitor offline storage.
  *
@@ -19,10 +20,11 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 15
+export const DB_VERSION = 16
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
+  ...STATISTICS_TABLES,
   'kv',
   'my_learning_units',
   'downloaded_packs',
@@ -61,6 +63,7 @@ export type TableName = (typeof TABLE_NAMES)[number]
 
 /** CREATE TABLE statements for each store. */
 export const DDL: Record<TableName, string> = {
+  ...STATISTICS_DDL,
   kv: `
     CREATE TABLE IF NOT EXISTS kv (
       id TEXT PRIMARY KEY NOT NULL,
@@ -430,6 +433,8 @@ export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
  * does not alter an existing table, so these statements run on every open.
  */
 export const COLUMN_MIGRATIONS = [
+  { table: 'daily_practice_attempts', column: 'run_id', sql: `ALTER TABLE daily_practice_attempts ADD COLUMN run_id TEXT` },
+  { table: 'outbox', column: 'next_retry_at', sql: `ALTER TABLE outbox ADD COLUMN next_retry_at TEXT NOT NULL DEFAULT '1970-01-01T00:00:00.000Z'` },
   { table: 'downloaded_unit_details', column: 'row_kind', sql: `ALTER TABLE downloaded_unit_details ADD COLUMN row_kind TEXT` },
   { table: 'downloaded_unit_details', column: 'sort_order', sql: `ALTER TABLE downloaded_unit_details ADD COLUMN sort_order INTEGER` },
   { table: 'offline_content_refs', column: 'sort_order', sql: `ALTER TABLE offline_content_refs ADD COLUMN sort_order INTEGER` },
@@ -472,6 +477,7 @@ export async function initializeOfflineSchema(
       if (!isDuplicateColumnError(error)) throw error
     }
   }
+  for (const sql of STATISTICS_TRIGGERS) await execute(sql)
   for (const idx of INDEXES) {
     try { await execute(idx) } catch { /* index may already exist */ }
   }
@@ -558,6 +564,10 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_topic_sessions_remote_id ON topic_sessions (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_topic_sessions_topic_id ON topic_sessions (topic_id)`,
   `CREATE INDEX IF NOT EXISTS idx_topic_submissions_session_id ON topic_submissions (session_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_outbox_due ON outbox (status, next_retry_at, id)`,
+  `CREATE INDEX IF NOT EXISTS idx_outbox_synced_time ON outbox (status, updated_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_outbox_entity_id ON outbox (entity_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_attempts_run_status ON daily_practice_attempts (run_id, sync_status)`,
   // outbox: filter by status
   `CREATE INDEX IF NOT EXISTS idx_outbox_status ON outbox (status)`,
   `CREATE INDEX IF NOT EXISTS idx_outbox_entity ON outbox (entity_type, entity_id)`,

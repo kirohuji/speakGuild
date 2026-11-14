@@ -1,3 +1,8 @@
+import { getCurrentSessionSnapshot } from '@/providers/auth-session'
+import { learningStatisticsRepository } from './learning-statistics.repository'
+import { batchStatisticsNotifications, notifyStatisticsChanged } from './storage-events'
+import { flushPracticeActivityRecords } from '@/stores/practice-activity.store'
+import { refreshLearningBadgeFromTodayRun } from '@/lib/native/learning-reminder'
 import { learningApi } from '@/features/learning/api/learning-api'
 import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
@@ -20,13 +25,14 @@ const logger = createLogger('offline-sync')
 const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
 
 export interface OfflineSyncResult {
-  push: { synced: number; failed: number; skipped: number; operations?: Record<string, number> }
+  push: { synced: number; failed: number; skipped: number; remaining?: number; operations?: Record<string, number> }
   pull: { cursor: string | null; changed: number; deleted: number } | null
   refreshedPacks: string[]
 }
 
 // All callers must share one real sync promise. In particular, logout must wait
 // for an already-running foreground sync instead of treating it as a no-op.
+let accountResetInProgress = false
 let activeSyncPromise: Promise<OfflineSyncResult> | null = null
 
 function userSyncCursorKey(userId?: string | null) {
@@ -289,9 +295,8 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
     await applyWarmupRecordItem(item)
   }
 
-  for (const item of changed?.dailyPracticeRuns ?? []) {
-    await restoreRemoteDailyPracticeRun(item)
-  }
+  await learningStatisticsRepository.saveRemoteRuns(changed?.dailyPracticeRuns ?? [])
+  for (const item of changed?.dailyPracticeRuns ?? []) await restoreRemoteDailyPracticeRun(item)
 
   for (const session of changed?.topicSessions ?? []) {
     if (!session?.id) continue
@@ -370,6 +375,11 @@ async function replayItem(
   item: SyncOutboxItem,
   expressionCache?: { items: any[] },
 ): Promise<boolean> {
+  if (item.entityType === 'learning_activity') {
+    const result = await dailyPracticeApi.recordActivity(item.payload as any)
+    if ((result as any)?.accepted === false) throw new Error('学习时长未被接受')
+    return true
+  }
   if (item.entityType === 'my_unit') {
     if (item.operation === 'create') {
       await learningApi.startUnit(item.entityId)
@@ -604,7 +614,7 @@ async function replayItem(
 export type SyncScope = 'all' | 'today' | 'notebook'
 
 const SCOPE_OUTBOX_TYPES: Record<Exclude<SyncScope, 'all'>, ReadonlySet<SyncEntityType>> = {
-  today: new Set<SyncEntityType>(['daily_practice']),
+  today: new Set<SyncEntityType>(['daily_practice', 'learning_activity']),
   notebook: new Set<SyncEntityType>(['word_entry', 'chunk_entry', 'pattern_entry']),
 }
 const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
@@ -613,6 +623,25 @@ const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
 }
 
 export const offlineSyncService = {
+  pauseForAccountReset() { accountResetInProgress = true },
+  resumeForAccount() { accountResetInProgress = false },
+  async waitForIdle() { await activeSyncPromise?.catch(() => undefined) },
+  async syncPending(userId: string) {
+    if (accountResetInProgress || activeSyncPromise || typeof document === 'undefined' || document.visibilityState !== 'visible' || !navigator.onLine) return
+    if (getCurrentSessionSnapshot()?.user?.id !== userId) return
+    if (!(await localDb.listDueOutbox(new Date().toISOString(), 1)).length) return (await localDb.countWhere('outbox', [{ column: 'status', value: ['pending', 'failed'] }])) > 0
+    if (accountResetInProgress || activeSyncPromise || getCurrentSessionSnapshot()?.user?.id !== userId) return
+    const work = (async (): Promise<OfflineSyncResult> => {
+      // Periodic transport sends queued facts only. Full pull/content checks stay on foreground/manual sync.
+      await flushPracticeActivityRecords()
+      const push = await this.flush()
+      return { push, pull: null, refreshedPacks: [] }
+    })()
+    activeSyncPromise = work
+    try { await work }
+    finally { if (activeSyncPromise === work) activeSyncPromise = null }
+    return (await localDb.countWhere('outbox', [{ column: 'status', value: ['pending', 'failed'] }])) > 0
+  },
   async pull(userId?: string | null, types?: string[]): Promise<{
     cursors: Record<string, string | null>
     changed: number
@@ -629,6 +658,7 @@ export const offlineSyncService = {
     let totalChanged = 0
     let totalDeleted = 0
     const dailyPracticeRunIds = new Set<string>()
+    let dailyHistoryComplete = false
     let finalCursors: Record<string, string | null> = { ...cursors }
 
     // 循环分页拉取，直到所有类型 hasMore 均为 false。
@@ -638,7 +668,7 @@ export const offlineSyncService = {
 
     while (true) {
       const result = await syncApi.pull(cursors, types)
-      await applyUserPullChanges(result.changed, result.deleted)
+      await batchStatisticsNotifications(() => applyUserPullChanges(result.changed, result.deleted))
       for (const run of result.changed.dailyPracticeRuns ?? []) {
         if (typeof run?.clientRunId === 'string' && run.clientRunId) dailyPracticeRunIds.add(run.clientRunId)
       }
@@ -663,6 +693,7 @@ export const offlineSyncService = {
       finalCursors = result.cursors
 
       // 检查是否所有类型都已拉完
+      dailyHistoryComplete = !result.hasMore.dailyPracticeRuns
       const anyMore = Object.values(result.hasMore).some(Boolean)
       if (!anyMore) break
 
@@ -676,6 +707,13 @@ export const offlineSyncService = {
       cursors = result.cursors
     }
 
+    if ((!types || types.includes('dailyPracticeRuns')) && dailyHistoryComplete) {
+      const marker = await localDb.get<{ value?: boolean }>('kv', 'sync:user:statistics-complete')
+      if (!marker?.value) {
+        await localDb.put('kv', { id: 'sync:user:statistics-complete', value: true })
+        notifyStatisticsChanged('daily_activity')
+      }
+    }
     if (finalCursors) {
       await localDb.put('kv', {
         id: cursorKey,
@@ -688,6 +726,7 @@ export const offlineSyncService = {
   },
 
   async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope }): Promise<OfflineSyncResult> {
+    if (accountResetInProgress) throw new Error('Account data reset in progress')
     // 局部同步：只上传/拉取该范围对应的类型；'all'/不传 = 完整同步。
     const outboxTypes = options?.scope && options.scope !== 'all' ? SCOPE_OUTBOX_TYPES[options.scope] : undefined
     const pullTypes = options?.scope && options.scope !== 'all' ? SCOPE_PULL_TYPES[options.scope] : undefined
@@ -703,18 +742,16 @@ export const offlineSyncService = {
     const logId = syncStore.begin('开始同步')
     const running = (async (): Promise<OfflineSyncResult> => {
       try {
-        if (!outboxTypes || outboxTypes.has('daily_practice')) {
-          await dailyPracticeRepository.requeueUnsyncedSnapshots()
-        }
+        if (!outboxTypes || outboxTypes.has('learning_activity')) await flushPracticeActivityRecords()
         const push = await this.flush(outboxTypes)
-        if (push.failed > 0) {
+        if (push.failed > 0 || push.remaining > 0) {
           const detail = { push, pull: null, refreshedPacks: [] as string[] }
-          toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
+          if (!options?.quiet) toast.error(`还有 ${push.remaining} 条数据待同步，将在后续同步时继续处理`)
           useOfflineSyncStore.getState().finish(logId, {
             status: 'failed',
-            summary: `同步失败：${push.failed} 条未上传`,
+            summary: `还有 ${push.remaining} 条数据待同步`,
             detail,
-            error: `${push.failed} 条待同步操作上传失败，请展开存储管理查看具体队列项。`,
+            error: `${push.remaining} 条待同步操作尚未确认。`,
           })
           return detail
         }
@@ -731,6 +768,7 @@ export const offlineSyncService = {
         const refreshedPacks = (!options?.scope || options.scope === 'all')
           ? await this.refreshContentUpdates()
           : []
+        void refreshLearningBadgeFromTodayRun().catch(() => undefined)
         const result = { push, pull, refreshedPacks }
         useOfflineSyncStore.getState().finish(logId, {
           status: 'success',
@@ -858,12 +896,16 @@ export const offlineSyncService = {
     return refreshed
   },
 
-  async flush(outboxTypes?: ReadonlySet<SyncEntityType>): Promise<{ synced: number; failed: number; skipped: number; operations: Record<string, number> }> {
+  async flush(outboxTypes?: ReadonlySet<SyncEntityType>): Promise<{ synced: number; failed: number; skipped: number; remaining: number; operations: Record<string, number> }> {
     let synced = 0
     let failed = 0
     let skipped = 0
+    const countRemaining = () => localDb.countWhere('outbox', [
+      { column: 'status', value: ['pending', 'failed'] },
+      ...(outboxTypes ? [{ column: 'entity_type', value: [...outboxTypes] }] : []),
+    ])
 
-    let items = await syncOutbox.listPending()
+    let items = await syncOutbox.listPending(outboxTypes)
     if (outboxTypes) items = items.filter((item) => outboxTypes.has(item.entityType))
     const operations = items.reduce<Record<string, number>>((acc, item) => {
       const key = `${item.entityType}:${item.operation}`
@@ -873,12 +915,13 @@ export const offlineSyncService = {
     if (items.length === 0) {
       // 清理历史上残留的 synced 记录
       await syncOutbox.cleanup()
-      return { synced, failed, skipped, operations }
+      return { synced, failed, skipped, remaining: await countRemaining(), operations }
     }
 
     // 预取 expression 全量列表，供 replayItem 中 delete 操作复用（避免逐条 list()）
     let exprCtx: { items: any[] } | undefined
     try {
+      if (!items.some(item => ['word_entry', 'chunk_entry', 'pattern_entry'].includes(item.entityType))) throw new Error('No expression operations')
       const raw = await expressionApi.list()
       exprCtx = { items: Array.isArray(raw) ? raw : (raw as any)?.items ?? [] }
     } catch { /* 预取失败不影响同步，回退到逐条查询 */ }
@@ -950,9 +993,10 @@ export const offlineSyncService = {
 
     // 逐条处理需要顺序 replay 的类型。
     let madeProgress = true
-    while (madeProgress) {
+    let replayPasses = 0
+    while (madeProgress && replayPasses++ < 2) {
       madeProgress = false
-      const pending = await syncOutbox.listPending()
+      const pending = await syncOutbox.listPending(outboxTypes)
 
       for (const item of pending) {
         if (bulkEntityTypes.has(item.entityType)) {
@@ -999,6 +1043,6 @@ export const offlineSyncService = {
     // 清理 outbox 中已同步的旧记录
     await syncOutbox.cleanup()
 
-    return { synced, failed, skipped, operations }
+    return { synced, failed, skipped, remaining: await countRemaining(), operations }
   },
 }

@@ -372,6 +372,8 @@ const ja = {
       deleteCancelApplication: '削除申請を取り消す',
       deleteCancelSuccess: '削除申請が取り消されました。',
       deleteCancelFailed: '削除の取り消しに失敗しました',
+      statsReadError: 'ローカルの学習統計を読み込めませんでした。再試行してください。',
+      statsHistoryPending: 'この端末の学習記録を表示しています。過去の履歴はオンライン同期後に復元されます。',
       stats: {
         practiceDays: '練習日数',
         totalQuestions: '累計問題数',

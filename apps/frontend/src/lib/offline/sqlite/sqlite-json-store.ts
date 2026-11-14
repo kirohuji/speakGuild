@@ -1,3 +1,4 @@
+import { projectStatisticsRuns } from '../statistics-projection'
 import type { TableName } from './schema'
 
 export interface SqliteJsonExecutor {
@@ -148,6 +149,7 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['pack_ids', 'packIdsKey', (value) => Array.isArray(value?.packIds) ? value.packIds.join(',') : null],
   ],
   daily_practice_attempts: [
+    ['run_id', 'runId', (value) => value?.runId ?? null],
     ['item_id', 'itemId', (value) => value?.itemId ?? null],
     ['pack_id', 'packId', (value) => value?.packId ?? null],
     ['topic_id', 'topicId', (value) => value?.topicId ?? null],
@@ -194,6 +196,7 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['entity_id', 'entityId', (value) => value?.entityId ?? null],
     ['operation', 'operation', (value) => value?.operation ?? null],
     ['status', 'status', (value) => value?.status ?? null],
+    ['next_retry_at', 'nextRetryAt', (value) => value?.nextRetryAt ?? value?.createdAt ?? '1970-01-01T00:00:00.000Z'],
     ['client_mutation_id', 'clientMutationId', (value) => value?.clientMutationId ?? null],
     ['retry_count', 'retryCount', (value) => typeof value?.retryCount === 'number' ? value.retryCount : null],
     ['created_at', 'createdAt', (value) => value?.createdAt ?? null],
@@ -340,7 +343,108 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
     })
   }
 
+  async function atomic(statements: Array<{ sql: string; values: any[] }>) {
+    if (!statements.length) return
+    await enqueueWrite(async () => {
+      if (!executor.runMany) throw new Error('Atomic SQLite batch support is required')
+      await executor.runMany(statements, true)
+      await executor.afterWrite?.()
+    })
+  }
+  function upsertRow(table: TableName, value: any) {
+    const metadata = metadataFor(table, value)
+    return { sql: upsertSql(table, metadata.columns), values: [value.id, ...metadata.values, JSON.stringify(jsonDataFor(table, value)), new Date().toISOString()] }
+  }
+  function outboxStatement(id: string, entityType: string, entityId: string, operation: string, payload: any) {
+    const now = new Date().toISOString()
+    const value = { id, entityType, entityId, operation, payload, clientMutationId: id, revision: 1, status: 'pending', retryCount: 0, createdAt: now, updatedAt: now, nextRetryAt: now }
+    const statement = upsertRow('outbox', value)
+    const incoming = `CASE WHEN json_array_length(json_extract(excluded.data,'$.payload.attempts'))=0 AND json_array_length(json_extract(outbox.data,'$.payload.attempts'))>0 THEN json_remove(json_extract(excluded.data,'$.payload'),'$.attempts') ELSE json_extract(excluded.data,'$.payload') END`
+    let payloadMerge = `json_patch(CASE WHEN outbox.status='synced' THEN '{}' ELSE coalesce(json_extract(outbox.data,'$.payload'),'{}') END, ${incoming})`
+    if (entityType === 'daily_practice') {
+      // Immutable events survive a slower facts-only snapshot or an in-flight acknowledgement.
+      const events = `(SELECT coalesce(json_group_array(json(event)),'[]') FROM (
+        SELECT value AS event FROM json_each(outbox.data,'$.payload.run.attemptHistory') WHERE outbox.status != 'synced'
+        UNION SELECT value AS event FROM json_each(excluded.data,'$.payload.run.attemptHistory')))`
+      payloadMerge = `json_set(${payloadMerge}, '$.run.attemptHistory', json(${events}))`
+      const mergeItems = (path: string, identity: string, rank: string) => `(SELECT coalesce(json_group_array(json(item)),'[]') FROM (
+        SELECT item FROM (SELECT item,incoming,position,ROW_NUMBER() OVER (
+          PARTITION BY json_extract(item,'$.${identity}') ORDER BY ${rank} DESC,incoming DESC) AS priority FROM (
+            SELECT value AS item,0 AS incoming,CAST(key AS INTEGER) AS position FROM json_each(outbox.data,'$.payload.${path}') WHERE outbox.status!='synced'
+            UNION ALL SELECT value AS item,1 AS incoming,CAST(key AS INTEGER) AS position FROM json_each(excluded.data,'$.payload.${path}')
+        )) WHERE priority=1 ORDER BY incoming DESC,position
+      ))`
+      const attempts = mergeItems('attempts', 'clientAttemptId', '0')
+      payloadMerge = `json_set(${payloadMerge}, '$.attempts', json(${attempts}))`
+      const items = mergeItems('warmupRecord.items', 'stepId', "coalesce(json_extract(item,'$.practiceCount'),0)")
+      payloadMerge = `CASE WHEN json_type(${payloadMerge},'$.warmupRecord')='object'
+        THEN json_set(${payloadMerge},'$.warmupRecord.items',json(${items})) ELSE ${payloadMerge} END`
+    }
+    statement.sql = statement.sql.replace(/ON CONFLICT\(id\) DO UPDATE SET[\s\S]*/, `ON CONFLICT(id) DO UPDATE SET
+      status='pending', next_retry_at=excluded.next_retry_at, updated_at=excluded.updated_at,
+      data=json_set(excluded.data, '$.revision', coalesce(json_extract(outbox.data,'$.revision'),0)+1,
+        '$.payload', ${payloadMerge})`)
+
+    return statement
+  }
+
   return {
+    async applyStatisticsRuns(runs: any[]) {
+      const statements = projectStatisticsRuns(runs)
+      // Bound the native bridge payload during initial history restoration.
+      for (let i = 0; i < statements.length; i += SQL_BATCH_SIZE) await atomic(statements.slice(i, i + SQL_BATCH_SIZE))
+    },
+    async saveDailyPracticeOutbox(entityId: string, operation: string, payload: any) {
+      await atomic([outboxStatement(`daily-practice:${entityId}`, 'daily_practice', entityId, operation, payload)])
+    },
+    async patchOutbox(id: string, revision: number, status: 'synced' | 'failed', error?: string, retryAt?: string) {
+      return enqueueWrite(async () => {
+        const now = new Date().toISOString()
+        await executor.run(`UPDATE outbox SET status=?,updated_at=?,next_retry_at=COALESCE(?,next_retry_at),
+          retry_count=coalesce(retry_count,0)+?,data=json_set(data,'$.status',?,'$.updatedAt',?,'$.syncedAt',?,
+          '$.lastError',?,'$.nextRetryAt',COALESCE(?,next_retry_at),'$.retryCount',coalesce(retry_count,0)+?)
+          WHERE id=? AND json_extract(data,'$.revision')=?`,
+          [status,now,retryAt ?? null,status==='failed'?1:0,status,now,status==='synced'?now:null,error ?? null,retryAt ?? null,status==='failed'?1:0,id,revision])
+        await executor.afterWrite?.()
+        const rows = await executor.queryRows<any>("SELECT status,json_extract(data,'$.revision') AS revision FROM outbox WHERE id=?", [id])
+        return rows[0]?.status===status && rows[0]?.revision===revision
+      })
+    },
+    async saveRunFacts(run: any, payload: any, warmup?: any) {
+      await atomic([...(warmup ? [upsertRow('warmup_records', warmup)] : []), upsertRow('daily_practice_runs', run), outboxStatement(`daily-practice:${run.id}`, 'daily_practice', run.id, 'update', payload)])
+    },
+    async saveLearningActivity(record: { date: string; sourceId: string; scope: string; activeSeconds: number }) {
+      const projection = projectStatisticsRuns([{ date: record.date, stats: { activity: { [record.sourceId]: record } } }])
+      await atomic([...projection, outboxStatement(`learning-activity:${record.date}:${record.sourceId}`, 'learning_activity', `${record.date}:${record.sourceId}`, 'snapshot', { ...record, questionCount: 0 })])
+    },
+    async readLearningStatistics(start: string, end: string, today: string) {
+      // Serialize with writes so the visible range and cumulative counters agree.
+      return enqueueWrite(async () => {
+        const [days, totals, streak] = await Promise.all([
+          executor.queryRows<any>('SELECT id AS date, question_count AS questionCount, active_seconds AS activeSeconds, 1 AS active FROM learning_stat_days WHERE id >= ? AND id <= ? AND (question_count > 0 OR active_seconds > 0) ORDER BY id', [start, end]),
+          executor.queryRows<any>("SELECT * FROM learning_stat_totals WHERE id='total'"),
+          // Index probes stop at the first missing date, without loading history.
+          executor.queryRows<any>(`WITH RECURSIVE streak(day,n) AS (
+            SELECT CASE WHEN EXISTS(SELECT 1 FROM learning_stat_days WHERE id=? AND (question_count>0 OR active_seconds>0)) THEN ? ELSE date(?,'-1 day') END, 0
+            UNION ALL SELECT date(day,'-1 day'), n+1 FROM streak WHERE EXISTS(
+              SELECT 1 FROM learning_stat_days WHERE id=streak.day AND (question_count>0 OR active_seconds>0))
+          ) SELECT MAX(n) AS count FROM streak`, [today, today, today]),
+        ])
+        const total = totals[0] ?? {}
+        return { dailyStats: days.map(day => ({ ...day, active: Boolean(day.active) })), activeDays: total.active_days ?? 0,
+          uniqueQuestionsAnswered: total.unique_questions ?? 0, activeSeconds: total.active_seconds ?? 0,
+          avgDailyQuestions: total.active_days ? Math.round(total.question_days / total.active_days) : 0,
+          currentStreakDays: streak[0]?.count ?? 0, favoriteCount: total.favorite_count ?? 0, wordCount: total.word_count ?? 0 }
+      })
+    },
+    async pruneSyncedOutbox(before: string) {
+      await write("DELETE FROM outbox WHERE status='synced' AND updated_at < ?", [before])
+    },
+    async listDueOutbox(now: string, limit: number, types?: string[]) {
+      const typeClause = types?.length ? ` AND entity_type IN (${types.map(() => '?').join(',')})` : ''
+      const rows = await executor.queryRows<any>(`SELECT * FROM outbox WHERE status IN ('pending','failed') AND next_retry_at <= ?${typeClause} ORDER BY next_retry_at,id LIMIT ?`, [now, ...(types ?? []), limit])
+      return rows.map(row => hydrateRow('outbox', row))
+    },
     async get<T>(storeName: TableName, id: string): Promise<T | null> {
       try {
         const rows = await executor.queryRows<{ data: string }>(

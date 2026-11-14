@@ -1,3 +1,4 @@
+import { LearningStatisticsService } from '../../common/learning-statistics/learning-statistics.service';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
@@ -11,7 +12,6 @@ import {
 const CHECK_IN_BASE_POINTS = 10;
 const STREAK_BONUS_CAP = 5; // max bonus per day from streak
 const MAX_CALENDAR_RANGE_DAYS = 371;
-const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseCalendarDate(value: string) {
@@ -33,7 +33,7 @@ function formatCalendarDate(date: Date) {
 
 @Injectable()
 export class PointsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly learningStatistics: LearningStatisticsService) {}
 
   /** Get user's current points balance */
   async getBalance(userId: string) {
@@ -93,7 +93,7 @@ export class PointsService {
       throw new BadRequestException(`日历查询范围不能超过 ${MAX_CALENDAR_RANGE_DAYS} 天`);
     }
 
-    const [checkIns, totalCheckIns, status, runs] = await Promise.all([
+    const [checkIns, totalCheckIns, status, statistics] = await Promise.all([
       this.prisma.userCheckIn.findMany({
         where: {
           userId,
@@ -105,34 +105,9 @@ export class PointsService {
       }),
       this.prisma.userCheckIn.count({ where: { userId } }),
       this.getCheckInStatus(userId, timeZone),
-      (this.prisma as any).userDailyPracticeRun.findMany({
-        where: { userId, date: { gte: rangeStart, lte: rangeEnd } },
-        select: { date: true, completedItemIds: true, stats: true },
-      }),
+      this.learningStatistics.get(userId, startDate, endDate, timeZone),
     ]);
-
-    const statsByDate = new Map<string, { date: string; completedIds: Set<string>; dialogueQuestions: number; activeSeconds: number }>();
-    for (const run of runs) {
-      const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
-      const activity = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
-      const activeSeconds = activity.reduce((total, item) => total + Math.max(0, Math.min(MAX_ACTIVE_SECONDS_PER_SOURCE, Number(item?.activeSeconds) || 0)), 0);
-      const dialogueQuestions = activity
-        .filter((item) => item?.scope === 'dialogue')
-        .reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
-      const date = formatCalendarDate(run.date);
-      const previous = statsByDate.get(date) ?? { date, completedIds: new Set<string>(), dialogueQuestions: 0, activeSeconds: 0 };
-      for (const itemId of run.completedItemIds ?? []) previous.completedIds.add(itemId);
-      previous.dialogueQuestions += dialogueQuestions;
-      previous.activeSeconds += activeSeconds;
-      statsByDate.set(date, previous);
-    }
-    const dailyStats = [...statsByDate.values()]
-      .map(({ date, completedIds, dialogueQuestions, activeSeconds }) => ({
-        date,
-        questionCount: completedIds.size + dialogueQuestions,
-        activeSeconds,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const dailyStats = statistics.dailyStats.filter(day => day.date >= startDate && day.date <= endDate);
 
     return {
       dates: [...new Set(checkIns

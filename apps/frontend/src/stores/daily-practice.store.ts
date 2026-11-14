@@ -144,8 +144,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
     const recordsAtAttempt = useWarmupSessionStore.getState().records
     if (!factsAtAttempt || factsAtAttempt.id !== planAtAttempt.runId) return
     attemptChain = attemptChain.catch(() => undefined).then(async () => {
-      await dailyPracticeRepository.persistRunFacts(factsAtAttempt)
-      void refreshLearningBadgeFromTodayRun().catch(() => undefined)
+      await dailyPracticeRepository.persistRunFacts(factsAtAttempt, { plan: planAtAttempt, records: recordsAtAttempt })
 
       const initial = after.initialRecallResults[step.itemId]
       const remediation = after.remediationResults[step.itemId]
@@ -183,12 +182,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
         const { useLearningStore } = await import('./learning.store')
         await useLearningStore.getState().fetchMyLearning(true)
       }
-      // 作答原文先落盘。入队失败可以吞掉，下次同步会按本地记录补进队列。
-      await dailyPracticeRepository.persistTodayWarmup(
-        planAtAttempt,
-        recordsAtAttempt,
-        `today-warmup:${planAtAttempt.runId}`,
-      )
+      void refreshLearningBadgeFromTodayRun().catch(() => undefined)
       await dailyPracticeRepository.syncRunSnapshot(planAtAttempt.runId).catch(() => undefined)
     })
     return attemptChain

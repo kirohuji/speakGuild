@@ -1,115 +1,83 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
-import { registerPracticeActivityCommitter, usePracticeActivityStore, type PracticeActivityScope } from '@/stores/practice-activity.store'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { createId } from '@/lib/offline/utils'
 import { localDateKey } from '@/lib/date/calendar-date'
-
+import { claimPracticeTimer, ownsPracticeTimer, getPracticeActivityGeneration, flushPracticeActivityRecords, registerPracticeActivityCommitter, usePracticeActivityStore, type PracticeActivityScope } from '@/stores/practice-activity.store'
 const IDLE_PAUSE_MS = 60_000
-const FLUSH_INTERVAL_MS = 30_000
-
-/**
- * 只累计用户在前台且持续操作中的练习时间：无交互 60 秒或切到后台即暂停。
- * 本地持久化总秒数，服务端以 sourceId 的最大值去重，因此断网和重复请求不会重复累计。
- */
-export function useEffectivePracticeTimer({
-  enabled,
-  sourceId,
-  scope,
-  questionCount = 0,
-  idlePauseMs = IDLE_PAUSE_MS,
-}: {
-  enabled: boolean
-  sourceId: string | null
-  scope: PracticeActivityScope
-  questionCount?: number
-  idlePauseMs?: number
+/** Only the active foreground learning timer accrues. Writes happen at five-second checkpoints. */
+export function useEffectivePracticeTimer({ enabled, sourceId: inputSourceId, scope, idlePauseMs = IDLE_PAUSE_MS }: {
+  enabled: boolean; sourceId: string | null; scope: PracticeActivityScope; questionCount?: number; idlePauseMs?: number
 }) {
-  const addActiveSeconds = usePracticeActivityStore((s) => s.addActiveSeconds)
-  const getRecord = usePracticeActivityStore((s) => s.getRecord)
-  const lastInteractionAt = useRef(Date.now())
-  const lastTickAt = useRef(Date.now())
-  const lastFlushAt = useRef(0)
-  const questionCountRef = useRef(questionCount)
-  const sourceIdRef = useRef(sourceId)
-  const scopeRef = useRef(scope)
-
-  questionCountRef.current = questionCount
-  sourceIdRef.current = sourceId
-  scopeRef.current = scope
-
+  const sourceId = useMemo(() => inputSourceId ? `timer:${createId()}` : null, [inputSourceId])
+  const onInteraction = useRef<(() => void) | null>(null)
+  const touch = useCallback(() => { onInteraction.current?.() }, [])
   const flush = useCallback(() => {
-    const activeSourceId = sourceIdRef.current
-    if (!activeSourceId) return
-    const date = localDateKey()
-    const record = getRecord(date, activeSourceId)
-    if (!record || record.activeSeconds === 0) return
-    lastFlushAt.current = Date.now()
-    void dailyPracticeApi.recordActivity({
-      date,
-      sourceId: activeSourceId,
-      scope: scopeRef.current,
-      activeSeconds: record.activeSeconds,
-      questionCount: Math.max(0, Math.floor(questionCountRef.current)),
-    }).catch(() => {
-      // 保留本地累计值，下一次用户练习或重新进入页面时自动补传。
-    })
-  }, [getRecord])
-
-  const touch = useCallback(() => {
-    lastInteractionAt.current = Date.now()
+    void flushPracticeActivityRecords().catch(error => console.warn('[learning-activity] local persistence failed:', error))
   }, [])
-
   useEffect(() => {
     if (!enabled || !sourceId) return
-    return registerPracticeActivityCommitter(() => {
-      const now = Date.now()
-      const elapsed = Math.floor((now - lastTickAt.current) / 1000)
-      lastTickAt.current = now
-      const activeSourceId = sourceIdRef.current
-      if (!activeSourceId || elapsed <= 0) return
-      if (document.visibilityState === 'visible' && now - lastInteractionAt.current <= idlePauseMs) {
-        addActiveSeconds({ date: localDateKey(), sourceId: activeSourceId, scope: scopeRef.current, seconds: elapsed })
+    const generation = getPracticeActivityGeneration()
+    const releaseOwnership = claimPracticeTimer(sourceId)
+    let lastMonotonic = performance.now()
+    let lastWall = Date.now()
+    let lastInteraction = lastMonotonic
+    let visible = document.visibilityState === 'visible'
+    const pendingMilliseconds = new Map<string, number>()
+    const advance = () => {
+      const now = performance.now()
+      const startMonotonic = lastMonotonic
+      const startWall = lastWall
+      lastMonotonic = now
+      lastWall = Date.now()
+      if (generation !== getPracticeActivityGeneration() || !visible || !ownsPracticeTimer(sourceId)) return
+      // Intersect with the previous idle deadline before accepting a new interaction.
+      const milliseconds = Math.max(0, Math.min(now, lastInteraction + idlePauseMs) - startMonotonic)
+      let cursor = startWall
+      const end = startWall + Math.min(milliseconds, 60_000)
+      while (cursor < end) {
+        const midnight = new Date(cursor)
+        midnight.setHours(24, 0, 0, 0)
+        const until = Math.min(end, midnight.getTime())
+        const date = localDateKey(new Date(cursor))
+        pendingMilliseconds.set(date, (pendingMilliseconds.get(date) ?? 0) + until - cursor)
+        cursor = until
       }
-    })
-  }, [addActiveSeconds, enabled, idlePauseMs, sourceId])
-
-  useEffect(() => {
-    if (!enabled || !sourceId) return
-    lastInteractionAt.current = Date.now()
-    lastTickAt.current = Date.now()
-
-    const onActivity = () => { lastInteractionAt.current = Date.now() }
+    }
+    const commit = () => {
+      advance()
+      if (generation !== getPracticeActivityGeneration()) return
+      for (const [date, milliseconds] of pendingMilliseconds) {
+        const seconds = Math.floor(milliseconds / 1000)
+        if (seconds) usePracticeActivityStore.getState().addActiveSeconds({ date, sourceId, scope, seconds })
+        pendingMilliseconds.set(date, milliseconds % 1000)
+      }
+      // At most the current and immediately preceding calendar day's fractional second is retained.
+      if (pendingMilliseconds.size > 2) pendingMilliseconds.delete(pendingMilliseconds.keys().next().value!)
+    }
+    const interact = () => { advance(); lastInteraction = performance.now() }
+    onInteraction.current = interact
+    const unregister = registerPracticeActivityCommitter(commit)
+    let timer: ReturnType<typeof setInterval> | undefined
+    const stopTimer = () => { clearInterval(timer); timer = undefined }
+    const startTimer = () => { if (!timer) timer = setInterval(commit, 5_000) }
     const onVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') flush()
-      else {
-        lastInteractionAt.current = Date.now()
-        lastTickAt.current = Date.now()
-      }
+      commit()
+      visible = document.visibilityState === 'visible'
+      if (visible) {
+        lastMonotonic = performance.now(); lastInteraction = lastMonotonic; lastWall = Date.now(); startTimer()
+      } else { stopTimer(); flush() }
     }
     const events: Array<keyof DocumentEventMap> = ['pointerdown', 'keydown', 'touchstart', 'input', 'scroll', 'wheel']
-    events.forEach((event) => document.addEventListener(event, onActivity, { passive: true }))
+    events.forEach(event => document.addEventListener(event, touch, { passive: true }))
     document.addEventListener('visibilitychange', onVisibilityChange)
-
-    const timer = window.setInterval(() => {
-      const now = Date.now()
-      const elapsed = Math.floor((now - lastTickAt.current) / 1000)
-      lastTickAt.current = now
-      if (document.visibilityState === 'visible' && now - lastInteractionAt.current <= idlePauseMs) {
-        addActiveSeconds({ date: localDateKey(), sourceId, scope, seconds: elapsed })
-      }
-      if (now - lastFlushAt.current >= FLUSH_INTERVAL_MS) flush()
-    }, 5_000)
-
+    if (visible) startTimer()
     return () => {
-      window.clearInterval(timer)
-      events.forEach((event) => document.removeEventListener(event, onActivity))
+      commit(); unregister(); stopTimer(); releaseOwnership()
+      if (onInteraction.current === interact) onInteraction.current = null
+      events.forEach(event => document.removeEventListener(event, touch))
       document.removeEventListener('visibilitychange', onVisibilityChange)
       flush()
+      usePracticeActivityStore.getState().releaseSource(sourceId)
     }
-  }, [addActiveSeconds, enabled, flush, idlePauseMs, scope, sourceId])
-
-  useEffect(() => {
-    if (enabled && sourceId && questionCount > 0) flush()
-  }, [enabled, flush, questionCount, sourceId])
-
+  }, [enabled, sourceId, scope, idlePauseMs, touch, flush])
   return { touch, flush }
 }

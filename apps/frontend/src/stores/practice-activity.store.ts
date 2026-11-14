@@ -1,80 +1,57 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
-
+import { localDb } from '@/lib/offline/unified-storage'
 export type PracticeActivityScope = 'daily' | 'dialogue' | 'learning'
-
-export type PracticeActivityRecord = {
-  date: string
-  sourceId: string
-  scope: PracticeActivityScope
-  activeSeconds: number
-  updatedAt: string
+export type PracticeActivityRecord = { date: string; sourceId: string; scope: PracticeActivityScope; activeSeconds: number; updatedAt: string }
+const dirty = new Map<string, PracticeActivityRecord>()
+const timerOwners: string[] = []
+export function claimPracticeTimer(source: string) { for (const commit of activityCommitters) commit(); timerOwners.push(source); return () => { for (const commit of activityCommitters) commit(); const index = timerOwners.indexOf(source); if (index >= 0) timerOwners.splice(index, 1) } }
+export function ownsPracticeTimer(source: string) { return timerOwners.at(-1) === source }
+const activityCommitters = new Set<() => void>()
+let writeChain: Promise<void> = Promise.resolve()
+let generation = 0
+const keyFor = (date: string, source: string) => `${date}:${source}`
+function save(record: PracticeActivityRecord) {
+  const epoch = generation
+  writeChain = writeChain.catch(() => undefined).then(async () => {
+    if (epoch !== generation) return
+    await localDb.saveLearningActivity(record)
+    const key = keyFor(record.date, record.sourceId)
+    if (dirty.get(key) === record) dirty.delete(key)
+  })
+  return writeChain
 }
-
-type PracticeActivityState = {
+export function registerPracticeActivityCommitter(commit: () => void) { activityCommitters.add(commit); return () => { activityCommitters.delete(commit) } }
+export async function flushPracticeActivityRecords() {
+  for (const commit of activityCommitters) commit()
+  await writeChain.catch(() => undefined)
+  for (const record of [...dirty.values()]) await save(record)
+}
+export const usePracticeActivityStore = create<{
   records: Record<string, PracticeActivityRecord>
   addActiveSeconds: (input: { date: string; sourceId: string; scope: PracticeActivityScope; seconds: number }) => void
-  getRecord: (date: string, sourceId: string) => PracticeActivityRecord | null
+  getRecord: (date: string, source: string) => PracticeActivityRecord | null
+  releaseSource: (source: string) => void
   reset: () => void
-}
-
-const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60
-
-function recordKey(date: string, sourceId: string) {
-  return `${date}:${sourceId}`
-}
-
-const activityCommitters = new Set<() => void>()
-
-/** Let an open timer fold its not-yet-ticked seconds into the store before upload. */
-export function registerPracticeActivityCommitter(commit: () => void) {
-  activityCommitters.add(commit)
-  return () => { activityCommitters.delete(commit) }
-}
-
-/** Upload every locally accumulated source. The server keeps the max per source. */
-export async function flushPracticeActivityRecords(): Promise<void> {
-  for (const commit of activityCommitters) commit()
-  const records = Object.values(usePracticeActivityStore.getState().records).filter((record) => record.activeSeconds > 0)
-  await Promise.all(records.map((record) => dailyPracticeApi.recordActivity({
-    date: record.date,
-    sourceId: record.sourceId,
-    scope: record.scope,
-    activeSeconds: record.activeSeconds,
-    questionCount: 0,
-  })))
-}
-
-export const usePracticeActivityStore = create<PracticeActivityState>()(
-  persist(
-    (set, get) => ({
-      records: {},
-      addActiveSeconds({ date, sourceId, scope, seconds }) {
-        const safeSeconds = Math.max(0, Math.min(60, Math.floor(seconds)))
-        if (safeSeconds === 0) return
-        const key = recordKey(date, sourceId)
-        set((state) => {
-          const existing = state.records[key]
-          const activeSeconds = Math.min(MAX_ACTIVE_SECONDS_PER_SOURCE, (existing?.activeSeconds ?? 0) + safeSeconds)
-          return {
-            records: {
-              ...state.records,
-              [key]: { date, sourceId, scope, activeSeconds, updatedAt: new Date().toISOString() },
-            },
-          }
-        })
-      },
-      getRecord(date, sourceId) {
-        return get().records[recordKey(date, sourceId)] ?? null
-      },
-      reset() {
-        set({ records: {} })
-      },
-    }),
-    {
-      name: 'manyu-practice-activity',
-      partialize: (state) => ({ records: state.records }),
-    },
-  ),
-)
+}>((set, get) => ({
+  records: {},
+  addActiveSeconds({ date, sourceId, scope, seconds }) {
+    const delta = Math.max(0, Math.min(60, Math.floor(seconds)))
+    if (!delta) return
+    const key = keyFor(date, sourceId)
+    const previous = get().records[key]?.activeSeconds ?? 0
+    const activeSeconds = Math.min(14400, previous + delta)
+    if (activeSeconds === previous) return
+    const record = { date, sourceId, scope, activeSeconds, updatedAt: new Date().toISOString() }
+    set(s => ({ records: { ...s.records, [key]: record } }))
+    dirty.set(key, record)
+    void save(record).catch(error => console.warn('[learning-activity] local save failed:', error))
+  },
+  getRecord(date, source) { return get().records[keyFor(date, source)] ?? null },
+  releaseSource(source) {
+    // Keep failed increments in dirty until retry; completed sessions leave runtime state.
+    set(s => ({ records: Object.fromEntries(Object.entries(s.records).filter(([, record]) => record.sourceId !== source)) }))
+  },
+  reset() { generation++; dirty.clear(); set({ records: {} }) },
+}))
+export async function waitForActivityWrites() { await writeChain }
+export function getPracticeActivityGeneration() { return generation }
