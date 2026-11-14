@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -568,7 +569,7 @@ export function LearningAssessmentDialog({
       })
       toast.success(t('profile.placement.success'))
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || t('profile.placement.failed'))
+      showRequestError(error, t('profile.placement.failed'))
     } finally {
       setSaving(false)
     }

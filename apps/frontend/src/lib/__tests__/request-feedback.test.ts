@@ -1,0 +1,28 @@
+import { beforeEach, afterEach, expect, it, vi } from 'vitest'
+const calls = vi.hoisted(() => ({ info: vi.fn(), error: vi.fn() }))
+vi.mock('sonner', () => ({ toast: calls }))
+vi.mock('i18next', () => ({ default: { t: (key: string) => key } }))
+vi.mock('../request', () => ({ ApiRequestError: class extends Error { constructor(public kind: string, message: string) { super(message) } } }))
+beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-14')) })
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+it('collapses repeated connectivity errors into one readable informational notice', async () => {
+  const { ApiRequestError } = await import('../request'); const { showRequestError } = await import('../request-feedback')
+  showRequestError(new ApiRequestError('offline', 'raw error'), 'load failed')
+  showRequestError(new ApiRequestError('network', 'Network Error'), 'load failed')
+  expect(calls.info).toHaveBeenCalledTimes(1)
+  expect(calls.info).toHaveBeenCalledWith('network.offline', expect.objectContaining({ duration: 3500 }))
+  expect(calls.error).not.toHaveBeenCalled()
+})
+it('keeps background failures, cancellations and cooldown silent', async () => {
+  const { ApiRequestError } = await import('../request'); const { showRequestError } = await import('../request-feedback')
+  showRequestError(new ApiRequestError('network', 'raw'), 'failed', { background: true })
+  showRequestError(new ApiRequestError('cooldown', 'raw'), 'failed')
+  showRequestError({ name: 'AbortError' }, 'failed')
+  expect(calls.info).not.toHaveBeenCalled(); expect(calls.error).not.toHaveBeenCalled()
+})
+it('preserves meaningful validation errors even when offline', async () => {
+  vi.stubGlobal('navigator', { onLine: false })
+  const { showRequestError } = await import('../request-feedback')
+  showRequestError(new Error('名称不能为空'), 'failed')
+  expect(calls.error).toHaveBeenCalledWith('名称不能为空')
+})

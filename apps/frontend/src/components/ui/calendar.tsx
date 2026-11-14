@@ -84,10 +84,11 @@ function CalendarDayButton({
   return (
     <Button
       ref={ref}
-      variant="ghost"
+      variant={modifiers.selected ? 'default' : 'ghost'}
       size="icon"
+      data-selected={modifiers.selected || undefined}
       data-day={day.date.toLocaleDateString()}
-      className={cn('flex size-full min-h-[--cell-size] items-center justify-center rounded-xl p-0 text-xs font-normal leading-normal', className)}
+      className={cn('touch-manipulation flex size-full min-h-[--cell-size] items-center justify-center rounded-xl p-0 text-xs font-normal leading-normal', className)}
       {...props}
     />
   )

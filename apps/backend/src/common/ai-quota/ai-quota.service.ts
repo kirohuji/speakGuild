@@ -133,18 +133,17 @@ export class AiQuotaService {
     // 扣积分 + 追加配额
     const today = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
-        data: { points: { decrement: EXCHANGE_COST } },
-      });
+    const exchanged = await this.prisma.$transaction(async (tx) => {
+      const debit = await tx.user.updateMany({ where: { id: userId, points: { gte: EXCHANGE_COST } }, data: { points: { decrement: EXCHANGE_COST } } });
+      if (debit.count !== 1) return false;
+      const balance = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true } });
 
       await tx.pointTransaction.create({
         data: {
           userId,
           type: 'exchange',
           amount: -EXCHANGE_COST,
-          balance: user.points - EXCHANGE_COST,
+          balance: balance.points,
           description: `积分兑换 1 次${TYPE_LABELS[type]}`,
         },
       });
@@ -160,7 +159,10 @@ export class AiQuotaService {
           data: { [type]: { decrement: 1 } },
         });
       }
+      return true;
     });
+
+    if (!exchanged) return { success: false, message: '积分不足，请刷新余额后重试' };
 
     return { success: true, message: `兑换成功！获得 1 次${TYPE_LABELS[type]}` };
   }

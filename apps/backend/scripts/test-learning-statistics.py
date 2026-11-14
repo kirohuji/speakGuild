@@ -23,6 +23,12 @@ try:
     started = True
     sql('CREATE TABLE "user"(id TEXT PRIMARY KEY); INSERT INTO "user" VALUES (\'alice\'),(\'bob\'); CREATE TABLE user_daily_practice_run(id TEXT PRIMARY KEY,"userId" TEXT NOT NULL,date DATE NOT NULL,"attemptHistory" JSONB,stats JSONB,"attemptedItemIds" TEXT[] DEFAULT ARRAY[]::text[],"completedItemIds" TEXT[] DEFAULT ARRAY[]::text[]);')
     sql((Path(__file__).resolve().parents[1] / 'prisma/migrations/20261114000100_learning_statistics_projections/migration.sql').read_text())
+    sql('''INSERT INTO "user" VALUES ('carol');
+      INSERT INTO user_daily_practice_run(id,"userId",date,"attemptHistory",stats) VALUES ('before-hourly','carol','2026-11-14','[{"date":"2026-11-14","stepId":"pre-q","hour":9,"createdAt":"2026-11-14T01:00:00Z"}]','{"activity":{"timer:pre:h09":{"activeSeconds":60}}}');''')
+    sql((Path(__file__).resolve().parents[1] / 'prisma/migrations/20261114000300_hourly_learning_statistics/migration.sql').read_text())
+    assert sql("SELECT question_count||','||active_seconds FROM learning_stat_hours WHERE user_id='carol' AND date='2026-11-14' AND hour=9;").strip() == '1,60'
+    assert sql("SELECT active_days||','||unique_questions||','||question_days||','||active_seconds FROM learning_stat_totals WHERE user_id='carol';").strip() == '1,1,1,60'
+
     sql('''INSERT INTO user_daily_practice_run(id,"userId",date,"attemptHistory",stats) VALUES ('one','alice','2026-11-13','[{"date":"2026-11-13","stepId":"a"},{"date":"2026-11-13","stepId":"a"}]','{"activity":{"source":{"activeSeconds":60}}}');
       UPDATE user_daily_practice_run SET "attemptHistory"="attemptHistory",stats='{"activity":{"source":{"activeSeconds":30}}}' WHERE id='one';
       INSERT INTO user_daily_practice_run(id,"userId",date,"attemptHistory",stats) VALUES ('two','alice','2026-11-14','[{"date":"2026-11-14","stepId":"a"}]','{"activity":{"source":{"activeSeconds":20}}}');
@@ -38,6 +44,12 @@ try:
     assert sql("SELECT active_seconds FROM learning_stat_totals WHERE user_id='alice';").strip() == '200'
     plan = sql("SET enable_seqscan=off; EXPLAIN SELECT * FROM learning_stat_days WHERE user_id='alice' AND date>='2026-11-01' AND date<='2026-11-30';")
     assert 'Index' in plan
+    sql('''INSERT INTO user_daily_practice_run(id,"userId",date,"attemptHistory",stats) VALUES ('hour-one','bob','2026-11-14','[{"date":"2026-11-14","stepId":"hour-q","hour":14,"createdAt":"2026-11-14T06:00:00Z"}]','{"activity":{"timer:test:h14":{"activeSeconds":60}}}');
+      INSERT INTO user_daily_practice_run(id,"userId",date,"attemptHistory",stats) VALUES ('hour-two','bob','2026-11-14','[{"date":"2026-11-14","stepId":"hour-q","hour":13,"createdAt":"2026-11-14T05:00:00Z"}]','{"activity":{"timer:test:h14":{"activeSeconds":30}}}');''')
+    assert sql("SELECT question_count||','||active_seconds FROM learning_stat_hours WHERE user_id='bob' AND date='2026-11-14' AND hour=14;").strip() == '0,60'
+    assert sql("SELECT question_count FROM learning_stat_hours WHERE user_id='bob' AND date='2026-11-14' AND hour=13;").strip() == '1'
+    sql('''INSERT INTO user_daily_practice_run(id,"userId",date,"attemptHistory",stats) VALUES ('hour-unknown','bob','2026-11-14','[{"date":"2026-11-14","stepId":"hour-q","createdAt":"2026-11-14T04:00:00Z"}]','{}');''')
+    assert sql("SELECT question_count FROM learning_stat_hours WHERE user_id='bob' AND date='2026-11-14' AND hour=13;").strip() == '0'
     print('PostgreSQL statistics: migration, deduplication, date attribution, account isolation, rollback, concurrent timers and indexed range passed.')
 finally:
     if started:

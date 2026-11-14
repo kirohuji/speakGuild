@@ -1,3 +1,4 @@
+import { FileAssetsService } from '../file-assets/file-assets.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { scheduleReview, warmupScoreToReviewRating } from '../../common/spaced-repetition';
@@ -201,7 +202,7 @@ function mergedSubmissionStatus(existing?: string | null, incoming?: string | nu
 
 @Injectable()
 export class DailyPracticeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly files: FileAssetsService) {}
 
   async getCurrentRun(userId: string, params: {
     date: string;
@@ -306,6 +307,7 @@ export class DailyPracticeService {
     attempts: DailyPracticeAttemptInput[];
     warmupRecord?: { topicId: string; topicTitle?: string; items: any[]; score?: number | null; feedback?: string | null; packId?: string | null };
   }) {
+    body = await this.files.normalizePersistentAssetUrls(body);
     const requestedPackIds = [...new Set(body.run.packIds ?? [])];
     if (requestedPackIds.length > 0) {
       const nonPracticePack = await this.prisma.scene.findFirst({
@@ -457,9 +459,11 @@ export class DailyPracticeService {
             feedback: input.feedback || previous?.feedback || null,
             items: mergeWarmupItems(previous?.items, input.items),
           };
-          return previous
+          const record = await (previous
             ? tx.practiceWarmupRecord.update({ where: { id: previous.id }, data })
-            : tx.practiceWarmupRecord.create({ data });
+            : tx.practiceWarmupRecord.create({ data }));
+          await this.files.syncPersistentAssetReferences(tx, userId, 'practice_warmup_record', record.id, data.items);
+          return record;
         }, { isolationLevel: 'Serializable' });
       } catch (error: any) {
         if (attempt === 3 || (error?.code !== 'P2034' && error?.code !== 'P2002')) throw error;

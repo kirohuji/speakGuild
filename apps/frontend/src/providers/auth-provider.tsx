@@ -53,7 +53,7 @@ function useAppForegroundSync(userId: string | undefined, enabled: boolean) {
       if (now - lastSyncRef.current < 30_000) return
       lastSyncRef.current = now
 
-      void offlineSyncService.sync(userId).catch((error) => {
+      void offlineSyncService.sync(userId, { quiet: true }).catch((error) => {
         console.warn('[offline-sync] foreground sync failed:', error)
       })
       void rescheduleLearningReminder().catch((error) => {
@@ -201,7 +201,7 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
 
 function startBackgroundLoginRestore(userId: string) {
   useOfflineSyncStore.getState().setLoginRestorePending(true)
-  void offlineSyncService.sync(userId)
+  void offlineSyncService.sync(userId, { quiet: true })
     .catch((error) => {
       console.warn('[auth] background offline restore failed; retained local data:', error)
     })
@@ -459,6 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    if (!managementRoute && !navigator.onLine) throw new Error(t('learningNotebooks.offlineLogoutBlocked'))
     // User-scoped local storage is removed on logout. Do not make logout a
     // destructive path for an interrupted Today run or any queued practice data.
     if (session?.user.id && !managementRoute) {
@@ -467,7 +468,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await useDailyPracticeStore.getState().waitForPendingWrites()
       await flushPracticeActivityRecords()
       const syncResult = await offlineSyncService.sync(session.user.id)
-      if (syncResult.push.failed > 0 || (syncResult.push.remaining ?? 0) > 0) {
+      if (syncResult.offline || syncResult.push.failed > 0 || (syncResult.push.remaining ?? 0) > 0) {
         throw new Error('练习数据尚未同步，请联网后再退出登录')
       }
     }

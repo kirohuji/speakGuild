@@ -1,3 +1,4 @@
+import { prepareRecordingPayload } from './user-recordings'
 import {
   practiceApi,
   practiceAiApi,
@@ -43,8 +44,8 @@ const PRACTICE_DATA_RESET_KEY = 'practice-data-reset-at'
  * merges shared data from the unit-level record for backward compatibility.
  */
 async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null> {
-  const projected = await readTopicPrep(topicId)
-  if (projected) return projected as TopicDetail
+  const [projected, runtime] = await Promise.all([readTopicPrep(topicId), readTopicPipeline(topicId)])
+  if (projected) return { ...projected, topic: { ...projected.topic, metadata: runtime?.metadata ?? projected.topic?.metadata ?? {} } } as TopicDetail
   const cached = await localDb.get<{ detail: any; unitId?: string }>('downloaded_unit_details', `topic:${topicId}`)
   if (!cached?.detail) return null
 
@@ -225,7 +226,7 @@ export const practiceRepository = {
         console.warn(`[repo.submitTurn] ⏸️ session尚未同步，turn留在outbox等待flush | sessionId=${sessionId} | round=${data.round}`)
         return
       }
-      await practiceApi.submitTurn(remoteSessionId, data)
+      await practiceApi.submitTurn(remoteSessionId, await prepareRecordingPayload(data))
       await syncOutbox.markSynced(outboxItem.id)
     } catch (err) {
       console.error(`[repo.submitTurn] ❌ HTTP失败 | round=${data.round}:`, err)

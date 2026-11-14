@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -179,7 +180,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
         toast.message(t('profile.rateUnavailable'))
       }
     } catch (error: any) {
-      toast.error(error?.message || t('profile.rateFailed'))
+      showRequestError(error, t('profile.rateFailed'))
     }
   }
 
@@ -191,7 +192,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
         toast.error(t('settings.reminderPermission'))
       }
     } catch (error: any) {
-      toast.error(error?.message || t('settings.reminderFailed'))
+      showRequestError(error, t('settings.reminderFailed'))
     }
   }
 
@@ -222,7 +223,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           : t('settings.testReminderNativeOnly'))
       }
     } catch (error: any) {
-      toast.error(error?.message || t('settings.testReminderSendFailed'))
+      showRequestError(error, t('settings.testReminderSendFailed'))
     } finally {
       setTestingLearningReminder(false)
     }
@@ -289,8 +290,8 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
       if (!result.newVersion) {
         toast.success(t('settings.alreadyLatest'))
       }
-    } catch {
-      toast.error(t('settings.checkUpdateFailed'))
+    } catch (error) {
+      showRequestError(error, t('settings.checkUpdateFailed'))
     } finally {
       finishNoUpdate()
     }
@@ -304,7 +305,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
       setShowLogoutDialog(false)
       navigate('/auth/login')
     } catch (error: any) {
-      toast.error(error?.message || t('profile.logoutFailed', { defaultValue: '退出登录失败，请重试' }))
+      showRequestError(error, t('profile.logoutFailed', { defaultValue: '退出登录失败，请重试' }))
     } finally {
       setLogoutLoading(false)
     }
@@ -550,7 +551,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={() => setShowLogoutDialog(true)}
+            onClick={() => { if (!navigator.onLine) { toast.info(t('learningNotebooks.offlineLogoutBlocked')); return }; setShowLogoutDialog(true) }}
             className="w-full text-center text-sm font-medium text-red-500"
           >
             {t('profile.logout')}

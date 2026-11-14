@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -277,7 +278,7 @@ function ReadingAnswerPage({
       setAnalysisError(null)
       setView('answer')
     } catch (error: any) {
-      toast.error(error?.message || t('learning.submitFailed'))
+      showRequestError(error, t('learning.submitFailed'))
     } finally { setSaving(false) }
   }
 
@@ -303,7 +304,7 @@ function ReadingAnswerPage({
       toast.success(t('learning.aiEvaluationDone'))
     } catch (error: any) {
       finalizedRef.current = false
-      toast.error(error?.message || t('learning.submitFailed'))
+      showRequestError(error, t('learning.submitFailed'))
     } finally { setSaving(false) }
   }
 

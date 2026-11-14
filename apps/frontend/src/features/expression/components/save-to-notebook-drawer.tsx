@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { showRequestError } from '@/lib/request-feedback'
+import { learningContentRepository, LEARNING_LIBRARY_CHANGED_EVENT, type ExpressionEntryKind } from '@/lib/offline/learning-content.repository'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { Check, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
@@ -23,7 +25,11 @@ export function SaveToNotebookDrawer({
   open,
   onOpenChange,
   onSave,
+  entry,
+  onRemoved,
 }: {
+  entry?: { kind: ExpressionEntryKind; text: string } | null
+  onRemoved?: () => void
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (notebookIds: string[]) => Promise<void>
@@ -35,24 +41,39 @@ export function SaveToNotebookDrawer({
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [memberships, setMemberships] = useState<Array<{ id: string; notebookId: string }>>([])
+  const removing = memberships.length > 0
+  const busyRef = useRef(false)
+  const [listLoading, setListLoading] = useState(true)
 
   useEffect(() => {
     if (!open) return
     setCreating(false)
     setName('')
-    learningNotebookRepository.list()
-      .then((result) => {
-        setNotebooks(result.items)
-        const custom = result.items.filter((item) => item.kind === 'custom')
-        const stored = window.localStorage.getItem(LAST_NOTEBOOK_KEY)
-        const preferred = custom.find((item) => item.id === stored) ?? custom[0]
-        const fallback = result.items.find((item) => item.kind === 'uncategorized')
-        const initial = preferred ?? fallback
-        setLastNotebookId(preferred?.id ?? null)
-        setSelectedIds(initial ? [initial.id] : [])
-      })
-      .catch(() => toast.error(t('learningNotebooks.loadFailed')))
-  }, [open, t])
+    setMemberships([])
+    setSelectedIds([])
+    setListLoading(true)
+    let cancelled = false
+    const load = async () => {
+      const result = await learningNotebookRepository.listCached()
+      const expression = entry ? await learningContentRepository.getExpressionByText(entry.kind, entry.text) : null
+      const currentItems = expression ? (await learningContentRepository.activeNotebookItems()).filter(i => i.expressionEntryId === expression.id) : []
+      if (cancelled) return
+      setMemberships(currentItems)
+      setNotebooks(currentItems.length ? result.items.filter(n => currentItems.some(i => i.notebookId === n.id)) : result.items)
+      const custom = result.items.filter(item => item.kind === 'custom')
+      const stored = window.localStorage.getItem(LAST_NOTEBOOK_KEY)
+      const preferred = custom.find(item => item.id === stored) ?? custom[0]
+      const initial = preferred ?? result.items.find(item => item.kind === 'uncategorized')
+      setLastNotebookId(preferred?.id ?? null)
+      setSelectedIds(currentItems.length ? [...new Set(currentItems.map(i => i.notebookId))] : initial ? [initial.id] : [])
+      setListLoading(false)
+    }
+    void load().catch(() => toast.error(t('learningNotebooks.loadFailed')))
+    const onChanged = () => { if (!busyRef.current) void load().catch(() => undefined) }
+    window.addEventListener(LEARNING_LIBRARY_CHANGED_EVENT, onChanged)
+    return () => { cancelled = true; window.removeEventListener(LEARNING_LIBRARY_CHANGED_EVENT, onChanged) }
+  }, [open, t, entry?.kind, entry?.text])
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
@@ -71,6 +92,7 @@ export function SaveToNotebookDrawer({
       toast.error(t('learningNotebooks.nameRequired'))
       return
     }
+    busyRef.current = true
     setSubmitting(true)
     try {
       const created = await learningNotebookRepository.create(value)
@@ -81,15 +103,26 @@ export function SaveToNotebookDrawer({
       setCreating(false)
       setName('')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learningNotebooks.createFailed'))
+      showRequestError(error, t('learningNotebooks.createFailed'))
     } finally {
+      busyRef.current = false
       setSubmitting(false)
     }
   }
 
   const save = async () => {
+    busyRef.current = true
     setSubmitting(true)
     try {
+      if (removing) {
+        for (const item of memberships.filter(i => selectedIds.includes(i.notebookId))) {
+          await learningNotebookRepository.removeCachedNotebookItem(item.id)
+        }
+        onRemoved?.()
+        toast.success(t('learningNotebooks.removed'))
+        onOpenChange(false)
+        return
+      }
       await onSave(selectedIds)
       const preferred = lastNotebookId && selectedIds.includes(lastNotebookId)
         ? lastNotebookId
@@ -97,8 +130,9 @@ export function SaveToNotebookDrawer({
       if (preferred) window.localStorage.setItem(LAST_NOTEBOOK_KEY, preferred)
       onOpenChange(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learningNotebooks.saveFailed'))
+      showRequestError(error, t('learningNotebooks.saveFailed'))
     } finally {
+      busyRef.current = false
       setSubmitting(false)
     }
   }
@@ -110,9 +144,9 @@ export function SaveToNotebookDrawer({
         className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] bg-background drawer-surface"
       >
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
-          <DrawerTitle>{creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>
+          <DrawerTitle>{removing ? t('learningNotebooks.removeTitle') : creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>
           <DrawerDescription>
-            {creating ? t('learningNotebooks.description') : t('learningNotebooks.chooseDescription')}
+            {removing ? t('learningNotebooks.removeHint') : creating ? t('learningNotebooks.description') : t('learningNotebooks.chooseDescription')}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -162,10 +196,10 @@ export function SaveToNotebookDrawer({
                   </button>
                 )
               })}
-              <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setCreating(true)}>
+              {!removing && <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setCreating(true)}>
                 <Plus data-icon="inline-start" />
                 {t('learningNotebooks.createNew')}
-              </Button>
+              </Button>}
             </div>
           </div>
         )}
@@ -185,8 +219,8 @@ export function SaveToNotebookDrawer({
               <Button variant="secondary" className="flex-1 border-0 bg-secondary shadow-none hover:bg-secondary/80" onClick={() => onOpenChange(false)}>
                 {t('learningNotebooks.cancel')}
               </Button>
-              <Button className="flex-1" onClick={() => void save()} disabled={submitting}>
-                {selectedIds.length === 0 ? t('learningNotebooks.saveUncategorized') : t('learningNotebooks.save')}
+              <Button className="flex-1" onClick={() => void save()} disabled={submitting || listLoading || (removing && selectedIds.length === 0)}>
+                {removing ? t('learningNotebooks.confirmRemove') : selectedIds.length === 0 ? t('learningNotebooks.saveUncategorized') : t('learningNotebooks.save')}
               </Button>
             </>
           )}

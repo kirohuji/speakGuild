@@ -1,3 +1,5 @@
+import { getPublishedModel, modelDownloadProgress } from '@/lib/local-models/published-models'
+import { downloadModelFile, ensureModelDirectory, installModelDirectory, recoverModelDirectory, localModelJsonFiles, validateModelFile } from '@/lib/local-models/native-model-files'
 import { Capacitor } from '@capacitor/core'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { FileTransfer } from '@capacitor/file-transfer'
@@ -25,6 +27,8 @@ export interface LocalSttModelStatus {
   expectedBytes: number
   updatedAt?: string
   localModelPath?: string
+  storageDirectory?: string
+  resourceVersionId?: string
   missingFiles: string[]
   manifestFiles: string[]
 }
@@ -34,6 +38,8 @@ export interface LocalSttModelLoadConfig {
   dtype: LocalSttModelVariant['dtype']
   localModelPath?: string
   allowRemoteModels?: boolean
+  localJsonFiles?: Record<string, string>
+  modelRevision?: string
 }
 
 type LocalSttModelManifest = {
@@ -42,6 +48,7 @@ type LocalSttModelManifest = {
   variants?: Partial<Record<LocalSttModelVariantId, {
     files: string[]
     sizes: Record<string, number>
+    resourceVersionId?: string
     updatedAt: string
   }>>
 }
@@ -112,21 +119,20 @@ function manifestPath(modelId: string) {
   return `${modelDir(modelId)}/${MANIFEST_NAME}`
 }
 
-function remoteUrl(modelId: string, file: string) {
-  return `https://huggingface.co/${modelId}/resolve/${REVISION}/${file}`
-}
+
 
 async function safeStat(path: string) {
   try {
+    await validateModelFile(path)
     return await Filesystem.stat({ path, directory: Directory.Data })
   } catch {
     return null
   }
 }
 
-async function safeReadManifest(modelId: string) {
+async function safeReadManifest(modelId: string, path = manifestPath(modelId)) {
   try {
-    const result = await Filesystem.readFile({ path: manifestPath(modelId), directory: Directory.Data, encoding: Encoding.UTF8 })
+    const result = await Filesystem.readFile({ path, directory: Directory.Data, encoding: Encoding.UTF8 })
     const data = typeof result.data === 'string' ? result.data : ''
     return JSON.parse(data) as LocalSttModelManifest
   } catch {
@@ -138,10 +144,7 @@ function manifestEntry(manifest: LocalSttModelManifest | null, variantId: LocalS
   return manifest?.variants?.[variantId] ?? null
 }
 
-async function ensureModelDirectories(modelId: string) {
-  await Filesystem.mkdir({ path: modelDir(modelId), directory: Directory.Data, recursive: true }).catch(() => undefined)
-  await Filesystem.mkdir({ path: `${modelDir(modelId)}/onnx`, directory: Directory.Data, recursive: true }).catch(() => undefined)
-}
+
 
 export const localSttModelManager = {
   variants: LOCAL_STT_MODEL_VARIANTS,
@@ -164,12 +167,22 @@ export const localSttModelManager = {
       }
     }
 
-    const stats = await Promise.all(variant.files.map(async (file) => ({ file, stat: await safeStat(`${modelDir(variant.modelId)}/${file}`) })))
-    const missingFiles = stats.filter((item) => !item.stat).map((item) => item.file)
+    if (!installing) await recoverModelDirectory(`${ROOT_DIR}/${variantId}`)
+    const publishedRoot = `${ROOT_DIR}/${variantId}`
+    const publishedDir = `${publishedRoot}/${variant.modelId}`
+    const publishedManifest = await safeReadManifest(variant.modelId, `${publishedDir}/${MANIFEST_NAME}`)
+    const directory = publishedManifest ? publishedDir : modelDir(variant.modelId)
+    const localRoot = publishedManifest ? publishedRoot : ROOT_DIR
+    const manifest = publishedManifest ?? await safeReadManifest(variant.modelId)
+    const stats = await Promise.all(variant.files.map(async (file) => ({ file, stat: await safeStat(`${directory}/${file}`) })))
+    const missingFiles = stats.filter((item) => !item.stat || Number(item.stat.size) <= 0).map((item) => item.file)
     const bytes = stats.reduce((sum, item) => sum + Number(item.stat?.size ?? 0), 0)
-    const manifest = await safeReadManifest(variant.modelId)
     const entry = manifestEntry(manifest, variantId)
     const manifestFiles = entry?.files ?? []
+    for (const { file, stat } of stats) {
+      const expected = (entry as { sizes?: Record<string, number> } | null)?.sizes?.[file]
+      if (stat && expected && Number(stat.size) !== expected && !missingFiles.includes(file)) missingFiles.push(file)
+    }
     const manifestMatches = Boolean(
       manifest?.modelId === variant.modelId
       && manifest?.revision === REVISION
@@ -183,7 +196,7 @@ export const localSttModelManager = {
         : !manifestMatches
           ? 'manifest_mismatch'
           : 'ready'
-    const rootUri = await Filesystem.getUri({ path: ROOT_DIR, directory: Directory.Data }).catch(() => null)
+    const rootUri = await Filesystem.getUri({ path: localRoot, directory: Directory.Data }).catch(() => null)
     const localModelPath = rootUri?.uri ? `${Capacitor.convertFileSrc(rootUri.uri).replace(/\/$/, '')}/` : undefined
 
     return {
@@ -197,6 +210,8 @@ export const localSttModelManager = {
       expectedBytes: variant.estimatedBytes,
       updatedAt: entry?.updatedAt,
       localModelPath,
+      storageDirectory: directory,
+      resourceVersionId: (entry as { resourceVersionId?: string } | null)?.resourceVersionId,
       missingFiles,
       manifestFiles,
     }
@@ -212,6 +227,8 @@ export const localSttModelManager = {
       dtype: variant.dtype,
       localModelPath: status.localModelPath,
       allowRemoteModels: !status.localModelPath,
+      modelRevision: status.resourceVersionId ?? status.updatedAt,
+      localJsonFiles: isNative() ? await localModelJsonFiles(status.storageDirectory ?? modelDir(variant.modelId), variant.files) : undefined,
     }
   },
 
@@ -228,59 +245,64 @@ export const localSttModelManager = {
     let currentFile = variant.files[0]
     let listener: { remove: () => Promise<void> } | null = null
 
-    const report = (file: string, loaded: number, total: number) => {
-      const completedBytes = Array.from(completed.values()).reduce((sum, value) => sum + value, 0)
-      const totalBytes = Math.max(variant.estimatedBytes, completedBytes + total)
-      const loadedBytes = Math.min(totalBytes, completedBytes + loaded)
-      onProgress?.({
-        file,
-        loadedBytes,
-        totalBytes,
-        percent: totalBytes > 0 ? Math.round((loadedBytes / totalBytes) * 100) : 0,
-      })
-    }
+    const staging = `${ROOT_DIR}/.install-${variantId}`
+    const installDir = `${staging}/${variant.modelId}`
+    let currentDownloadUrl = ''
+    let report: (file: string, loaded: number, total?: number) => void = () => undefined
+    let finishProgress: () => void = () => undefined
 
     try {
-      await ensureModelDirectories(variant.modelId)
+      onProgress?.({ file: '连接模型资源库', loadedBytes: 0, totalBytes: 0, percent: 0 })
+      const published = await getPublishedModel(variantId, variant.modelId, variant.files)
+      const progress = modelDownloadProgress(published.files, onProgress)
+      report = progress.report
+      finishProgress = progress.complete
+      await ensureModelDirectory(ROOT_DIR)
+      await recoverModelDirectory(`${ROOT_DIR}/${variantId}`)
+      await Filesystem.rmdir({ path: staging, directory: Directory.Data, recursive: true }).catch(() => undefined)
+      await ensureModelDirectory(installDir)
+      await ensureModelDirectory(`${installDir}/onnx`)
       listener = await FileTransfer.addListener('progress', (progress) => {
-        if (!progress.url.includes(variant.modelId)) return
+        if (progress.url !== currentDownloadUrl) return
         report(currentFile, progress.bytes, progress.contentLength || variant.estimatedBytes)
       })
 
+      const installed = await this.getStatus(variantId)
       for (const file of variant.files) {
         currentFile = file
-        const targetPath = `${modelDir(variant.modelId)}/${file}`
-        const targetUri = await Filesystem.getUri({ path: targetPath, directory: Directory.Data })
-        await FileTransfer.downloadFile({
-          url: remoteUrl(variant.modelId, file),
-          path: targetUri.uri,
-          progress: true,
-          readTimeout: 180_000,
-          connectTimeout: 60_000,
-        })
-        const stat = await safeStat(targetPath)
+        const targetPath = `${installDir}/${file}`
+        const resource = published.files.find(item => item.path === file)!
+        currentDownloadUrl = resource.url
+        report(file, 0)
+        if (installed.storageDirectory) await Filesystem.copy({ from: `${installed.storageDirectory}/${file}`, to: targetPath, directory: Directory.Data, toDirectory: Directory.Data }).catch(() => undefined)
+        const size = await downloadModelFile(resource.url, targetPath, 180_000, resource)
+        const stat = { size }
         completed.set(file, Number(stat?.size ?? 0))
         report(file, Number(stat?.size ?? 0), Number(stat?.size ?? 0))
       }
 
-      const previousManifest = await safeReadManifest(variant.modelId)
+      await Promise.all(variant.files.map(file => validateModelFile(`${installDir}/${file}`)))
       const variants = {
-        ...(previousManifest?.modelId === variant.modelId && previousManifest.revision === REVISION ? previousManifest.variants : {}),
         [variantId]: {
           files: variant.files,
           sizes: Object.fromEntries(completed.entries()),
+          resourceVersionId: published.id,
+          hashes: Object.fromEntries(published.files.map(file => [file.path, file.sha256])),
           updatedAt: new Date().toISOString(),
         },
       }
       await Filesystem.writeFile({
-        path: manifestPath(variant.modelId),
+        path: `${installDir}/manyu-manifest.json`,
         directory: Directory.Data,
         data: JSON.stringify({ modelId: variant.modelId, revision: REVISION, variants }),
         encoding: Encoding.UTF8,
         recursive: true,
       })
+      await installModelDirectory(staging, `${ROOT_DIR}/${variantId}`)
+      finishProgress()
     } finally {
       installing = false
+      await Filesystem.rmdir({ path: staging, directory: Directory.Data, recursive: true }).catch(() => undefined)
       await listener?.remove().catch(() => undefined)
     }
   },
@@ -288,6 +310,8 @@ export const localSttModelManager = {
   async remove(variantId?: LocalSttModelVariantId) {
     if (!isNative()) return
     if (variantId) {
+      await Filesystem.rmdir({ path: `${ROOT_DIR}/${variantId}.previous`, directory: Directory.Data, recursive: true }).catch(() => undefined)
+      await Filesystem.rmdir({ path: `${ROOT_DIR}/${variantId}`, directory: Directory.Data, recursive: true }).catch(() => undefined)
       await Filesystem.rmdir({ path: modelDir(variantById(variantId).modelId), directory: Directory.Data, recursive: true }).catch(() => undefined)
       return
     }

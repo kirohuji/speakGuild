@@ -1,3 +1,4 @@
+import { prepareRecordingPayload } from './user-recordings'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
 import type { UnitDetail } from '@/features/learning/api/learning-api'
 import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
@@ -1336,7 +1337,7 @@ export const dailyPracticeRepository = {
     }
 
     try {
-      const result = await dailyPracticeApi.complete(payload)
+      const result = await dailyPracticeApi.complete(await prepareRecordingPayload(payload))
       await localDb.putMany('daily_practice_items', result.itemProgresses.map((item) => ({ ...item, id: item.itemId })))
       if (params.localWarmupRecordId && params.records.length > 0) {
         await practiceRepository.markWarmupRecordSynced(params.localWarmupRecordId, result.warmupRecordId)

@@ -313,20 +313,6 @@ function WarmupRecordsContent() {
       },
     },
     {
-      key: 'score',
-      header: t('learning.scoreHeader'),
-      width: 70,
-      cell: (v) => (
-        <span className={cn(
-          'text-sm font-bold tabular-nums',
-          v != null && v >= 80 ? 'text-green-600' : v != null && v >= 50 ? 'text-amber-600' : 'text-muted-foreground',
-        )}>
-          {v ?? '-'}
-        </span>
-      ),
-      align: 'center',
-    },
-    {
       key: 'createdAt',
       header: t('learning.dateHeader'),
       cell: (v) => (

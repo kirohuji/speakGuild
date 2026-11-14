@@ -1,3 +1,5 @@
+import { showRequestError } from '@/lib/request-feedback'
+import { localDateKey } from '@/lib/date/calendar-date'
 import { create } from 'zustand'
 import { Network } from '@capacitor/network'
 import {
@@ -12,7 +14,7 @@ import {
   type TagInfo,
   type UnitDetail,
 } from '@/features/learning/api/learning-api'
-import { pointsApi, type CheckInCalendar } from '@/features/points/api'
+import { pointsApi, type CheckInCalendar, type CheckInStatus } from '@/features/points/api'
 import {
   learningPackService,
   learningRepository,
@@ -89,6 +91,7 @@ interface LearningStore {
 
   // 签到日历
   checkInData: CheckInCalendar | null
+  checkInStreak: number | null
   checkInLoading: boolean
 
   // 分类标签
@@ -112,7 +115,8 @@ interface LearningStore {
   fetchShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
   refreshShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
   loadMoreShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string }) => Promise<void>
-  fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<void>
+  fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<CheckInCalendar | null>
+  invalidateCheckInCalendar: (status?: CheckInStatus) => Promise<void>
   enrollUnit: (
     unitId: string,
     title?: string,
@@ -180,6 +184,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   shopLoading: false,
 
   checkInData: null,
+  checkInStreak: null,
   checkInLoading: false,
 
   tags: [],
@@ -315,21 +320,42 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     const cacheId = `user_profile:checkin:${startDate}:${endDate}`
     set({ checkInLoading: true })
     try {
-      const cached = await localDb.get<{ id: string; value: CheckInCalendar }>('kv', cacheId)
-      if (generation !== checkInRequestGeneration) return
+      const [cached, status] = await Promise.all([
+        localDb.get<{ id: string; value: CheckInCalendar }>('kv', cacheId),
+        localDb.get<{ today: string; currentStreak: number }>('kv', 'user_profile:checkin-status'),
+      ])
+      if (generation !== checkInRequestGeneration) return null
+      if (status?.today === localDateKey()) set({ checkInStreak: status.currentStreak })
       if (cached) set({ checkInData: cached.value, checkInLoading: false })
       const data = await pointsApi.getCheckInCalendar(startDate, endDate)
-      if (generation !== checkInRequestGeneration) return
+      if (generation !== checkInRequestGeneration) return null
       checkInCacheWrites = checkInCacheWrites.catch(() => undefined).then(async () => {
-        if (generation === checkInRequestGeneration) await localDb.put('kv', { id: cacheId, value: data })
+        if (generation !== checkInRequestGeneration) return
+        await localDb.put('kv', { id: cacheId, value: data })
+        if (generation === checkInRequestGeneration) await localDb.put('kv', { id: 'user_profile:checkin-status', today: data.today, currentStreak: data.currentStreak })
       })
       await checkInCacheWrites
-      if (generation !== checkInRequestGeneration) return
-      set({ checkInData: data, checkInLoading: false })
+      if (generation !== checkInRequestGeneration) return null
+      set({ checkInData: data, checkInStreak: data.currentStreak, checkInLoading: false })
+      return data
     } catch {
       if (generation === checkInRequestGeneration) set({ checkInLoading: false })
+      return null
     }
   },
+  async invalidateCheckInCalendar(status) {
+    const generation = ++checkInRequestGeneration
+    checkInCacheWrites = checkInCacheWrites.catch(() => undefined).then(async () => {
+      if (generation !== checkInRequestGeneration) return
+      await localDb.deleteWhere<any>('kv', row => row.id.startsWith('user_profile:checkin:'))
+      if (generation !== checkInRequestGeneration) return
+      const snapshot = getState().checkInData
+      if (snapshot?.startDate && snapshot.endDate) await localDb.put('kv', { id: `user_profile:checkin:${snapshot.startDate}:${snapshot.endDate}`, value: snapshot })
+      if (status && generation === checkInRequestGeneration) await localDb.put('kv', { id: 'user_profile:checkin-status', today: status.today, currentStreak: status.currentStreak })
+    })
+    await checkInCacheWrites
+  },
+
 
   async enrollUnit(unitId, title, providedUnit) {
     const state = getState()
@@ -357,7 +383,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
         downloadTasks: current.downloadTasks.filter((task) => task.packId !== unitId),
         packInstallingIds: current.packInstallingIds.filter((id) => id !== unitId),
       }))
-      toast.error(message)
+      showRequestError(error, message)
       return false
     }
 
@@ -478,7 +504,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       set({ downloadedPacks })
       console.warn('[learning-store]   → 检查失败', error)
       if (!silent) {
-        toast.error(i18n.t('learning.packUpdateCheckFailed'))
+        showRequestError(error, i18n.t('learning.packUpdateCheckFailed'))
       }
     }
   },
@@ -602,6 +628,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       shopHasMore: false,
       shopLoading: false,
       checkInData: null,
+      checkInStreak: null,
       checkInLoading: false,
       tags: [],
       unitDetail: null,
@@ -815,7 +842,7 @@ async function processDownloadQueue() {
       ),
       packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
-    toast.error(i18n.t('learning.packDownloadFailed'))
+    showRequestError(error, i18n.t('learning.packDownloadFailed'))
   } finally {
     activePackTaskIds.delete(next.packId)
     activePackTaskControllers.delete(next.packId)

@@ -1,3 +1,4 @@
+import { Link, useSearchParams } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import {
   Search, Copy, Check, Loader2, ShieldCheck,
@@ -26,6 +27,7 @@ import { adminTasksApi, type AdminTaskDetail } from '../api-admin-tasks'
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
 const GROUP_LABELS: Record<string, string> = {
+  offline_model: '离线模型',
   avatar: '头像',
   library: '资源库',
   tts: 'TTS',
@@ -38,6 +40,7 @@ const GROUP_LABELS: Record<string, string> = {
 }
 
 const GROUP_COLORS: Record<string, string> = {
+  offline_model: 'bg-primary/10 text-primary',
   avatar: 'bg-pink-100 text-pink-700',
   library: 'bg-blue-100 text-blue-700',
   tts: 'bg-purple-100 text-purple-700',
@@ -70,10 +73,11 @@ function mimeIcon(mimeType: string) {
 type ViewMode = 'table' | 'card'
 
 export function AdminFileAssetsPage() {
+  const [searchParams] = useSearchParams()
   const [data, setData] = useState<{ items: FileAssetItem[]; total: number; page: number; pageSize: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [groupFilter, setGroupFilter] = useState('all')
+  const [groupFilter, setGroupFilter] = useState(() => searchParams.get('group') ?? 'all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [groupStats, setGroupStats] = useState<FileAssetGroupStat[]>([])
@@ -128,6 +132,15 @@ export function AdminFileAssetsPage() {
       setDetailLoading(false)
     }
   }
+
+  useEffect(() => {
+    const assetId = searchParams.get('assetId')
+    if (!assetId) return
+    let canceled = false
+    setDetailOpen(true); setDetailLoading(true)
+    getFileAssetDetail(assetId).then(asset => { if (!canceled) setDetailAsset(asset) }).catch(() => { if (!canceled) toast.error('资源不存在或已被清理') }).finally(() => { if (!canceled) setDetailLoading(false) })
+    return () => { canceled = true }
+  }, [searchParams])
 
   const waitForTask = async (taskId: string) => {
     for (let attempt = 0; attempt < 250; attempt += 1) {
@@ -585,7 +598,8 @@ export function AdminFileAssetsPage() {
                             {detailAsset.references.map((ref) => (
                               <tr key={ref.id} className="border-t">
                                 <td className="px-3 py-2">
-                                  <p className="font-mono">{ref.bizType}</p>
+                                  <p className="font-mono">{ref.bizType === 'offline_model_version' ? '离线模型版本' : ref.bizType}</p>
+                                  {ref.bizType === 'offline_model_version' && <Link className="text-primary hover:underline" to={`/admin/offline-models?version=${ref.bizId}`}>查看模型版本</Link>}
                                   <p className="max-w-[200px] truncate font-mono text-[10px] text-muted-foreground" title={ref.bizId}>
                                     {ref.bizId}
                                   </p>

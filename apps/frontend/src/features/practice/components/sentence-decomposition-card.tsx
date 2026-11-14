@@ -1,3 +1,6 @@
+import { saveUserRecording } from '@/lib/offline/user-recordings'
+import { useRecordingPlaybackUrl } from '@/hooks/use-recording-playback-url'
+import { RecordingAudio } from '@/components/common/recording-audio'
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, CheckCircle2, Mic, Square, Play, Pause } from 'lucide-react'
@@ -68,7 +71,8 @@ export function SentenceDecompositionCard({
   const isLast = currentIdx === totalLevels - 1
 
   // ── 录音 & 回放（每级独立，暂不需要转写识别）──
-  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording'>('idle')
+  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'saving'>('idle')
+  const [recordingError, setRecordingError] = useState('')
   const [recordingElapsed, setRecordingElapsed] = useState(0)
   const [levelRecordings, setLevelRecordings] = useState<Map<number, { audioUrl: string }>>(() => new Map())
   const [isPlaying, setIsPlaying] = useState(false)
@@ -92,7 +96,7 @@ export function SentenceDecompositionCard({
         levelRecordings.forEach((v, k) => { levelAudioObj[k] = v.audioUrl })
         const levelsData = JSON.stringify(levels)
         store.recordStep(stepId, { userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
-        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', displayLabel: t('todayTask.sentenceDecomposition'), score: 'strong', correction: levelsData })
+        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', displayLabel: t('todayTask.sentenceDecomposition'), score: 'strong', correction: levelsData, levelAudios: levelAudioObj })
         onComplete?.(true, 'strong')
         onAttempt?.({ stepId, outcome: 'correct', assistance: 'none' })
         return
@@ -164,14 +168,15 @@ export function SentenceDecompositionCard({
       chunksRef.current = []
 
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
-      mr.onstop = () => {
+      mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop())
         streamRef.current = null
         if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || mimeType || 'audio/webm' })
-        const url = URL.createObjectURL(blob)
-        saveLevelRecording(currentIdx, url)
-        setRecordingStatus('idle')
+        setRecordingStatus('saving')
+        try { saveLevelRecording(currentIdx, await saveUserRecording(blob)); setRecordingError('') }
+        catch { setRecordingError(t('recording.saveFailed')) }
+        finally { setRecordingStatus('idle') }
       }
 
       mediaRecorderRef.current = mr
@@ -190,19 +195,19 @@ export function SentenceDecompositionCard({
       nativeSessionRef.current = null
       // 原生录音：speech 类型无音频 blob，跳过；audio 类型获取 blob 保存
       if (ns.kind !== 'speech') {
-        ns.stop().then((result) => {
-          const url = URL.createObjectURL(result.blob)
-          saveLevelRecording(currentIdx, url)
-        }).catch(() => {})
+        setRecordingStatus('saving')
+        ns.stop().then(async result => {
+          saveLevelRecording(currentIdx, await saveUserRecording(result.blob, result.filename))
+          setRecordingError('')
+        }).catch(() => setRecordingError(t('recording.saveFailed'))).finally(() => setRecordingStatus('idle'))
       }
-      setRecordingStatus('idle')
       return
     }
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [currentIdx, saveLevelRecording])
+  }, [currentIdx, saveLevelRecording, t])
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current
@@ -217,9 +222,11 @@ export function SentenceDecompositionCard({
   }
 
   // 切换 level 时加载该级的录音（回顾模式优先用 reviewData）
-  const displayAudioUrl = isReview
+  const displayAudioReference = isReview
     ? (reviewAudios.get(currentIdx)?.audioUrl ?? null)
     : (levelRecordings.get(currentIdx)?.audioUrl ?? null)
+
+  const displayAudioUrl = useRecordingPlaybackUrl(displayAudioReference)
 
   const doneLevelAudios = isReview ? reviewAudios : levelRecordings
 
@@ -253,7 +260,7 @@ export function SentenceDecompositionCard({
                   </div>
                   {audioUrl && (
                     // biome-ignore lint/a11y/useMediaCaption: short self-recording replay
-                    <audio src={audioUrl} controls preload="metadata" className="mt-2 h-8 w-full" />
+                    <RecordingAudio src={audioUrl} controls preload="metadata" className="mt-2 h-8 w-full" />
                   )}
                 </div>
               )
@@ -401,6 +408,8 @@ export function SentenceDecompositionCard({
           </>
         )}
       </div>
+      {recordingError && <p role="alert" className="text-xs text-destructive">{recordingError}</p>}
+      {recordingStatus === 'saving' && <p className="text-xs text-muted-foreground">{t('recording.saving')}</p>}
       {/* Navigation: 上一级 / 下一级 */}
       <div className="flex gap-2">
         <Button
@@ -418,6 +427,7 @@ export function SentenceDecompositionCard({
           variant="ghost"
           className="min-h-11 flex-1 gap-1.5 border-0 bg-primary/10 text-sm text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           onClick={advance}
+          disabled={recordingStatus !== 'idle'}
         >
           {isLast ? t('practiceSession.decomp.complete') : t('practiceSession.decomp.nextLevel')}
           <ChevronRight className="size-4" />

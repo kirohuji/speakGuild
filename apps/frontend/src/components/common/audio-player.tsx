@@ -1,3 +1,4 @@
+import { useRecordingPlaybackUrl } from '@/hooks/use-recording-playback-url'
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -103,8 +104,9 @@ type AudioPlayerProps = {
 }
 
 export function AudioPlayer({
-  audioUrl, wordTimestamps, audioProvider, className, compact = false,
+  audioUrl: recordingReference, wordTimestamps, audioProvider, className, compact = false,
 }: AudioPlayerProps) {
+  const audioUrl = useRecordingPlaybackUrl(recordingReference) ?? ''
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const waveRef  = useRef<AudioWaveformHandle | null>(null)
   const loopTimerRef = useRef<number | null>(null)

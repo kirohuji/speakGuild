@@ -9,7 +9,7 @@ import {
 
 export { createFileAssetReference, getFileAssetContentUrl, resolveFileAssetUrl }
 
-export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack' | 'scene_cover' | 'user_recording' | 'epub'
+export type FileAssetGroup = 'offline_model' | 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack' | 'scene_cover' | 'user_recording' | 'epub'
 
 export interface CosPolicy {
   exists: boolean

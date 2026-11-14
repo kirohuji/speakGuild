@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -206,7 +207,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         toast.success(t('member.purchaseUpdated'))
       } catch (err: any) {
         if (err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR') return
-        toast.error(err?.message || t('member.purchaseFailed'))
+        showRequestError(err, t('member.purchaseFailed'))
       } finally {
         purchaseInFlightRef.current = false
         setPurchaseLoading(false)
@@ -242,7 +243,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       else toast.message(t('member.noPurchaseRestored'))
     } catch (err: any) {
       if (err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR') return
-      toast.error(err?.message || t('member.restoreFailed'))
+      showRequestError(err, t('member.restoreFailed'))
     } finally {
       setSubscriptionAction(null)
     }
@@ -262,7 +263,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       if (!synced.isActive && current?.isActive) toast.message(t('member.subscriptionUpdatePending'))
     } catch (err: any) {
       if (customerCenterOpened) toast.message(t('member.subscriptionUpdatePending'))
-      else toast.error(err?.message || t('member.manageSubUnavailable'))
+      else showRequestError(err, t('member.manageSubUnavailable'))
     } finally {
       setSubscriptionAction(null)
     }

@@ -324,6 +324,22 @@ function assertIndexedColumn(storeName: TableName, columnName: string) {
   }
 }
 
+export const notebookItemsSql = `
+  WITH ranked AS (
+    SELECT ni.*, ROW_NUMBER() OVER (
+      PARTITION BY ni.notebook_id, ni.expression_entry_id
+      ORDER BY CASE WHEN ni.sync_status IN ('pending', 'failed') THEN 0 ELSE 1 END,
+        ni.updated_at DESC, ni.id ASC
+    ) AS duplicate_rank
+    FROM learning_notebook_items ni
+  ), valid_items AS (
+    SELECT ni.* FROM ranked ni
+    INNER JOIN learning_notebooks nb ON nb.id = ni.notebook_id
+    WHERE ni.duplicate_rank = 1
+      AND json_extract(ni.data, '$.deletedAt') IS NULL
+      AND json_extract(nb.data, '$.deletedAt') IS NULL
+  )`
+
 export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
   let writeQueue = Promise.resolve()
 
@@ -389,6 +405,20 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
   }
 
   return {
+    async commitLocalWrites(writes: Array<{ table: TableName; value?: any; deleteId?: string }>) {
+      await atomic(writes.map(({ table, value, deleteId }) => deleteId ? { sql: `DELETE FROM "${table}" WHERE id = ?`, values: [deleteId] } : upsertRow(table, value)))
+    },
+    async activeNotebookItems(): Promise<Array<{ id: string; notebookId: string; expressionEntryId: string }>> {
+      return executor.queryRows(`${notebookItemsSql}
+        SELECT ni.id, ni.notebook_id AS notebookId, ni.expression_entry_id AS expressionEntryId
+        FROM valid_items ni INNER JOIN expression_entries ee ON ee.id = ni.expression_entry_id`)
+    },
+    async notebookCounts(): Promise<Array<{ notebookId: string; kind: string; count: number }>> {
+      return executor.queryRows(`${notebookItemsSql}
+        SELECT ni.notebook_id AS notebookId, ee.kind AS kind, COUNT(*) AS count
+        FROM valid_items ni INNER JOIN expression_entries ee ON ee.id = ni.expression_entry_id
+        GROUP BY ni.notebook_id, ee.kind`)
+    },
     async applyStatisticsRuns(runs: any[]) {
       const statements = projectStatisticsRuns(runs)
       // Bound the native bridge payload during initial history restoration.
@@ -420,7 +450,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
     async readLearningStatistics(start: string, end: string, today: string) {
       // Serialize with writes so the visible range and cumulative counters agree.
       return enqueueWrite(async () => {
-        const [days, totals, streak] = await Promise.all([
+        const [days, totals, streak, hours] = await Promise.all([
           executor.queryRows<any>('SELECT id AS date, question_count AS questionCount, active_seconds AS activeSeconds, 1 AS active FROM learning_stat_days WHERE id >= ? AND id <= ? AND (question_count > 0 OR active_seconds > 0) ORDER BY id', [start, end]),
           executor.queryRows<any>("SELECT * FROM learning_stat_totals WHERE id='total'"),
           // Index probes stop at the first missing date, without loading history.
@@ -429,9 +459,10 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
             UNION ALL SELECT date(day,'-1 day'), n+1 FROM streak WHERE EXISTS(
               SELECT 1 FROM learning_stat_days WHERE id=streak.day AND (question_count>0 OR active_seconds>0))
           ) SELECT MAX(n) AS count FROM streak`, [today, today, today]),
+          start===end ? executor.queryRows<any>('SELECT hour,question_count AS questionCount,active_seconds AS activeSeconds FROM learning_stat_hours WHERE date=? AND (question_count>0 OR active_seconds>0) ORDER BY hour',[start]) : Promise.resolve([]),
         ])
         const total = totals[0] ?? {}
-        return { dailyStats: days.map(day => ({ ...day, active: Boolean(day.active) })), activeDays: total.active_days ?? 0,
+        return { hourlyStats: hours, hourlyComplete: start===end && hours.reduce((n,h)=>n+h.questionCount,0)===(days[0]?.questionCount??0) && hours.reduce((n,h)=>n+h.activeSeconds,0)===(days[0]?.activeSeconds??0), dailyStats: days.map(day => ({ ...day, active: Boolean(day.active) })), activeDays: total.active_days ?? 0,
           uniqueQuestionsAnswered: total.unique_questions ?? 0, activeSeconds: total.active_seconds ?? 0,
           avgDailyQuestions: total.active_days ? Math.round(total.question_days / total.active_days) : 0,
           currentStreakDays: streak[0]?.count ?? 0, favoriteCount: total.favorite_count ?? 0, wordCount: total.word_count ?? 0 }
@@ -634,22 +665,14 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       if (query.reviewState && query.reviewState !== 'learning') values.push(query.reviewState)
       values.push(query.kind)
       if (query.search?.trim()) values.push(`%${query.search.trim().toLowerCase()}%`)
-      const baseSql = `
-        WITH deduplicated_items AS (
-          SELECT ni.*, ROW_NUMBER() OVER (
-            PARTITION BY ni.expression_entry_id
-            ORDER BY CASE WHEN ni.id LIKE 'local:%' THEN 1 ELSE 0 END, ni.updated_at DESC
-          ) AS duplicate_rank
-          FROM learning_notebook_items ni
-          WHERE ni.notebook_id = ? ${statusSql}
-        ), filtered AS (
-          SELECT di.*, ee.id AS entry_id, ee.remote_id AS entry_remote_id,
+      const baseSql = `${notebookItemsSql}, filtered AS (
+          SELECT ni.*, ee.id AS entry_id, ee.remote_id AS entry_remote_id,
             ee.kind AS entry_kind, ee.expression_type AS entry_type,
             ee.sync_status AS entry_sync_status, ee.data AS entry_data,
             ee.updated_at AS entry_updated_at
-          FROM deduplicated_items di
-          INNER JOIN expression_entries ee ON ee.id = di.expression_entry_id
-          WHERE di.duplicate_rank = 1 AND ee.kind = ? ${searchSql}
+          FROM valid_items ni
+          INNER JOIN expression_entries ee ON ee.id = ni.expression_entry_id
+          WHERE ni.notebook_id = ? ${statusSql} AND ee.kind = ? ${searchSql}
         )`
       const rows = await executor.queryRows<Record<string, any>>(
         `${baseSql} SELECT * FROM filtered ORDER BY entry_updated_at DESC, entry_id ASC LIMIT ? OFFSET ?`,

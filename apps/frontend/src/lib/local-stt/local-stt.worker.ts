@@ -1,3 +1,5 @@
+import { modelFetch } from '@/lib/local-models/model-fetch'
+const nativeFetch = globalThis.fetch.bind(globalThis)
 import { env, pipeline } from '@huggingface/transformers'
 import type { LocalSttModelLoadConfig } from './local-stt-model-manager'
 
@@ -16,11 +18,13 @@ let runCount = 0
 function getTranscriber(config: LocalSttModelLoadConfig) {
   const localModelPath = config.localModelPath?.trim()
   const allowRemoteModels = config.allowRemoteModels ?? !localModelPath
-  const nextKey = `${config.modelId}:${config.dtype}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
+  const nextKey = `${config.modelId}:${config.dtype}:${config.modelRevision ?? ''}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
   if (transcriberKey !== nextKey) {
     transcriberKey = nextKey
     transcriberPromise = null
+    env.fetch = modelFetch(config, nativeFetch)
     env.allowLocalModels = Boolean(localModelPath)
+    if (localModelPath) { env.useBrowserCache = false; env.useFS = false }
     env.allowRemoteModels = allowRemoteModels
     if (localModelPath) env.localModelPath = localModelPath
   }
@@ -31,7 +35,7 @@ function getTranscriber(config: LocalSttModelLoadConfig) {
     session_options: {
       graphOptimizationLevel: 'basic',
     },
-  })
+  }).catch(error => { transcriberPromise = null; throw error })
   return transcriberPromise
 }
 

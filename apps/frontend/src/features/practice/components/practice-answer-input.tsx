@@ -1,3 +1,5 @@
+import { saveUserRecording } from '@/lib/offline/user-recordings'
+import { useRecordingPlaybackUrl } from '@/hooks/use-recording-playback-url'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Mic, Square, Play, Pause } from 'lucide-react'
@@ -57,7 +59,7 @@ export function PracticeAnswerInput({
   const voiceGenerationRef = useRef(0)
   const disabledRef = useRef(disabled)
   disabledRef.current = disabled
-  const playbackUrl = recordedAudioUrl === undefined ? audioUrl : recordedAudioUrl
+  const playbackUrl = useRecordingPlaybackUrl(recordedAudioUrl === undefined ? audioUrl : recordedAudioUrl)
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -130,15 +132,12 @@ export function PracticeAnswerInput({
     if (!isCaptureCurrent(generation)) return
     setVoiceStatus('processing')
     try {
+      const savedRecording = await saveUserRecording(blob, filename)
+      if (!isCaptureCurrent(generation)) return
+      setRecordedAudioUrl(savedRecording)
       const result = await transcribeVoiceInput(blob, filename, lang)
       if (!isCaptureCurrent(generation)) return
       const text = normalizeVoiceInputText(result.text ?? '')
-
-      // Prefer the uploaded URL so playback survives question changes.
-      const fallbackUrl = URL.createObjectURL(blob)
-      const nextAudioUrl = result.audioUrl ?? fallbackUrl
-      if (nextAudioUrl !== fallbackUrl) URL.revokeObjectURL(fallbackUrl)
-      setRecordedAudioUrl(nextAudioUrl)
 
       if (!text) {
         setVoiceError(t('profile.placement.voiceNoContent'))
@@ -150,7 +149,7 @@ export function PracticeAnswerInput({
       setVoiceStatus('idle')
     } catch {
       if (!isCaptureCurrent(generation)) return
-      setVoiceError(t('profile.placement.voiceFailed'))
+      setVoiceError(t(audioUrlRef.current?.startsWith('user-recording://') ? 'recording.transcriptionFailedSaved' : 'recording.saveFailed'))
       setVoiceStatus('idle')
     }
   }, [isCaptureCurrent, lang, onChange, setRecordedAudioUrl, t])
@@ -167,8 +166,9 @@ export function PracticeAnswerInput({
 
     try {
       const nativeSession = await startBestNativeVoiceInput({
+        requireRecording: true,
         language: lang,
-        useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
+        useNativeSpeechRecognition: !onAudioChange && nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
           if (!isCaptureCurrent(generation)) return
           const text = normalizeVoiceInputText(partialText)
@@ -231,7 +231,7 @@ export function PracticeAnswerInput({
       setVoiceError(getVoiceMicErrorMessage(error, t))
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, invalidateVoiceCapture, isCaptureCurrent, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setRecordedAudioUrl, t, voiceStatus])
+  }, [cleanupRecording, disabled, invalidateVoiceCapture, isCaptureCurrent, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onAudioChange, onChange, processAudioBlob, setRecordedAudioUrl, t, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const generation = voiceGenerationRef.current

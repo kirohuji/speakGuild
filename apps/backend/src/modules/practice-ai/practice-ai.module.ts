@@ -1,3 +1,4 @@
+import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { PracticeModule } from '../practice/practice.module';
@@ -11,7 +12,7 @@ import { DailyPracticeController } from './daily-practice.controller';
 import { DailyPracticeService } from './daily-practice.service';
 
 @Module({
-  imports: [PrismaModule, PracticeModule, AiModelModule, ContentExperienceModule],
+  imports: [FileAssetsModule, PrismaModule, PracticeModule, AiModelModule, ContentExperienceModule],
   controllers: [EnglishPracticeAiController, WarmupRecordController, DailyPracticeController],
   providers: [EnglishPracticeAiService, WarmupRecordService, DailyPracticeService],
   exports: [EnglishPracticeAiService],

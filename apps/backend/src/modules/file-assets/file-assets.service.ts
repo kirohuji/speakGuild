@@ -1,3 +1,5 @@
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
 import {
   BadRequestException,
   Injectable,
@@ -639,6 +641,32 @@ export class FileAssetsService {
       url,
       expiresInSeconds: this.privateUrlExpiresSeconds,
     };
+  }
+
+  /** Stream large model files from disk instead of buffering model weights in memory. */
+  async createAssetFromPath(input: { path: string; filename: string; mimeType: string; group: FileAssetGroup }): Promise<FileAsset> {
+    this.ensureGroup(input.group);
+    const size = (await stat(input.path)).size;
+    if (!size || size > 1024 * 1024 * 1024) throw new BadRequestException('文件为空或超过 1 GB');
+    const hash = createHash('sha256');
+    for await (const chunk of createReadStream(input.path)) hash.update(chunk);
+    const sha256 = hash.digest('hex');
+    const existing = await this.prisma.fileAsset.findUnique({ where: { sha256 } });
+    if (existing) return existing;
+    const filename = this.sanitizeFilename(input.filename);
+    const key = this.buildObjectKey(input.group, `${sha256}-${filename}`);
+    await new Promise<void>((resolve, reject) => this.cosClient.putObject({
+      Bucket: this.bucket, Region: this.region, Key: key, Body: createReadStream(input.path),
+      ContentLength: size, ContentType: input.mimeType,
+    }, error => error ? reject(error) : resolve()));
+    try {
+      const asset = await this.prisma.fileAsset.upsert({ where: { sha256 }, create: {
+        sha256, bucket: this.bucket, region: this.region, cosKey: key, group: input.group,
+        size, mimeType: input.mimeType, filename,
+      }, update: {} });
+      if (asset.cosKey !== key) await this.deleteOrQueueOrphan(key, sha256);
+      return asset;
+    } catch (error) { await this.deleteOrQueueOrphan(key, sha256); throw error; }
   }
 
   async createAssetFromBuffer(input: IngestBufferInput): Promise<FileAsset> {

@@ -1,3 +1,5 @@
+import { getPublishedModel, modelDownloadProgress } from '@/lib/local-models/published-models'
+import { downloadModelFile, ensureModelDirectory, installModelDirectory, recoverModelDirectory, localModelJsonFiles, validateModelFile } from '@/lib/local-models/native-model-files'
 import { Capacitor } from '@capacitor/core'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import { FileTransfer } from '@capacitor/file-transfer'
@@ -23,6 +25,8 @@ export interface LocalWarmupModelStatus {
   expectedBytes: number
   updatedAt?: string
   localModelPath?: string
+  storageDirectory?: string
+  resourceVersionId?: string
   missingFiles: string[]
   manifestFiles: string[]
 }
@@ -32,6 +36,8 @@ export interface LocalWarmupModelLoadConfig {
   dtype: LocalWarmupModelVariant['dtype']
   localModelPath?: string
   allowRemoteModels?: boolean
+  localJsonFiles?: Record<string, string>
+  modelRevision?: string
 }
 
 const MODEL_ID = 'Xenova/all-MiniLM-L6-v2'
@@ -48,6 +54,7 @@ type WarmupModelManifest = {
   variants?: Partial<Record<LocalWarmupModelVariantId, {
     files: string[]
     sizes: Record<string, number>
+    resourceVersionId?: string
     updatedAt: string
   }>>
   variantId?: LocalWarmupModelVariantId
@@ -92,9 +99,7 @@ function filesForVariant(variantId: LocalWarmupModelVariantId) {
   return [...SHARED_FILES, variantById(variantId).modelFile]
 }
 
-function remoteUrl(file: string) {
-  return `https://huggingface.co/${MODEL_ID}/resolve/${REVISION}/${file}`
-}
+
 
 function expectedBytes(variantId: LocalWarmupModelVariantId) {
   const sharedApproxBytes = 650 * 1024
@@ -103,15 +108,16 @@ function expectedBytes(variantId: LocalWarmupModelVariantId) {
 
 async function safeStat(path: string) {
   try {
+    await validateModelFile(path)
     return await Filesystem.stat({ path, directory: Directory.Data })
   } catch {
     return null
   }
 }
 
-async function safeReadManifest() {
+async function safeReadManifest(path = MANIFEST_PATH) {
   try {
-    const result = await Filesystem.readFile({ path: MANIFEST_PATH, directory: Directory.Data, encoding: Encoding.UTF8 })
+    const result = await Filesystem.readFile({ path, directory: Directory.Data, encoding: Encoding.UTF8 })
     const data = typeof result.data === 'string' ? result.data : ''
     return JSON.parse(data) as WarmupModelManifest
   } catch {
@@ -128,10 +134,7 @@ function manifestEntry(manifest: WarmupModelManifest | null, variantId: LocalWar
   return null
 }
 
-async function ensureModelDirectories() {
-  await Filesystem.mkdir({ path: MODEL_DIR, directory: Directory.Data, recursive: true }).catch(() => undefined)
-  await Filesystem.mkdir({ path: `${MODEL_DIR}/onnx`, directory: Directory.Data, recursive: true }).catch(() => undefined)
-}
+
 
 export const warmupModelManager = {
   variants: LOCAL_WARMUP_MODEL_VARIANTS,
@@ -154,13 +157,23 @@ export const warmupModelManager = {
       }
     }
 
+    if (!installing) await recoverModelDirectory(`${ROOT_DIR}/${variantId}`)
+    const publishedRoot = `${ROOT_DIR}/${variantId}`
+    const publishedDir = `${publishedRoot}/${MODEL_ID}`
+    const publishedManifest = await safeReadManifest(`${publishedDir}/manyu-manifest.json`)
+    const directory = publishedManifest ? publishedDir : MODEL_DIR
+    const localRoot = publishedManifest ? publishedRoot : ROOT_DIR
+    const manifest = publishedManifest ?? await safeReadManifest()
     const files = filesForVariant(variantId)
-    const stats = await Promise.all(files.map(async (file) => ({ file, stat: await safeStat(`${MODEL_DIR}/${file}`) })))
-    const missingFiles = stats.filter((item) => !item.stat).map((item) => item.file)
+    const stats = await Promise.all(files.map(async (file) => ({ file, stat: await safeStat(`${directory}/${file}`) })))
+    const missingFiles = stats.filter((item) => !item.stat || Number(item.stat.size) <= 0).map((item) => item.file)
     const bytes = stats.reduce((sum, item) => sum + Number(item.stat?.size ?? 0), 0)
-    const manifest = await safeReadManifest()
     const entry = manifestEntry(manifest, variantId)
     const manifestFiles = entry?.files ?? []
+    for (const { file, stat } of stats) {
+      const expected = (entry as { sizes?: Record<string, number> } | null)?.sizes?.[file]
+      if (stat && expected && Number(stat.size) !== expected && !missingFiles.includes(file)) missingFiles.push(file)
+    }
     const expectedFiles = filesForVariant(variantId)
     const manifestMatches = Boolean(
       manifest?.modelId === MODEL_ID
@@ -175,7 +188,7 @@ export const warmupModelManager = {
         : !manifestMatches
           ? 'manifest_mismatch'
           : 'ready'
-    const rootUri = await Filesystem.getUri({ path: ROOT_DIR, directory: Directory.Data }).catch(() => null)
+    const rootUri = await Filesystem.getUri({ path: localRoot, directory: Directory.Data }).catch(() => null)
     const localModelPath = rootUri?.uri ? `${Capacitor.convertFileSrc(rootUri.uri).replace(/\/$/, '')}/` : undefined
 
     return {
@@ -189,6 +202,8 @@ export const warmupModelManager = {
       expectedBytes: expectedBytes(variantId),
       updatedAt: entry?.updatedAt,
       localModelPath,
+      storageDirectory: directory,
+      resourceVersionId: (entry as { resourceVersionId?: string } | null)?.resourceVersionId,
       missingFiles,
       manifestFiles,
     }
@@ -203,6 +218,8 @@ export const warmupModelManager = {
       dtype: variantById(variantId).dtype,
       localModelPath: status.localModelPath,
       allowRemoteModels: !status.localModelPath,
+      modelRevision: status.resourceVersionId ?? status.updatedAt,
+      localJsonFiles: isNative() ? await localModelJsonFiles(status.storageDirectory ?? MODEL_DIR, filesForVariant(variantId)) : undefined,
     }
   },
 
@@ -219,52 +236,54 @@ export const warmupModelManager = {
     let currentFile = files[0]
     let listener: { remove: () => Promise<void> } | null = null
 
-    const report = (file: string, loaded: number, total: number) => {
-      const completedBytes = Array.from(completed.values()).reduce((sum, value) => sum + value, 0)
-      const totalBytes = Math.max(expectedBytes(variantId), completedBytes + total)
-      const loadedBytes = Math.min(totalBytes, completedBytes + loaded)
-      onProgress?.({
-        file,
-        loadedBytes,
-        totalBytes,
-        percent: totalBytes > 0 ? Math.round((loadedBytes / totalBytes) * 100) : 0,
-      })
-    }
+    const staging = `${ROOT_DIR}/.install-${variantId}`
+    const installDir = `${staging}/${MODEL_ID}`
+    let currentDownloadUrl = ''
+    let report: (file: string, loaded: number, total?: number) => void = () => undefined
+    let finishProgress: () => void = () => undefined
 
     try {
-      await ensureModelDirectories()
+      onProgress?.({ file: '连接模型资源库', loadedBytes: 0, totalBytes: 0, percent: 0 })
+      const published = await getPublishedModel(variantId, MODEL_ID, files)
+      const progress = modelDownloadProgress(published.files, onProgress)
+      report = progress.report
+      finishProgress = progress.complete
+      await ensureModelDirectory(ROOT_DIR)
+      await recoverModelDirectory(`${ROOT_DIR}/${variantId}`)
+      await Filesystem.rmdir({ path: staging, directory: Directory.Data, recursive: true }).catch(() => undefined)
+      await ensureModelDirectory(installDir)
+      await ensureModelDirectory(`${installDir}/onnx`)
       listener = await FileTransfer.addListener('progress', (progress) => {
-        if (!progress.url.includes(MODEL_ID)) return
+        if (progress.url !== currentDownloadUrl) return
         report(currentFile, progress.bytes, progress.contentLength || variantById(variantId).estimatedBytes)
       })
 
+      const installed = await this.getStatus(variantId)
       for (const file of files) {
         currentFile = file
-        const targetPath = `${MODEL_DIR}/${file}`
-        const targetUri = await Filesystem.getUri({ path: targetPath, directory: Directory.Data })
-        await FileTransfer.downloadFile({
-          url: remoteUrl(file),
-          path: targetUri.uri,
-          progress: true,
-          readTimeout: 120_000,
-          connectTimeout: 60_000,
-        })
-        const stat = await safeStat(targetPath)
+        const targetPath = `${installDir}/${file}`
+        const resource = published.files.find(item => item.path === file)!
+        currentDownloadUrl = resource.url
+        report(file, 0)
+        if (installed.storageDirectory) await Filesystem.copy({ from: `${installed.storageDirectory}/${file}`, to: targetPath, directory: Directory.Data, toDirectory: Directory.Data }).catch(() => undefined)
+        const size = await downloadModelFile(resource.url, targetPath, 120_000, resource)
+        const stat = { size }
         completed.set(file, Number(stat?.size ?? 0))
         report(file, Number(stat?.size ?? 0), Number(stat?.size ?? 0))
       }
 
-      const previousManifest = await safeReadManifest()
+      await Promise.all(files.map(file => validateModelFile(`${installDir}/${file}`)))
       const variants = {
-        ...(previousManifest?.modelId === MODEL_ID && previousManifest.revision === REVISION ? previousManifest.variants : {}),
         [variantId]: {
           files,
           sizes: Object.fromEntries(completed.entries()),
+          resourceVersionId: published.id,
+          hashes: Object.fromEntries(published.files.map(file => [file.path, file.sha256])),
           updatedAt: new Date().toISOString(),
         },
       }
       await Filesystem.writeFile({
-        path: MANIFEST_PATH,
+        path: `${installDir}/manyu-manifest.json`,
         directory: Directory.Data,
         data: JSON.stringify({
           modelId: MODEL_ID,
@@ -274,14 +293,17 @@ export const warmupModelManager = {
         encoding: Encoding.UTF8,
         recursive: true,
       })
+      await installModelDirectory(staging, `${ROOT_DIR}/${variantId}`)
+      finishProgress()
     } finally {
       installing = false
+      await Filesystem.rmdir({ path: staging, directory: Directory.Data, recursive: true }).catch(() => undefined)
       await listener?.remove().catch(() => undefined)
     }
   },
 
   async remove() {
     if (!isNative()) return
-    await Filesystem.rmdir({ path: MODEL_DIR, directory: Directory.Data, recursive: true }).catch(() => undefined)
+    await Filesystem.rmdir({ path: ROOT_DIR, directory: Directory.Data, recursive: true }).catch(() => undefined)
   },
 }

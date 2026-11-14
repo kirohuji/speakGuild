@@ -1,6 +1,8 @@
+import { HOURLY_TABLES, HOURLY_DDL, HOURLY_TRIGGERS } from './hourly-statistics-schema'
 /** Indexed projections maintained inside the same SQLite transaction as their facts. */
-export const STATISTICS_TABLES = ['learning_stat_days', 'learning_stat_questions', 'learning_stat_day_questions', 'learning_stat_sources', 'learning_stat_totals'] as const
+export const STATISTICS_TABLES = [...HOURLY_TABLES,'learning_stat_days', 'learning_stat_questions', 'learning_stat_day_questions', 'learning_stat_sources', 'learning_stat_totals'] as const
 export const STATISTICS_DDL = {
+  ...HOURLY_DDL,
   learning_stat_days: `CREATE TABLE IF NOT EXISTS learning_stat_days (
     id TEXT PRIMARY KEY, question_count INTEGER NOT NULL DEFAULT 0, active_seconds INTEGER NOT NULL DEFAULT 0
   )`,
@@ -74,3 +76,5 @@ STATISTICS_TRIGGERS.push(
     ${ensureTotal} UPDATE learning_stat_totals SET word_count=word_count+
       CASE WHEN NEW.expression_type='word' THEN 1 ELSE 0 END-CASE WHEN OLD.expression_type='word' THEN 1 ELSE 0 END WHERE id='total'; END`,
 )
+
+STATISTICS_TRIGGERS.push(...HOURLY_TRIGGERS)

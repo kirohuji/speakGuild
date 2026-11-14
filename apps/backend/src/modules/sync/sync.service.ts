@@ -1,3 +1,4 @@
+import { applyNotebookMutation } from './notebook-sync';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -73,6 +74,12 @@ export class SyncService {
     item: OutboxItem,
   ): Promise<{ handled: boolean; remoteId?: string; remoteItem?: any }> {
     const { entityType, entityId, operation, payload } = item;
+
+    if (entityType === 'notebook' || entityType === 'notebook_item') {
+      return this.prisma.$transaction(tx => applyNotebookMutation(tx, userId, item), {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    }
 
     // ---- 学习单元 ----
     if (entityType === 'my_unit') {
@@ -435,7 +442,8 @@ export class SyncService {
   async pull(userId: string, cursors: Record<string, string>, types?: string[]) {
     // types 为空 = 拉取全部类型；否则只拉取指定的类型（如生词本/今日任务各自的同步按钮）
     const want = (t: string) => !types || types.length === 0 || types.includes(t);
-    const sinceExpression = cursors.expressionItems ? new Date(cursors.expressionItems) : new Date(0);
+    const [expressionTime, expressionId = ''] = (cursors.expressionItems ?? '').split('|');
+    const sinceExpression = expressionTime ? new Date(expressionTime) : new Date(0);
     const sinceSceneProgress = cursors.sceneProgresses ? new Date(cursors.sceneProgresses) : new Date(0);
     const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
     const sincePracticeSession = cursors.practiceSessions ? new Date(cursors.practiceSessions) : new Date(0);
@@ -443,11 +451,16 @@ export class SyncService {
     const [runTime, runId = ''] = (cursors.dailyPracticeRuns ?? '').split('|');
     const sinceDailyPracticeRun = runTime ? new Date(runTime) : new Date(0);
     const sinceTopicSession = cursors.topicSessions ? new Date(cursors.topicSessions) : new Date(0);
-    const sinceDeletedExpression = cursors.deletedExpressionItems ? new Date(cursors.deletedExpressionItems) : new Date(0);
-    const sinceNotebook = cursors.learningNotebooks ? new Date(cursors.learningNotebooks) : new Date(0);
-    const sinceNotebookItem = cursors.learningNotebookItems ? new Date(cursors.learningNotebookItems) : new Date(0);
-    const sinceDeletedNotebook = cursors.deletedLearningNotebooks ? new Date(cursors.deletedLearningNotebooks) : new Date(0);
-    const sinceDeletedNotebookItem = cursors.deletedLearningNotebookItems ? new Date(cursors.deletedLearningNotebookItems) : new Date(0);
+    const [deletedExpressionTime, deletedExpressionId = ''] = (cursors.deletedExpressionItems ?? '').split('|');
+    const sinceDeletedExpression = deletedExpressionTime ? new Date(deletedExpressionTime) : new Date(0);
+    const [notebookTime, notebookId = ''] = (cursors.learningNotebooks ?? '').split('|');
+    const sinceNotebook = notebookTime ? new Date(notebookTime) : new Date(0);
+    const [notebookItemTime, notebookItemId = ''] = (cursors.learningNotebookItems ?? '').split('|');
+    const sinceNotebookItem = notebookItemTime ? new Date(notebookItemTime) : new Date(0);
+    const [deletedNotebookTime, deletedNotebookId = ''] = (cursors.deletedLearningNotebooks ?? '').split('|');
+    const sinceDeletedNotebook = deletedNotebookTime ? new Date(deletedNotebookTime) : new Date(0);
+    const [deletedNotebookItemTime, deletedNotebookItemId = ''] = (cursors.deletedLearningNotebookItems ?? '').split('|');
+    const sinceDeletedNotebookItem = deletedNotebookItemTime ? new Date(deletedNotebookItemTime) : new Date(0);
 
     const [
       expressionItems,
@@ -461,8 +474,8 @@ export class SyncService {
       learningNotebookItems,
     ] = await Promise.all([
       want('expressionItems') ? this.prisma.expressionItem.findMany({
-        where: { userId, updatedAt: { gt: sinceExpression }, deletedAt: null },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceExpression } }, { updatedAt: sinceExpression, id: { gt: expressionId } }], deletedAt: null },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
       }) : Promise.resolve([]),
       want('sceneProgresses') ? this.prisma.userSceneProgress.findMany({
@@ -562,17 +575,18 @@ export class SyncService {
         },
       }) : Promise.resolve([]),
       want('learningNotebooks') ? this.prisma.learningNotebook.findMany({
-        where: { userId, updatedAt: { gt: sinceNotebook }, deletedAt: null },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceNotebook } }, { updatedAt: sinceNotebook, id: { gt: notebookId } }], deletedAt: null },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
       }) : Promise.resolve([]),
       want('learningNotebookItems') ? this.prisma.learningNotebookItem.findMany({
         where: {
-          notebook: { userId },
-          updatedAt: { gt: sinceNotebookItem },
+          notebook: { userId, deletedAt: null },
+          expressionItem: { userId, deletedAt: null },
+          OR: [{ updatedAt: { gt: sinceNotebookItem } }, { updatedAt: sinceNotebookItem, id: { gt: notebookItemId } }],
           deletedAt: null,
         },
-        orderBy: { updatedAt: 'asc' },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
         include: { expressionItem: true },
       }) : Promise.resolve([]),
@@ -587,24 +601,24 @@ export class SyncService {
 
     const deletedExpressionItems = want('expressionItems')
       ? await this.prisma.expressionItem.findMany({
-          where: { userId, deletedAt: { gt: sinceDeletedExpression } },
-          orderBy: { deletedAt: 'asc' },
+          where: { userId, OR: [{ deletedAt: { gt: sinceDeletedExpression } }, { deletedAt: sinceDeletedExpression, id: { gt: deletedExpressionId } }] },
+          orderBy: [{ deletedAt: 'asc' }, { id: 'asc' }],
           take: SyncService.PULL_PAGE_SIZE,
           select: { id: true, deletedAt: true },
         })
       : [];
     const deletedLearningNotebooks = want('learningNotebooks')
       ? await this.prisma.learningNotebook.findMany({
-          where: { userId, deletedAt: { gt: sinceDeletedNotebook } },
-          orderBy: { deletedAt: 'asc' },
+          where: { userId, OR: [{ deletedAt: { gt: sinceDeletedNotebook } }, { deletedAt: sinceDeletedNotebook, id: { gt: deletedNotebookId } }] },
+          orderBy: [{ deletedAt: 'asc' }, { id: 'asc' }],
           take: SyncService.PULL_PAGE_SIZE,
           select: { id: true, deletedAt: true },
         })
       : [];
     const deletedLearningNotebookItems = want('learningNotebookItems')
       ? await this.prisma.learningNotebookItem.findMany({
-          where: { notebook: { userId }, deletedAt: { gt: sinceDeletedNotebookItem } },
-          orderBy: { deletedAt: 'asc' },
+          where: { notebook: { userId }, OR: [{ deletedAt: { gt: sinceDeletedNotebookItem } }, { deletedAt: sinceDeletedNotebookItem, id: { gt: deletedNotebookItemId } }] },
+          orderBy: [{ deletedAt: 'asc' }, { id: 'asc' }],
           take: SyncService.PULL_PAGE_SIZE,
           select: { id: true, deletedAt: true },
         })
@@ -619,18 +633,18 @@ export class SyncService {
 
     // 未参与本次拉取的类型保持原 cursor 不变，避免跳过其增量。
     const nextCursors = {
-      expressionItems: want('expressionItems') ? (maxTime(expressionItems, 'updatedAt') ?? cursors.expressionItems ?? null) : (cursors.expressionItems ?? null),
+      expressionItems: want('expressionItems') ? ((expressionItems.length ? `${expressionItems.at(-1).updatedAt.toISOString()}|${expressionItems.at(-1).id}` : null) ?? cursors.expressionItems ?? null) : (cursors.expressionItems ?? null),
       sceneProgresses: want('sceneProgresses') ? (maxTime(sceneProgresses, 'updatedAt') ?? cursors.sceneProgresses ?? null) : (cursors.sceneProgresses ?? null),
       chunkProgresses: want('chunkProgresses') ? (maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null) : (cursors.chunkProgresses ?? null),
       practiceSessions: want('practiceSessions') ? (maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null) : (cursors.practiceSessions ?? null),
       practiceWarmupRecords: want('practiceWarmupRecords') ? (maxTime(practiceWarmupRecords, 'updatedAt') ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
       dailyPracticeRuns: want('dailyPracticeRuns') ? (dailyPracticeRuns.length ? `${dailyPracticeRuns.at(-1).updatedAt.toISOString()}|${dailyPracticeRuns.at(-1).id}` : cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
       topicSessions: want('topicSessions') ? (maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
-      deletedExpressionItems: want('expressionItems') ? (maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),
-      learningNotebooks: want('learningNotebooks') ? (maxTime(learningNotebooks, 'updatedAt') ?? cursors.learningNotebooks ?? null) : (cursors.learningNotebooks ?? null),
-      learningNotebookItems: want('learningNotebookItems') ? (maxTime(learningNotebookItems, 'updatedAt') ?? cursors.learningNotebookItems ?? null) : (cursors.learningNotebookItems ?? null),
-      deletedLearningNotebooks: want('learningNotebooks') ? (maxTime(deletedLearningNotebooks, 'deletedAt') ?? cursors.deletedLearningNotebooks ?? null) : (cursors.deletedLearningNotebooks ?? null),
-      deletedLearningNotebookItems: want('learningNotebookItems') ? (maxTime(deletedLearningNotebookItems, 'deletedAt') ?? cursors.deletedLearningNotebookItems ?? null) : (cursors.deletedLearningNotebookItems ?? null),
+      deletedExpressionItems: want('expressionItems') ? ((deletedExpressionItems.length ? `${deletedExpressionItems.at(-1).deletedAt.toISOString()}|${deletedExpressionItems.at(-1).id}` : null) ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),
+      learningNotebooks: want('learningNotebooks') ? ((learningNotebooks.length ? `${learningNotebooks.at(-1).updatedAt.toISOString()}|${learningNotebooks.at(-1).id}` : null) ?? cursors.learningNotebooks ?? null) : (cursors.learningNotebooks ?? null),
+      learningNotebookItems: want('learningNotebookItems') ? ((learningNotebookItems.length ? `${learningNotebookItems.at(-1).updatedAt.toISOString()}|${learningNotebookItems.at(-1).id}` : null) ?? cursors.learningNotebookItems ?? null) : (cursors.learningNotebookItems ?? null),
+      deletedLearningNotebooks: want('learningNotebooks') ? ((deletedLearningNotebooks.length ? `${deletedLearningNotebooks.at(-1).deletedAt.toISOString()}|${deletedLearningNotebooks.at(-1).id}` : null) ?? cursors.deletedLearningNotebooks ?? null) : (cursors.deletedLearningNotebooks ?? null),
+      deletedLearningNotebookItems: want('learningNotebookItems') ? ((deletedLearningNotebookItems.length ? `${deletedLearningNotebookItems.at(-1).deletedAt.toISOString()}|${deletedLearningNotebookItems.at(-1).id}` : null) ?? cursors.deletedLearningNotebookItems ?? null) : (cursors.deletedLearningNotebookItems ?? null),
     };
 
     // 每种类型独立 hasMore；未参与的类型不触发分页
@@ -657,6 +671,7 @@ export class SyncService {
       : [];
 
     return {
+      userId,
       cursors: nextCursors,
       hasMore,
       changed: {

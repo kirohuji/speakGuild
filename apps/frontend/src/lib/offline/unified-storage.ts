@@ -20,7 +20,12 @@ import { Capacitor } from '@capacitor/core'
 
 // ── Storage interface (shared by all backends) ──────────
 
+export type LocalWrite = { table: TableName; value: any; deleteId?: never } | { table: TableName; deleteId: string; value?: never }
+
 export interface ILocalDb {
+  commitLocalWrites(writes: LocalWrite[]): Promise<void>
+  activeNotebookItems(): Promise<Array<{ id: string; notebookId: string; expressionEntryId: string }>>
+  notebookCounts(): Promise<Array<{ notebookId: string; kind: string; count: number }>>
   applyStatisticsRuns(runs: any[]): Promise<void>
   saveDailyPracticeOutbox(entityId: string, operation: string, payload: any): Promise<void>
   patchOutbox(id: string, revision: number, status: 'synced' | 'failed', error?: string, retryAt?: string): Promise<boolean>
@@ -102,6 +107,9 @@ async function getBackend(): Promise<ILocalDb> {
 // ── Public API ────────────────────────────────────────
 
 export const localDb: ILocalDb = {
+  async commitLocalWrites(writes) { await (await getBackend()).commitLocalWrites(writes); if (writes.some(w => w.table === 'outbox')) notifyStatisticsChanged('outbox') },
+  async activeNotebookItems() { return (await getBackend()).activeNotebookItems() },
+  async notebookCounts() { return (await getBackend()).notebookCounts() },
   async applyStatisticsRuns(runs) { if (!runs.length) return; await (await getBackend()).applyStatisticsRuns(runs); notifyStatisticsChanged('daily_activity') },
   async saveDailyPracticeOutbox(entityId, operation, payload) { await (await getBackend()).saveDailyPracticeOutbox(entityId, operation, payload); notifyStatisticsChanged('outbox') },
   async patchOutbox(id, revision, status, error, retryAt) { const result = await (await getBackend()).patchOutbox(id, revision, status, error, retryAt); notifyStatisticsChanged('outbox'); return result },

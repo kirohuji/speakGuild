@@ -34,6 +34,7 @@ export interface WarmupRecordEntry {
   packId?: string
   packTitle?: string
   topicTitle?: string
+  levelAudios?: Record<number, string>
   recordId?: string
   practiceCount?: number
   score?: WarmupScore

@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -102,7 +103,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
       await useLearningStore.getState().refreshMyUnits()
       toast.success(t('learning.learnAgainDone', { title: unit.title }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learning.learnAgainFailed'))
+      showRequestError(error, t('learning.learnAgainFailed'))
     } finally {
       setRestarting(false)
     }

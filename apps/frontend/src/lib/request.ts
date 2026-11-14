@@ -1,3 +1,4 @@
+import i18next from 'i18next'
 import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import { clearBearerToken, getBearerToken } from '@/features/auth/client'
 import { reportClientError } from '@/lib/monitoring'
@@ -37,6 +38,7 @@ export type RequestOptions = AxiosRequestConfig & {
 const DEFAULT_GET_FAILURE_COOLDOWN_MS = 30_000
 const inflightRequests = new Map<string, Promise<unknown>>()
 const failedUntil = new Map<string, number>()
+if (typeof window !== 'undefined') window.addEventListener('online', () => failedUntil.clear())
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu',
@@ -85,15 +87,16 @@ function normalizeError(error: any): ApiRequestError {
     error?.message ||
     '请求失败'
 
+  if (status >= 500) return new ApiRequestError('server', i18next.t('network.unavailable'), { status, apiCode, original: error })
   if (status === 401) return new ApiRequestError('unauthorized', message, { status, apiCode, original: error })
-  if (error?.code === 'ECONNABORTED') return new ApiRequestError('timeout', message, { status, apiCode, original: error })
-  if (!error?.response) return new ApiRequestError('network', message, { status, apiCode, original: error })
+  if (error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT') return new ApiRequestError('timeout', i18next.t('network.unavailable'), { status, apiCode, original: error })
+  if (!error?.response) return new ApiRequestError(isOffline() ? 'offline' : 'network', i18next.t(isOffline() ? 'network.offline' : 'network.unavailable'), { status, apiCode, original: error })
   return new ApiRequestError('server', message, { status, apiCode, original: error })
 }
 
 instance.interceptors.request.use((config) => {
   if (isOffline()) {
-    throw new ApiRequestError('offline', '当前处于离线状态')
+    throw new ApiRequestError('offline', i18next.t('network.offline'))
   }
 
   const token = getBearerToken()
@@ -126,7 +129,7 @@ instance.interceptors.response.use(
       window.dispatchEvent(new CustomEvent('auth:unauthorized'))
     }
     const normalized = normalizeError(error)
-    console.error('[API Error]', normalized.message, error)
+    if (!['offline', 'network', 'timeout', 'cooldown'].includes(normalized.kind)) console.error('[API Error]', normalized.message, error)
     if (normalized.status && normalized.status >= 500) {
       reportClientError(normalized, 'api.5xx')
     }
@@ -146,7 +149,7 @@ export function request<T = any>(
   const cooldownUntil = failedUntil.get(key) ?? 0
 
   if (cooldownMs > 0 && cooldownUntil > Date.now()) {
-    return Promise.reject(new ApiRequestError('cooldown', '请求刚刚失败过，稍后再试'))
+    return Promise.reject(new ApiRequestError('cooldown', i18next.t('network.unavailable')))
   }
 
   const shouldDedupe = dedupe ?? normalizedMethod === 'get'
@@ -162,7 +165,7 @@ export function request<T = any>(
     data,
   }).catch((error) => {
     const normalized = normalizeError(error)
-    if (cooldownMs > 0 && normalized.kind !== 'cooldown') {
+    if (cooldownMs > 0 && normalized.kind !== 'cooldown' && normalized.kind !== 'offline') {
       failedUntil.set(key, Date.now() + cooldownMs)
     }
     throw normalized

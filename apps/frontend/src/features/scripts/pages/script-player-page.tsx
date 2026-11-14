@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -462,7 +463,7 @@ function InkEpisodePlayer({
           error: error?.message || t('scripts.videoGenerateFailedRetry'),
         })
       }
-      toast.error(error?.message || t('scripts.videoGenerateFailedRetry'))
+      showRequestError(error, t('scripts.videoGenerateFailedRetry'))
     } finally {
       setPublishing(false)
     }
@@ -511,7 +512,7 @@ function InkEpisodePlayer({
       if (!result.analysis) toast.error(t('learning.aiReviewPending'))
       else toast.success(t('learning.aiEvaluationDone'))
     } catch (error: any) {
-      toast.error(error?.message || t('practiceSession.aiEvalUnavailable'))
+      showRequestError(error, t('practiceSession.aiEvalUnavailable'))
       setAnalysisOpen(false)
     } finally {
       setAnalysisLoading(false)

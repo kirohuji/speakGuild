@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Query, Req } from '@nestjs/common';
+import { MakeupCheckInDto } from './dto/makeup-check-in.dto';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { PointsService } from './points.service';
 import { requireAuthSession } from '../auth/session.util';
@@ -36,6 +37,12 @@ export class PointsController {
   ) {
     const session = await requireAuthSession(req);
     return this.pointsService.getCheckInCalendar(session.user.id, startDate, endDate, requestTimeZone(req));
+  }
+
+  @Post('check-in/makeup')
+  async makeupCheckIn(@Req() req: Request, @Body() body: MakeupCheckInDto) {
+    const session = await requireAuthSession(req);
+    return this.pointsService.makeupCheckIn(session.user.id, body.date, requestTimeZone(req));
   }
 
   /** 每日签到 */

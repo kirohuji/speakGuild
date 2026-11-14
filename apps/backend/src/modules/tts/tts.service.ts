@@ -266,8 +266,7 @@ export class TtsService {
           mimeType,
           group: 'user_recording' as FileAssetGroup,
         });
-        const signed = await this.fileAssetsService.getPrivateUrlByAssetId(asset.id);
-        audioUrl = (signed as any).url ?? null;
+        audioUrl = this.fileAssetsService.getAssetReference(asset.id);
         this.logger.log(`User recording saved to COS: ${asset.id}`);
       } catch (e) {
         this.logger.warn(`Failed to save user recording to COS: ${e instanceof Error ? e.message : String(e)}`);

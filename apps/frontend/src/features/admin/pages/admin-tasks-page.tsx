@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
@@ -62,6 +63,7 @@ const TYPE_LABELS: Record<string, string> = {
   'pattern-missing-meaning-enrich': '句型字段检查与 AI 补全',
   'script-video-render': '剧本演出视频',
   'narrative-video-render': '叙事视频预览',
+  'offline-model-prepare': '离线模型准备',
   'file-asset-inspect': '检查未使用资源',
   'file-asset-cleanup': '清理未使用资源',
   'dictionary-pronunciation-batch-refresh': '词典音标批量检查',
@@ -582,10 +584,11 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 }
 
 export function AdminTasksPage() {
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<AdminTaskStatus | 'all' | 'active'>('active');
   const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'vocabulary-meaning-pos-rewrite' | 'vocabulary-bilingual-definition-enrich' | 'vocabulary-difficulty-reclassify' | 'chunk-missing-meaning-enrich' | 'chunk-meaning-rewrite' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('taskId'));
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);

@@ -728,6 +728,8 @@ export function ExpressionPrepSection({
         onIndexChange={setDialogIndex}
       />
       <SaveToNotebookDrawer
+        entry={pendingSave ? { kind: pendingSave.kind, text: pendingSave.kind === 'word' ? pendingSave.item.word : pendingSave.kind === 'chunk' ? pendingSave.item.text : pendingSave.item.pattern } : null}
+        onRemoved={() => { void refreshCollectedTexts() }}
         open={saveDrawerOpen}
         onOpenChange={setSaveDrawerOpen}
         onSave={savePendingToNotebooks}

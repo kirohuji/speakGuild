@@ -116,8 +116,8 @@ export function WarmupRecordDetailDialog({
     if (current.stepType === 'sentence_decomposition') {
       let levels: any[] = []
       try { levels = JSON.parse(current.correction || '[]') } catch {}
-      let levelAudios: Record<number, string> | null = null
-      try { levelAudios = JSON.parse(current.userAnswer || '{}') } catch {}
+      let levelAudios: Record<number, string> | null = (current as any).levelAudios ?? null
+      if (!levelAudios) try { levelAudios = JSON.parse(current.userAnswer || '{}') } catch {}
       return (
         <SentenceDecompositionCard
           title={prompt || t('learning.sentenceBreakdown')}

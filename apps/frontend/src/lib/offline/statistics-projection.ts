@@ -7,6 +7,12 @@ export function projectStatisticsRuns(runs: any[]): StatisticsStatement[] {
     for (const event of run.attemptHistory ?? []) {
       if (!event?.stepId || !/^\d{4}-\d{2}-\d{2}$/.test(event.date ?? '')) continue
       statements.push({ sql: 'INSERT OR IGNORE INTO learning_stat_day_questions(id,date,question_id) VALUES (?,?,?)', values: [JSON.stringify([event.date, event.stepId]), event.date, event.stepId] })
+      if (event.createdAt) {
+        statements.push({ sql: `INSERT INTO learning_stat_question_times(date,question_id,first_at,hour) VALUES(?,?,?,?)
+          ON CONFLICT(date,question_id) DO UPDATE SET first_at=excluded.first_at,hour=excluded.hour
+          WHERE excluded.first_at<learning_stat_question_times.first_at OR (excluded.first_at=learning_stat_question_times.first_at AND excluded.hour IS NOT NULL AND (learning_stat_question_times.hour IS NULL OR excluded.hour<learning_stat_question_times.hour))`, values:[event.date,event.stepId,event.createdAt,Number.isInteger(event.hour)&&event.hour>=0&&event.hour<24?event.hour:null] })
+      }
+
     }
     const date = String(run.date).slice(0, 10)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue

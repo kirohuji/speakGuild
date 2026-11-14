@@ -34,23 +34,23 @@ export function useEffectivePracticeTimer({ enabled, sourceId: inputSourceId, sc
       let cursor = startWall
       const end = startWall + Math.min(milliseconds, 60_000)
       while (cursor < end) {
-        const midnight = new Date(cursor)
-        midnight.setHours(24, 0, 0, 0)
-        const until = Math.min(end, midnight.getTime())
-        const date = localDateKey(new Date(cursor))
-        pendingMilliseconds.set(date, (pendingMilliseconds.get(date) ?? 0) + until - cursor)
+        const boundary = new Date(cursor)
+        boundary.setHours(boundary.getHours() + 1, 0, 0, 0)
+        const until = Math.min(end, boundary.getTime())
+        const bucket = `${localDateKey(new Date(cursor))}:${String(new Date(cursor).getHours()).padStart(2,'0')}`
+        pendingMilliseconds.set(bucket, (pendingMilliseconds.get(bucket) ?? 0) + until - cursor)
         cursor = until
       }
     }
     const commit = () => {
       advance()
       if (generation !== getPracticeActivityGeneration()) return
-      for (const [date, milliseconds] of pendingMilliseconds) {
+      for (const [bucket, milliseconds] of pendingMilliseconds) {
         const seconds = Math.floor(milliseconds / 1000)
-        if (seconds) usePracticeActivityStore.getState().addActiveSeconds({ date, sourceId, scope, seconds })
-        pendingMilliseconds.set(date, milliseconds % 1000)
+        if (seconds) usePracticeActivityStore.getState().addActiveSeconds({ date: bucket.slice(0,10), sourceId: `${sourceId}:h${bucket.slice(-2)}`, scope, seconds })
+        pendingMilliseconds.set(bucket, milliseconds % 1000)
       }
-      // At most the current and immediately preceding calendar day's fractional second is retained.
+      // Retain at most two adjacent hourly buckets of fractional seconds.
       if (pendingMilliseconds.size > 2) pendingMilliseconds.delete(pendingMilliseconds.keys().next().value!)
     }
     const interact = () => { advance(); lastInteraction = performance.now() }

@@ -89,6 +89,9 @@ model AdminTaskLog {
 }
 
 model User {
+  notebookSyncReceipts NotebookSyncReceipt[]
+  learningStatHours LearningStatisticsHour[]
+  learningStatQuestionTimes LearningStatisticsQuestionTime[]
   learningStatDays LearningStatisticsDay[]
   learningStatQuestions LearningStatisticsQuestion[]
   learningStatDayQuestions LearningStatisticsDayQuestion[]
@@ -488,6 +491,7 @@ model RevenueCatWebhookEvent {
 // ---- 文件资产域 ----
 
 enum FileAssetGroup {
+  offline_model
   avatar
   library
   tts
@@ -1816,6 +1820,8 @@ model LearningNotebook {
   @@index([userId, kind])
   @@index([userId, deletedAt])
   @@map("learning_notebook")
+  version Int @default(0)
+
 }
 
 model LearningNotebookItem {
@@ -1841,6 +1847,8 @@ model LearningNotebookItem {
   @@index([updatedAt])
   @@index([deletedAt])
   @@map("learning_notebook_item")
+  version Int @default(0)
+
 }
 
 // ──── 用户场景熟练度 ────
@@ -2425,6 +2433,8 @@ model UserCheckIn {
   date      DateTime @db.Date
   points    Int      @default(10)
   streak    Int      @default(1)
+  isMakeup Boolean @default(false)
+  makeupCost Int @default(0)
   createdAt DateTime @default(now())
 
   @@unique([userId, date])
@@ -2585,4 +2595,66 @@ model LearningStatisticsTotal {
   questionDays Int @default(0) @map("question_days")
   activeSeconds Int @default(0) @map("active_seconds")
   @@map("learning_stat_totals")
+}
+
+model LearningStatisticsHour {
+ userId String @map("user_id")
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ date DateTime @db.Date
+ hour Int
+ questionCount Int @default(0) @map("question_count")
+ activeSeconds Int @default(0) @map("active_seconds")
+ @@id([userId,date,hour])
+ @@map("learning_stat_hours")
+}
+model LearningStatisticsQuestionTime {
+ userId String @map("user_id")
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ date DateTime @db.Date
+ questionId String @map("question_id")
+ firstAt DateTime @db.Timestamptz @map("first_at")
+ hour Int?
+ @@id([userId,date,questionId])
+ @@map("learning_stat_question_times")
+}
+
+// Durable acknowledgements for immutable offline notebook operations.
+model NotebookSyncReceipt {
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  clientMutationId String
+  result           Json
+  createdAt        DateTime @default(now())
+
+  @@id([userId, clientMutationId])
+  @@map("notebook_sync_receipt")
+}
+
+model OfflineModelVersion {
+  id                String   @id @default(cuid())
+  variantId         String
+  version           String
+  modelId           String
+  purpose           String
+  dtype             String
+  sourceRevision    String   @default("main")
+  sourceCommit      String?
+  status            String   @default("queued")
+  isPublished       Boolean  @default(false)
+  publishedAt       DateTime?
+  files             Json     @default("[]")
+  totalBytes        Int      @default(0)
+  bundleAssetId     String?
+  importAssetId     String?
+  taskId            String?
+  deviceValidation  String   @default("unverified")
+  validationNote    String?
+  errorMessage      String?
+  createdById       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([variantId, version])
+  @@index([variantId, isPublished])
+  @@map("offline_model_version")
 }

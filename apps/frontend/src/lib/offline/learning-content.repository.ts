@@ -1,6 +1,4 @@
 import { localDb } from './unified-storage'
-import { expressionApi } from '@/features/practice/api/english-practice-api'
-import { syncOutbox, type SyncEntityType } from './sync-outbox'
 
 function includesText(value: unknown, query: string) {
   return typeof value === 'string' && value.toLowerCase().includes(query.toLowerCase())
@@ -173,12 +171,6 @@ function expressionText(entry: Pick<ExpressionEntry, 'kind' | 'original' | 'chun
   return entry.chunkText ?? entry.corrected ?? ''
 }
 
-function expressionEntityType(kind: ExpressionEntryKind): SyncEntityType {
-  if (kind === 'word') return 'word_entry'
-  if (kind === 'pattern') return 'pattern_entry'
-  return 'chunk_entry'
-}
-
 function makeEntry(input: {
   kind: ExpressionEntryKind
   text: string
@@ -283,7 +275,7 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
   return entry
 }
 
-function createPayload(entry: ExpressionEntry) {
+export function createPayload(entry: ExpressionEntry) {
   const source = {
     sourceType: entry.sourceType,
     sourceId: entry.sourceId,
@@ -314,40 +306,7 @@ function createPayload(entry: ExpressionEntry) {
   }
 }
 
-function createRequest(entry: ExpressionEntry) {
-  const source = {
-    sourceType: entry.sourceType,
-    sourceId: entry.sourceId,
-    sourceSnapshot: entry.sourceSnapshot,
-  }
-  if (entry.kind === 'word') {
-    return {
-      type: 'word' as const,
-      chunkText: keepText(entry.chunkText, entry.contentSnapshot?.meaning) ?? '',
-      original: entry.original ?? '',
-      sceneName: entry.sceneName ?? undefined,
-      ...source,
-    }
-  }
-  if (entry.kind === 'pattern') {
-    return {
-      type: 'scene_phrase' as const,
-      chunkText: entry.chunkText ?? '',
-      corrected: keepText(entry.corrected, entry.contentSnapshot?.example) ?? entry.chunkText ?? '',
-      original: keepText(entry.original, entry.contentSnapshot?.meaning) ?? '',
-      sceneName: entry.sceneName ?? undefined,
-      ...source,
-    }
-  }
-  return {
-    type: 'chunk' as const,
-    chunkText: entry.chunkText ?? '',
-    corrected: entry.corrected ?? entry.chunkText ?? '',
-    original: keepText(entry.original, entry.contentSnapshot?.meaning) ?? '',
-    sceneName: entry.sceneName ?? undefined,
-    ...source,
-  }
-}
+
 
 export const learningContentRepository = {
   async savePackContentIndex(packId: string, unitId: string, unitDetail: any, topicDetails: any[]): Promise<void> {
@@ -765,42 +724,11 @@ export const learningContentRepository = {
   async saveExpressionEntryAndSync(
     input: Parameters<typeof makeEntry>[0] & { notebookIds: string[] },
   ): Promise<ExpressionEntry> {
-    const entry = await this.saveExpressionEntry(input)
-    await localDb.putMany('learning_notebook_items', input.notebookIds.map((notebookId) => ({
-      id: `local:${notebookId}:${entry.id}`,
-      remoteId: null,
-      notebookId,
-      expressionEntryId: entry.id,
-      masteryStatus: 'learning',
-      reviewCount: 0,
-      intervalDays: 0,
-      easeFactor: 2.5,
-      lapseCount: 0,
-      lastReviewedAt: null,
-      nextReviewAt: null,
-      createdAt: entry.createdAt,
-      updatedAt: entry.updatedAt,
-      syncStatus: entry.syncStatus ?? 'pending',
-    })))
-    notifyLearningLibraryChanged()
-    const text = expressionText(entry)
-    const outboxItem = await syncOutbox.enqueue({
-      entityType: expressionEntityType(entry.kind),
-      entityId: text,
-      operation: 'create',
-      payload: { ...createPayload(entry), notebookIds: input.notebookIds },
-    })
-    try {
-      const created = await expressionApi.create({
-        ...createRequest(entry),
-        notebookIds: input.notebookIds,
-      })
-      await this.saveRemoteExpressionEntry(created)
-      await syncOutbox.markSynced(outboxItem.id)
-    } catch (error) {
-      await syncOutbox.markFailed(outboxItem.id, error)
-      await this.markExpressionSyncStatus(entry.kind, text, 'failed')
-    }
+    const entry = makeEntry(input)
+    const existing = await localDb.get<ExpressionEntry>('expression_entries', entry.id)
+    const merged = { ...existing, ...entry, remoteId: existing?.remoteId ?? entry.remoteId, contentSnapshot: mergeContentSnapshot(existing?.contentSnapshot, entry.contentSnapshot) }
+    const { learningNotebookRepository } = await import('./learning-notebook.repository')
+    await learningNotebookRepository.addEntry(merged, input.notebookIds)
     return entry
   },
 
@@ -842,10 +770,14 @@ export const learningContentRepository = {
     return kind ? entries.filter((entry) => entry.kind === kind) : entries
   },
 
+  async activeNotebookItems(): Promise<Array<{ expressionEntryId: string; notebookId: string; id: string }>> {
+    return localDb.activeNotebookItems()
+  },
+
   async listExpressionTexts(kind: ExpressionEntryKind): Promise<string[]> {
     const [entries, notebookItems] = await Promise.all([
       this.listExpressionEntries(kind),
-      localDb.list<{ expressionEntryId: string }>('learning_notebook_items'),
+      this.activeNotebookItems(),
     ])
     const savedEntryIds = new Set(notebookItems.map((item) => item.expressionEntryId))
     return entries
@@ -857,7 +789,7 @@ export const learningContentRepository = {
   async isExpressionSaved(kind: ExpressionEntryKind, text: string): Promise<boolean> {
     const entry = await this.getExpressionByText(kind, text)
     if (!entry) return false
-    const notebookItems = await localDb.list<{ expressionEntryId: string }>('learning_notebook_items')
+    const notebookItems = await this.activeNotebookItems()
     return notebookItems.some((item) => item.expressionEntryId === entry.id)
   },
 

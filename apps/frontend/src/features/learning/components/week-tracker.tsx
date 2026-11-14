@@ -1,7 +1,17 @@
+import { DailyActivityChart } from './daily-activity-chart'
+import { toast } from 'sonner'
+import { ActivityInfoCard, CompactActivityChart, ExpandedActivityChart, getChartCardPosition, getChartCardTopByRatio, useLearningChartConfig } from './activity-chart'
+import { pointsApi, type CheckInCalendar } from '@/features/points/api'
+import { makeupAvailability } from '@/features/points/makeup-policy'
+import { useUserStore } from '@/stores/user.store'
+import { useHomeStore } from '@/stores/home.store'
+import { getCurrentSessionSnapshot } from '@/providers/auth-session'
+import { localDateKey } from '@/lib/date/calendar-date'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useLearningStatistics } from '@/stores/learning-statistics.store'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { addMonths, addWeeks, addYears, eachDayOfInterval, endOfMonth, endOfWeek, endOfYear, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
+import { addDays, addMonths, addWeeks, addYears, eachDayOfInterval, endOfMonth, endOfWeek, endOfYear, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
 import { enUS, ja, zhCN } from 'date-fns/locale'
 import { CalendarDays, Flame, CalendarCheck, ChevronLeft, ChevronRight, Clock3, ListChecks } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -12,36 +22,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
+import { ChartContainer } from '@/components/ui/chart'
 import { Bar, CartesianGrid, Cell, ComposedChart, LabelList, Line, ReferenceLine, XAxis, YAxis } from 'recharts'
-
-function useLearningChartConfig() {
-  const { t } = useTranslation()
-  return {
-    minutes: { label: t('learning.activeDuration', { defaultValue: '练习分钟' }), color: 'hsl(var(--primary))' },
-    questions: { label: t('learning.questionsCompleted', { defaultValue: '完成题数' }), color: 'hsl(var(--accent))' },
-  } satisfies ChartConfig
-}
-
-function getChartCardPosition(index: number, itemCount: number) {
-  const anchor = `${((index + 0.5) / itemCount) * 100}%`
-  return {
-    left: `clamp(3.75rem, ${anchor}, calc(100% - 3.75rem))`,
-    transform: 'translateX(-50%)',
-  }
-}
-
-function getChartCardTopByRatio(ratio: number, plotHeight: number, topMargin: number) {
-  const barTop = topMargin + (1 - ratio) * plotHeight
-  return Math.max(4, barTop - 46)
-}
-
-// Minutes and completed questions are separate units. Give each one a little
-// headroom so a single high value does not visually pin its mark to the top.
-function getChartDomainMax(values: number[], minimum: number) {
-  const maximum = Math.max(0, ...values)
-  return Math.max(minimum, Math.ceil(maximum * 1.15))
-}
 
 export function LearningWeekTracker() {
   const { t } = useTranslation()
@@ -94,7 +76,7 @@ export function LearningWeekTracker() {
   )
 }
 
-function CheckInCalendarDrawer({
+export function CheckInCalendarDrawer({
   open,
   onOpenChange,
 }: {
@@ -108,18 +90,37 @@ function CheckInCalendarDrawer({
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [year, setYear] = useState(() => startOfYear(new Date()))
-  const [view, setView] = useState<'week' | 'month' | 'year'>('month')
+  const [view, setView] = useState<'day' | 'month' | 'year'>('day')
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date())
-  const today = useMemo(() => startOfDay(new Date()), [])
+  const [today, setToday] = useState(() => startOfDay(new Date()))
+  const todayKey = localDateKey(today)
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine)
+  const [makeupBusy, setMakeupBusy] = useState(false)
+  const [quote, setQuote] = useState<{ date: string; cost: number; balance: number } | null>(null)
+  const requestEpoch = useRef(0)
+  const submittingRef = useRef(false)
+  const accountId = useUserStore(state => state.currentUserId)
+  useEffect(() => { requestEpoch.current++; setQuote(null); setMakeupBusy(false) }, [accountId])
+  useEffect(() => {
+    if (!open) return
+    const update = () => { setOnline(navigator.onLine); setToday(startOfDay(new Date())) }
+    update()
+    const timer = setInterval(update, 60_000)
+    window.addEventListener('online', update)
+    window.addEventListener('offline', update)
+    document.addEventListener('visibilitychange', update)
+    return () => { clearInterval(timer); window.removeEventListener('online', update); window.removeEventListener('offline', update); document.removeEventListener('visibilitychange', update) }
+  }, [open])
+  useEffect(()=>{
+    if(open){const current=startOfDay(new Date());setToday(current);setSelectedDay(current);setMonth(startOfMonth(current));setView('day')}
+  },[open])
   const calendarLocale = i18n.language.startsWith('ja')
     ? ja
     : i18n.language.startsWith('en')
       ? enUS
       : zhCN
   const visibleRange = useMemo(() => {
-    if (view === 'week') {
-      return { startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd') }
-    }
+    if (view === 'day') { const date=localDateKey(selectedDay??today); return {startDate:date,endDate:date} }
     if (view === 'year') {
       return { startDate: format(startOfYear(year), 'yyyy-MM-dd'), endDate: format(endOfYear(year), 'yyyy-MM-dd') }
     }
@@ -127,7 +128,7 @@ function CheckInCalendarDrawer({
       startDate: format(startOfWeek(startOfMonth(month), { locale: calendarLocale, weekStartsOn: 1 }), 'yyyy-MM-dd'),
       endDate: format(endOfWeek(endOfMonth(month), { locale: calendarLocale, weekStartsOn: 1 }), 'yyyy-MM-dd'),
     }
-  }, [calendarLocale, month, view, weekStart, year])
+  }, [calendarLocale, month, view, weekStart, year, selectedDay, todayKey])
   const { data: statistics } = useLearningStatistics(visibleRange.startDate, visibleRange.endDate, open)
   const checkedInDates = useMemo<Date[]>(
     () => data?.dates.map((date) => parseISO(date)) ?? [],
@@ -135,7 +136,8 @@ function CheckInCalendarDrawer({
   )
   const dailyStats = useMemo(() => new Map((statistics?.dailyStats ?? []).map((item) => [item.date, item])), [statistics])
   const visibleDays = useMemo(() => eachDayOfInterval({ start: parseISO(visibleRange.startDate), end: parseISO(visibleRange.endDate) }), [visibleRange])
-  const summary = useMemo(() => visibleDays.reduce((total, day) => {
+  const periodDays = useMemo(() => view === 'month' ? eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }) : visibleDays, [view, month, visibleDays])
+  const summary = useMemo(() => periodDays.reduce((total, day) => {
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     if (!stat) return total
     return {
@@ -143,17 +145,18 @@ function CheckInCalendarDrawer({
       questionCount: total.questionCount + stat.questionCount,
       activeSeconds: total.activeSeconds + stat.activeSeconds,
     }
-  }, { activeDays: 0, questionCount: 0, activeSeconds: 0 }), [dailyStats, visibleDays])
+  }, { activeDays: 0, questionCount: 0, activeSeconds: 0 }), [dailyStats, periodDays])
   const focusedStats = selectedDay ? dailyStats.get(format(selectedDay, 'yyyy-MM-dd')) : null
+  const dayUnknown=view==='day'&&!focusedStats&&!statistics?.historyComplete
 
   useEffect(() => {
     if (!open) return
     fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
-  }, [open, visibleRange, fetchCheckInCalendar])
+  }, [open, visibleRange, fetchCheckInCalendar, todayKey, online])
 
   const changeMonth = useCallback((offset: number) => {
     const nextMonth = startOfMonth(addMonths(month, offset))
-    if (!isAfter(nextMonth, startOfMonth(today))) setMonth(nextMonth)
+    if (!isAfter(nextMonth, startOfMonth(today))) { setMonth(nextMonth); setSelectedDay(isSameDay(nextMonth, startOfMonth(today)) ? today : nextMonth) }
   }, [month, today])
 
   const canGoToNextMonth = !isAfter(startOfMonth(addMonths(month, 1)), startOfMonth(today))
@@ -166,59 +169,137 @@ function CheckInCalendarDrawer({
       setSelectedDay(nextWeek)
     }
   }, [today, weekStart])
+  const selectedKey = selectedDay ? localDateKey(selectedDay) : todayKey
+  const calendarMatches = view==='day' ? Boolean(data?.startDate && data.endDate && data.startDate<=selectedKey && data.endDate>=selectedKey) : data?.startDate === visibleRange.startDate && data?.endDate === visibleRange.endDate
+  const activeCalendar = calendarMatches ? data : null
+  const makeupState = makeupAvailability(selectedKey, activeCalendar, online, todayKey)
+  const canOfferMakeup = view === 'day' && selectedKey < todayKey && !activeCalendar?.dates.includes(selectedKey)
+  const makeupReason = makeupState === 'insufficient'
+    ? t('learning.dayDetails.insufficient', { cost: activeCalendar?.makeup?.cost, balance: activeCalendar?.makeup?.pointsBalance })
+    : t(`learning.dayDetails.${makeupState}`)
+  const invalidateCalendar = useLearningStore(state => state.invalidateCheckInCalendar)
+  const selectDay = useCallback((day?: Date) => {
+    if (!day || isAfter(day, today)) return
+    setSelectedDay(day)
+    if (view === 'month' && !isSameDay(startOfMonth(day), month)) setMonth(startOfMonth(day))
+  }, [today, view, month])
+  const lastDayTap=useRef<{key:string;at:number}|null>(null)
+  const openDay=(day:Date)=>{const current=startOfDay(new Date());if(isAfter(day,current))return;setToday(current);setSelectedDay(day);setMonth(startOfMonth(day));setView('day')}
+  const calendarDayClick=(day:Date,_modifiers:unknown,event:React.MouseEvent)=>{
+    if(isAfter(day,today)||event.detail===0)return
+    const key=localDateKey(day),at=performance.now(),previous=lastDayTap.current
+    if(event.detail>=2||(previous?.key===key&&at-previous.at<350)){lastDayTap.current=null;openDay(day)}
+    else lastDayTap.current={key,at}
+  }
+  const changeView=(value:string)=>{
+    if(value==='day')openDay(startOfDay(new Date()))
+    else if(value==='month'){setMonth(startOfMonth(selectedDay??today));setView('month')}
+    else if(value==='year'){setYear(startOfYear(month));setView('year')}
+  }
+  const showMakeupError = (error: unknown) => {
+    const code = (error as any)?.apiCode ?? (error as any)?.response?.data?.code
+    const key = ({ MAKEUP_ALREADY_CHECKED_IN: 'checked', MAKEUP_OUT_OF_RANGE: 'out_of_range', MAKEUP_INSUFFICIENT_POINTS: 'insufficientError' } as Record<string,string>)[code] ?? 'failed'
+    toast.error(t(`learning.dayDetails.${key}`))
+  }
+  const prepareMakeup = async () => {
+    const owner = getCurrentSessionSnapshot()?.user?.id
+    if (!owner || submittingRef.current || !navigator.onLine) return
+    const epoch = ++requestEpoch.current
+    setMakeupBusy(true)
+    try {
+      const fresh = await fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
+      if (epoch !== requestEpoch.current || getCurrentSessionSnapshot()?.user?.id !== owner) return
+      if (!fresh?.makeup) { toast.error(t('learning.dayDetails.failed')); return }
+      const availability = makeupAvailability(selectedKey, fresh, navigator.onLine, localDateKey())
+      if (availability !== 'ready') { toast.error(t(`learning.dayDetails.${availability === 'insufficient' ? 'insufficientError' : availability}`)); return }
+      setQuote({ date: selectedKey, cost: fresh.makeup.cost, balance: fresh.makeup.pointsBalance })
+    } catch (error) {
+      if (epoch === requestEpoch.current && getCurrentSessionSnapshot()?.user?.id === owner) showMakeupError(error)
+    } finally { if (epoch === requestEpoch.current) setMakeupBusy(false) }
+  }
+  const confirmMakeup = async () => {
+    const owner = getCurrentSessionSnapshot()?.user?.id
+    if (!quote || !owner || submittingRef.current) return
+    if (!navigator.onLine) { toast.error(t('learning.dayDetails.offline')); return }
+    submittingRef.current = true
+    setMakeupBusy(true)
+    try {
+      const result = await pointsApi.makeupCheckIn(quote.date)
+      if (getCurrentSessionSnapshot()?.user?.id !== owner) return
+      if (useUserStore.getState().currentUserId === owner) useUserStore.getState().setPointsBalance(result.points)
+      useHomeStore.setState({ checkInStatus: result.status })
+      useLearningStore.setState(state => {
+        const current = state.checkInData
+        if (!current) return {}
+        const dates = [...new Set([...current.dates, result.date])].sort()
+        return { checkInStreak: result.status.currentStreak, checkInData: { ...current, totalCheckIns: current.totalCheckIns + (result.alreadyApplied ? 0 : 1), dates, makeupDates: [...new Set([...(current.makeupDates ?? []), result.date])],
+          currentStreak: result.status.currentStreak, today: result.status.today,
+          makeup: current.makeup ? { ...current.makeup, pointsBalance: result.points } : undefined } }
+      })
+      setQuote(null)
+      toast.success(t(result.alreadyApplied ? 'learning.dayDetails.alreadyApplied' : 'learning.dayDetails.success'))
+      await invalidateCalendar(result.status)
+      if (getCurrentSessionSnapshot()?.user?.id === owner) await fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
+    } catch (error) {
+      if (getCurrentSessionSnapshot()?.user?.id === owner) { showMakeupError(error); void fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate) }
+    } finally { submittingRef.current = false; setMakeupBusy(false) }
+  }
+
   const monthSwipeStartRef = useRef<{ x: number; y: number } | null>(null)
 
   return (
+    <>
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] bg-background drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <div className="flex items-center justify-between gap-3">
             <DrawerTitle className="text-base font-semibold">{t('learning.myLearning')}</DrawerTitle>
-            <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as 'week' | 'month' | 'year')} size="sm" className="rounded-full bg-muted/50 p-0.5">
-              {/* <ToggleGroupItem value="week" aria-label="周视图" className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">周</ToggleGroupItem> */}
+            <ToggleGroup type="single" value={view} onValueChange={changeView} size="sm" className="rounded-full bg-muted/50 p-0.5">
+              <ToggleGroupItem value="day" aria-label={t('learning.dayChart.dayView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.dayChart.dayShort')}</ToggleGroupItem>
               <ToggleGroupItem value="month" aria-label={t('learning.monthView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.monthShort')}</ToggleGroupItem>
               <ToggleGroupItem value="year" aria-label={t('learning.yearView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.yearShort')}</ToggleGroupItem>
             </ToggleGroup>
           </div>
         </DrawerHeader>
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <p className="text-xs text-muted-foreground">
+            {view === 'day' ? format(selectedDay ?? today, 'PPP', { locale: calendarLocale }) : view === 'year' ? format(year, 'yyyy') : format(month, 'yyyy MMMM', { locale: calendarLocale })}
+            {' · '}{t(view === 'day' ? 'learning.dayChart.daySummary' : view === 'year' ? 'learning.dayDetails.yearSummary' : 'learning.dayDetails.monthSummary')}
+          </p>
+
           <div className="grid shrink-0 grid-cols-3 gap-2">
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarCheck className="size-3.5" />
-                {t('learning.activeDays', { defaultValue: '练习天数' })}
+                {view==='day'?t('learning.dayChart.checkInStatus'):t('learning.activeDays', { defaultValue: '练习天数' })}
               </div>
-              <p className="mt-1 text-lg font-bold tabular-nums">{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></p>
+              {canOfferMakeup ? <Button type="button" variant="outline" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={makeupState !== 'ready' || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { void prepareMakeup() }}>
+                {makeupBusy && <Spinner data-icon="inline-start" />}
+                {t('learning.dayDetails.makeup')}
+              </Button> : <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>}
             </div>
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <ListChecks className="size-3.5" />
                 {t('learning.questionsCompleted', { defaultValue: '完成题数' })}
               </div>
-              <p className="mt-1 text-lg font-bold tabular-nums">{summary.questionCount}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.questionsUnit', { defaultValue: '题' })}</span></p>
+              <p className="mt-1 text-lg font-bold tabular-nums">{dayUnknown?'—':summary.questionCount}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.questionsUnit', { defaultValue: '题' })}</span></p>
             </div>
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock3 className="size-3.5" />
                 {t('learning.activeDuration', { defaultValue: '练习分钟' })}
               </div>
-              <p className="mt-1 text-lg font-bold tabular-nums">{formatDuration(summary.activeSeconds)}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums">{dayUnknown?'—':formatDuration(summary.activeSeconds, t)}</p>
             </div>
           </div>
 
-          {view === 'week' ? (
-            <WeeklyActivity
-              days={visibleDays}
-              dailyStats={dailyStats}
-              checkedInDates={checkedInDates}
-              locale={calendarLocale}
-              today={today}
-              selectedDay={selectedDay}
-              onSelectDay={setSelectedDay}
-              onPrevWeek={() => changeWeek(-1)}
-              onNextWeek={() => changeWeek(1)}
-              canGoToNextWeek={canGoToNextWeek}
-            />
+          {view === 'day' ? (
+            <DailyActivityChart key={selectedKey} pending={dayUnknown} hours={statistics?.hourlyStats ?? []}
+              complete={Boolean(statistics?.hourlyComplete)} hasActivity={summary.questionCount > 0 || summary.activeSeconds > 0} today={selectedKey === todayKey}
+              period={format(selectedDay ?? today, 'M/d')} busy={loading}
+              onPrevious={() => openDay(addDays(selectedDay ?? today, -1))}
+              onNext={() => openDay(addDays(selectedDay ?? today, 1))} canGoNext={!isSameDay(selectedDay ?? today, today)} />
           ) : view === 'month' ? (
           <div
             className="flex flex-none touch-pan-y flex-col rounded-2xl bg-background"
@@ -237,28 +318,23 @@ function CheckInCalendarDrawer({
             }}
             onPointerCancel={() => { monthSwipeStartRef.current = null }}
           >
-            <div className="flex items-center justify-between px-3 pt-3">
-              <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100"
-                onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}
-                onClick={() => changeMonth(-1)} aria-label="Previous month">
-                <ChevronLeft className="size-4" />
-              </Button>
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                {format(month, 'yyyy MMMM', { locale: calendarLocale })}
-                {loading && <Spinner className="size-3.5 text-muted-foreground" />}
-              </div>
-              <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100"
-                disabled={!canGoToNextMonth}
-                onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}
-                onClick={() => changeMonth(1)} aria-label="Next month">
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-            <MonthlyActivityChart days={visibleDays} dailyStats={dailyStats} locale={calendarLocale} selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+            <LearningPeriodHeader
+              label={format(month, 'yyyy MMMM', { locale: calendarLocale })}
+              loading={loading}
+              onPrevious={() => changeMonth(-1)}
+              onNext={() => changeMonth(1)}
+              canGoNext={canGoToNextMonth}
+              previousLabel="Previous month"
+              nextLabel="Next month"
+            />
+            <MonthlyActivityChart days={periodDays} dailyStats={dailyStats} locale={calendarLocale} selectedDay={selectedDay} onSelectDay={selectDay} />
             <div className="flex-none" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
-              <Calendar mode="single" selected={selectedDay} onSelect={setSelectedDay} month={month} hideNavigation locale={calendarLocale} disabled={{ after: today }}
-                modifiers={{ checkedIn: checkedInDates }}
-                modifiersClassNames={{ checkedIn: 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]' }}
+              <Calendar mode="single" required selected={selectedDay} onSelect={selectDay} onDayClick={calendarDayClick} onDayKeyDown={(day,_modifiers,event)=>{if(event.key==='Enter'&&event.shiftKey)openDay(day)}} month={month} hideNavigation locale={calendarLocale} disabled={{ after: today }}
+                modifiers={{ checkedIn: checkedInDates.filter(day => !(data?.makeupDates ?? []).includes(localDateKey(day))), madeUp: (data?.makeupDates ?? []).map(date => parseISO(date)) }}
+                modifiersClassNames={{
+                  checkedIn: 'relative after:pointer-events-none after:absolute after:bottom-1 after:left-1/2 after:size-1.5 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""] [&.rdp-selected]:after:bg-primary-foreground',
+                  madeUp: 'relative after:pointer-events-none after:absolute after:bottom-1 after:left-1/2 after:size-1.5 after:-translate-x-1/2 after:rounded-full after:border after:border-primary after:content-[""] [&.rdp-selected]:after:border-primary-foreground',
+                }}
                 classNames={{ month_caption: 'hidden' }} className="mx-auto w-full [--cell-size:2.15rem]" />
             </div>
           </div>
@@ -268,8 +344,9 @@ function CheckInCalendarDrawer({
               dailyStats={dailyStats}
               today={today}
               onSelectMonth={(target) => {
+                if (isAfter(startOfMonth(target), startOfMonth(today))) return
                 setMonth(target)
-                setSelectedDay(target)
+                setSelectedDay(isSameDay(startOfMonth(target), startOfMonth(today)) ? today : target)
                 setView('month')
               }}
               onPrevYear={() => setYear((value) => addYears(value, -1))}
@@ -277,24 +354,67 @@ function CheckInCalendarDrawer({
               canGoToNextYear={canGoToNextYear}
             />
           )}
-          {/* <div className="flex shrink-0 items-center justify-between rounded-xl bg-muted/30 px-3 py-2.5 text-xs">
-            <div className="min-w-0">
-              <p className="font-medium text-foreground">{selectedDay ? format(selectedDay, 'M月d日', { locale: calendarLocale }) : t('learning.today', { defaultValue: '今天' })}</p>
-              <p className="mt-0.5 text-muted-foreground">{focusedStats?.questionCount ?? 0}{t('learning.questionsUnit', { defaultValue: '题' })} · {formatDuration(focusedStats?.activeSeconds ?? 0)}</p>
-            </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Flame className="size-3.5" />
-              {t('learning.currentStreak')} {data?.currentStreak ?? 0}{t('learning.days')}
-            </div>
-          </div> */}
+          {view==='month'&&<div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="size-1.5 rounded-full bg-primary"/>{t('learning.dayDetails.checkedIn')}</span>
+            <span className="flex items-center gap-1"><span className="size-1.5 rounded-full border border-primary"/>{t('learning.dayDetails.madeUp')}</span>
+            <span>{t('learning.dayChart.doubleTap')}</span>
+          </div>}
+
         </div>
       </DrawerContent>
     </Drawer>
+    <Dialog open={Boolean(quote)} onOpenChange={value => { if (!value && !submittingRef.current) setQuote(null) }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('learning.dayDetails.confirmTitle', { date: quote ? format(parseISO(quote.date),'PPP',{locale:calendarLocale}) : '' })}</DialogTitle>
+          <DialogDescription>{t('learning.dayDetails.confirmDescription', { cost: quote?.cost })}</DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-3 text-sm tabular-nums">
+          <span>{t('learning.dayDetails.balance', { balance: quote?.balance })}</span>
+          <span>{t('learning.dayDetails.afterBalance', { balance: (quote?.balance ?? 0)-(quote?.cost ?? 0) })}</span>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={makeupBusy} onClick={() => setQuote(null)}>{t('common.cancel')}</Button>
+          <Button type="button" disabled={makeupBusy || !online} onClick={() => { void confirmMakeup() }}>{makeupBusy && <Spinner data-icon="inline-start" />}{t('learning.dayDetails.confirm', { cost: quote?.cost })}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
 
-function formatDuration(seconds: number) {
-  return `${Math.ceil(Math.max(0, seconds) / 60)} 分钟`
+function LearningPeriodHeader({ label, loading, onPrevious, onNext, canGoNext, previousLabel, nextLabel }: {
+  label: string
+  loading: boolean
+  onPrevious: () => void
+  onNext: () => void
+  canGoNext: boolean
+  previousLabel: string
+  nextLabel: string
+}) {
+  return (
+    <div className="flex items-center justify-between px-3 pt-3">
+      <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100"
+        onPointerDown={event => event.stopPropagation()} onTouchStart={event => event.stopPropagation()}
+        onClick={onPrevious} aria-label={previousLabel}>
+        <ChevronLeft />
+      </Button>
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        {label}
+        {loading && <Spinner className="size-3.5 text-muted-foreground" />}
+      </div>
+      <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100"
+        disabled={!canGoNext} onPointerDown={event => event.stopPropagation()} onTouchStart={event => event.stopPropagation()}
+        onClick={onNext} aria-label={nextLabel}>
+        <ChevronRight />
+      </Button>
+    </div>
+  )
+}
+
+function formatDuration(seconds: number, t: any) {
+  if (seconds > 0 && seconds < 60) return t('learning.dayDetails.lessMinute')
+  return t('learning.minutesWithCount', { count: Math.ceil(Math.max(0, seconds) / 60) })
 }
 
 function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selectedDay, onSelectDay, onPrevWeek, onNextWeek, canGoToNextWeek }: {
@@ -419,77 +539,17 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
   onSelectDay: (day: Date) => void
 }) {
   const { t } = useTranslation()
-  const chartConfig = useLearningChartConfig()
-  const chartData = days.map((day) => {
+  const items = days.map(day => {
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     return {
-      dateKey: format(day, 'yyyy-MM-dd'),
-      date: format(day, 'M/d', { locale }),
+      key: format(day, 'yyyy-MM-dd'),
+      title: format(day, 'M/d', { locale }),
       label: format(day, 'd', { locale }),
       minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60),
       questions: stat?.questionCount ?? 0,
     }
   })
-  const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
-  const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
-  const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
-  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 60)
-  // Treat the line as a quiet trend cue. On the compact monthly chart, a
-  // normal session (up to roughly 80 questions) should remain below midline.
-  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 160)
-  const selectedChartRatio = selectedChartItem
-    ? Math.max(selectedChartItem.minutes / minutesMax, selectedChartItem.questions / questionsMax)
-    : 0
-  return (
-    <section className="shrink-0 px-3 pt-2">
-      <div className="mb-1 flex items-center justify-between">
-        <p className="text-xs font-medium text-foreground">{t('learning.monthlyRhythm', { defaultValue: '本月练习趋势' })}</p>
-        <p className="text-[10px] text-muted-foreground">{t('learning.chartLegend', { defaultValue: '柱状为分钟，折线为完成题数' })}</p>
-      </div>
-      <div className="relative">
-        <ChartContainer config={chartConfig} className="h-[116px] w-full">
-          <ComposedChart
-            accessibilityLayer
-            data={chartData}
-            margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
-            onClick={(state) => {
-              if (typeof state?.activeTooltipIndex !== 'number') return
-              const target = days[state.activeTooltipIndex]
-              if (target) onSelectDay(target)
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="dateKey" axisLine={false} tickLine={false} interval={4} tick={{ fontSize: 9 }} tickFormatter={(value) => String(value).slice(-2).replace(/^0/, '')} />
-            <YAxis hide yAxisId="minutes" domain={[0, minutesMax]} />
-            <YAxis hide yAxisId="questions" orientation="right" domain={[0, questionsMax]} />
-            {selectedDateKey && <ReferenceLine x={selectedDateKey} yAxisId="minutes" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
-            <Bar dataKey="minutes" yAxisId="minutes" barSize={5} fill="var(--color-minutes)" radius={[2, 2, 0, 0]} isAnimationActive={false}>
-              {chartData.map((item) => {
-                const isSelected = item.dateKey === selectedDateKey
-                return <Cell key={item.dateKey} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
-              })}
-            </Bar>
-            <Line type="linear" dataKey="questions" yAxisId="questions" stroke="var(--color-questions)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
-          </ComposedChart>
-        </ChartContainer>
-        {selectedChartItem && (
-          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTopByRatio(selectedChartRatio, 76, 8) }}>
-            <ActivityInfoCard title={selectedChartItem.date} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function ActivityInfoCard({ title, minutes, questions }: { title: string; minutes: number; questions: number }) {
-  const { t } = useTranslation()
-  return (
-    <div className="w-28 rounded-md border border-accent bg-background px-2 py-1 text-[10px] shadow-md">
-      <p className="font-medium text-foreground">{title}</p>
-      <p className="mt-0.5 whitespace-nowrap text-muted-foreground">{formatDuration(minutes * 60)} · {questions}{t('learning.questionsUnit', { defaultValue: '题' })}</p>
-    </div>
-  )
+  return <CompactActivityChart title={t('learning.monthlyRhythm', { defaultValue: '本月练习趋势' })} items={items} selectedKey={selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined} onSelect={index => onSelectDay(days[index])} />
 }
 
 function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, onNextYear, canGoToNextYear }: {
@@ -502,7 +562,6 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
   canGoToNextYear: boolean
 }) {
   const { t } = useTranslation()
-  const chartConfig = useLearningChartConfig()
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null)
   useEffect(() => setSelectedMonthIndex(null), [year])
   const values = Array.from({ length: 12 }, (_, index) => {
@@ -514,75 +573,22 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
       questions: days.reduce((sum, item) => sum + item.questionCount, 0),
     }
   })
-  const chartData = values
-  const selectedChartItem = selectedMonthIndex === null ? null : chartData[selectedMonthIndex]
-  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 120)
-  // Keep modest monthly totals visually calm as well; only a genuinely busy
-  // month should make the line climb into the upper half of the chart.
-  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 240)
-  const selectedChartRatio = selectedChartItem
-    ? Math.max(selectedChartItem.minutes / minutesMax, selectedChartItem.questions / questionsMax)
-    : 0
-
-  return (
-    <div className="flex h-[440px] flex-none flex-col overflow-hidden rounded-2xl bg-background">
-      <div className="flex items-center justify-between gap-3 px-3 pt-3">
-        <div>
-          <p className="text-sm font-semibold">{t('profile.yearlyTrend', { defaultValue: '全年学习趋势' })}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">{t('profile.yearlyTrendHint', { defaultValue: '柱状为分钟，折线为完成题数' })}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onPrevYear} aria-label="Previous year">
-            <ChevronLeft />
-          </Button>
-          <span className="min-w-10 text-center text-xs font-medium tabular-nums">{format(year, 'yyyy')}</span>
-          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onNextYear} disabled={!canGoToNextYear} aria-label="Next year">
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
-      <div className="relative mt-2 min-h-0 flex-1 px-3">
-        <ChartContainer config={chartConfig} className="absolute inset-x-3 top-0 h-[calc(100%-3.75rem)] w-[calc(100%-1.5rem)]">
-          <ComposedChart
-            accessibilityLayer
-            data={chartData}
-            margin={{ top: 18, right: 0, left: 0, bottom: 0 }}
-            onClick={(state) => {
-              if (typeof state?.activeTooltipIndex === 'number') setSelectedMonthIndex(state.activeTooltipIndex)
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="label" hide />
-            <YAxis hide yAxisId="minutes" domain={[0, minutesMax]} />
-            <YAxis hide yAxisId="questions" orientation="right" domain={[0, questionsMax]} />
-            {selectedChartItem && <ReferenceLine x={selectedChartItem.label} yAxisId="minutes" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
-            <Bar dataKey="minutes" yAxisId="minutes" barSize={10} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-              {chartData.map((item, index) => {
-                const isSelected = index === selectedMonthIndex
-                return <Cell key={item.label} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
-              })}
-            </Bar>
-            <Line type="linear" dataKey="questions" yAxisId="questions" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 2.5, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
-          </ComposedChart>
-        </ChartContainer>
-        {selectedChartItem && selectedMonthIndex !== null && (
-          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedMonthIndex, chartData.length), top: getChartCardTopByRatio(selectedChartRatio, 298, 18) }}>
-            <ActivityInfoCard title={`${format(year, 'yyyy')}-${String(selectedChartItem.label).padStart(2, '0')}`} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
-          </div>
-        )}
-        <div className="absolute inset-x-3 bottom-2 grid grid-cols-12 [--cell-size:2.15rem]">
-          {values.map((item, index) => {
-            const monthDate = startOfMonth(new Date(year.getFullYear(), index, 1))
-            const isFuture = isAfter(monthDate, startOfMonth(today))
-            return (
-              <button key={item.label} type="button" disabled={isFuture} onClick={() => { setSelectedMonthIndex(index); onSelectMonth(monthDate) }} className={cn('flex h-[--cell-size] w-full items-center justify-center rounded-xl p-0 text-[10px] font-normal leading-normal text-foreground transition-colors hover:bg-muted disabled:text-muted-foreground disabled:opacity-35', index === selectedMonthIndex && 'bg-muted')}>
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-        {/* {!hasData && <p className="pointer-events-none absolute inset-x-0 top-11 text-center text-[10px] text-muted-foreground">完成练习后，这里会显示全年趋势</p>} */}
-      </div>
-    </div>
-  )
+  const items = values.map(item => ({
+    key: String(item.label), label: String(item.label),
+    title: `${format(year, 'yyyy')}-${String(item.label).padStart(2, '0')}`,
+    minutes: item.minutes, questions: item.questions,
+  }))
+  return <ExpandedActivityChart
+    title={t('profile.yearlyTrend', { defaultValue: '全年学习趋势' })}
+    hint={t('profile.yearlyTrendHint', { defaultValue: '柱状为分钟，折线为完成题数' })}
+    period={format(year, 'yyyy')} onPrevious={onPrevYear} onNext={onNextYear} canGoNext={canGoToNextYear}
+    previousLabel="Previous year" nextLabel="Next year"
+    items={items} selectedKey={selectedMonthIndex === null ? undefined : String(selectedMonthIndex + 1)} onSelect={setSelectedMonthIndex}
+    footer={<div className="grid grid-cols-12 [--cell-size:2.15rem]">
+      {values.map((item, index) => {
+        const monthDate = startOfMonth(new Date(year.getFullYear(), index, 1))
+        return <button key={item.label} type="button" disabled={isAfter(monthDate, startOfMonth(today))} onClick={() => { setSelectedMonthIndex(index); onSelectMonth(monthDate) }} className={cn('flex h-[--cell-size] w-full items-center justify-center rounded-xl p-0 text-[10px] font-normal leading-normal text-foreground transition-colors hover:bg-muted disabled:text-muted-foreground disabled:opacity-35', index === selectedMonthIndex && 'bg-muted')}>{item.label}</button>
+      })}
+    </div>}
+  />
 }

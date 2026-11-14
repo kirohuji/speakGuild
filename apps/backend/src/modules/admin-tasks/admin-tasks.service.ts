@@ -1,3 +1,5 @@
+import { OfflineModelsService } from '../offline-models/offline-models.service';
+import { OFFLINE_MODEL_JOB, OFFLINE_MODEL_QUEUE } from '../offline-models/offline-model-catalog';
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
@@ -43,6 +45,7 @@ export class AdminTasksService implements OnModuleInit {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly offlineModels: OfflineModelsService,
     @InjectQueue(ADMIN_CONTENT_QUEUE) private readonly contentQueue: Queue,
     @InjectQueue(VOCABULARY_IMPORT_QUEUE) private readonly vocabularyImportQueue: Queue,
     @InjectQueue(SCRIPT_VIDEO_QUEUE) private readonly videoQueue: Queue,
@@ -1266,6 +1269,10 @@ export class AdminTasksService implements OnModuleInit {
   async retry(id: string, createdById?: string) {
     const task = await this.prisma.adminTask.findUnique({ where: { id } });
     if (!task) throw new NotFoundException('任务不存在');
+    if (task.type === OFFLINE_MODEL_JOB && task.targetId) {
+      const version = await this.offlineModels.retry(task.targetId, createdById || task.createdById);
+      return this.get(version.taskId);
+    }
     if (task.type === SCRIPT_VIDEO_RENDER_JOB && task.targetId) {
       const payload = task.payload as any;
       return this.enqueueScriptVideo(task.targetId, payload?.userId || createdById, payload?.frames || []);
@@ -1391,6 +1398,8 @@ export class AdminTasksService implements OnModuleInit {
     if (task.status !== 'queued' && task.status !== 'running') {
       throw new NotFoundException('只能取消排队中或执行中的任务');
     }
+
+    if (task.type === OFFLINE_MODEL_JOB && task.targetId) { await this.offlineModels.cancel(task.targetId, id); return this.get(id); }
 
     // First make cancellation durable. An active worker may not be removable,
     // but it must never be able to overwrite this state while removal runs.
@@ -1553,6 +1562,7 @@ export class AdminTasksService implements OnModuleInit {
 
   async getQueuesStatus() {
     const queues = [
+      { name: OFFLINE_MODEL_QUEUE, queue: this.offlineModels.taskQueue, label: '离线模型准备' },
       { name: ADMIN_CONTENT_QUEUE, queue: this.contentQueue, label: '学习包内容准备' },
       { name: VOCABULARY_IMPORT_QUEUE, queue: this.vocabularyImportQueue, label: '词汇CSV导入' },
       { name: SCRIPT_VIDEO_QUEUE, queue: this.videoQueue, label: '视频渲染' },
@@ -1582,6 +1592,7 @@ export class AdminTasksService implements OnModuleInit {
 
   async getQueueJobs(queueName: string, statuses: string[]) {
     const queueMap: Record<string, Queue> = {
+      [OFFLINE_MODEL_QUEUE]: this.offlineModels.taskQueue,
       [ADMIN_CONTENT_QUEUE]: this.contentQueue,
       [VOCABULARY_IMPORT_QUEUE]: this.vocabularyImportQueue,
       [SCRIPT_VIDEO_QUEUE]: this.videoQueue,
@@ -1663,6 +1674,7 @@ export class AdminTasksService implements OnModuleInit {
   async forceRunTask(taskId: string, userId: string) {
     const task = await this.prisma.adminTask.findUnique({ where: { id: taskId } });
     if (!task) throw new NotFoundException('任务不存在');
+    if (task.type === OFFLINE_MODEL_JOB) throw new BadRequestException('请在离线模型管理中取消任务后重试，避免并行准备同一版本');
 
     // Allow force-run on queued (stuck) or failed tasks
     if (task.status !== 'queued' && task.status !== 'failed') {
@@ -1747,6 +1759,7 @@ export class AdminTasksService implements OnModuleInit {
   }
 
   private getQueueForTask(type: string): Queue {
+    if (type === OFFLINE_MODEL_JOB) return this.offlineModels.taskQueue;
     if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.videoQueue;
     }

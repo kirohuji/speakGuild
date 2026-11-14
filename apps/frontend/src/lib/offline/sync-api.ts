@@ -11,6 +11,7 @@ export interface PushResult {
 }
 
 export interface PullResult {
+  userId: string
   cursors: Record<string, string | null>
   hasMore: Record<string, boolean>
   changed: {

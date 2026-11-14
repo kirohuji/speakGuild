@@ -182,6 +182,18 @@ export function PracticeSessionPage() {
     setRuntimePipeline(pipeline)
   }, [projected, topicId])
 
+  useEffect(() => {
+    if (!projected || !topicId) { setRuntimePipeline(null); return }
+    let cancelled = false
+    setRuntimePipeline(null)
+    practiceRepository.getTopicRuntime(topicId).then(row => {
+      if (cancelled) return
+      const output = row?.metadata?.outputTraining
+      setRuntimePipeline(output?.enabled === false ? [] : (output?.pipeline ?? row?.metadata?.pipeline ?? []))
+    }).catch(error => { if (!cancelled) console.warn('[practice-session] local pipeline unavailable', error) })
+    return () => { cancelled = true }
+  }, [projected, topicId])
+
   const handleStartPractice = useCallback(async () => {
     setImmersiveMode(true)
     await ensurePipeline()
@@ -233,7 +245,7 @@ export function PracticeSessionPage() {
 
   const warmupItems = useMemo(() => {
     const pipeline = projected
-      ? (runtimePipeline ?? [])
+      ? (runtimePipeline ?? (detail?.topic?.metadata?.outputTraining?.enabled === false ? [] : detail?.topic?.metadata?.outputTraining?.pipeline ?? (detail?.topic?.metadata as { pipeline?: any[] })?.pipeline ?? []))
       : (detail?.topic?.metadata?.outputTraining?.pipeline ?? [])
     const metadataItems = pipeline.filter((item: any) =>
       item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition' || item.type === 'pattern_drill'
@@ -691,8 +703,8 @@ export function PracticeSessionPage() {
       : objectives
     const hintForRound = readTagValue(currentTags, 'hint:')
     const sessionKey = practiceSessionId || topicId || 'practice'
-    // Upload in parallel with AI judge so turn latency stays close to story VN.
-    const durableAudioPromise = persistUserRecordingAsset({
+    // Commit audio locally before judging; network upload belongs to the outbox.
+    const durableUserAudioUrl = await persistUserRecordingAsset({
       recording,
       fallbackAudioUrl: audioUrl,
       bizType: 'practice_turn_recording',
@@ -795,7 +807,6 @@ export function PracticeSessionPage() {
         return
       }
 
-      const durableUserAudioUrl = await durableAudioPromise
       if (practiceSessionId) {
         practiceRepository.submitTurn(practiceSessionId, {
           round,
@@ -836,7 +847,6 @@ export function PracticeSessionPage() {
       return
     }
 
-    const durableUserAudioUrl = await durableAudioPromise
     setDialogueRounds((prev) => [...prev, {
       speaker: t('practiceSession.speakerYou'),
       text: userMsg,

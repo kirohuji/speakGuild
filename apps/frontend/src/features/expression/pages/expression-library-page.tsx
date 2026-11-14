@@ -1,3 +1,5 @@
+import { showRequestError } from '@/lib/request-feedback'
+import { LEARNING_LIBRARY_CHANGED_EVENT } from '@/lib/offline/learning-content.repository'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { localDateKey } from '@/lib/date/calendar-date'
@@ -14,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { toast } from 'sonner'
-import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
+import { type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
 import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersivePlayerItem } from '@/features/learning/components/immersive-player'
@@ -99,6 +101,13 @@ export function ExpressionLibraryPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [notebookSyncing, setNotebookSyncing] = useState(false)
+  const [online, setOnline] = useState(() => navigator.onLine)
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine)
+    window.addEventListener('online', update)
+    window.addEventListener('offline', update)
+    return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update) }
+  }, [])
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -160,19 +169,23 @@ export function ExpressionLibraryPage() {
     sort: 'newest' as const,
   }), [libraryTab, notebookId, reviewState, search])
 
-  const refreshLocalList = useCallback(async (remote?: PageResult) => {
+  const localListKeyRef = useRef('')
+  localListKeyRef.current = JSON.stringify(localListRequest)
+
+  const refreshLocalList = useCallback(async () => {
     if (!notebookId) return []
     const page = await learningNotebookRepository.listCachedExpressionPage({
       ...localListRequest,
       limit: PAGE_SIZE,
       offset: 0,
     })
+    if (localListKeyRef.current !== JSON.stringify(localListRequest)) return []
     setResult({
       items: page.items as Expression[],
-      total: Math.max(remote?.total ?? 0, page.total),
-      page: remote?.page ?? 1,
-      pageSize: remote?.pageSize ?? PAGE_SIZE,
-      totalPages: remote?.totalPages ?? Math.ceil(page.total / PAGE_SIZE),
+      total: page.total,
+      page: 1,
+      pageSize: PAGE_SIZE,
+      totalPages: Math.ceil(page.total / PAGE_SIZE),
     })
     return page.items
   }, [localListRequest, notebookId])
@@ -186,6 +199,7 @@ export function ExpressionLibraryPage() {
         limit: PAGE_SIZE,
         offset: result.items.length,
       })
+      if (localListKeyRef.current !== JSON.stringify(localListRequest)) return
       setResult((current) => {
         // 筛选条件切换期间返回的旧请求不应追加到新列表。
         if (current.items.length !== result.items.length) return current
@@ -200,16 +214,19 @@ export function ExpressionLibraryPage() {
 
   const syncThisNotebook = useCallback(async () => {
     if (!notebookId || !session?.user?.id || notebookSyncing) return
+    if (!navigator.onLine) return
     setNotebookSyncing(true)
     try {
       // 同步学习本及其条目的增量；不再整本下载并覆盖本地副本。
-      const result = await offlineSyncService.sync(session.user.id, { quiet: true, scope: 'notebook' })
+      const result = await offlineSyncService.sync(session.user.id, { quiet: true, scope: 'notebook', retryNow: true })
       await refreshLocalList()
       const pulled = (result.pull?.changed ?? 0) + (result.pull?.deleted ?? 0)
+      if (result.offline) return
+      if ((result.push.remaining ?? 0) > 0 || result.push.failed > 0 || result.pull?.complete === false) { toast(t('learningNotebooks.syncIncomplete')); return }
       if (result.push.synced === 0 && pulled === 0) toast.success('学习本已是最新')
       else toast.success(`学习本同步完成：上传 ${result.push.synced}，下载 ${pulled}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '学习本同步失败，请稍后重试')
+      showRequestError(error, '学习本同步失败，请稍后重试')
     } finally {
       setNotebookSyncing(false)
     }
@@ -239,18 +256,19 @@ export function ExpressionLibraryPage() {
 
   useEffect(() => {
     if (!notebookId) return
-    learningNotebookRepository.getCached(notebookId)
-      .then((notebook) => {
-        if (notebook) setNotebookName(notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name)
-      })
-      .catch(() => undefined)
-    learningNotebookRepository.refresh()
-      .then((data) => {
-        const notebook = data.items.find((item) => item.id === notebookId)
-        if (notebook) setNotebookName(notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name)
-      })
-      .catch(() => undefined)
-  }, [notebookId, t])
+    let disposed = false
+    const updateName = async () => {
+      const notebook = await learningNotebookRepository.getCached(notebookId)
+      if (notebook && !disposed) setNotebookName(notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name)
+    }
+    const onChanged = () => {
+      void updateName().catch(() => undefined)
+      void refreshLocalList().catch(error => console.warn('[expression-library] local refresh failed', error))
+    }
+    void updateName().catch(() => undefined)
+    window.addEventListener(LEARNING_LIBRARY_CHANGED_EVENT, onChanged)
+    return () => { disposed = true; window.removeEventListener(LEARNING_LIBRARY_CHANGED_EVENT, onChanged) }
+  }, [notebookId, refreshLocalList, t])
 
   const deepLinkKind = searchParams.has('word')
     ? 'word'
@@ -439,7 +457,6 @@ export function ExpressionLibraryPage() {
     const target = result.items.find((item) => item.id === id)
     if (!target?.notebookItemId) return
     try {
-      await expressionApi.updateNotebookItemStatus(target.notebookItemId, status)
       await learningNotebookRepository.updateCachedNotebookItemStatus(target.notebookItemId, status)
       await refreshLocalList()
       toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
@@ -453,7 +470,6 @@ export function ExpressionLibraryPage() {
     const target = result.items.find((item) => item.id === id)
     try {
       if (!target?.notebookItemId) return
-      await expressionApi.removeNotebookItem(target.notebookItemId)
       await learningNotebookRepository.removeCachedNotebookItem(target.notebookItemId)
       await refreshLocalList()
       toast.success(t('expressionLib.removed'))
@@ -479,7 +495,7 @@ export function ExpressionLibraryPage() {
     setBatchCreatingNotebook(false)
     setNewNotebookName('')
     try {
-      const data = await learningNotebookRepository.refresh()
+      const data = await learningNotebookRepository.listCached()
       const available = data.items.filter((item) => item.id !== notebookId)
       setNotebooks(available)
       setTargetNotebookId(available[0]?.id ?? '')
@@ -502,7 +518,7 @@ export function ExpressionLibraryPage() {
       setNewNotebookName('')
       setBatchCreatingNotebook(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learningNotebooks.createFailed'))
+      showRequestError(error, t('learningNotebooks.createFailed'))
     } finally {
       setBatchBusy(false)
     }
@@ -513,14 +529,13 @@ export function ExpressionLibraryPage() {
     setBatchBusy(true)
     try {
       if (batchAction === 'status') {
-        await expressionApi.updateNotebookItemsStatus(selectedNotebookItemIds, batchStatus)
         await Promise.all(selectedNotebookItemIds.map((id) => learningNotebookRepository.updateCachedNotebookItemStatus(id, batchStatus)))
       } else {
         if (!targetNotebookId) {
           toast.error(t('expressionLib.chooseNotebook'))
           return
         }
-        await expressionApi.addNotebookItemsToNotebook(selectedNotebookItemIds, targetNotebookId)
+        await learningNotebookRepository.addItemsToNotebook(selectedNotebookItemIds, targetNotebookId)
       }
       toast.success(t('expressionLib.batchSuccess'))
       setBatchOpen(false)
@@ -528,7 +543,7 @@ export function ExpressionLibraryPage() {
       setSelectedIds(new Set())
       await refreshLocalList()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('expressionLib.operationFailed'))
+      showRequestError(error, t('expressionLib.operationFailed'))
     } finally {
       setBatchBusy(false)
     }
@@ -932,7 +947,7 @@ export function ExpressionLibraryPage() {
           <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <button type="button" onClick={() => void syncThisNotebook()} disabled={notebookSyncing} className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors disabled:opacity-50" aria-label="同步此学习本" title="同步此学习本">
+          <button type="button" onClick={() => void syncThisNotebook()} disabled={notebookSyncing || !online} className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors disabled:opacity-50" aria-label="同步学习本" title="同步学习本">
             <RefreshCw className={cn('size-4', notebookSyncing && 'animate-spin')} />
           </button>
           {result.items.length > 0 && (

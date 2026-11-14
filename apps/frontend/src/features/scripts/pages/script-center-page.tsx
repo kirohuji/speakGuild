@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '@/lib/i18n'
@@ -477,7 +478,7 @@ export function ScriptCenterPage() {
       await Promise.all([loadWorks(), loadRecords()])
       toast.success(t('scripts.createdSubmittedRendering'))
     } catch (error: any) {
-      toast.error(error?.message || t('scripts.videoGenerateFailedRetry'))
+      showRequestError(error, t('scripts.videoGenerateFailedRetry'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -1263,7 +1264,7 @@ function MyWorks({
       )
       await onChanged()
     } catch (error: any) {
-      toast.error(error?.message || t('scripts.workStatusFailed'))
+      showRequestError(error, t('scripts.workStatusFailed'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -1446,7 +1447,7 @@ function WorksLibraryDialog({
       await onChanged()
       if (work.status === 'rendering') toast.success(t('scripts.canceledGenerationKept'))
     } catch (error: any) {
-      toast.error(error?.message || t('scripts.workStatusFailed'))
+      showRequestError(error, t('scripts.workStatusFailed'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -1470,7 +1471,7 @@ function WorksLibraryDialog({
       toast.success(t('scripts.submittedGenerationHint'))
       await onChanged()
     } catch (error: any) {
-      toast.error(error?.message || t('scripts.videoGenerateFailedRetry'))
+      showRequestError(error, t('scripts.videoGenerateFailedRetry'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -1489,7 +1490,7 @@ function WorksLibraryDialog({
       toast.success(t('scripts.deleteWorkSuccess'))
       setDeleteTarget(null)
     } catch (error: any) {
-      toast.error(error?.message || t('scripts.deleteWorkFailed'))
+      showRequestError(error, t('scripts.deleteWorkFailed'))
     } finally {
       setDeletingWork(false)
     }
@@ -2714,7 +2715,7 @@ function ScriptRecordReplayDialog({
         toast.error(t('learning.aiReviewPending'))
       }
     } catch (error: any) {
-      toast.error(error?.message || t('practiceSession.aiEvalUnavailable'))
+      showRequestError(error, t('practiceSession.aiEvalUnavailable'))
       setView('replay')
     } finally {
       setAnalysisLoading(false)

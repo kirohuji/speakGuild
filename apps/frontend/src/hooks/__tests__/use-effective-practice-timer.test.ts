@@ -30,6 +30,12 @@ describe('effective timer offline boundaries', () => {
       ['2026-11-13', 2], ['2026-11-14', 3],
     ])
   })
+  it('splits effective time at the hour without extra elapsed seconds',()=>{
+    vi.setSystemTime(new Date(2026,10,14,13,59,58))
+    renderHook(()=>useEffectivePracticeTimer({enabled:true,sourceId:'lesson',scope:'learning'}))
+    act(()=>vi.advanceTimersByTime(5000))
+    expect(activity.add.mock.calls.map(([record])=>[record.sourceId.slice(-4),record.seconds])).toEqual([[':h13',2],[':h14',3]])
+  })
   it('stops a mounted old timer after the existing account-reset boundary', () => {
     vi.setSystemTime(new Date(2026, 10, 14, 12))
     renderHook(() => useEffectivePracticeTimer({ enabled: true, sourceId: 'lesson', scope: 'learning' }))

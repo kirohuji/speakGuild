@@ -1,10 +1,9 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, ChevronDown, Eye, XCircle } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import type { ColumnConfig, ConfigDataTableProps } from '@/components/common/config-datatable'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
-import { cn } from '@/lib/cn'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
 import type { PracticeItem } from '../pages/today-task-page'
 
@@ -31,13 +30,6 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: Today
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 10
-
-  const scoreLabels = {
-    strong: t('todayTask.scoreStrong'),
-    ok: t('todayTask.scoreOk'),
-    weak: t('todayTask.scoreWeak'),
-    miss: t('todayTask.scoreMiss'),
-  }
 
   const setDrawerOpen = (nextOpen: boolean) => {
     if (!nextOpen) setDetailIndex(null)
@@ -71,33 +63,7 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: Today
         )
       },
     },
-    {
-      key: 'score',
-      header: t('learning.scoreHeader'),
-      width: 82,
-      cell: (value, record) => (
-        <div className="space-y-1 text-center">
-          <div className="flex items-center justify-center gap-1">
-            {record.passed
-              ? <CheckCircle2 className="size-3.5 text-green-500" />
-              : <XCircle className="size-3.5 text-red-400" />}
-            <span className={cn(
-              'text-xs font-medium',
-              value === 'strong' && 'text-green-600',
-              value === 'ok' && 'text-blue-600',
-              value === 'weak' && 'text-amber-600',
-              value === 'miss' && 'text-red-500',
-            )}>
-              {value ? scoreLabels[value as keyof typeof scoreLabels] : (record.passed ? t('todayTask.scoreOk') : t('todayTask.scoreMiss'))}
-            </span>
-          </div>
-          {record.practiceCount && record.practiceCount > 1 ? (
-            <p className="text-[10px] text-muted-foreground">{t('todayTask.practiceTimes', { count: record.practiceCount })}</p>
-          ) : null}
-        </div>
-      ),
-      align: 'center',
-    },
+
   ]
 
   return (

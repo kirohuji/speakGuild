@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -141,7 +142,7 @@ export function MobileStorageView() {
       // reset, then immediately rebuild the local projection from the server.
       if (category === 'practice' && session?.user.id) {
         const syncResult = await offlineSyncService.sync(session.user.id)
-        if (syncResult.push.failed > 0) {
+        if (syncResult.offline || syncResult.push.failed > 0 || (syncResult.push.remaining ?? 0) > 0) {
           throw new Error('仍有练习数据未同步，暂不能清理本地练习缓存')
         }
       }
@@ -155,7 +156,7 @@ export function MobileStorageView() {
       toast.success(category === 'all' ? t('profile.cacheAllCleared', { defaultValue: '缓存已全部清除' }) : t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
       refresh()
     } catch (error: any) {
-      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+      showRequestError(error, t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setClearing(null)
     }
@@ -169,7 +170,7 @@ export function MobileStorageView() {
       toast.success(t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
       refresh()
     } catch (error: any) {
-      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+      showRequestError(error, t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setDeletingPackId(null)
     }
@@ -185,9 +186,10 @@ export function MobileStorageView() {
       toast.success(t('settings.storage.localModelDownloaded', { defaultValue: '本地 AI 模型已下载' }))
       refreshModelStatus(localAiWarmupModelVariant)
     } catch (error: any) {
-      toast.error(error?.message || t('settings.storage.localModelDownloadFailed', { defaultValue: '模型下载失败' }))
+      showRequestError(error, t('settings.storage.localModelDownloadFailed', { defaultValue: '模型下载失败' }))
     } finally {
       setModelDownload({ active: false, percent: 0 })
+      refreshModelStatus(localAiWarmupModelVariant)
     }
   }, [localAiWarmupModelVariant, refreshModelStatus, t])
 
@@ -202,7 +204,7 @@ export function MobileStorageView() {
       refresh()
       refreshModelStatus(localAiWarmupModelVariant)
     } catch (error: any) {
-      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+      showRequestError(error, t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setModelDeleting(false)
     }
@@ -216,7 +218,7 @@ export function MobileStorageView() {
       refresh()
       refreshModelStatus(localAiWarmupModelVariant)
     } catch (error: any) {
-      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+      showRequestError(error, t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setEmbeddingClearing(false)
     }
@@ -232,9 +234,10 @@ export function MobileStorageView() {
       toast.success(t('settings.storage.localSttModelDownloaded', { defaultValue: '本地 STT 模型已下载' }))
       refreshSttModelStatus(localSttModelVariant)
     } catch (error: any) {
-      toast.error(error?.message || t('settings.storage.localModelDownloadFailed', { defaultValue: '模型下载失败' }))
+      showRequestError(error, t('settings.storage.localModelDownloadFailed', { defaultValue: '模型下载失败' }))
     } finally {
       setSttModelDownload({ active: false, percent: 0 })
+      refreshSttModelStatus(localSttModelVariant)
     }
   }, [localSttModelVariant, refreshSttModelStatus, t])
 
@@ -246,7 +249,7 @@ export function MobileStorageView() {
       toast.success(t('settings.storage.localSttModelDeleted', { defaultValue: '本地 STT 模型已删除' }))
       refreshSttModelStatus(localSttModelVariant)
     } catch (error: any) {
-      toast.error(error?.message || t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+      showRequestError(error, t('profile.cleanupFailed', { defaultValue: '清理失败' }))
     } finally {
       setSttModelDeleting(false)
     }
@@ -603,8 +606,8 @@ export function MobileStorageView() {
                 <p>{t('settings.storage.localModelPath', { defaultValue: '存储位置' })}: {isNativeRuntime ? 'Directory.Data / ai-models' : t('settings.storage.localModelBrowserCache', { defaultValue: '浏览器模型缓存' })}</p>
                 <p>{t('settings.storage.localModelFiles', { defaultValue: '文件' })}: config.json · tokenizer.json · onnx/{selectedVariant.modelFile.split('/').pop()}</p>
                 {modelStatus?.updatedAt && <p>{t('settings.storage.updated', { updated: formatDateTime(modelStatus.updatedAt) || t('settings.storage.unknownTime') })}</p>}
-                {modelStatus?.missingFiles.length ? (
-                  <p className="line-clamp-2 text-amber-600">{t('settings.storage.localModelMissing', { defaultValue: '缺少文件' })}: {modelStatus.missingFiles.join(', ')}</p>
+                {!modelDownload.active && (modelStatus?.bytes ?? 0) > 0 && modelStatus?.missingFiles.length ? (
+                  <p className="line-clamp-2 text-amber-600">{t('recording.modelIncomplete')}</p>
                 ) : null}
                 {modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch' ? (
                   <p className="text-amber-600">{t('settings.storage.localModelNeedsRedownloadHint', { defaultValue: '模型记录不完整，请重新下载后再启用本地判断' })}</p>
@@ -764,8 +767,8 @@ export function MobileStorageView() {
                 <p>{t('settings.storage.localModelPath', { defaultValue: '存储位置' })}: {isNativeRuntime ? 'Directory.Data / local-stt-models' : t('settings.storage.localModelBrowserCache', { defaultValue: '浏览器模型缓存' })}</p>
                 <p>{t('settings.storage.localModelFiles', { defaultValue: '文件' })}: config.json · tokenizer.json · onnx/encoder_model_quantized.onnx · onnx/decoder_model_merged_quantized.onnx</p>
                 {sttModelStatus?.updatedAt && <p>{t('settings.storage.updated', { updated: formatDateTime(sttModelStatus.updatedAt) || t('settings.storage.unknownTime') })}</p>}
-                {sttModelStatus?.missingFiles.length ? (
-                  <p className="line-clamp-2 text-amber-600">{t('settings.storage.localModelMissing', { defaultValue: '缺少文件' })}: {sttModelStatus.missingFiles.join(', ')}</p>
+                {!sttModelDownload.active && (sttModelStatus?.bytes ?? 0) > 0 && sttModelStatus?.missingFiles.length ? (
+                  <p className="line-clamp-2 text-amber-600">{t('recording.modelIncomplete')}</p>
                 ) : null}
               </div>
 
@@ -950,6 +953,7 @@ export function MobileStorageView() {
         <IosRow
           icon={Trash2}
           iconBg="bg-orange-500"
+          right={<span />}
           label={clearing === 'practice' ? t('common.clearing', { defaultValue: '清除中...' }) : t('settings.storage.clearPracticeTestData')}
           subtitle={t('settings.storage.clearPracticeTestDataHint')}
           last
@@ -961,6 +965,7 @@ export function MobileStorageView() {
         <IosRow
           icon={Trash2}
           iconBg="bg-red-500"
+          right={<span />}
           label={clearing === 'all' ? t('common.clearing', { defaultValue: '清除中...' }) : t('profile.clearAll', { defaultValue: '全部清除' })}
           subtitle={t('profile.clearAllHint', { defaultValue: '清除学习包、资源文件、词典缓存和本地模型；不会删除学习记录或学习库数据' })}
           last

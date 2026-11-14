@@ -1,3 +1,5 @@
+import { modelFetch } from '@/lib/local-models/model-fetch'
+const nativeFetch = globalThis.fetch.bind(globalThis)
 import { env, pipeline } from '@huggingface/transformers'
 import type { LocalWarmupModelLoadConfig } from './warmup-model-manager'
 
@@ -26,13 +28,15 @@ const referenceCache = new Map<string, { expected: number[]; prompt: number[] }>
 function getExtractor(config: LocalWarmupModelLoadConfig) {
   const localModelPath = config.localModelPath?.trim()
   const allowRemoteModels = config.allowRemoteModels ?? !localModelPath
-  const nextKey = `${config.modelId}:${config.dtype}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
+  const nextKey = `${config.modelId}:${config.dtype}:${config.modelRevision ?? ''}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
   if (extractorKey !== nextKey) {
     extractorKey = nextKey
     extractorPromise = null
     embeddingCache.clear()
     referenceCache.clear()
+    env.fetch = modelFetch(config, nativeFetch)
     env.allowLocalModels = Boolean(localModelPath)
+    if (localModelPath) { env.useBrowserCache = false; env.useFS = false }
     env.allowRemoteModels = allowRemoteModels
     if (localModelPath) {
       env.localModelPath = localModelPath
@@ -45,7 +49,7 @@ function getExtractor(config: LocalWarmupModelLoadConfig) {
     session_options: {
       graphOptimizationLevel: 'disabled',
     }
-  })
+  }).catch(error => { extractorPromise = null; throw error })
   return extractorPromise
 }
 

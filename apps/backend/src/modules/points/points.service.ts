@@ -1,14 +1,15 @@
+import { Prisma } from '@prisma/client';
 import { LearningStatisticsService } from '../../common/learning-statistics/learning-statistics.service';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
   addDateKeyDays,
-  dateKeyInTimeZone,
   formatDateKey,
   parseDateKey,
   todayDateKey,
 } from '../../common/calendar-date';
 
+export const MAKEUP_COST = 200;
 const CHECK_IN_BASE_POINTS = 10;
 const STREAK_BONUS_CAP = 5; // max bonus per day from streak
 const MAX_CALENDAR_RANGE_DAYS = 371;
@@ -44,37 +45,53 @@ export class PointsService {
     return { points: user?.points ?? 0 };
   }
 
-  /** Get today's check-in status */
-  private async findCheckInByUserDate(userId: string, dateKey: string, timeZone: string) {
-    const date = parseCalendarDate(dateKey);
-    const candidates = await this.prisma.userCheckIn.findMany({
-      where: {
-        userId,
-        date: { gte: addDateKeyDays(date, -1), lte: addDateKeyDays(date, 1) },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    // createdAt is authoritative for legacy rows that were saved one day early.
-    return candidates.find((item) => dateKeyInTimeZone(item.createdAt, timeZone) === dateKey)
-      ?? candidates.find((item) => formatCalendarDate(item.date) === dateKey)
-      ?? null;
+  private async streakAt(userId: string, date: string, db: Pick<PrismaService, '$queryRaw'> = this.prisma): Promise<number> {
+    const rows = await db.$queryRaw<Array<{ count: number }>>`WITH RECURSIVE streak(day,n) AS (
+      SELECT ${date}::date,0 UNION ALL SELECT day-1,n+1 FROM streak WHERE EXISTS(
+        SELECT 1 FROM user_check_in WHERE "userId"=${userId} AND date=streak.day)
+    ) SELECT MAX(n) AS count FROM streak`;
+    return rows[0]?.count ?? 0;
   }
 
-  async getCheckInStatus(userId: string, timeZone: string) {
+  async getCheckInStatus(userId: string, timeZone: string, db: Prisma.TransactionClient = this.prisma) {
     const todayKey = todayDateKey(timeZone);
-    const today = parseCalendarDate(todayKey);
-    const existing = await this.findCheckInByUserDate(userId, todayKey, timeZone);
+    const existing = await db.userCheckIn.findUnique({ where: { userId_date: { userId, date: parseCalendarDate(todayKey) } } });
+    const anchor = existing ? todayKey : formatDateKey(addDateKeyDays(parseCalendarDate(todayKey), -1));
+    return { checkedIn: !!existing, todayPoints: existing?.points ?? 0, currentStreak: await this.streakAt(userId, anchor, db), today: todayKey };
+  }
 
-    // Get yesterday's check-in for streak info
-    const yesterdayKey = formatCalendarDate(addDateKeyDays(today, -1));
-    const yesterdayCheckIn = await this.findCheckInByUserDate(userId, yesterdayKey, timeZone);
+  async getMakeupInfo(userId: string, timeZone: string) {
+    const today = todayDateKey(timeZone);
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { points: true } });
+    return { cost: MAKEUP_COST, pointsBalance: user?.points ?? 0, today,
+      latestDate: formatDateKey(addDateKeyDays(parseCalendarDate(today), -1)) };
+  }
 
-    return {
-      checkedIn: !!existing,
-      todayPoints: existing?.points ?? 0,
-      currentStreak: existing?.streak ?? yesterdayCheckIn?.streak ?? 0,
-    };
+  async makeupCheckIn(userId: string, dateKey: string, timeZone: string) {
+    const date = parseCalendarDate(dateKey);
+    return this.prisma.$transaction(async tx => {
+      // Serialize duplicate checks and every debit for this account; never trust client balances.
+      await tx.$queryRaw`SELECT id FROM "user" WHERE id=${userId} FOR UPDATE`;
+      const existing = await tx.userCheckIn.findUnique({ where: { userId_date: { userId, date } } });
+      if (existing) {
+        if (!existing.isMakeup) throw new BadRequestException({ code: 'MAKEUP_ALREADY_CHECKED_IN', message: '该日期已经签到' });
+        const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true } });
+        return { points: user.points, date: dateKey, cost: existing.makeupCost, alreadyApplied: true, status: await this.getCheckInStatus(userId, timeZone, tx) };
+      }
+      const today = parseCalendarDate(todayDateKey(timeZone));
+      if (date >= today) {
+        throw new BadRequestException({ code: 'MAKEUP_OUT_OF_RANGE', message: '只能补签过去的日期，不含今天' });
+      }
+      const debit = await tx.user.updateMany({ where: { id: userId, points: { gte: MAKEUP_COST } }, data: { points: { decrement: MAKEUP_COST } } });
+      if (debit.count !== 1) throw new BadRequestException({ code: 'MAKEUP_INSUFFICIENT_POINTS', message: '积分不足，需要200积分' });
+      const previousDay = formatDateKey(addDateKeyDays(date,-1));
+      const checkIn = await tx.userCheckIn.create({ data: { userId, date, points: 0,
+        streak: (await this.streakAt(userId, previousDay, tx))+1, isMakeup: true, makeupCost: MAKEUP_COST } });
+      const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true } });
+      await tx.pointTransaction.create({ data: { userId, type: 'makeup_check_in', amount: -MAKEUP_COST,
+        balance: user.points, description: `补签 ${dateKey} -${MAKEUP_COST}积分`, referenceId: checkIn.id } });
+      return { points: user.points, date: dateKey, cost: MAKEUP_COST, alreadyApplied: false, status: await this.getCheckInStatus(userId, timeZone, tx) };
+    });
   }
 
   /** Get check-in dates for the calendar */
@@ -93,26 +110,27 @@ export class PointsService {
       throw new BadRequestException(`日历查询范围不能超过 ${MAX_CALENDAR_RANGE_DAYS} 天`);
     }
 
-    const [checkIns, totalCheckIns, status, statistics] = await Promise.all([
+    const [checkIns, totalCheckIns, status, statistics, makeup] = await Promise.all([
       this.prisma.userCheckIn.findMany({
         where: {
           userId,
-          // Include a one-day buffer for legacy rows written from local midnight.
-          date: { gte: addDateKeyDays(rangeStart, -1), lte: addDateKeyDays(rangeEnd, 1) },
+          date: { gte: rangeStart, lte: rangeEnd },
         },
         orderBy: { date: 'asc' },
-        select: { date: true, createdAt: true },
+        select: { date: true, isMakeup: true },
       }),
       this.prisma.userCheckIn.count({ where: { userId } }),
       this.getCheckInStatus(userId, timeZone),
       this.learningStatistics.get(userId, startDate, endDate, timeZone),
+      this.getMakeupInfo(userId, timeZone),
     ]);
     const dailyStats = statistics.dailyStats.filter(day => day.date >= startDate && day.date <= endDate);
 
     return {
-      dates: [...new Set(checkIns
-        .map((item) => dateKeyInTimeZone(item.createdAt, timeZone))
-        .filter((date) => date >= startDate && date <= endDate))].sort(),
+      startDate, endDate, today: status.today,
+      dates: checkIns.map(item => formatDateKey(item.date)),
+      makeupDates: checkIns.filter(item => item.isMakeup).map(item => formatDateKey(item.date)),
+      makeup,
       totalCheckIns,
       currentStreak: status.currentStreak,
       dailyStats,
@@ -124,51 +142,20 @@ export class PointsService {
     const todayKey = todayDateKey(timeZone);
     const today = parseCalendarDate(todayKey);
 
-    // Check if already checked in today
-    const existing = await this.findCheckInByUserDate(userId, todayKey, timeZone);
-
-    if (existing) {
-      throw new BadRequestException('今天已经签到过了');
-    }
-
-    // Calculate streak
-    const yesterdayKey = formatCalendarDate(addDateKeyDays(today, -1));
-    const yesterdayCheckIn = await this.findCheckInByUserDate(userId, yesterdayKey, timeZone);
-
-    const streak = (yesterdayCheckIn?.streak ?? 0) + 1;
-    const streakBonus = Math.min(streak - 1, STREAK_BONUS_CAP);
-    const points = CHECK_IN_BASE_POINTS + streakBonus;
-
-    // Create check-in record and update points in a transaction
-    const result = await this.prisma.$transaction(async (tx) => {
-      const checkIn = await tx.userCheckIn.create({
-        data: {
-          userId,
-          date: today,
-          points,
-          streak,
-        },
-      });
-
-      const updated = await tx.user.update({
-        where: { id: userId },
-        data: { points: { increment: points } },
-        select: { points: true },
-      });
-
-      await tx.pointTransaction.create({
-        data: {
-          userId,
-          type: 'check_in',
-          amount: points,
-          balance: updated.points,
-          description: `每日签到 +${points}积分（连续${streak}天）`,
-          referenceId: checkIn.id,
-        },
-      });
-
-      return { points: updated.points, checkIn };
+    const result = await this.prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM "user" WHERE id=${userId} FOR UPDATE`;
+      const existing = await tx.userCheckIn.findUnique({ where: { userId_date: { userId, date: today } } });
+      if (existing) throw new BadRequestException('今天已经签到过了');
+      const yesterdayKey = formatDateKey(addDateKeyDays(today,-1));
+      const streak = (await this.streakAt(userId,yesterdayKey,tx))+1;
+      const points = CHECK_IN_BASE_POINTS + Math.min(streak-1,STREAK_BONUS_CAP);
+      const checkIn = await tx.userCheckIn.create({ data: { userId, date: today, points, streak } });
+      const updated = await tx.user.update({ where: { id:userId },data: { points: { increment:points } }, select:{ points:true } });
+      await tx.pointTransaction.create({ data: { userId,type:'check_in',amount:points,balance:updated.points,
+        description:`每日签到 +${points}积分（连续${streak}天）`,referenceId:checkIn.id } });
+      return { points:updated.points,earned:points,streak };
     });
+    const { earned: points, streak } = result;
 
     return {
       points: result.points,
@@ -197,6 +184,7 @@ export class PointsService {
 
   /** Redeem points — deduct and record */
   async redeemPoints(userId: string, amount: number, orderNo: string) {
+    if (!Number.isSafeInteger(amount) || amount <= 0) throw new BadRequestException('积分金额无效');
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { points: true },
@@ -207,11 +195,9 @@ export class PointsService {
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.user.update({
-        where: { id: userId },
-        data: { points: { decrement: amount } },
-        select: { points: true },
-      });
+      const debit = await tx.user.updateMany({ where: { id: userId, points: { gte: amount } }, data: { points: { decrement: amount } } });
+      if (debit.count !== 1) throw new BadRequestException('积分不足');
+      const updated = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true } });
 
       await tx.pointTransaction.create({
         data: {

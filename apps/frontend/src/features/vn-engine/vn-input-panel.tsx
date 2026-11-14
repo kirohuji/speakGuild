@@ -182,6 +182,7 @@ export function VnInputPanel({
 
     try {
       const nativeSession = await startBestNativeVoiceInput({
+        requireRecording: true,
         language: 'en-US',
         useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
@@ -296,10 +297,12 @@ export function VnInputPanel({
       setInputRecording(null)
       setVoiceStatus('idle')
       setVoiceError(null)
+    } catch {
+      setVoiceError(t('recording.submitFailed'))
     } finally {
       setSubmitting(false)
     }
-  }, [text, isDisabled, onSubmit, recordedAudioUrl, inputRecording])
+  }, [text, isDisabled, onSubmit, recordedAudioUrl, inputRecording, t])
 
   // ── 回放 ──
   const togglePlayback = useCallback(() => {

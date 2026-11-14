@@ -1,3 +1,4 @@
+import { AdminOfflineModelsPage } from '@/features/admin/pages/admin-offline-models-page'
 // Admin routes — loaded only when user navigates to /admin/*
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AdminLayout } from '@/layout/admin-layout'
@@ -68,6 +69,7 @@ export default function AdminRoutes() {
         <Route path="script-packs" element={<AdminLearningPacksPage mode="script" />} />
         <Route path="content-library" element={<AdminContentLibraryPage />} />
         <Route path="dictionary" element={<AdminDictionaryPage />} />
+        <Route path="offline-models" element={<AdminOfflineModelsPage />} />
         <Route path="ai-models" element={<AdminAiModelsPage />} />
         <Route path="tasks" element={<AdminTasksPage />} />
         <Route path="file-assets" element={<AdminFileAssetsPage />} />

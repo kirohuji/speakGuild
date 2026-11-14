@@ -1,3 +1,6 @@
+import { showRequestError } from '@/lib/request-feedback'
+import { LEARNING_LIBRARY_CHANGED_EVENT } from '@/lib/offline/learning-content.repository'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookCopy, ChevronRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -119,6 +122,7 @@ export function LearningNotebooksPage() {
   const navigate = useNavigate()
   const [notebooks, setNotebooks] = useState<LearningNotebook[]>([])
   const [loading, setLoading] = useState(true)
+  const restoring = useOfflineSyncStore(s => s.loginRestorePending)
   const [mode, setMode] = useState<EditorMode>(null)
   const [selected, setSelected] = useState<LearningNotebook | null>(null)
   const [name, setName] = useState('')
@@ -126,26 +130,18 @@ export function LearningNotebooksPage() {
   const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
 
   const load = useCallback(async () => {
-    const cached = await learningNotebookRepository.listCached()
-    if (cached.items.length > 0) {
-      setNotebooks(cached.items)
-      setLoading(false)
-    } else {
-      setLoading(true)
-    }
-
     try {
-      const result = await learningNotebookRepository.refresh()
-      setNotebooks(result.items)
-    } catch {
-      if (cached.items.length === 0) toast.error(t('learningNotebooks.loadFailed'))
-    } finally {
-      setLoading(false)
-    }
+      const cached = await learningNotebookRepository.listCached()
+      setNotebooks(cached.items)
+    } catch { toast.error(t('learningNotebooks.loadFailed')) }
+    finally { setLoading(false) }
   }, [t])
 
   useEffect(() => {
     void load()
+    const onChanged = () => { void load() }
+    window.addEventListener(LEARNING_LIBRARY_CHANGED_EVENT, onChanged)
+    return () => window.removeEventListener(LEARNING_LIBRARY_CHANGED_EVENT, onChanged)
   }, [load])
 
   // 有学习本数据时触发「学习本」引导（条件式分段，仅首次）
@@ -193,7 +189,7 @@ export function LearningNotebooksPage() {
       setMode(null)
       await load()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learningNotebooks.operationFailed'))
+      showRequestError(error, t('learningNotebooks.operationFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -208,7 +204,7 @@ export function LearningNotebooksPage() {
       setMode(null)
       await load()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learningNotebooks.deleteFailed'))
+      showRequestError(error, t('learningNotebooks.deleteFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -260,7 +256,7 @@ export function LearningNotebooksPage() {
               >
                 <BookCopy className="size-8 text-muted-foreground" />
                 <span className="text-sm font-medium">{t('learningNotebooks.createFirst')}</span>
-                <span className="text-xs text-muted-foreground">{t('learningNotebooks.createFirstDesc')}</span>
+                <span className="text-xs text-muted-foreground">{restoring ? t('learningNotebooks.restoring') : t('learningNotebooks.localEmptyHint')}</span>
               </button>
             )}
           </section>

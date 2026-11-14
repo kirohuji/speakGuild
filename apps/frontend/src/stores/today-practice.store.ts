@@ -55,6 +55,7 @@ export interface AttemptHistoryEntry {
   cycle?: number
   createdAt: string
   /** Calendar day at the time of the answer; stable across timezone changes and delayed sync. */
+  hour?: number
   date?: string
 }
 
@@ -150,7 +151,7 @@ function appendHistory(state: TodayPracticeState, input: Omit<AttemptHistoryEntr
   const { now: _now, ...entry } = input
   // An ordinal is only unique on one device.  History is synchronized as an
   // event set, so every event needs a device-independent identity.
-  return [...state.attemptHistory, { ...entry, id: createId('today_attempt'), createdAt, date: localDateKey(new Date(createdAt)) }]
+  return [...state.attemptHistory, { ...entry, id: createId('today_attempt'), createdAt, date: localDateKey(new Date(createdAt)), hour: new Date(createdAt).getHours() }]
 }
 
 function dirty(state: TodayPracticeState): TodayPracticeState {

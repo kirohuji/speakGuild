@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -483,7 +484,7 @@ export function TodayTaskPage() {
       if (source) await recordAttempt(source, attempt.outcome, attempt.assistance)
     } catch (error) {
       console.error('[today-task] failed to persist attempt:', error)
-      toast.error(error instanceof Error ? error.message : t('common.error'))
+      showRequestError(error, t('common.error'))
     } finally {
       // 作答会写入 outbox（待同步快照），同步后刷新角标。
       void refreshPendingSyncBadge()
@@ -520,12 +521,14 @@ export function TodayTaskPage() {
       // 只同步今日任务相关数据（daily_practice run/记录/进度），不拉其他页面类型；
       // quiet 让按钮只报一条端到端结果，不叠加内部多次 toast。
       const result = await offlineSyncService.sync(userId, { quiet: true, scope: 'today' })
+      if (result.offline) return
+      if (result.pull?.complete === false || (result.push.remaining ?? 0) > 0) { toast(t('learningNotebooks.syncIncomplete')); return }
       if (result.push.failed > 0) throw new Error(`${result.push.failed} 条数据未同步`)
       // pull 完成后仅以本地已更新的数据重建页面；loadToday 不产生 outbox。
       await loadToday(targetPackId, targetDate, planMode)
       toast.success('今日任务已同步')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '今日任务同步失败')
+      showRequestError(error, '今日任务同步失败')
     } finally {
       setManualSyncing(false)
       void refreshPendingSyncBadge()

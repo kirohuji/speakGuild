@@ -239,8 +239,10 @@ export async function startBestNativeVoiceInput(options: {
   language?: string;
   onPartial?: (text: string) => void;
   useNativeSpeechRecognition?: boolean;
+  /** Speech-only sessions return no audio and cannot back durable practice records. */
+  requireRecording?: boolean;
 } = {}) {
-  if (options.useNativeSpeechRecognition) {
+  if (options.useNativeSpeechRecognition && !options.requireRecording) {
     const speechSession = await startNativeSpeechInput(options);
     if (speechSession) {
       return speechSession;

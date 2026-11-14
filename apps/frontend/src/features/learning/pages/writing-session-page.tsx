@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -357,6 +358,8 @@ function WritingPreparePage({
         onIndexChange={setInsightIndex}
       />
       <SaveToNotebookDrawer
+        entry={pendingSave ? { kind: pendingSave.kind === 'vocab' ? 'word' : pendingSave.kind, text: pendingSave.kind === 'vocab' ? pendingSave.word : pendingSave.kind === 'chunk' ? pendingSave.text : pendingSave.pattern } : null}
+        onRemoved={() => { void Promise.all((['word', 'chunk', 'pattern'] as const).map(kind => learningContentRepository.listExpressionTexts(kind))).then(groups => setCollectedTexts(new Set(groups.flat()))) }}
         open={saveDrawerOpen}
         onOpenChange={setSaveDrawerOpen}
         onSave={savePendingToNotebooks}
@@ -696,7 +699,7 @@ function WritingEditor({
         await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
       }
-    } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
+    } catch (error: any) { showRequestError(error, t('learning.saveFailed')) } finally { setSaving(false) }
   }
 
   // focus 时 selection 可能未落到点击处，兼听 click；不听 select，避免打字时反复测量滚动。
@@ -883,7 +886,7 @@ function TranslationEditor({
       if (result.error) toast.error(t('learning.aiReviewPending'))
       else toast.success(t('learning.aiEvaluationDone'))
     } catch (error: any) {
-      toast.error(error?.message || t('learning.saveFailed'))
+      showRequestError(error, t('learning.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -1115,7 +1118,7 @@ function DialogueEditor({
         await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
       }
-    } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
+    } catch (error: any) { showRequestError(error, t('learning.saveFailed')) } finally { setSaving(false) }
   }
 
   const goToTurn = (index: number) => {

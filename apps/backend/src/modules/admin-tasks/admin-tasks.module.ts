@@ -1,3 +1,4 @@
+import { OfflineModelsModule } from '../offline-models/offline-models.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../common/prisma/prisma.module';
@@ -25,6 +26,7 @@ import { ContentExperienceModule } from '../content-experiences/content-experien
 @Module({
   imports: [
     PrismaModule,
+    OfflineModelsModule,
     FileAssetsModule,
     DictionaryModule,
     PracticeAiModule,

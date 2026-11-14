@@ -135,7 +135,7 @@ function referenceKey(input: WarmupReferencePreloadInput) {
 function modelKey(config: LocalWarmupModelLoadConfig) {
   const localModelPath = config.localModelPath?.trim()
   const allowRemoteModels = config.allowRemoteModels ?? !localModelPath
-  return `${config.modelId}:${config.dtype}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
+  return `${config.modelId}:${config.dtype}:${config.modelRevision ?? ''}:${localModelPath ?? ''}:${allowRemoteModels ? 'remote' : 'local'}`
 }
 
 export async function getCurrentWarmupLocalJudgeModelKey() {

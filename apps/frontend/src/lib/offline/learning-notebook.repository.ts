@@ -1,6 +1,10 @@
-import { learningNotebookApi, type LearningNotebook } from '@/features/practice/api/english-practice-api'
+import { type LearningNotebook } from '@/features/practice/api/english-practice-api'
+import { notebookMutation, commitNotebookMutation, serializeNotebookWrite } from './notebook-mutations'
+import { createId } from './utils'
+import { getCurrentSessionSnapshot } from '@/providers/auth-session'
+import { createPayload } from './learning-content.repository'
 import { localDb } from './unified-storage'
-import { learningContentRepository, notifyLearningLibraryChanged, type ExpressionEntry } from './learning-content.repository'
+import { learningContentRepository, type ExpressionEntry } from './learning-content.repository'
 
 type NotebookCounts = {
   total: number
@@ -59,16 +63,11 @@ export type LocalExpressionPageResult = {
 }
 
 type CachedNotebook = LearningNotebook & {
-  remoteId: string
-  syncStatus: 'synced'
-}
-
-function toCached(notebook: LearningNotebook): CachedNotebook {
-  return {
-    ...notebook,
-    remoteId: notebook.id,
-    syncStatus: 'synced',
-  }
+  remoteId?: string | null
+  remoteUpdatedAt?: string | null
+  deletedAt?: string | null
+  lastMutationId?: string
+  syncStatus: 'synced' | 'pending' | 'failed'
 }
 
 function summarize(notebooks: LearningNotebook[]): NotebookListResult {
@@ -90,8 +89,8 @@ function toLibraryExpression(entry: ExpressionEntry, item: CachedNotebookItem): 
   const snapshot = entry.contentSnapshot
   return {
     ...entry,
-    id: entry.remoteId ?? entry.id,
-    notebookItemId: item.remoteId ?? item.id,
+    id: entry.id,
+    notebookItemId: item.id,
     notebookId: item.notebookId,
     masteryStatus: item.masteryStatus,
     reviewCount: item.reviewCount,
@@ -105,31 +104,28 @@ function toLibraryExpression(entry: ExpressionEntry, item: CachedNotebookItem): 
   }
 }
 
-function matchesLocalExpression(entry: ExpressionEntry, request: LocalExpressionListRequest) {
-  const type = request.type === 'scene_phrase' ? 'scene_phrase' : request.type
-  if (entry.type !== type) return false
-  const query = request.search?.trim().toLocaleLowerCase()
-  if (!query) return true
-  return [entry.original, entry.corrected, entry.chunkText, entry.sceneName]
-    .some((value) => value?.toLocaleLowerCase().includes(query))
-}
-
 export const learningNotebookRepository = {
   async listCached(): Promise<NotebookListResult> {
-    return summarize(await localDb.list<CachedNotebook>('learning_notebooks'))
+    const [notebooks, groups] = await Promise.all([
+      localDb.list<CachedNotebook>('learning_notebooks'), localDb.notebookCounts(),
+    ])
+    const counts = new Map<string, NotebookCounts>()
+    for (const group of groups) {
+      const value = counts.get(group.notebookId) ?? { total: 0, word: 0, chunk: 0, pattern: 0 }
+      if (group.kind === 'word' || group.kind === 'chunk' || group.kind === 'pattern') {
+        value[group.kind] += group.count
+        value.total += group.count
+      }
+      counts.set(group.notebookId, value)
+    }
+    return summarize(notebooks.filter(n => !n.deletedAt).map(n => ({
+      ...n, counts: counts.get(n.id) ?? { total: 0, word: 0, chunk: 0, pattern: 0 },
+    })).sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt)))
   },
 
-  async refresh(): Promise<NotebookListResult> {
-    const result = await learningNotebookApi.list()
-    await localDb.putMany('learning_notebooks', result.items.map(toCached))
-    return result
-  },
-
-  async list() {
-    const cached = await this.listCached()
-    if (cached.items.length > 0) return cached
-    return this.refresh()
-  },
+  // Compatibility for existing callers: refreshing a view never performs network I/O.
+  async refresh() { return this.listCached() },
+  async list() { return this.listCached() },
 
   async getCached(id: string): Promise<LearningNotebook | null> {
     return localDb.get<CachedNotebook>('learning_notebooks', id)
@@ -141,60 +137,14 @@ export const learningNotebookRepository = {
    * result without keeping thousands of DOM nodes alive.
    */
   async listCachedExpressionItems(request: LocalExpressionListRequest): Promise<LocalNotebookExpression[]> {
-    const notebookItems = await localDb.findByIndex<CachedNotebookItem>('learning_notebook_items', 'notebook_id', request.notebookId)
-    const entryIds = [...new Set(notebookItems.map((item) => item.expressionEntryId).filter(Boolean))]
-    const entries = entryIds.length === 0
-      ? []
-      : await localDb.findByIndexIn<ExpressionEntry>('expression_entries', 'id', entryIds)
-    const entriesById = new Map(entries.map((entry) => [entry.id, entry]))
-    const status = request.reviewState
-
-    // 同一学习本 + 同一内容可能同时存在 local: 临时行和远程同步行；列表只保留一条（优先远程）。
-    const uniqueItems = new Map<string, CachedNotebookItem>()
-    for (const item of notebookItems) {
-      if (item.notebookId !== request.notebookId) continue
-      if (status) {
-        const matches = status === 'learning'
-          ? item.masteryStatus === 'learning' || item.masteryStatus === 'activated'
-          : item.masteryStatus === status
-        if (!matches) continue
-      }
-      const key = item.expressionEntryId
-      const existing = uniqueItems.get(key)
-      if (!existing) {
-        uniqueItems.set(key, item)
-        continue
-      }
-      const existingLocal = String(existing.id).startsWith('local:')
-      const nextLocal = String(item.id).startsWith('local:')
-      if (existingLocal && !nextLocal) uniqueItems.set(key, item)
+    // Export and playback use exactly the same dataset as visible pagination.
+    const rows: LocalNotebookExpression[] = []
+    while (true) {
+      const page = await this.listCachedExpressionPage({ ...request, limit: 500, offset: rows.length })
+      rows.push(...page.items)
+      if (rows.length >= page.total || page.items.length === 0) break
     }
-
-    // 顺手清掉已被远程条目取代的 local: 脏数据，避免下次再撞上。
-    const staleLocalIds = notebookItems
-      .filter((item) => {
-        if (item.notebookId !== request.notebookId) return false
-        if (!String(item.id).startsWith('local:')) return false
-        const kept = uniqueItems.get(item.expressionEntryId)
-        return Boolean(kept && kept.id !== item.id)
-      })
-      .map((item) => item.id)
-    if (staleLocalIds.length > 0) {
-      await Promise.all(staleLocalIds.map((id) => localDb.delete('learning_notebook_items', id)))
-    }
-
-    const pairs = [...uniqueItems.values()].flatMap((item) => {
-      const entry = entriesById.get(item.expressionEntryId)
-      if (!entry || !matchesLocalExpression(entry, request)) return []
-      return [{ item, entry }]
-    })
-    const hydrated = await learningContentRepository.hydrateExpressionSnapshots(pairs.map((pair) => pair.entry))
-    const rows = pairs.map((pair, index) => toLibraryExpression(hydrated[index] ?? pair.entry, pair.item))
-
-    return rows.sort((a, b) => {
-      const result = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      return request.sort === 'oldest' ? -result : result
-    })
+    return request.sort === 'oldest' ? rows.reverse() : rows
   },
 
   async listCachedExpressionPage(
@@ -220,60 +170,105 @@ export const learningNotebookRepository = {
     }
   },
 
-  async updateCachedNotebookItemStatus(notebookItemId: string, masteryStatus: string): Promise<void> {
-    const item = await localDb.get<CachedNotebookItem>('learning_notebook_items', notebookItemId)
-    if (!item) return
-    await localDb.put('learning_notebook_items', {
-      ...item,
-      masteryStatus,
-      updatedAt: new Date().toISOString(),
-      syncStatus: item.remoteId ? 'synced' : item.syncStatus,
+  async updateCachedNotebookItemStatus(id: string, masteryStatus: string): Promise<void> {
+    if (!['learning', 'reviewing', 'mastered'].includes(masteryStatus)) throw new Error('无效的学习状态')
+    await serializeNotebookWrite(async () => {
+      const item = await localDb.get<any>('learning_notebook_items', id)
+      if (!item || item.deletedAt) return
+      await this.writeItem({ ...item, masteryStatus })
     })
   },
 
-  async removeCachedNotebookItem(notebookItemId: string): Promise<void> {
-    const target = await localDb.get<CachedNotebookItem>('learning_notebook_items', notebookItemId)
-    if (!target) return
+  async writeItem(item: any, extraWrites: Array<{ table: 'expression_entries'; value: ExpressionEntry }> = []) {
+    const entry = extraWrites.find(w => w.value.id === item.expressionEntryId)?.value
+      ?? await localDb.get<ExpressionEntry>('expression_entries', item.expressionEntryId)
+    if (!entry) throw new Error('学习内容尚未恢复，请同步后重试')
+    const mutation = notebookMutation('notebook_item', item, {
+      notebookId: item.notebookId, intent: item.deletedAt ? 'remove' : 'status', deleted: Boolean(item.deletedAt), masteryStatus: item.masteryStatus,
+      entry: { kind: entry.kind, type: entry.type, text: entry.kind === 'word' ? entry.original : entry.chunkText, ...createPayload(entry) },
+    })
+    await commitNotebookMutation([
+      ...extraWrites,
+      { table: 'learning_notebook_items', value: { ...item, updatedAt: new Date().toISOString(), syncStatus: 'pending', lastMutationId: mutation.id } },
+      { table: 'outbox', value: mutation },
+    ])
+  },
 
-    // 同一内容可能遗留一个 local: 临时副本。删除服务器条目时把当前学习本中
-    // 所有同内容副本一并移除，避免删除后本地仍显示“已加入”。
-    const sameNotebook = await localDb.findByIndex<CachedNotebookItem>('learning_notebook_items', 'notebook_id', target.notebookId)
-    const duplicates = sameNotebook.filter((item) => item.expressionEntryId === target.expressionEntryId)
-    await Promise.all(duplicates.map((item) => localDb.delete('learning_notebook_items', item.id)))
+  async removeCachedNotebookItem(id: string): Promise<void> {
+    await serializeNotebookWrite(async () => {
+      const item = await localDb.get<any>('learning_notebook_items', id)
+      if (!item || item.deletedAt) return
+      await this.writeItem({ ...item, deletedAt: new Date().toISOString() })
+    })
+  },
 
-    const sameExpression = await localDb.findByIndex<CachedNotebookItem>('learning_notebook_items', 'expression_entry_id', target.expressionEntryId)
-    const belongsToAnotherNotebook = sameExpression.some((item) => item.notebookId !== target.notebookId)
-    // 收藏状态的唯一依据是“至少存在一个学习本关联”。最后一个关联删除后，
-    // 同步移除表达式索引，让所有来源页立即重新显示“加入学习库”。
-    if (!belongsToAnotherNotebook) {
-      await localDb.delete('expression_entries', target.expressionEntryId)
+  async addEntry(entry: ExpressionEntry, notebookIds: string[]) {
+    return serializeNotebookWrite(async () => {
+      if (!notebookIds.length) {
+        const notebooks = await this.listCached()
+        let uncategorized = notebooks.items.find(n => n.kind === 'uncategorized')
+        if (!uncategorized) uncategorized = await this.createLocal('未分类', 'uncategorized')
+        notebookIds = [uncategorized.id]
+      }
+      const writes: import('./unified-storage').LocalWrite[] = [{ table: 'expression_entries', value: entry }]
+      for (const notebookId of [...new Set(notebookIds)]) {
+        const notebook = await localDb.get<any>('learning_notebooks', notebookId)
+        if (!notebook || notebook.deletedAt) throw new Error('学习本已删除')
+        const existing = (await localDb.findByIndex<any>('learning_notebook_items', 'notebook_id', notebookId))
+          .filter(i => i.expressionEntryId === entry.id)
+          .sort((a, b) => Number(b.syncStatus === 'pending') - Number(a.syncStatus === 'pending') || String(b.updatedAt).localeCompare(String(a.updatedAt)))[0]
+        if (existing && !existing.deletedAt) continue
+        const item = { ...existing, id: existing?.id ?? `local:${notebookId}:${entry.id}`, remoteId: existing?.remoteId ?? null,
+          notebookId, expressionEntryId: entry.id, deletedAt: null, masteryStatus: 'learning',
+          reviewCount: 0, intervalDays: 0, easeFactor: 2.5, lapseCount: 0,
+          lastReviewedAt: null, nextReviewAt: null, createdAt: existing?.createdAt ?? new Date().toISOString() }
+        const mutation = notebookMutation('notebook_item', item, { notebookId, intent: 'join', deleted: false, masteryStatus: 'learning',
+          entry: { kind: entry.kind, type: entry.type, text: entry.kind === 'word' ? entry.original : entry.chunkText, ...createPayload(entry) } })
+        writes.push({ table: 'learning_notebook_items', value: { ...item, updatedAt: new Date().toISOString(), syncStatus: 'pending', lastMutationId: mutation.id } },
+          { table: 'outbox', value: mutation })
+      }
+      await commitNotebookMutation(writes)
+    })
+  },
+
+  async addItemsToNotebook(ids: string[], notebookId: string) {
+    for (const id of ids) {
+      const item = await localDb.get<any>('learning_notebook_items', id)
+      if (!item || item.deletedAt) continue
+      const entry = await localDb.get<ExpressionEntry>('expression_entries', item.expressionEntryId)
+      if (entry) await this.addEntry(entry, [notebookId])
     }
-    notifyLearningLibraryChanged()
   },
 
-  async create(name: string) {
-    const notebook = await learningNotebookApi.create(name)
-    const cached = toCached({
-      ...notebook,
-      counts: notebook.counts ?? { total: 0, word: 0, chunk: 0, pattern: 0 },
+  async createLocal(rawName: string, kind: 'custom' | 'uncategorized' = 'custom'): Promise<CachedNotebook> {
+    const name = rawName.trim()
+    if (!name || name.length > 30) throw new Error('学习本名称需为 1–30 个字符')
+    const notebooks = await this.listCached()
+    if (notebooks.items.some(n => n.name.toLocaleLowerCase() === name.toLocaleLowerCase() && n.kind === kind)) throw new Error('已经有同名学习本')
+    const now = new Date().toISOString()
+    const notebook: CachedNotebook = { id: createId('notebook'), name, kind, color: 'ocean', sortOrder: notebooks.items.length,
+      createdAt: now, updatedAt: now, remoteId: null, syncStatus: 'pending', counts: { total: 0, word: 0, chunk: 0, pattern: 0 } }
+    const mutation = notebookMutation('notebook', notebook, { name, kind, deleted: false, ownerId: getCurrentSessionSnapshot()?.user?.id })
+    await commitNotebookMutation([{ table: 'learning_notebooks', value: { ...notebook, lastMutationId: mutation.id } }, { table: 'outbox', value: mutation }])
+    return notebook
+  },
+  async create(name: string): Promise<CachedNotebook> { return serializeNotebookWrite<CachedNotebook>(() => this.createLocal(name)) },
+  async rename(id: string, rawName: string): Promise<CachedNotebook> {
+    return serializeNotebookWrite(async () => {
+      const name = rawName.trim()
+      if (!name || name.length > 30) throw new Error('学习本名称需为 1–30 个字符')
+      if ((await this.listCached()).items.some(n => n.id !== id && n.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error('已经有同名学习本')
+      return this.writeNotebook(id, { name })
     })
-    await localDb.put('learning_notebooks', cached)
-    return cached
   },
-
-  async rename(id: string, name: string) {
-    const notebook = await learningNotebookApi.rename(id, name)
-    const existing = await localDb.get<CachedNotebook>('learning_notebooks', id)
-    const cached = toCached({
-      ...notebook,
-      counts: notebook.counts ?? existing?.counts ?? { total: 0, word: 0, chunk: 0, pattern: 0 },
-    })
-    await localDb.put('learning_notebooks', cached)
-    return cached
+  async writeNotebook(id: string, patch: { name?: string; deletedAt?: string }): Promise<CachedNotebook> {
+    const notebook = await localDb.get<CachedNotebook>('learning_notebooks', id)
+    if (!notebook || notebook.deletedAt) throw new Error('学习本已删除')
+    if (notebook.kind !== 'custom') throw new Error('系统学习本不能修改或删除')
+    const next = { ...notebook, ...patch, updatedAt: new Date().toISOString() }
+    const mutation = notebookMutation('notebook', notebook, { name: next.name, kind: next.kind, deleted: Boolean(next.deletedAt) })
+    await commitNotebookMutation([{ table: 'learning_notebooks', value: { ...next, syncStatus: 'pending', lastMutationId: mutation.id } }, { table: 'outbox', value: mutation }])
+    return next
   },
-
-  async remove(id: string) {
-    await learningNotebookApi.remove(id)
-    await localDb.delete('learning_notebooks', id)
-  },
+  async remove(id: string): Promise<CachedNotebook> { return serializeNotebookWrite<CachedNotebook>(() => this.writeNotebook(id, { deletedAt: new Date().toISOString() })) },
 }

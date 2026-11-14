@@ -1,3 +1,4 @@
+import { HOURLY_BACKFILL } from './hourly-statistics-schema'
 import { STATISTICS_TABLES, STATISTICS_DDL, STATISTICS_TRIGGERS } from './statistics-schema'
 /**
  * SQLite schema for Capacitor offline storage.
@@ -20,7 +21,7 @@ import { STATISTICS_TABLES, STATISTICS_DDL, STATISTICS_TRIGGERS } from './statis
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 16
+export const DB_VERSION = 17
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -480,6 +481,10 @@ export async function initializeOfflineSchema(
   for (const sql of STATISTICS_TRIGGERS) await execute(sql)
   for (const idx of INDEXES) {
     try { await execute(idx) } catch { /* index may already exist */ }
+  }
+  if (queryRows && !(await queryRows("SELECT id FROM kv WHERE id='schema:hourly-statistics:v1'")).length) {
+    for (const sql of HOURLY_BACKFILL) await execute(sql)
+    await execute(`INSERT INTO kv(id,data) VALUES ('schema:hourly-statistics:v1','{"value":true}') ON CONFLICT(id) DO NOTHING`)
   }
   try {
     await execute(`UPDATE practice_records SET practiced_at = updated_at WHERE practiced_at IS NULL`)

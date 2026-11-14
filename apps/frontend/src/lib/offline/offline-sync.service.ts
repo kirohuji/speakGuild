@@ -1,3 +1,6 @@
+import { prepareRecordingPayload, uploadUserRecording, RecordingDependencyError } from './user-recordings'
+import { replayNotebookMutation } from './notebook-sync'
+import { serializeNotebookWrite } from './notebook-mutations'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { learningStatisticsRepository } from './learning-statistics.repository'
 import { batchStatisticsNotifications, notifyStatisticsChanged } from './storage-events'
@@ -11,7 +14,7 @@ import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
 import { syncOutbox, type SyncEntityType, type SyncOutboxItem } from './sync-outbox'
-import { learningContentRepository } from './learning-content.repository'
+import { learningContentRepository, notifyLearningLibraryChanged } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
 import { emitPracticeSyncFailed, scriptRepository } from './script.repository'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
@@ -26,7 +29,8 @@ const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
 
 export interface OfflineSyncResult {
   push: { synced: number; failed: number; skipped: number; remaining?: number; operations?: Record<string, number> }
-  pull: { cursor: string | null; changed: number; deleted: number } | null
+  pull: { changed: number; deleted: number; complete?: boolean } | null
+  offline?: boolean
   refreshedPacks: string[]
 }
 
@@ -40,6 +44,7 @@ function userSyncCursorKey(userId?: string | null) {
 }
 
 function isPermanentSyncError(error: unknown): boolean {
+  if (error instanceof RecordingDependencyError) return false
   const message = errorMessage(error)
   const status = (error as any)?.response?.status
   return status === 404 || [
@@ -179,73 +184,41 @@ async function applyWarmupRecordItem(item: any): Promise<void> {
   await upsertWarmupRecordEntries(record)
 }
 
-async function refreshLocalNotebookCounts(): Promise<void> {
-  const [notebooks, notebookItems, expressionEntries] = await Promise.all([
-    localDb.list<any>('learning_notebooks'),
-    localDb.list<any>('learning_notebook_items'),
-    localDb.list<any>('expression_entries'),
-  ])
-  const typeByEntryId = new Map(expressionEntries.map((entry) => [entry.id, entry.type]))
-  const countsByNotebookId = new Map<string, { total: number; word: number; chunk: number; pattern: number }>()
-
-  for (const item of notebookItems) {
-    const counts = countsByNotebookId.get(item.notebookId) ?? { total: 0, word: 0, chunk: 0, pattern: 0 }
-    counts.total += 1
-    const type = typeByEntryId.get(item.expressionEntryId)
-    if (type === 'word') counts.word += 1
-    else if (type === 'chunk') counts.chunk += 1
-    else if (type === 'scene_phrase') counts.pattern += 1
-    countsByNotebookId.set(item.notebookId, counts)
-  }
-
-  await Promise.all(notebooks.map((notebook) => localDb.put('learning_notebooks', {
-    ...notebook,
-    counts: countsByNotebookId.get(notebook.id) ?? { total: 0, word: 0, chunk: 0, pattern: 0 },
-  })))
-}
-
-async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
+async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { id: string; value: string }): Promise<void> {
+  const notebookWrites: import('./unified-storage').LocalWrite[] = []
+  const pending = (await localDb.list<SyncOutboxItem>('outbox')).filter(op => op.status !== 'synced')
+  const pendingIds = new Set(pending.map(op => op.entityId))
+  const pendingExpressions = new Set(pending.filter(op => ['word_entry', 'chunk_entry', 'pattern_entry'].includes(op.entityType))
+    .map(op => `${op.entityType.replace('_entry', '')}:${op.entityId}`))
+  const hasPending = (row: any) => row && (pendingIds.has(row.id) || pendingExpressions.has(row.expressionEntryId))
   for (const item of changed?.expressionItems ?? []) {
     await applyExpressionItem(item)
   }
 
-  for (const notebook of changed?.learningNotebooks ?? []) {
-    if (!notebook?.id) continue
-    await localDb.put('learning_notebooks', {
-      ...notebook,
-      remoteId: notebook.id,
-      syncStatus: 'synced',
-    })
-  }
-
-  for (const item of changed?.learningNotebookItems ?? []) {
-    if (!item?.id || !item?.expressionItem) continue
-    const expression = await learningContentRepository.saveRemoteExpressionEntry(item.expressionItem)
-    if (!expression) continue
-    await localDb.put('learning_notebook_items', {
-      id: item.id,
-      remoteId: item.id,
-      notebookId: item.notebookId,
-      expressionEntryId: expression.id,
-      masteryStatus: item.masteryStatus ?? 'learning',
-      reviewCount: item.reviewCount ?? 0,
-      intervalDays: item.intervalDays ?? 0,
-      easeFactor: item.easeFactor ?? 2.5,
-      lapseCount: item.lapseCount ?? 0,
-      lastReviewedAt: toIsoString(item.lastReviewedAt),
-      nextReviewAt: toIsoString(item.nextReviewAt),
-      createdAt: toIsoString(item.createdAt),
-      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
-      syncStatus: 'synced',
-    })
-    // 收藏时会先写入 local: 临时关联；远程条目到位后清掉同本同内容的临时副本，避免列表双份显示。
-    await localDb.deleteWhere<any>(
-      'learning_notebook_items',
-      (row) =>
-        row.notebookId === item.notebookId
-        && row.expressionEntryId === expression.id
-        && String(row.id).startsWith('local:'),
-    )
+  {
+    for (const notebook of changed?.learningNotebooks ?? []) {
+      if (!notebook?.id) continue
+      const aliases = await localDb.findByIndex<any>('learning_notebooks', 'remote_id', notebook.id)
+      const existing = aliases[0] ?? await localDb.get<any>('learning_notebooks', notebook.id)
+      if (hasPending(existing)) continue
+      notebookWrites.push({ table: 'learning_notebooks', value: { ...notebook, id: existing?.id ?? notebook.id,
+        remoteId: notebook.id, remoteUpdatedAt: notebook.updatedAt, remoteVersion: notebook.version, syncStatus: 'synced' } })
+    }
+    for (const item of changed?.learningNotebookItems ?? []) {
+      if (!item?.id || !item?.expressionItem) continue
+      const expression = await learningContentRepository.saveRemoteExpressionEntry(item.expressionItem)
+      if (!expression) continue
+      const aliases = await localDb.findByIndex<any>('learning_notebooks', 'remote_id', item.notebookId)
+      const notebookId = aliases[0]?.id ?? item.notebookId
+      const rows = (await localDb.findByIndex<any>('learning_notebook_items', 'notebook_id', notebookId))
+        .filter(row => row.expressionEntryId === expression.id)
+      if (rows.some(hasPending)) continue
+      const existing = rows.find(row => row.remoteId === item.id) ?? rows[0]
+      notebookWrites.push({ table: 'learning_notebook_items', value: { ...item, id: existing?.id ?? item.id,
+        remoteId: item.id, notebookId, expressionEntryId: expression.id,
+        remoteUpdatedAt: item.updatedAt, remoteVersion: item.version, syncStatus: 'synced', expressionItem: undefined } })
+      for (const duplicate of rows) if (duplicate.id !== (existing?.id ?? item.id)) notebookWrites.push({ table: 'learning_notebook_items', deleteId: duplicate.id })
+    }
   }
 
   for (const item of changed?.sceneProgresses ?? []) {
@@ -330,26 +303,28 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
   }
 
   for (const id of deleted?.expressionItems ?? []) {
-    await deleteExpressionItem(id)
+    const entries = await localDb.findByIndex<any>('expression_entries', 'remote_id', id)
+    for (const entry of entries) {
+      const related = await localDb.findByIndex<any>('learning_notebook_items', 'expression_entry_id', entry.id)
+      if (!related.some(hasPending)) notebookWrites.push({ table: 'expression_entries', deleteId: entry.id })
+    }
   }
 
-  for (const id of deleted?.learningNotebookItems ?? []) {
-    await localDb.delete('learning_notebook_items', id)
+  {
+    for (const [ids, table] of [
+      [deleted?.learningNotebookItems ?? [], 'learning_notebook_items'],
+      [deleted?.learningNotebooks ?? [], 'learning_notebooks'],
+    ] as const) {
+      for (const id of ids) {
+        const aliases = await localDb.findByIndex<any>(table, 'remote_id', id)
+        const direct = await localDb.get<any>(table, id)
+        for (const row of direct ? [...aliases, direct] : aliases) {
+          if (table === 'learning_notebook_items' && hasPending(row)) continue
+          notebookWrites.push({ table, value: { ...row, deletedAt: new Date().toISOString() } })
+        }
+      }
+    }
   }
-  for (const id of deleted?.learningNotebooks ?? []) {
-    await localDb.delete('learning_notebooks', id)
-    await localDb.deleteWhere<any>('learning_notebook_items', (item) => item.notebookId === id)
-  }
-
-  if (
-    (changed?.learningNotebooks?.length ?? 0) > 0 ||
-    (changed?.learningNotebookItems?.length ?? 0) > 0 ||
-    (deleted?.learningNotebooks?.length ?? 0) > 0 ||
-    (deleted?.learningNotebookItems?.length ?? 0) > 0
-  ) {
-    await refreshLocalNotebookCounts()
-  }
-
   // 批量删除 user_progress：一次 scan 替代逐条 list()
   const deletedSceneIds = new Set<string>((deleted?.sceneProgresses ?? []).map(String))
   const deletedChunkIds = new Set<string>((deleted?.chunkProgresses ?? []).map(String))
@@ -369,12 +344,18 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
       }
     }
   }
+  if (checkpoint) notebookWrites.push({ table: 'kv', value: { ...checkpoint, updatedAt: new Date().toISOString() } })
+  await localDb.commitLocalWrites(notebookWrites)
+  notifyLearningLibraryChanged()
 }
 
 async function replayItem(
   item: SyncOutboxItem,
   expressionCache?: { items: any[] },
 ): Promise<boolean> {
+  if (item.entityType === 'user_recording') { await uploadUserRecording((item.payload as { reference: string }).reference); return true }
+  if (['daily_practice', 'practice_turn', 'topic_submission'].includes(item.entityType)) item = { ...item, payload: await prepareRecordingPayload(item.payload) }
+  if (item.entityType === 'notebook' || item.entityType === 'notebook_item') return replayNotebookMutation(item)
   if (item.entityType === 'learning_activity') {
     const result = await dailyPracticeApi.recordActivity(item.payload as any)
     if ((result as any)?.accepted === false) throw new Error('学习时长未被接受')
@@ -614,8 +595,8 @@ async function replayItem(
 export type SyncScope = 'all' | 'today' | 'notebook'
 
 const SCOPE_OUTBOX_TYPES: Record<Exclude<SyncScope, 'all'>, ReadonlySet<SyncEntityType>> = {
-  today: new Set<SyncEntityType>(['daily_practice', 'learning_activity']),
-  notebook: new Set<SyncEntityType>(['word_entry', 'chunk_entry', 'pattern_entry']),
+  today: new Set<SyncEntityType>(['daily_practice', 'learning_activity', 'user_recording']),
+  notebook: new Set<SyncEntityType>(['notebook', 'notebook_item', 'word_entry', 'chunk_entry', 'pattern_entry']),
 }
 const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
   today: ['dailyPracticeRuns', 'practiceWarmupRecords'],
@@ -647,6 +628,7 @@ export const offlineSyncService = {
     changed: number
     deleted: number
     dailyPracticeRunIds: string[]
+    complete: boolean
   }> {
     const cursorKey = userSyncCursorKey(userId)
     const cursorRecord = await localDb.get<{ value?: string }>('kv', cursorKey)
@@ -655,20 +637,30 @@ export const offlineSyncService = {
     try {
       cursors = cursorRecord?.value ? JSON.parse(cursorRecord.value) : {}
     } catch { /* 旧格式兼容：忽略 */ }
+    // Older timestamp-only cursors could have skipped records at a page boundary.
+    // Reconcile once through the same sync protocol; retain all pending local edits.
+    if ((!types || types.includes('learningNotebookItems')) && !(await localDb.get<any>('kv', 'sync:user:notebook-protocol-v2'))?.value) {
+      for (const type of ['learningNotebooks', 'learningNotebookItems', 'deletedLearningNotebooks', 'deletedLearningNotebookItems', 'expressionItems', 'deletedExpressionItems']) delete cursors[type]
+      await localDb.commitLocalWrites([
+        { table: 'kv', value: { id: cursorKey, value: JSON.stringify(cursors) } },
+        { table: 'kv', value: { id: 'sync:user:notebook-protocol-v2', value: true } },
+      ])
+    }
     let totalChanged = 0
     let totalDeleted = 0
     const dailyPracticeRunIds = new Set<string>()
+    let complete = false
     let dailyHistoryComplete = false
     let finalCursors: Record<string, string | null> = { ...cursors }
 
     // 循环分页拉取，直到所有类型 hasMore 均为 false。
     const MAX_PULL_DURATION_MS = 30_000
     const pullStartedAt = Date.now()
-    let lastCursors = { ...cursors }
 
     while (true) {
       const result = await syncApi.pull(cursors, types)
-      await batchStatisticsNotifications(() => applyUserPullChanges(result.changed, result.deleted))
+      if (accountResetInProgress || (userId && (getCurrentSessionSnapshot()?.user?.id !== userId || result.userId !== userId))) throw new Error('Account changed')
+      await serializeNotebookWrite(() => batchStatisticsNotifications(() => applyUserPullChanges(result.changed, result.deleted, { id: cursorKey, value: JSON.stringify(result.cursors) })))
       for (const run of result.changed.dailyPracticeRuns ?? []) {
         if (typeof run?.clientRunId === 'string' && run.clientRunId) dailyPracticeRunIds.add(run.clientRunId)
       }
@@ -695,15 +687,14 @@ export const offlineSyncService = {
       // 检查是否所有类型都已拉完
       dailyHistoryComplete = !result.hasMore.dailyPracticeRuns
       const anyMore = Object.values(result.hasMore).some(Boolean)
-      if (!anyMore) break
+      if (!anyMore) { complete = true; break }
 
       if (Date.now() - pullStartedAt > MAX_PULL_DURATION_MS) {
-        // 超时：回退到上一页 cursors，下次 sync 从断点继续
+        // 已提交的页保留游标，下次从下一页继续
         logger.warn(`pull timeout after ${MAX_PULL_DURATION_MS}ms, will resume on next sync`)
-        finalCursors = lastCursors
+        finalCursors = result.cursors
         break
       }
-      lastCursors = result.cursors
       cursors = result.cursors
     }
 
@@ -722,11 +713,18 @@ export const offlineSyncService = {
       })
     }
 
-    return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted, dailyPracticeRunIds: [...dailyPracticeRunIds] }
+    if (complete && (!types || types.includes('learningNotebookItems'))) {
+      await localDb.put('kv', { id: 'sync:user:notebooks-complete', value: true })
+      notifyLearningLibraryChanged()
+    }
+    return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted, dailyPracticeRunIds: [...dailyPracticeRunIds], complete }
   },
 
-  async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope }): Promise<OfflineSyncResult> {
+  async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope; retryNow?: boolean }): Promise<OfflineSyncResult> {
+    userId ??= getCurrentSessionSnapshot()?.user?.id
     if (accountResetInProgress) throw new Error('Account data reset in progress')
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return { push: { synced: 0, failed: 0, skipped: 0, remaining: await localDb.countWhere('outbox', [{ column: 'status', value: ['pending', 'failed'] }]) }, pull: null, refreshedPacks: [], offline: true }
+    if (userId && getCurrentSessionSnapshot()?.user?.id !== userId) throw new Error('Account changed')
     // 局部同步：只上传/拉取该范围对应的类型；'all'/不传 = 完整同步。
     const outboxTypes = options?.scope && options.scope !== 'all' ? SCOPE_OUTBOX_TYPES[options.scope] : undefined
     const pullTypes = options?.scope && options.scope !== 'all' ? SCOPE_PULL_TYPES[options.scope] : undefined
@@ -738,23 +736,17 @@ export const offlineSyncService = {
       await activeSyncPromise
       return this.sync(userId, options)
     }
+    if (options?.retryNow) {
+      const failed = (await localDb.list<SyncOutboxItem>('outbox')).filter(item => item.status === 'failed' && (!outboxTypes || outboxTypes.has(item.entityType)))
+      await localDb.commitLocalWrites(failed.map(item => ({ table: 'outbox', value: { ...item, status: 'pending', nextRetryAt: new Date().toISOString() } })))
+    }
     const syncStore = useOfflineSyncStore.getState()
     const logId = syncStore.begin('开始同步')
     const running = (async (): Promise<OfflineSyncResult> => {
       try {
         if (!outboxTypes || outboxTypes.has('learning_activity')) await flushPracticeActivityRecords()
         const push = await this.flush(outboxTypes)
-        if (push.failed > 0 || push.remaining > 0) {
-          const detail = { push, pull: null, refreshedPacks: [] as string[] }
-          if (!options?.quiet) toast.error(`还有 ${push.remaining} 条数据待同步，将在后续同步时继续处理`)
-          useOfflineSyncStore.getState().finish(logId, {
-            status: 'failed',
-            summary: `还有 ${push.remaining} 条数据待同步`,
-            detail,
-            error: `${push.remaining} 条待同步操作尚未确认。`,
-          })
-          return detail
-        }
+        if (push.remaining > 0 && !options?.quiet && navigator.onLine) toast.error(`还有 ${push.remaining} 条数据待同步，将在后续同步时继续处理`)
         const pull = await this.pull(userId, pullTypes)
 
         // 今日任务 item 进度：全量或今日范围同步时拉取
@@ -769,11 +761,15 @@ export const offlineSyncService = {
           ? await this.refreshContentUpdates()
           : []
         void refreshLearningBadgeFromTodayRun().catch(() => undefined)
+        const pendingErrors = push.remaining > 0 ? (await localDb.list<SyncOutboxItem>('outbox'))
+          .filter(item => item.status === 'failed' && (!outboxTypes || outboxTypes.has(item.entityType)))
+          .map(item => item.lastError).filter(Boolean) : []
         const result = { push, pull, refreshedPacks }
         useOfflineSyncStore.getState().finish(logId, {
-          status: 'success',
-          summary: `同步完成：上传 ${push.synced}，拉取 ${pull.changed + pull.deleted}，更新学习包 ${refreshedPacks.length}`,
+          status: pull.complete && push.remaining === 0 ? 'success' : 'failed',
+          summary: `${pull.complete && push.remaining === 0 ? '同步完成' : '同步未完成，下次继续'}：上传 ${push.synced}，拉取 ${pull.changed + pull.deleted}，更新学习包 ${refreshedPacks.length}`,
           detail: result,
+          error: pendingErrors.length ? [...new Set(pendingErrors)].join('；') : undefined,
           pulledDailyPracticeRunIds: pull.dailyPracticeRunIds,
         })
         return result
@@ -976,7 +972,7 @@ export const offlineSyncService = {
               failed += 1
             }
           } catch (error) {
-            if (isPermanentSyncError(error)) {
+            if (item.entityType !== 'notebook' && item.entityType !== 'notebook_item' && item.entityType !== 'user_recording' && isPermanentSyncError(error)) {
               await syncOutbox.markDiscarded(item.id)
               if (item.entityType === 'practice_session') {
                 await discardSessionDependents(item.entityId)
@@ -996,7 +992,7 @@ export const offlineSyncService = {
     let replayPasses = 0
     while (madeProgress && replayPasses++ < 2) {
       madeProgress = false
-      const pending = await syncOutbox.listPending(outboxTypes)
+      const pending = (await syncOutbox.listPending(outboxTypes)).sort((a, b) => Number(b.entityType === 'notebook') - Number(a.entityType === 'notebook') || a.createdAt.localeCompare(b.createdAt))
 
       for (const item of pending) {
         if (bulkEntityTypes.has(item.entityType)) {
@@ -1022,7 +1018,7 @@ export const offlineSyncService = {
           // spin on the same successful request; leave it pending for the
           // next scheduled/manual sync.
         } catch (error) {
-          if (isPermanentSyncError(error)) {
+          if (item.entityType !== 'notebook' && item.entityType !== 'notebook_item' && item.entityType !== 'user_recording' && isPermanentSyncError(error)) {
             await syncOutbox.markDiscarded(item.id)
             if (item.entityType === 'practice_session') {
               await discardSessionDependents(item.entityId)

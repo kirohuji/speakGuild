@@ -673,6 +673,8 @@ export function LearningUnitPage() {
         teachingMarkdown={teachingMarkdown}
       />
       <SaveToNotebookDrawer
+        entry={pendingSave ? { kind: pendingSave.kind, text: pendingSave.kind === 'word' ? pendingSave.item.word : pendingSave.kind === 'chunk' ? pendingSave.item.text : pendingSave.item.pattern } : null}
+        onRemoved={() => { void Promise.all((['word', 'chunk', 'pattern'] as const).map(kind => learningContentRepository.listExpressionTexts(kind))).then(groups => setCollectedTexts(new Set(groups.flat()))) }}
         open={saveDrawerOpen}
         onOpenChange={setSaveDrawerOpen}
         onSave={savePendingToNotebooks}

@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -45,7 +46,7 @@ export function MobileInviteDrawer({
         setStats(referralStats)
       })
       .catch((error: any) => {
-        if (!cancelled) toast.error(error?.message || t('invite.loadFailed'))
+        if (!cancelled) showRequestError(error, t('invite.loadFailed'), { background: true })
       })
       .finally(() => {
         if (!cancelled) setLoading(false)

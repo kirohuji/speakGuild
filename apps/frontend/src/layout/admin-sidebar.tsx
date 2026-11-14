@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Users, Settings, BarChart3, Bell,
+  Users, Settings, BarChart3, Bell, Download,
   ChevronRight, ChevronDown, CreditCard, Receipt,
   MessageSquare, Award, Palette, Quote,
   Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks, ScrollText, Boxes, Castle, Clapperboard, HardDrive,
@@ -98,6 +98,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'analytics', label: t('admin.analytics', { defaultValue: '数据统计' }), icon: BarChart3, path: '/admin/analytics' },
       { key: 'mobile-bundles', label: t('admin.otaBundles', { defaultValue: 'OTA 安装包' }), icon: Smartphone, path: '/admin/mobile-bundles' },
       { key: 'settings', label: t('admin.settings', { defaultValue: '系统设置' }), icon: Settings, path: '/admin/settings' },
+      { key: 'offline-models', label: '离线模型管理', icon: Download, path: '/admin/offline-models' },
       { key: 'ai-models', label: '大模型管理', icon: Brain, path: '/admin/ai-models' },
       { key: 'tasks', label: '任务中心', icon: ListChecks, path: '/admin/tasks' },
       { key: 'file-assets', label: '资源库管理', icon: HardDrive, path: '/admin/file-assets' },

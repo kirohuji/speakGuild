@@ -1,3 +1,4 @@
+import { LOCAL_RECORDING_SCHEME, resolveLocalRecording } from './user-recordings'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
@@ -24,6 +25,7 @@ export async function resolvePlaybackAudio(input: {
   /** NativeAudio needs a file:// URI. The WebView player needs a capacitor:// URL. */
   asFileUri?: boolean
 }): Promise<string | null> {
+  if (input.url?.startsWith(LOCAL_RECORDING_SCHEME)) return resolveLocalRecording(input.url)
   const rawUrl = input.url ? normalizeUrl(input.url) : ''
   const assetId = input.assetId || fileAssetIdFromUrl(rawUrl) || null
   const role = input.role ?? 'voice'

@@ -1,3 +1,4 @@
+import { useLearningStore } from '@/stores/learning.store'
 import { useLearningStatistics } from '@/stores/learning-statistics.store'
 import React, { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -27,12 +28,16 @@ export function OverviewTab() {
   const hmLoading = isLoading
   const heatmap = useMemo(() => toActivityHeatmap(overview?.dailyStats ?? [], year), [overview, year])
 
+  const checkInStreak = useLearningStore(state => state.checkInStreak)
+  const fetchCheckInCalendar = useLearningStore(state => state.fetchCheckInCalendar)
+  const todayKey = localDateKey()
+  useEffect(() => { void fetchCheckInCalendar(todayKey, todayKey) }, [todayKey, fetchCheckInCalendar])
   const stats = [
     { label: t('profile.stats.practiceDays'), value: overview?.activeDays ?? 0, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { label: t('profile.stats.totalQuestions'), value: overview?.uniqueQuestionsAnswered ?? 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     { label: t('profile.stats.favorites'), value: overview?.favoriteCount ?? 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     { label: t('profile.stats.words'), value: overview?.wordCount ?? 0, icon: BookMarked, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: t('profile.stats.streakDays'), value: `${overview?.currentStreakDays ?? 0}`, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { label: t('profile.stats.streakDays'), value: checkInStreak ?? '—', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     { label: t('profile.stats.dailyAvg'), value: overview?.avgDailyQuestions ?? 0, icon: TrendingUp, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
   ]
 

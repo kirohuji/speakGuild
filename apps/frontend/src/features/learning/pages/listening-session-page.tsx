@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -361,7 +362,7 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose, onPlaybackProg
       await learningApi.saveTopicSubmission(topic.id, { response: { listenedAtMs: currentMs }, status: 'completed' })
       toast.success(t('learning.topicCompleted'))
     } catch (error: any) {
-      toast.error(error?.message || t('learning.saveFailed'))
+      showRequestError(error, t('learning.saveFailed'))
     } finally {
       setCompleting(false)
     }

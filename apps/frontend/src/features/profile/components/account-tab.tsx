@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -119,7 +120,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
       await uploadAvatar(file)
       toast.success(t('profile.avatarUpdated', { defaultValue: '头像已更新' }))
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || t('profile.auth.loadFailed'))
+      showRequestError(error, t('profile.auth.loadFailed'))
     }
   }
 

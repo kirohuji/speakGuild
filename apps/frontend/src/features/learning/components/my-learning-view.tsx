@@ -1,3 +1,4 @@
+import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -272,8 +273,8 @@ function InProgressUnitCard({
     setConfirmQuit(false)
     try {
       await onQuit?.()
-    } catch {
-      toast.error(t('learning.quitFailed'))
+    } catch (error) {
+      showRequestError(error, t('learning.quitFailed'))
     } finally {
       setQuitting(false)
     }
@@ -283,8 +284,8 @@ function InProgressUnitCard({
     if (!onDownloadPack || isPackBusy) return
     try {
       await onDownloadPack()
-    } catch {
-      toast.error(t('learning.packDownloadFailed'))
+    } catch (error) {
+      showRequestError(error, t('learning.packDownloadFailed'))
     }
   }, [isPackBusy, onDownloadPack, t])
 
@@ -292,8 +293,8 @@ function InProgressUnitCard({
     if (!downloadTask || downloadTask.status !== 'paused') return
     try {
       await resumePackTask(unit.id)
-    } catch {
-      toast.error(downloadTask.kind === 'uninstall' ? t('learning.resumeUninstallFailed') : t('learning.packDownloadFailed'))
+    } catch (error) {
+      showRequestError(error, downloadTask.kind === 'uninstall' ? t('learning.resumeUninstallFailed') : t('learning.packDownloadFailed'))
     }
   }, [downloadTask, resumePackTask, t, unit.id])
 
@@ -304,7 +305,7 @@ function InProgressUnitCard({
     try {
       await onSetActivePracticePack()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learning.setCurrentPracticeFailed'))
+      showRequestError(error, t('learning.setCurrentPracticeFailed'))
     } finally {
       setSwitchingPractice(false)
     }
@@ -318,7 +319,7 @@ function InProgressUnitCard({
       await useLearningStore.getState().refreshMyUnits()
       toast.success(t('learning.markCompletedDone', { title: unit.title }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learning.markCompletedFailed'))
+      showRequestError(error, t('learning.markCompletedFailed'))
     } finally {
       setMarkingComplete(false)
     }
@@ -538,7 +539,7 @@ function MyUnitCard({
       await useLearningStore.getState().refreshMyUnits()
       toast.success(t('learning.learnAgainDone', { title: unit.title }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('learning.learnAgainFailed'))
+      showRequestError(error, t('learning.learnAgainFailed'))
     } finally {
       setRestarting(false)
     }

@@ -49,7 +49,7 @@ export const usePracticeActivityStore = create<{
   getRecord(date, source) { return get().records[keyFor(date, source)] ?? null },
   releaseSource(source) {
     // Keep failed increments in dirty until retry; completed sessions leave runtime state.
-    set(s => ({ records: Object.fromEntries(Object.entries(s.records).filter(([, record]) => record.sourceId !== source)) }))
+    set(s => ({ records: Object.fromEntries(Object.entries(s.records).filter(([, record]) => record.sourceId !== source && !record.sourceId.startsWith(`${source}:h`))) }))
   },
   reset() { generation++; dirty.clear(); set({ records: {} }) },
 }))

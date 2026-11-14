@@ -799,6 +799,8 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         </TabsContent>
       </div>
       <SaveToNotebookDrawer
+        entry={{ kind: 'word', text: item.word }}
+        onRemoved={() => { void learningContentRepository.isExpressionSaved('word', item.word).then(setSaved) }}
         open={saveDrawerOpen}
         onOpenChange={setSaveDrawerOpen}
         onSave={saveWordToNotebooks}
@@ -1119,6 +1121,8 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
         </TabsContent>
       </div>
       <SaveToNotebookDrawer
+        entry={{ kind: 'chunk', text: item.text }}
+        onRemoved={() => { void learningContentRepository.isExpressionSaved('chunk', item.text).then(setSaved) }}
         open={saveDrawerOpen}
         onOpenChange={setSaveDrawerOpen}
         onSave={saveChunkToNotebooks}
@@ -1217,6 +1221,8 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         </TabsContent>
       </div>
       <SaveToNotebookDrawer
+        entry={{ kind: 'pattern', text: item.pattern }}
+        onRemoved={() => { void learningContentRepository.isExpressionSaved('pattern', item.pattern).then(setSaved) }}
         open={saveDrawerOpen}
         onOpenChange={setSaveDrawerOpen}
         onSave={savePatternToNotebooks}

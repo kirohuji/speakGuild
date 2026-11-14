@@ -42,6 +42,7 @@ const USER_SCOPED_KV_KEYS = new Set([
 
 /** kv 表中按前缀归属当前用户的 key */
 const USER_SCOPED_KV_PREFIXES = [
+  'user-recording:',
   'session-map:',
   'expression-cache:',
   'sync:user:',
@@ -221,6 +222,7 @@ export const offlineStorageService = {
         || USER_SCOPED_KV_PREFIXES.some((prefix) => id.startsWith(prefix))
     })
     clearUserScopedLocalStorageKeys()
+    if (isNative()) await Filesystem.rmdir({ path: 'user-recordings', directory: Directory.Data, recursive: true }).catch(() => undefined)
   },
 
   async getStats(): Promise<OfflineStorageStats> {
@@ -405,9 +407,8 @@ export const offlineStorageService = {
       // in-progress 1/10 run depend on a fragile remote restore path.
       await localDb.deleteWhere<any>('kv', (item) => {
         const id = String(item.id)
-        return id.startsWith('session-map:')
+        return id.startsWith('practice-ui-cache:') || id === 'practice-records-cache:loaded'
       })
-      clearPracticeLocalStorageKeys()
       return
     }
 
