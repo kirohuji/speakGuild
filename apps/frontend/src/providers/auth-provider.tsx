@@ -21,6 +21,9 @@ import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { useLearningStore, waitForCheckInCacheWrites } from '@/stores/learning.store'
 import { isManagementHashRoute, useManagementHashRoute } from '@/hooks/use-management-route'
 import { setCurrentSessionSnapshot } from '@/providers/auth-session'
+import { AccountDataIsolationError, prepareAccountData, clearAccountDataForLogout } from '@/lib/offline/account-data-ownership'
+import { serializeNotebookWrite } from '@/lib/offline/notebook-mutations'
+import { toast } from 'sonner'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 const AUTH_SESSION_CACHE_KEY = 'manyu-auth-session-cache'
@@ -183,11 +186,7 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
   useLearningStore.getState().resetUserState()
   await waitForCheckInCacheWrites().catch(() => undefined)
   if (!options.preservePersistentData) {
-    try {
-      await offlineStorageService.clearUserData()
-    } catch (error) {
-      console.warn('[auth] clear user offline data failed:', error)
-    }
+    await serializeNotebookWrite(() => offlineStorageService.clearUserData())
   }
   useLearningStatisticsStore.getState().reset()
   useOfflineSyncStore.getState().reset()
@@ -217,22 +216,32 @@ function startBackgroundLoginRestore(userId: string) {
 }
 
 async function prepareOfflineDataForUser(userId: string) {
-  const ownerId = getOfflineDataOwner()
-  // Data retained after an expired session may only be reused by the same account.
-  if (ownerId && ownerId !== userId) await clearUserScopedClientData()
-  activateAccountLearningPreferences(userId, { migrateCurrentDeviceValues: ownerId === userId })
-  setOfflineDataOwner(userId)
-  offlineSyncService.resumeForAccount()
-  if (!ownerId || ownerId === userId) {
-    await flushPracticeActivityRecords().catch((error) => {
-      console.warn('[auth] flush practice activity failed:', error)
+  try {
+    const ownerId = getOfflineDataOwner()
+    offlineSyncService.pauseForAccountReset()
+    await offlineSyncService.waitForIdle()
+    await useDailyPracticeStore.getState().waitForPendingWrites()
+    await waitForActivityWrites()
+    await waitForCheckInCacheWrites()
+    await serializeNotebookWrite(async () => undefined)
+    const { reused, archiveId } = await prepareAccountData(userId, { ownerId, cachedUserId: readCachedSession()?.user.id ?? null }, () => clearUserScopedClientData())
+    if (archiveId) toast('旧版本地数据已单独保留，未合并到当前账号')
+    activateAccountLearningPreferences(userId, { migrateCurrentDeviceValues: reused })
+    setOfflineDataOwner(userId)
+    offlineSyncService.resumeForAccount()
+    if (reused) {
+      await flushPracticeActivityRecords().catch((error) => {
+        console.warn('[auth] flush practice activity failed:', error)
+      })
+    }
+    // Foreground sync is deliberately throttled and may have already run for a
+    // previous account. Rebuild native notifications immediately for this one.
+    void rescheduleLearningReminder().catch((error) => {
+      console.warn('[learning-reminder] reschedule on account switch failed:', error)
     })
+  } catch (error) {
+    throw error instanceof AccountDataIsolationError ? error : new AccountDataIsolationError(error)
   }
-  // Foreground sync is deliberately throttled and may have already run for a
-  // previous account. Rebuild native notifications immediately for this one.
-  void rescheduleLearningReminder().catch((error) => {
-    console.warn('[learning-reminder] reschedule on account switch failed:', error)
-  })
 }
 
 function credentialErrorMessage(
@@ -287,9 +296,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
-  const cachedSessionRef = useRef<SessionPayload>(readCachedSession())
-  const [session, setSession] = useState<Session | null>(() => cachedSessionRef.current)
-  const [isLoading, setIsLoading] = useState(() => !cachedSessionRef.current)
+  const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const managementRoute = useManagementHashRoute()
 
   // Listen for 401 events from request interceptor (token expired/invalid)
@@ -312,28 +320,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
-  useEffect(() => {
-    if (cachedSessionRef.current?.user?.id) {
-      setCurrentSessionSnapshot(cachedSessionRef.current)
-      localStorage.setItem(OTA_USER_ID_KEY, cachedSessionRef.current.user.id)
-    }
-  }, [])
-
   useAppForegroundSync(session?.user?.id, !managementRoute)
 
   const fetchSession = async (options: { allowCacheFallback?: boolean } = {}): Promise<Session | null> => {
     try {
-      const raw = await authClient.getSession()
+      let timeout: ReturnType<typeof setTimeout> | undefined
+      const raw = await Promise.race([
+        authClient.getSession(),
+        new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Session refresh timed out')), 5000) }),
+      ]).finally(() => clearTimeout(timeout))
       const nextSession = normalizeSessionResponse(raw)
       if (nextSession?.user?.id && !isManagementHashRoute()) {
         await prepareOfflineDataForUser(nextSession.user.id)
         // Mark restore pending before exposing the session so TodayTaskPage can
         // wait, then sync in the background so login itself is not blocked.
-        startBackgroundLoginRestore(nextSession.user.id)
+        useOfflineSyncStore.getState().setLoginRestorePending(true)
       }
       setCurrentSessionSnapshot(nextSession)
       setSession(nextSession)
       writeCachedSession(nextSession)
+      if (nextSession?.user?.id && !isManagementHashRoute()) startBackgroundLoginRestore(nextSession.user.id)
 
       if (nextSession?.user?.id) {
         localStorage.setItem(OTA_USER_ID_KEY, nextSession.user.id)
@@ -346,14 +352,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return nextSession
     } catch (error) {
+      if (error instanceof AccountDataIsolationError) {
+        setCurrentSessionSnapshot(null)
+        setSession(null)
+        throw error
+      }
       const cached = options.allowCacheFallback === false ? null : readCachedSession()
       if (cached?.user?.id) {
         if (!isManagementHashRoute()) {
-          await prepareOfflineDataForUser(cached.user.id)
-          startBackgroundLoginRestore(cached.user.id)
+          try { await prepareOfflineDataForUser(cached.user.id) }
+          catch (prepareError) { setCurrentSessionSnapshot(null); setSession(null); throw prepareError }
         }
         setCurrentSessionSnapshot(cached)
         setSession(cached)
+        if (!isManagementHashRoute()) startBackgroundLoginRestore(cached.user.id)
         localStorage.setItem(OTA_USER_ID_KEY, cached.user.id)
         if (!isManagementHashRoute()) void useUserStore.getState().ensureLoaded(cached.user.id)
         console.warn('[auth] session refresh failed; using cached session:', error)
@@ -375,15 +387,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    fetchSession()
-
-    // ⏱ 加载超时兜底：5 秒后无论是否完成都退出加载态
-    // 防止 iOS 模拟器或弱网环境下 auth 请求卡住导致白屏
-    const timeout = window.setTimeout(() => {
-      setIsLoading(false)
-    }, 5000)
-
-    return () => window.clearTimeout(timeout)
+    void fetchSession().catch(error => {
+      console.warn('[auth] account data preparation failed:', error)
+      if (error instanceof AccountDataIsolationError) toast.error(error.message)
+    })
   }, [])
 
   useEffect(() => {
@@ -480,8 +487,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[RevenueCat] logout reset failed:', error)
       })
     }
-    await clearUserScopedClientData({ preservePersistentData: managementRoute })
-    setOfflineDataOwner(null)
+    setSession(null)
+    setCurrentSessionSnapshot(null)
+    if (managementRoute) await clearUserScopedClientData({ preservePersistentData: true })
+    else {
+      await clearAccountDataForLogout(() => clearUserScopedClientData())
+      setOfflineDataOwner(null)
+    }
     clearBearerToken()
     useUserStore.getState().reset()
     localStorage.removeItem(OTA_USER_ID_KEY)

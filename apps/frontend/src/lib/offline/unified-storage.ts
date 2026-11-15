@@ -23,6 +23,7 @@ import { Capacitor } from '@capacitor/core'
 export type LocalWrite = { table: TableName; value: any; deleteId?: never } | { table: TableName; deleteId: string; value?: never }
 
 export interface ILocalDb {
+  snapshotTables(tables: TableName[]): Promise<Record<string, Record<string, unknown>[]>>
   commitLocalWrites(writes: LocalWrite[]): Promise<void>
   activeNotebookItems(): Promise<Array<{ id: string; notebookId: string; expressionEntryId: string }>>
   notebookCounts(): Promise<Array<{ notebookId: string; kind: string; count: number }>>
@@ -107,6 +108,7 @@ async function getBackend(): Promise<ILocalDb> {
 // ── Public API ────────────────────────────────────────
 
 export const localDb: ILocalDb = {
+  async snapshotTables(tables) { return (await getBackend()).snapshotTables(tables) },
   async commitLocalWrites(writes) { await (await getBackend()).commitLocalWrites(writes); if (writes.some(w => w.table === 'outbox')) notifyStatisticsChanged('outbox') },
   async activeNotebookItems() { return (await getBackend()).activeNotebookItems() },
   async notebookCounts() { return (await getBackend()).notebookCounts() },

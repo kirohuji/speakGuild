@@ -105,7 +105,8 @@ function toLibraryExpression(entry: ExpressionEntry, item: CachedNotebookItem): 
 }
 
 export const learningNotebookRepository = {
-  async listCached(): Promise<NotebookListResult> {
+  // Internal read used while holding the notebook write lock.
+  async listStored(): Promise<NotebookListResult> {
     const [notebooks, groups] = await Promise.all([
       localDb.list<CachedNotebook>('learning_notebooks'), localDb.notebookCounts(),
     ])
@@ -121,6 +122,18 @@ export const learningNotebookRepository = {
     return summarize(notebooks.filter(n => !n.deletedAt).map(n => ({
       ...n, counts: counts.get(n.id) ?? { total: 0, word: 0, chunk: 0, pattern: 0 },
     })).sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt)))
+  },
+
+  async listCached(): Promise<NotebookListResult> {
+    const cached = await this.listStored()
+    if (cached.items.some(n => n.kind === 'uncategorized') || !getCurrentSessionSnapshot()?.user?.id) return cached
+    await serializeNotebookWrite(async () => {
+      // Recheck inside the lock: parallel views must create only one system notebook.
+      if (!(await this.listStored()).items.some(n => n.kind === 'uncategorized')) {
+        await this.createLocal('未分类', 'uncategorized')
+      }
+    })
+    return this.listStored()
   },
 
   // Compatibility for existing callers: refreshing a view never performs network I/O.
@@ -205,7 +218,7 @@ export const learningNotebookRepository = {
   async addEntry(entry: ExpressionEntry, notebookIds: string[]) {
     return serializeNotebookWrite(async () => {
       if (!notebookIds.length) {
-        const notebooks = await this.listCached()
+        const notebooks = await this.listStored()
         let uncategorized = notebooks.items.find(n => n.kind === 'uncategorized')
         if (!uncategorized) uncategorized = await this.createLocal('未分类', 'uncategorized')
         notebookIds = [uncategorized.id]
@@ -243,10 +256,10 @@ export const learningNotebookRepository = {
   async createLocal(rawName: string, kind: 'custom' | 'uncategorized' = 'custom'): Promise<CachedNotebook> {
     const name = rawName.trim()
     if (!name || name.length > 30) throw new Error('学习本名称需为 1–30 个字符')
-    const notebooks = await this.listCached()
+    const notebooks = await this.listStored()
     if (notebooks.items.some(n => n.name.toLocaleLowerCase() === name.toLocaleLowerCase() && n.kind === kind)) throw new Error('已经有同名学习本')
     const now = new Date().toISOString()
-    const notebook: CachedNotebook = { id: createId('notebook'), name, kind, color: 'ocean', sortOrder: notebooks.items.length,
+    const notebook: CachedNotebook = { id: createId('notebook'), name, kind, color: kind === 'uncategorized' ? 'slate' : 'ocean', sortOrder: kind === 'uncategorized' ? -1 : notebooks.items.length,
       createdAt: now, updatedAt: now, remoteId: null, syncStatus: 'pending', counts: { total: 0, word: 0, chunk: 0, pattern: 0 } }
     const mutation = notebookMutation('notebook', notebook, { name, kind, deleted: false, ownerId: getCurrentSessionSnapshot()?.user?.id })
     await commitNotebookMutation([{ table: 'learning_notebooks', value: { ...notebook, lastMutationId: mutation.id } }, { table: 'outbox', value: mutation }])
@@ -257,7 +270,7 @@ export const learningNotebookRepository = {
     return serializeNotebookWrite(async () => {
       const name = rawName.trim()
       if (!name || name.length > 30) throw new Error('学习本名称需为 1–30 个字符')
-      if ((await this.listCached()).items.some(n => n.id !== id && n.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error('已经有同名学习本')
+      if ((await this.listStored()).items.some(n => n.id !== id && n.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error('已经有同名学习本')
       return this.writeNotebook(id, { name })
     })
   },

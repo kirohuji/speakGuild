@@ -1,5 +1,5 @@
 import { prepareRecordingPayload, uploadUserRecording, RecordingDependencyError } from './user-recordings'
-import { replayNotebookMutation } from './notebook-sync'
+import { replayNotebookMutation, findPulledNotebook } from './notebook-sync'
 import { serializeNotebookWrite } from './notebook-mutations'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { learningStatisticsRepository } from './learning-statistics.repository'
@@ -196,11 +196,18 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
   }
 
   {
+    const notebookAliases = new Map<string, string>()
     for (const notebook of changed?.learningNotebooks ?? []) {
       if (!notebook?.id) continue
-      const aliases = await localDb.findByIndex<any>('learning_notebooks', 'remote_id', notebook.id)
-      const existing = aliases[0] ?? await localDb.get<any>('learning_notebooks', notebook.id)
-      if (hasPending(existing)) continue
+      const existing = await findPulledNotebook(notebook)
+      notebookAliases.set(notebook.id, existing?.id ?? notebook.id)
+      if (hasPending(existing)) {
+        // Bind the server identity without overwriting queued local edits.
+        if (notebook.kind === 'uncategorized' && !existing.remoteId) notebookWrites.push({
+          table: 'learning_notebooks', value: { ...existing, remoteId: notebook.id },
+        })
+        continue
+      }
       notebookWrites.push({ table: 'learning_notebooks', value: { ...notebook, id: existing?.id ?? notebook.id,
         remoteId: notebook.id, remoteUpdatedAt: notebook.updatedAt, remoteVersion: notebook.version, syncStatus: 'synced' } })
     }
@@ -209,7 +216,7 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
       const expression = await learningContentRepository.saveRemoteExpressionEntry(item.expressionItem)
       if (!expression) continue
       const aliases = await localDb.findByIndex<any>('learning_notebooks', 'remote_id', item.notebookId)
-      const notebookId = aliases[0]?.id ?? item.notebookId
+      const notebookId = notebookAliases.get(item.notebookId) ?? aliases[0]?.id ?? item.notebookId
       const rows = (await localDb.findByIndex<any>('learning_notebook_items', 'notebook_id', notebookId))
         .filter(row => row.expressionEntryId === expression.id)
       if (rows.some(hasPending)) continue

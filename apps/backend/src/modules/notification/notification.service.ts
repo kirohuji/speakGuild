@@ -417,7 +417,7 @@ export class NotificationService {
     });
   }
 
-  /** 获取用户未读的特殊通知（首页横幅用） */
+  /** Only the latest visible special notification is eligible for a home popup. */
   async getUnreadSpecialNotifications(userId: string) {
     const notifications = await this.prisma.notification.findMany({
       where: {
@@ -430,14 +430,15 @@ export class NotificationService {
             ],
           },
         ],
-        reads: { none: { userId } },
       },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-      select: { id: true, title: true, content: true, imageUrl: true, createdAt: true },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 1,
+      select: { id: true, title: true, content: true, imageUrl: true, createdAt: true,
+        reads: { where: { userId }, select: { userId: true }, take: 1 },
+      },
     });
 
-    return notifications;
+    return notifications.filter(item => item.reads.length === 0).map(({ reads, ...item }) => item);
   }
 
   /** 管理员：删除通知 */

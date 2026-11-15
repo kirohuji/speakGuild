@@ -185,6 +185,11 @@ async function clearAssetFiles(): Promise<void> {
   await deferredPackAssetService.clearOpenZips()
 }
 
+function isUserScopedLocalStorageKey(key: string): boolean {
+  return ['guided-progress:', 'guided-session:', 'manyu:novel-progress:', 'nqtr-save:', 'story-episode-passed:'].some(prefix => key.startsWith(prefix))
+    || ['manyu-search-history', 'learning-library:last-notebook-id', 'manyu:today-teaching-hint-seen'].includes(key)
+}
+
 function clearPracticeLocalStorageKeys(): void {
   if (typeof localStorage === 'undefined') return
   for (const key of Object.keys(localStorage)) {
@@ -209,6 +214,49 @@ function clearUserScopedLocalStorageKeys(): void {
 }
 
 export const offlineStorageService = {
+  /** Preserve legacy rows before clearing an unidentified account's active space. */
+  async archiveUserData(archiveId: string): Promise<void> {
+    const key = `offline-account-archive:${archiveId}`
+    let archive = await localDb.get<any>('kv', key)
+    if (!archive) {
+      const tables = await localDb.snapshotTables(USER_SCOPED_TABLES)
+      const kv = (await localDb.list<any>('kv')).filter(item => USER_SCOPED_KV_KEYS.has(item.id)
+        || USER_SCOPED_KV_PREFIXES.some(prefix => item.id.startsWith(prefix)))
+      const localStorageData: Record<string, string> = {}
+      if (typeof localStorage !== 'undefined') for (const name of Object.keys(localStorage)) {
+        if (isUserScopedLocalStorageKey(name)) localStorageData[name] = localStorage.getItem(name)
+      }
+      archive = { id: key, format: 'sqlite-rows-v1', createdAt: new Date().toISOString(), tables, kv, localStorageData, ready: false }
+      await localDb.put('kv', archive)
+    }
+    if (archive.ready) return
+    if (isNative()) {
+      const root = await Filesystem.readdir({ path: '', directory: Directory.Data })
+      if (root.files.some(file => file.name === 'user-recordings')) {
+        const target = `offline-account-archives/${archiveId}`
+        await Filesystem.mkdir({ path: target, directory: Directory.Data, recursive: true })
+        await Filesystem.rename({ from: 'user-recordings', to: `${target}/user-recordings`, directory: Directory.Data, toDirectory: Directory.Data })
+      }
+    }
+    await localDb.put('kv', { ...archive, ready: true, recordingsDirectory: `offline-account-archives/${archiveId}/user-recordings` })
+  },
+
+  async inspectUserData(): Promise<{ hasData: boolean; ownerIds: string[] }> {
+    let hasData = false
+    const ownerIds = new Set<string>()
+    for (const table of USER_SCOPED_TABLES) {
+      if (await localDb.count(table)) hasData = true
+    }
+    for (const row of await localDb.list<any>('outbox')) {
+      const owner = row.payload?.ownerId
+      if (typeof owner === 'string' && owner) ownerIds.add(owner)
+    }
+    for (const row of await localDb.list<any>('kv')) {
+      if (USER_SCOPED_KV_KEYS.has(row.id) || USER_SCOPED_KV_PREFIXES.some(prefix => String(row.id).startsWith(prefix))) hasData = true
+      if (String(row.id).startsWith('user_profile:')) ownerIds.add(String(row.id).slice('user_profile:'.length))
+    }
+    return { hasData, ownerIds: [...ownerIds] }
+  },
   /**
    * Clear data that belongs to the signed-in user while keeping reusable offline
    * resources such as installed learning packs, downloaded assets, dictionaries,

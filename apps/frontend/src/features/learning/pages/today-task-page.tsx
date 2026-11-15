@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowRight, Blocks, Braces, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, ListChecks, ListMusic, PenLine, Replace, Split, Target,
-  AlertCircle, CheckCircle2, Loader2, RefreshCw,
+  AlertCircle, CheckCircle2, Loader2, RefreshCw, WifiOff,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -39,6 +39,7 @@ import { syncOutbox } from '@/lib/offline/sync-outbox'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { useOnlineStatus } from '@/hooks/use-online-status'
 import { localDateKey } from '@/lib/date/calendar-date'
 // ── 类型 ──
 type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }
@@ -251,9 +252,10 @@ export function TodayTaskPage() {
   const [reviewDismissal, setReviewDismissal] = useState<{ runId: string | null; dismissed: boolean }>({ runId: null, dismissed: false })
   const [rehearsalAll, setRehearsalAll] = useState(false)
   const [manualSyncing, setManualSyncing] = useState(false)
+  const isOnline = useOnlineStatus()
   const [practiceTabSummary, setPracticeTabSummary] = useState<{ attemptedCount: number; totalCount: number } | null>(null)
   const [reviewDebtCount, setReviewDebtCount] = useState<number | null>(null)
-  // 今日任务相关 outbox 存在未同步改动时，同步按钮显示感叹号角标。
+  // 在线时提示待同步改动；离线时只显示断网状态。
   const [hasPendingSync, setHasPendingSync] = useState(false)
   // 抽屉内收到的远端变更只做标记；等本轮练习关闭后再安全检查，不能抢走作答焦点。
   const [pendingTodayUpdateCheck, setPendingTodayUpdateCheck] = useState<string | null>(null)
@@ -513,7 +515,7 @@ export function TodayTaskPage() {
 
   const syncTodayTask = useCallback(async () => {
     const userId = session?.user?.id
-    if (!userId || manualSyncing) return
+    if (!userId || manualSyncing || !isOnline) return
     setManualSyncing(true)
     try {
       // 答题写入（facts、SRS、outbox）必须先完成，随后只做一次网络同步。
@@ -533,7 +535,7 @@ export function TodayTaskPage() {
       setManualSyncing(false)
       void refreshPendingSyncBadge()
     }
-  }, [loadToday, manualSyncing, planMode, refreshPendingSyncBadge, session?.user?.id, targetDate, targetPackId, waitForPendingWrites])
+  }, [isOnline, loadToday, manualSyncing, planMode, refreshPendingSyncBadge, session?.user?.id, targetDate, targetPackId, waitForPendingWrites])
 
   const startNewPracticeSet = useCallback(() => {
     closeSession()
@@ -1282,13 +1284,13 @@ export function TodayTaskPage() {
             <button
               type="button"
               onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
-              disabled={manualSyncing}
+              disabled={manualSyncing || !isOnline}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="同步今日任务"
-              title="同步今日任务"
+              aria-label={isOnline ? '同步今日任务' : t('common.offline')}
+              title={isOnline ? '同步今日任务' : t('common.offline')}
             >
-              <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
-              {hasPendingSync && !manualSyncing && (
+              {!isOnline ? <WifiOff className="size-[17px]" /> : <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />}
+              {isOnline && hasPendingSync && !manualSyncing && (
                 <span className="absolute -right-0.5 -top-0.5">
                   <AlertCircle className="size-3.5 text-amber-500" />
                 </span>

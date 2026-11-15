@@ -23,6 +23,13 @@ function transaction() {
 const create = { entityType: 'notebook', entityId: 'local-book', clientMutationId: 'create', payload: { name: 'Offline', kind: 'custom', deleted: false, ownerId: 'a' } }
 
 describe('server notebook acknowledgements', () => {
+  it('binds an offline initialized system book to the existing user system book', async () => {
+    const { tx, setNotebook } = transaction()
+    setNotebook({ id: 'server-system', userId: 'a', name: '未分类', kind: 'uncategorized', version: 0, updatedAt: new Date() })
+    const result = await applyNotebookMutation(tx, 'a', { ...create, payload: { ...create.payload, name: '未分类', kind: 'uncategorized' } })
+    expect(result.remoteItem.id).toBe('server-system')
+    expect(tx.learningNotebook.create).not.toHaveBeenCalled()
+  })
   it('returns a durable receipt on retry without creating twice', async () => {
     const { tx } = transaction()
     const result = await applyNotebookMutation(tx, 'a', create)

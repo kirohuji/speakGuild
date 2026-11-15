@@ -1,5 +1,6 @@
 import { projectStatisticsRuns } from '../statistics-projection'
 import type { TableName } from './schema'
+import { TABLE_NAMES } from './schema'
 
 export interface SqliteJsonExecutor {
   label: string
@@ -554,6 +555,16 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         console.warn(`[${executor.label}] list failed for ${storeName}`, error)
         throw error
       }
+    },
+
+    async snapshotTables(tables: TableName[]): Promise<Record<string, Record<string, unknown>[]>> {
+      const result: Record<string, Record<string, unknown>[]> = {}
+      for (const table of tables) {
+        if (!TABLE_NAMES.includes(table)) throw new Error('Unknown offline table')
+        // Statistics tables use native SQL columns rather than JSON rows.
+        result[table] = await executor.queryRows<Record<string, unknown>>(`SELECT * FROM "${table}"`)
+      }
+      return result
     },
 
     async findByIndex<T>(

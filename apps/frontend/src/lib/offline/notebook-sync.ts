@@ -4,6 +4,15 @@ import type { SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository, notifyLearningLibraryChanged } from './learning-content.repository'
 import { serializeNotebookWrite } from './notebook-mutations'
 
+/** Match a locally initialized system book before pulling its server identity. */
+export async function findPulledNotebook(notebook: any) {
+  const aliases = await localDb.findByIndex<any>('learning_notebooks', 'remote_id', notebook.id)
+  const existing = aliases[0] ?? await localDb.get<any>('learning_notebooks', notebook.id)
+  if (existing || notebook.kind !== 'uncategorized') return existing
+  return (await localDb.list<any>('learning_notebooks')).find(row =>
+    row.kind === 'uncategorized' && !row.deletedAt && !row.remoteId)
+}
+
 export async function replayNotebookMutation(item: SyncOutboxItem) {
   const payload = { ...(item.payload as any) }
   if (payload.predecessor) {
