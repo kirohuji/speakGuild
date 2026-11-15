@@ -1,0 +1,264 @@
+learning:
+  exercises:
+    pipeline:
+      - key: keep-book
+        kind: chunk
+        type: chunk_substitution
+        title: 把东西留给对方
+        chunk: keep the book
+        chunkMeaning: 把这本书留着
+        direction: zh_to_en
+        items:
+          - zh: 这本书你留下吧，因为我还有一本。
+            answer: You can keep the book, because I have another copy.
+            hint: because；another copy
+          - zh: 要是你还没看完，就先留着这本书。
+            answer: Keep the book if you haven't finished it.
+            hint: if；haven't finished
+      - key: keep-calm
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒对方冷静下来
+        chunk: Keep calm.
+        chunkMeaning: 保持冷静
+        direction: zh_to_en
+        items:
+          - zh: 深呼吸，保持冷静。
+            answer: Take a deep breath and keep calm.
+            hint: Take a deep breath
+          - zh: 就算计划变了，也要保持冷静。
+            answer: Keep calm even if the plan changes.
+            hint: even if；the plan
+      - key: keep-calm-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方叫你冷静
+        chunk: keep calm
+        chunkMeaning: 保持冷静
+        direction: en_to_zh
+        items:
+          - en: Keep calm and tell me what happened.
+            answer: 保持冷静，告诉我发生了什么。
+            hint: tell me；what happened
+          - en: She told the child to keep calm until the doctor arrived.
+            answer: 她让孩子在医生到之前保持冷静。
+            hint: the child；until；the doctor
+      - key: keep-away
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒对方离远一点
+        chunk: keep away from
+        chunkMeaning: 远离
+        direction: zh_to_en
+        items:
+          - zh: 这些油漆没干之前，离远一点。
+            answer: Keep away from the paint until it's dry.
+            hint: the paint；until；dry
+          - zh: 小孩应该离热炉子远一点。
+            answer: Children should keep away from the hot stove.
+            hint: Children；should；the hot stove
+      - key: keep-waiting
+        kind: chunk
+        type: chunk_substitution
+        title: 为让对方等候道歉
+        chunk: keep you waiting
+        chunkMeaning: 让你一直等着
+        direction: zh_to_en
+        items:
+          - zh: 抱歉，会开久了，让你一直等。
+            answer: Sorry the meeting ran long and kept you waiting.
+            hint: the meeting；ran long
+          - zh: 我尽量不让你等太久。
+            answer: I'll try not to keep you waiting long.
+            hint: try not；long
+      - key: keep-waiting-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说让人等了
+        chunk: keep you waiting
+        chunkMeaning: 让你一直等着
+        direction: en_to_zh
+        items:
+          - en: Sorry to keep you waiting for so long.
+            answer: 抱歉让你等了这么久。
+            hint: for so long
+          - en: I didn't mean to keep you waiting outside.
+            answer: 我不是有意让你在外面等的。
+            hint: didn't mean；outside
+      - key: keep-doing
+        type: pattern_drill
+        title: 说一件事还在继续，或老是发生
+        pattern: keep [doing]
+        patternMeaning: 持续做，或反复做；后面用 V-ing，不用 to do
+        direction: zh_to_en
+        items:
+          - zh: 他一直在问问题。
+            answer: He kept asking questions.
+            hint: questions
+          - zh: 我老是忘了把钥匙放在哪儿。
+            answer: I keep forgetting where I put my keys.
+            hint: where；my keys
+          - zh: 这个音继续练，你会发得更顺。
+            answer: Keep trying this sound and you'll say it more smoothly.
+            hint: this sound；more smoothly
+      - key: keep-going
+        kind: chunk
+        type: chunk_substitution
+        title: 鼓励对方别停
+        chunk: keep going
+        chunkMeaning: 继续；坚持下去
+        direction: zh_to_en
+        items:
+          - zh: 还剩最后一页，继续就行。
+            answer: There's one page left, so just keep going.
+            hint: one page；so
+          - zh: 膝盖有点疼，可我还是坚持走完了。
+            answer: My knee hurt a little, but I kept going and finished the walk.
+            hint: My knee；a little；the walk
+      - key: keep-going-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方叫你别停
+        chunk: keep going
+        chunkMeaning: 继续；坚持下去
+        direction: en_to_zh
+        items:
+          - en: The hill is steep, but keep going.
+            answer: 这段坡很陡，可是继续走。
+            hint: The hill；steep
+          - en: She kept going even after she lost the first game.
+            answer: 第一局输了，她还是继续比下去。
+            hint: even after；the first game
+      - key: keep-object-state
+        type: pattern_drill
+        title: 让某个东西维持现状
+        pattern: keep [something] [adjective]
+        patternMeaning: 使某物保持某种状态；形容词说明的是后面的东西，不是主语
+        direction: zh_to_en
+        items:
+          - zh: 让门开着。
+            answer: Keep the door open.
+            hint: the door
+          - zh: 大家马上就到，请把汤保温。
+            answer: Please keep the soup warm because everyone will be here soon.
+            hint: the soup；because；soon
+          - zh: 会议期间让手机保持静音。
+            answer: Keep your phone silent during the meeting.
+            hint: your phone；during the meeting
+      - key: keep-from
+        type: pattern_drill
+        title: 说是什么拦住了人，或没拦住
+        pattern: keep [someone] from [doing]
+        patternMeaning: 阻止某人做某事；from 后接 V-ing
+        direction: zh_to_en
+        items:
+          - zh: 没有什么能阻止他离开。
+            answer: Nothing could keep him from leaving.
+            hint: Nothing；could
+          - zh: 大雨并没有阻止我们出门。
+            answer: The heavy rain didn't keep us from going out.
+            hint: The heavy rain；didn't
+          - zh: 是什么阻止了你去那场面试？
+            answer: What kept you from going to the interview?
+            hint: What；the interview
+      - key: keep-in-touch-say
+        kind: chunk
+        type: chunk_substitution
+        title: 说以后还保持联系
+        chunk: keep in touch
+        chunkMeaning: 保持联系
+        direction: zh_to_en
+        items:
+          - zh: 你换了工作以后，我们还保持联系吧。
+            answer: Let's keep in touch after you change jobs.
+            hint: Let's；change jobs
+          - zh: 我出国这三个月会跟你保持联系。
+            answer: I'll keep in touch with you during these three months abroad.
+            hint: these three months；abroad
+      - key: keep-in-touch-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说以后还联系
+        chunk: keep in touch
+        chunkMeaning: 保持联系
+        direction: en_to_zh
+        items:
+          - en: Send me your new number so we can keep in touch.
+            answer: 把你的新号码发我，这样我们还能保持联系。
+            hint: your new number；so
+          - en: She promised to keep in touch during the trip.
+            answer: 她答应旅行期间保持联系。
+            hint: promised；during the trip
+      - key: keep-monitor
+        type: vocab_sentence_building
+        title: 说要记住、照看，或记下来
+        vocabWord: keep
+        vocabMeaning: 记住、留意，或持续掌握情况
+        direction: zh_to_en
+        patterns:
+          - chunk: keep in mind
+            items:
+              - zh: 记住，价格还没定死。
+                answer: Keep in mind that the price isn't final yet.
+                hint: the price；isn't final；yet
+              - zh: 做预算的时候记住这笔额外的费用。
+                answer: Keep the extra cost in mind when you make the budget.
+                hint: the extra cost；the budget
+          - chunk: keep an eye on
+            items:
+              - zh: 我去买票的时候，你能帮我看一下行李吗？
+                answer: Can you keep an eye on my luggage while I get the tickets?
+                hint: my luggage；while；the tickets
+              - zh: 我接这个电话的时候，你留意一下烤箱。
+                answer: Keep an eye on the oven while I take this call.
+                hint: the oven；while；this call
+          - chunk: keep track of
+            items:
+              - zh: 她用一个本子记下每天的开销。
+                answer: She uses a notebook to keep track of her daily spending.
+                hint: a notebook；daily
+              - zh: 你有记下自己每天走多少步吗？
+                answer: Do you keep track of how many steps you walk each day?
+                hint: how many steps；each day
+      - key: keep-up-with
+        type: pattern_drill
+        title: 说跟不上某个人或某件事
+        pattern: keep up with [someone/something]
+        patternMeaning: 跟上人或事物
+        direction: zh_to_en
+        items:
+          - zh: 她读得太快了，我跟不上她。
+            answer: She reads so fast that I can't keep up with her.
+            hint: so fast
+          - zh: 新功能出得太快了，我跟不上。
+            answer: New features come out so fast that I can't keep up with them.
+            hint: New features；so fast
+          - zh: 你跟得上这门课吗？
+            answer: Can you keep up with this class?
+            hint: Can you；this class
+      - key: keep-desk-build
+        type: sentence_decomposition
+        title: 把保持桌面整洁的理由说完整
+        sourceKind: pattern
+        sourceText: keep [something] [adjective]
+        fullSentence: I try to keep my desk clean so I can focus better.
+        fullSentenceZh: 我尽量保持桌面整洁，这样可以更专注。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I keep my desk clean.
+            zh: 我保持桌面整洁。
+            highlight: ''
+            hint: 先说桌面保持整洁
+          - level: 2
+            label: 加态度
+            en: I try to keep my desk clean.
+            zh: 我尽量保持桌面整洁。
+            highlight: try to
+            hint: 补上尽量
+          - level: 3
+            label: 完整句
+            en: I try to keep my desk clean so I can focus better.
+            zh: 我尽量保持桌面整洁，这样可以更专注。
+            highlight: so I can focus better
+            hint: 补上这样可以更专注

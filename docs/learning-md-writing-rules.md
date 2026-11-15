@@ -22,11 +22,15 @@
 
 ## 二、文件结构
 
-每个教学话题包含一对文件：
+每个教学话题保留教学正文和同步文件；需要持续生成练习时，使用同名目录分组维护：
 
 ```text
 话题.md           # 面向学习者的教学正文
-话题.learning.md  # 面向内容维护与同步的材料、练习配置
+话题.learning.md  # 合并产物，供现有同步程序读取
+话题.learning/   # 分组维护源文件
+  00-materials.yaml
+  01-get.yaml
+  02-take.yaml
 ```
 
 `.learning.md` 使用 YAML Front Matter。
@@ -45,6 +49,57 @@ learning:
     pipeline: []
 ---
 ```
+
+### 分组维护与合并去重
+
+已有单文件话题可继续使用。需要持续生成的练习，推荐在 `话题.learning/` 中维护，合并生成同目录下的 `话题.learning.md`。已有分组目录时，修改源文件后重新合并，不直接编辑产物。分组源和产物都应提交。
+
+当前示例 `核心动作与日常表达.learning/` 将材料放在 `00-materials.yaml`，88 个题组按核心动词分为 `get`、`take`、`make`、`keep` 四个文件。之后可继续新增其他动词或知识点文件，无须把所有练习追加到一个大文件中。其他话题可按目标词块、核心结构或语义知识点分组，避免按生成批次随意拆分。
+
+每个 `.yaml` / `.yml` 文件只含一个顶层 `learning` 对象，不使用 Markdown Front Matter。例如：
+
+```yaml
+learning:
+  exercises:
+    pipeline:
+      - key: get-to-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说到公司
+        chunk: get to work
+        chunkMeaning: 到公司
+        direction: zh_to_en
+        items:
+          - zh: 我通常九点到公司。
+            answer: I usually get to work at nine.
+            hint: usually；at nine
+```
+
+在仓库根目录执行：
+
+```bash
+# 合并所有 *.learning/ 目录，生成同名 .learning.md
+pnpm docs:merge-learning
+
+# 只合并一个话题（路径相对于命令调用目录，也支持绝对路径）
+pnpm docs:merge-learning "apps/docs-md/学习包/常用动词300个 高频核心/核心动作与日常表达.learning"
+
+# 检查产物是否最新，不写文件；未更新或解析失败时退出码为 1
+pnpm docs:merge-learning --check
+
+# 合并完成后，按已有流程同步到数据库
+pnpm docs:sync-learning
+```
+
+合并约定：
+
+- 递归读取分组目录中的 YAML 文件，按相对路径排序；使用 `00-`、`01-` 等前缀控制顺序。没有分组目录的话题不受影响。
+- `vocabulary`、`chunks`、`patterns` 等数组去除相同条目，保留首次出现顺序。字符串比较忽略首尾空白并统一 Unicode NFC，保留大小写及标点区别。
+- 题组必须有稳定 `key`；相同 `key` 合并为一个题组，数组字段追加并去重。重复生成同一题组时应复用原 `key`，不同训练方向或目标应使用不同 `key`。
+- 对象条目（包括题目和 `chunk_models`）按完整内容比较，忽略字段顺序；仅有相同题干、结构或答案不视为重复。不同释义、提示或合法答案变体保留，语义近似题仍需人工筛选。
+- 同一题组 `key` 下 `type`、`direction`、`title` 等标量值不一致时报错；其他配置值冲突也报错，请统一源文件。所有话题解析通过后才写产物。
+- 合并是从源文件重新构建，删除源条目后产物中的对应内容也会消失；不会把旧产物再合入。
+- 合并命令仅生成本地文件，不调用 AI、不写数据库。同步与导出命令仍沿用原逻辑；数据库导出若覆盖产物，需要人工核对并将需保留的修改回填源目录，再合并。
 
 ### 2.1 字段职责
 
@@ -1532,6 +1587,8 @@ exercises:
 没有必要时允许 `patterns: []`。
 
 ### 第六步：编排 Exercises
+
+优先按目标动词、词块或核心结构写入同名 `.learning/` 目录的分组 YAML，复用稳定题组 `key`。完成后运行 `pnpm docs:merge-learning` 和 `pnpm docs:merge-learning --check`，再进行覆盖校验与同步。
 
 按照当前目标选择适当练习类型。
 

@@ -1,3 +1,4 @@
+import { MembershipEditor } from '@/features/admin/components/membership-editor'
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -663,6 +664,7 @@ function UserRow({
           />
         </td>
         <td className="px-4 py-3 text-right">
+          <MembershipEditor userId={user.id} name={user.name || user.email} onSaved={() => { setDetail(null); onRoleUpdated() }} />
           <Button
             variant="ghost"
             size="sm"

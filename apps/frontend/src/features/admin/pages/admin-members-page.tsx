@@ -1,3 +1,5 @@
+import { toast } from 'sonner'
+import { MembershipEditor } from '@/features/admin/components/membership-editor'
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -259,9 +261,11 @@ function MemberRow({ member, onRefresh }: { member: AdminMember; onRefresh: () =
     try {
       await cancelMembership(member.userId)
       setCancelOpen(false)
+      setDetailOpen(false)
+      toast.success('已取消会员权益')
       onRefresh()
     } catch {
-      // ignore
+      toast.error('取消会员失败，请稍后重试')
     } finally {
       setCancelling(false)
     }
@@ -314,6 +318,7 @@ function MemberRow({ member, onRefresh }: { member: AdminMember; onRefresh: () =
           {formatDateTime(member.expiredAt)}
         </td>
         <td className="px-4 py-3 text-right">
+          <MembershipEditor userId={member.userId} name={member.user.name || member.user.email} onSaved={() => { setDetail(null); onRefresh() }} />
           <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={(e) => { e.stopPropagation(); openDetail() }}>
             详情
           </Button>
@@ -447,7 +452,7 @@ function MemberRow({ member, onRefresh }: { member: AdminMember; onRefresh: () =
                 <div className="rounded-xl border border-destructive/30 p-4">
                   <p className="text-sm font-medium text-destructive mb-2">取消订阅</p>
                   <p className="text-xs text-muted-foreground mb-3">
-                    取消后用户将失去会员权限，无法恢复。如需重新开通需再次购买。
+                    取消后立即收回本站会员权益，可通过“设置会员”重新开通。此操作不会停止商店订阅扣费，后续订阅同步可能更新会员状态。
                   </p>
                   <Button variant="destructive" size="sm" onClick={() => setCancelOpen(true)}>
                     <Ban className="mr-2 h-4 w-4" />
@@ -468,7 +473,7 @@ function MemberRow({ member, onRefresh }: { member: AdminMember; onRefresh: () =
           <DialogHeader>
             <DialogTitle>确认取消会员</DialogTitle>
             <DialogDescription>
-              确定要取消 <span className="font-semibold text-foreground">{member.user.name || member.user.email}</span> 的会员吗？此操作不可撤销。
+              确定要取消 <span className="font-semibold text-foreground">{member.user.name || member.user.email}</span> 的会员吗？确认后立即收回本站会员权益。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

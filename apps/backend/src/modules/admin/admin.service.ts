@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { UpdateMembershipDto } from './dto/update-membership.dto';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -425,6 +426,24 @@ export class AdminService {
     ]);
 
     return { ...membership, orders, purchases };
+  }
+
+  async updateMembership(userId: string, dto: UpdateMembershipDto) {
+    const expiredAt = new Date(dto.expiredAt);
+    const now = new Date();
+    if (!Number.isFinite(expiredAt.getTime()) || expiredAt <= now) {
+      throw new BadRequestException('到期时间必须晚于当前时间');
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { id: true } });
+      if (!user) throw new NotFoundException('用户不存在');
+      const plan = await tx.membershipPlan.findUnique({ where: { id: dto.planId } });
+      if (!plan || plan.level === 'free') throw new BadRequestException('请选择有效的会员套餐');
+      const existing = await tx.userMembership.findUnique({ where: { userId } });
+      const data = { planId: plan.id, expiredAt, status: 'active' as const, cancelledAt: null,
+        startedAt: existing?.status === 'active' && existing.expiredAt > now ? existing.startedAt : now };
+      return tx.userMembership.upsert({ where: { userId }, create: { userId, ...data }, update: data });
+    });
   }
 
   async cancelMembership(userId: string) {

@@ -437,3 +437,7 @@ export interface TestPaymentResult {
 export async function testPayment() {
   return post<TestPaymentResult>('/admin/test-payment');
 }
+
+export function updateMembership(userId: string, data: { planId: string; expiredAt: string }) {
+  return patch(`/admin/members/${userId}`, data);
+}

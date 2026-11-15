@@ -1,0 +1,400 @@
+learning:
+  exercises:
+    pipeline:
+      - key: get-to-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说到公司
+        chunk: get to work
+        chunkMeaning: 到公司
+        direction: zh_to_en
+        items:
+          - zh: 我通常九点到公司。
+            answer: I usually get to work at nine.
+            hint: usually；at nine
+          - zh: 我昨天到公司晚了。
+            answer: I got to work late yesterday.
+            hint: late；yesterday
+          - zh: 因为堵车，我没能到公司。
+            answer: I couldn't get to work because of the traffic.
+            hint: couldn't；because of the traffic
+      - key: get-to-the-office
+        kind: chunk
+        type: chunk_substitution
+        title: 说到办公室
+        chunk: get to the office
+        chunkMeaning: 到办公室
+        direction: zh_to_en
+        items:
+          - zh: 你几点到办公室的？
+            answer: What time did you get to the office?
+            hint: What time
+          - zh: 我得在开会前到办公室。
+            answer: I need to get to the office before the meeting.
+            hint: before the meeting
+      - key: get-to-work-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说到公司
+        chunk: get to work
+        chunkMeaning: 到公司
+        direction: en_to_zh
+        items:
+          - en: Did you get to work on time this morning?
+            answer: 你今天早上按时到公司了吗？
+            hint: on time；this morning
+          - en: I called her after I got to work.
+            answer: 我到公司后给她打了电话。
+            hint: called her；after
+      - key: get-state
+        type: vocab_sentence_building
+        title: 说事情变得怎样
+        vocabWord: get
+        vocabMeaning: 变得；进入某种状态
+        direction: zh_to_en
+        patterns:
+          - chunk: get ready
+            items:
+              - zh: 给我五分钟准备一下。
+                answer: Give me five minutes to get ready.
+                hint: five minutes
+              - zh: 我们出门前得准备好。
+                answer: We need to get ready before we go out.
+                hint: before we go out
+          - chunk: get better
+            items:
+              - zh: 你的发音越来越好了。
+                answer: Your pronunciation is getting better.
+                hint: pronunciation
+              - zh: 他休息了一会儿之后好多了。
+                answer: He got better after some rest.
+                hint: after some rest
+          - chunk: get worse
+            items:
+              - zh: 天气越来越糟了。
+                answer: The weather is getting worse.
+                hint: The weather
+              - zh: 要是我们什么都不做，情况会更糟。
+                answer: It will get worse if we do nothing.
+                hint: if we do nothing
+      - key: get-message
+        kind: chunk
+        type: chunk_substitution
+        title: 说收到他的消息
+        chunk: get a message from him
+        chunkMeaning: 收到他的消息
+        direction: zh_to_en
+        items:
+          - zh: 我今天早上收到了他的消息。
+            answer: I got a message from him this morning.
+            hint: this morning
+          - zh: 你收到他的消息了吗？
+            answer: Did you get a message from him?
+            hint: 疑问句
+      - key: get-to-meet
+        kind: chunk
+        type: chunk_substitution
+        title: 说有机会见到她
+        chunk: get to meet her
+        chunkMeaning: 有机会见到她
+        direction: zh_to_en
+        items:
+          - zh: 演出结束后，我有机会见到了她。
+            answer: I got to meet her after the show.
+            hint: after the show
+          - zh: 你有机会见到她吗？
+            answer: Did you get to meet her?
+            hint: 疑问句
+      - key: get-him-agree
+        kind: chunk
+        type: chunk_substitution
+        title: 让他同意
+        chunk: get him to agree
+        chunkMeaning: 让他同意
+        direction: zh_to_en
+        items:
+          - zh: 我终于让他同意了。
+            answer: I finally got him to agree.
+            hint: finally
+          - zh: 你能让他同意吗？
+            answer: Can you get him to agree?
+            hint: Can you
+      - key: get-laptop-fixed
+        kind: chunk
+        type: chunk_substitution
+        title: 把电脑送去修
+        chunk: get my laptop fixed
+        chunkMeaning: 把我的电脑修好
+        direction: zh_to_en
+        items:
+          - zh: 我得在周一之前把电脑送去修好。
+            answer: I need to get my laptop fixed before Monday.
+            hint: before Monday
+          - zh: 我上周把电脑送去修好了。
+            answer: I got my laptop fixed last week.
+            hint: last week
+      - key: get-used-to-alone
+        kind: chunk
+        type: chunk_substitution
+        title: 习惯一个人工作
+        chunk: get used to working alone
+        chunkMeaning: 习惯一个人工作
+        direction: zh_to_en
+        items:
+          - zh: 我正在慢慢习惯一个人工作。
+            answer: I'm getting used to working alone.
+            hint: 进行时
+          - zh: 你正在习惯一个人工作吗？
+            answer: Are you getting used to working alone?
+            hint: 疑问句；进行时
+      - key: get-rid-of-files
+        kind: chunk
+        type: chunk_substitution
+        title: 处理掉旧文件
+        chunk: get rid of old files
+        chunkMeaning: 把旧文件处理掉
+        direction: zh_to_en
+        items:
+          - zh: 我得把这些旧文件处理掉。
+            answer: I need to get rid of these old files.
+            hint: these
+          - zh: 你把那些旧文件处理掉了吗？
+            answer: Did you get rid of the old files?
+            hint: 疑问句
+      - key: get-in-touch-her
+        kind: chunk
+        type: chunk_substitution
+        title: 联系她
+        chunk: get in touch with her
+        chunkMeaning: 与她取得联系
+        direction: zh_to_en
+        items:
+          - zh: 我下周会联系她。
+            answer: I'll get in touch with her next week.
+            hint: next week
+          - zh: 你联系上她了吗？
+            answer: Did you get in touch with her?
+            hint: 疑问句
+      - key: get-back-to-you
+        kind: chunk
+        type: chunk_substitution
+        title: 答应稍后回复
+        chunk: I'll get back to you.
+        chunkMeaning: 我稍后回复你
+        direction: zh_to_en
+        items:
+          - zh: 我确认一下，明天回复你。
+            answer: I'll check and get back to you tomorrow.
+            hint: check；tomorrow
+          - zh: 我看一下你的消息，今天下午回复你。
+            answer: I'll check your message and get back to you this afternoon.
+            hint: your message；this afternoon
+      - key: get-back-to-you-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说会回复
+        chunk: I'll get back to you.
+        chunkMeaning: 我稍后回复你
+        direction: en_to_zh
+        items:
+          - en: I'll check and get back to you tomorrow.
+            answer: 我确认一下，明天回复你。
+            hint: check；tomorrow
+          - en: Can I get back to you after lunch?
+            answer: 我可以午饭后再回复你吗？
+            hint: after lunch
+      - key: get-i-got-it
+        kind: chunk
+        type: chunk_substitution
+        title: 表示自己听懂了
+        chunk: I got it.
+        chunkMeaning: 我明白了
+        direction: zh_to_en
+        items:
+          - zh: 好，我现在明白了。
+            answer: Okay, I got it now.
+            hint: Okay；now
+          - zh: 我明白了，所以我先给她打电话。
+            answer: I got it, so I'll call her first.
+            hint: so；call her first
+      - key: get-to-place
+        type: pattern_drill
+        title: 换个地点说到达
+        pattern: get to [place]
+        patternMeaning: 到达某地
+        direction: zh_to_en
+        items:
+          - zh: 我六点到了车站。
+            answer: I got to the station at six.
+            hint: at six
+          - zh: 你按时到学校了吗？
+            answer: Did you get to school on time?
+            hint: on time
+          - zh: 因为道路封闭，我没能到医院。
+            answer: I couldn't get to the hospital because the road was closed.
+            hint: couldn't；the road was closed
+      - key: get-home
+        type: pattern_drill
+        title: 说到家
+        pattern: get home
+        patternMeaning: 到家；home 前不加 to
+        direction: zh_to_en
+        items:
+          - zh: 我昨晚很晚才到家。
+            answer: I got home very late last night.
+            hint: very late；last night
+          - zh: 你到家后给我打电话。
+            answer: Call me when you get home.
+            hint: Call me；when
+      - key: get-adjective
+        type: pattern_drill
+        title: 说别的变化
+        pattern: get [adjective]
+        patternMeaning: 变得……
+        direction: zh_to_en
+        items:
+          - zh: 天越来越冷了。
+            answer: It's getting colder.
+            hint: 进行时
+          - zh: 我在路上累了。
+            answer: I got tired on the way.
+            hint: on the way
+      - key: get-something-from
+        type: pattern_drill
+        title: 说从别人那里收到东西
+        pattern: get [something] from [someone]
+        patternMeaning: 从某人处收到某物
+        direction: zh_to_en
+        items:
+          - zh: 我收到了经理的一封邮件。
+            answer: I got an email from my manager.
+            hint: an email；my manager
+          - zh: 她接到了姐姐的电话。
+            answer: She got a call from her sister.
+            hint: a call；her sister
+      - key: get-to-do
+        type: pattern_drill
+        title: 说有机会做别的事
+        pattern: get to [do]
+        patternMeaning: 有机会做某事
+        direction: zh_to_en
+        items:
+          - zh: 我终于有机会问了那个问题。
+            answer: I finally got to ask that question.
+            hint: finally；that question
+          - zh: 我们没机会把讨论做完。
+            answer: We didn't get to finish the discussion.
+            hint: didn't；the discussion
+      - key: get-someone-to-do
+        type: pattern_drill
+        title: 让别人去做一件事
+        pattern: get [someone] to [do]
+        patternMeaning: 说服或促使某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 我让她回了我的电话。
+            answer: I got her to call me back.
+            hint: call me back
+          - zh: 我们没能让他们再多等一会儿。
+            answer: We couldn't get them to wait a little longer.
+            hint: couldn't；a little longer
+      - key: get-something-done
+        type: pattern_drill
+        title: 把事情办完
+        pattern: get [something] [past participle]
+        patternMeaning: 让某事得到处理或完成
+        direction: zh_to_en
+        items:
+          - zh: 我得去剪头发了。
+            answer: I need to get my hair cut.
+            hint: my hair
+          - zh: 她昨晚把报告做完了。
+            answer: She got the report finished last night.
+            hint: the report；last night
+      - key: get-used-to-new
+        type: pattern_drill
+        title: 习惯一件新的事
+        pattern: get used to [noun/doing]
+        patternMeaning: 逐渐习惯某事；to 后接名词或 V-ing
+        direction: zh_to_en
+        items:
+          - zh: 我还得习惯新的作息。
+            answer: I still need to get used to the new schedule.
+            hint: still；the new schedule
+          - zh: 我花了几个星期才习惯在家工作。
+            answer: It took me a few weeks to get used to working from home.
+            hint: a few weeks
+      - key: get-rid-of-other
+        type: pattern_drill
+        title: 去掉别的东西
+        pattern: get rid of [something]
+        patternMeaning: 摆脱或去掉
+        direction: zh_to_en
+        items:
+          - zh: 我真想摆脱这个头疼。
+            answer: I really want to get rid of this headache.
+            hint: really；this headache
+          - zh: 我们把多余的椅子清掉吧。
+            answer: Let's get rid of the extra chairs.
+            hint: Let's；the extra chairs
+      - key: get-in-touch-other
+        type: pattern_drill
+        title: 联系别人
+        pattern: get in touch with [someone]
+        patternMeaning: 与某人取得联系
+        direction: zh_to_en
+        items:
+          - zh: 我明天会联系客户。
+            answer: I'll get in touch with the client tomorrow.
+            hint: the client；tomorrow
+          - zh: 你联系上老师了吗？
+            answer: Did you get in touch with your teacher?
+            hint: your teacher
+      - key: get-need-to
+        type: pattern_drill
+        title: 说自己需要做的事
+        pattern: I need to [do].
+        patternMeaning: 我需要做某事
+        direction: zh_to_en
+        items:
+          - zh: 我明天得早点到公司。
+            answer: I need to get to work early tomorrow.
+            hint: early；tomorrow
+          - zh: 我现在得准备一下。
+            answer: I need to get ready now.
+            hint: now
+          - zh: 我今天得联系她。
+            answer: I need to get in touch with her today.
+            hint: today
+      - key: get-home-build
+        type: sentence_decomposition
+        title: 把到家之后的话说完整
+        sourceKind: vocab
+        sourceText: get
+        fullSentence: I called her after I got home late last night.
+        fullSentenceZh: 我昨晚很晚到家，到家后给她打了电话。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I got home.
+            zh: 我到家了。
+            highlight: ''
+            hint: 先说到家
+          - level: 2
+            label: 加情况
+            en: I got home late.
+            zh: 我到家晚了。
+            highlight: late
+            hint: 补上晚了
+          - level: 3
+            label: 加时间
+            en: I got home late last night.
+            zh: 我昨晚到家晚了。
+            highlight: last night
+            hint: 补上昨晚
+          - level: 4
+            label: 完整句
+            en: I called her after I got home late last night.
+            zh: 我昨晚很晚到家，到家后给她打了电话。
+            highlight: I called her after
+            hint: 补上到家后给她打电话

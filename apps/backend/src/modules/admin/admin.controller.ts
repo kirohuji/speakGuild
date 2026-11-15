@@ -2,6 +2,7 @@ import {
   Controller, Get, Patch, Post, Param, Body, Query, Req, ForbiddenException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { AdminService } from './admin.service';
 import { AdminStatsService } from './admin-stats.service';
 import { PayService } from '../pay/pay.service';
@@ -90,6 +91,12 @@ export class AdminController {
   async getMemberDetail(@Req() req: Request, @Param('userId') userId: string) {
     await this.requireAdmin(req);
     return this.adminService.getMemberDetail(userId);
+  }
+
+  @Patch('members/:userId')
+  async updateMembership(@Req() req: Request, @Param('userId') userId: string, @Body() dto: UpdateMembershipDto) {
+    await this.requireAdmin(req);
+    return this.adminService.updateMembership(userId, dto);
   }
 
   @Post('members/:userId/cancel')

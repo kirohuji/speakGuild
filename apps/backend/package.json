@@ -16,7 +16,8 @@
     "docs:export": "ts-node prisma/sync-teaching-docs.ts export",
     "docs:export-learning": "ts-node prisma/sync-teaching-docs.ts export-learning",
     "docs:sync": "ts-node prisma/sync-teaching-docs.ts sync",
-    "docs:sync-learning": "ts-node prisma/sync-teaching-docs.ts sync-learning"
+    "docs:sync-learning": "ts-node prisma/sync-teaching-docs.ts sync-learning",
+    "docs:merge-learning": "node scripts/merge-learning.cjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",

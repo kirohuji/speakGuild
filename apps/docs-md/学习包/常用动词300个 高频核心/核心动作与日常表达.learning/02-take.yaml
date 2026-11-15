@@ -1,0 +1,379 @@
+learning:
+  exercises:
+    pipeline:
+      - key: take-umbrella
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒对方带伞
+        chunk: take an umbrella with you
+        chunkMeaning: 随身带把伞
+        direction: zh_to_en
+        items:
+          - zh: 出门的时候带把伞。
+            answer: Take an umbrella with you when you go out.
+            hint: when you go out
+          - zh: 带把伞吧，因为要下雨了。
+            answer: Take an umbrella with you because it's going to rain.
+            hint: because
+      - key: take-to-station
+        kind: chunk
+        type: chunk_substitution
+        title: 说送某人去车站
+        chunk: take you to the station
+        chunkMeaning: 送你去车站
+        direction: zh_to_en
+        items:
+          - zh: 我今天下午送你去车站。
+            answer: I'll take you to the station this afternoon.
+            hint: this afternoon
+          - zh: 谁送你去车站？
+            answer: Who's going to take you to the station?
+            hint: Who
+      - key: take-seriously
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒对方认真对待
+        chunk: take this problem seriously
+        chunkMeaning: 认真对待这个问题
+        direction: zh_to_en
+        items:
+          - zh: 你应该认真对待这个问题。
+            answer: You should take this problem seriously.
+            hint: should
+          - zh: 他没有认真对待这个问题。
+            answer: He didn't take this problem seriously.
+            hint: didn't
+      - key: take-responsibility
+        kind: chunk
+        type: chunk_substitution
+        title: 为这个错误负责
+        chunk: take responsibility for the mistake
+        chunkMeaning: 为这个错误负责
+        direction: zh_to_en
+        items:
+          - zh: 我需要为这个错误负责。
+            answer: I need to take responsibility for the mistake.
+            hint: I need to
+          - zh: 他拒绝为这个错误负责。
+            answer: He refused to take responsibility for the mistake.
+            hint: refused
+      - key: take-responsibility-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说谁负责
+        chunk: take responsibility for the mistake
+        chunkMeaning: 为这个错误负责
+        direction: en_to_zh
+        items:
+          - en: Nobody wanted to take responsibility for the mistake.
+            answer: 没有人愿意为这个错误负责。
+            hint: Nobody wanted
+          - en: She finally took responsibility for the mistake.
+            answer: 她最后还是为这个错误负了责。
+            hint: finally
+      - key: take-look-file
+        kind: chunk
+        type: chunk_substitution
+        title: 请对方看文件
+        chunk: take a look at this file
+        chunkMeaning: 看一下这个文件
+        direction: zh_to_en
+        items:
+          - zh: 你能看一下这个文件吗？
+            answer: Can you take a look at this file?
+            hint: Can you
+          - zh: 我午饭后看一下这个文件。
+            answer: I'll take a look at this file after lunch.
+            hint: after lunch
+      - key: take-look-this
+        kind: chunk
+        type: chunk_substitution
+        title: 让对方先看一眼
+        chunk: Take a look at this.
+        chunkMeaning: 看一下这个
+        direction: zh_to_en
+        items:
+          - zh: 改之前你先看一下这个。
+            answer: Take a look at this before you change it.
+            hint: before you change it
+          - zh: 你看一下这个，然后告诉我你的想法。
+            answer: Take a look at this and tell me what you think.
+            hint: what you think
+      - key: take-part
+        kind: chunk
+        type: chunk_substitution
+        title: 说参加活动
+        chunk: take part in the event
+        chunkMeaning: 参加这次活动
+        direction: zh_to_en
+        items:
+          - zh: 五十多名学生参加了这次活动。
+            answer: More than fifty students took part in the event.
+            hint: More than fifty
+          - zh: 你要参加这次活动吗？
+            answer: Are you going to take part in the event?
+            hint: going to
+      - key: take-care-booking
+        kind: chunk
+        type: chunk_substitution
+        title: 说自己负责预订
+        chunk: take care of the booking
+        chunkMeaning: 负责处理预订
+        direction: zh_to_en
+        items:
+          - zh: 预订的事我来处理，你不用担心。
+            answer: I'll take care of the booking, so you don't need to worry.
+            hint: don't need to worry
+          - zh: 谁来处理预订？
+            answer: Who's going to take care of the booking?
+            hint: Who
+      - key: take-break
+        kind: chunk
+        type: chunk_substitution
+        title: 提议休息
+        chunk: Take a break.
+        chunkMeaning: 休息一下
+        direction: zh_to_en
+        items:
+          - zh: 我们休息十分钟吧。
+            answer: Let's take a break for ten minutes.
+            hint: Let's；ten minutes
+          - zh: 你继续之前该休息一下。
+            answer: You should take a break before you continue.
+            hint: should；before you continue
+      - key: take-with-you
+        type: pattern_drill
+        title: 提醒随身带东西
+        pattern: take [something] with [someone]
+        patternMeaning: 随身带某物
+        direction: zh_to_en
+        items:
+          - zh: 别忘了把钥匙带上。
+            answer: Don't forget to take your keys with you.
+            hint: Don't forget；your keys
+          - zh: 要是天冷，就带件外套。
+            answer: Take a jacket with you if it's cold.
+            hint: a jacket；if it's cold
+      - key: take-someone-somewhere
+        type: pattern_drill
+        title: 说带某人去别处
+        pattern: take [someone] to [place]
+        patternMeaning: 带某人前往某地；home 前通常不加 to
+        direction: zh_to_en
+        items:
+          - zh: 我每天送孩子去学校。
+            answer: I take the kids to school every day.
+            hint: the kids；every day
+          - zh: 开完会我送她回家。
+            answer: I'll take her home after the meeting.
+            hint: after the meeting
+      - key: take-seriously-other
+        type: pattern_drill
+        title: 认真对待别的事
+        pattern: take [something] seriously
+        patternMeaning: 认真对待某事
+        direction: zh_to_en
+        items:
+          - zh: 你得认真对待这个警告。
+            answer: You need to take this warning seriously.
+            hint: this warning
+          - zh: 她把我的建议当真了。
+            answer: She took my advice seriously.
+            hint: my advice
+      - key: take-responsibility-other
+        type: pattern_drill
+        title: 为别的事负责
+        pattern: take responsibility for [something]
+        patternMeaning: 为某事负责
+        direction: zh_to_en
+        items:
+          - zh: 你需要为自己的决定负责。
+            answer: You need to take responsibility for your decision.
+            hint: your decision
+          - zh: 我得为这次延误负责。
+            answer: I have to take responsibility for the delay.
+            hint: the delay
+      - key: take-look-other
+        type: pattern_drill
+        title: 看一下别的东西
+        pattern: take a look at [something]
+        patternMeaning: 看一看、检查
+        direction: zh_to_en
+        items:
+          - zh: 你有空时看一下我的草稿。
+            answer: Take a look at my draft when you have time.
+            hint: my draft；when you have time
+          - zh: 我还没看过那份报告。
+            answer: I haven't taken a look at the report yet.
+            hint: haven't；the report；yet
+      - key: take-part-other
+        type: pattern_drill
+        title: 参加别的事
+        pattern: take part in [something]
+        patternMeaning: 参加某项活动
+        direction: zh_to_en
+        items:
+          - zh: 我想参加这次讨论。
+            answer: I'd like to take part in the discussion.
+            hint: I'd like；the discussion
+          - zh: 她去年参加了比赛。
+            answer: She took part in the competition last year.
+            hint: the competition；last year
+      - key: take-care-other
+        type: pattern_drill
+        title: 照顾或处理别的事
+        pattern: take care of [something]
+        patternMeaning: 照顾或负责处理
+        direction: zh_to_en
+        items:
+          - zh: 我出差的时候你能照顾我妹妹吗？
+            answer: Can you take care of my sister while I'm away?
+            hint: my sister；while I'm away
+          - zh: 今晚的账单我来处理。
+            answer: I'll take care of the bill tonight.
+            hint: the bill；tonight
+      - key: take-notes
+        type: vocab_sentence_building
+        title: 说自己做笔记
+        vocabWord: take notes
+        vocabMeaning: 做笔记
+        direction: zh_to_en
+        patterns:
+          - chunk: take notes
+            items:
+              - zh: 我阅读的时候通常会做笔记。
+                answer: I usually take notes while I'm reading.
+                hint: usually；while I'm reading
+              - zh: 你能把重点记下来吗？
+                answer: Can you take notes on the main points?
+                hint: the main points
+      - key: take-risk
+        type: vocab_sentence_building
+        title: 说要不要冒险
+        vocabWord: take a risk
+        vocabMeaning: 冒险；承担风险
+        direction: zh_to_en
+        patterns:
+          - chunk: take a risk
+            items:
+              - zh: 有时候你必须冒点险。
+                answer: Sometimes you have to take a risk.
+                hint: Sometimes；have to
+              - zh: 我们不该在这个项目上冒险。
+                answer: We shouldn't take a risk on this project.
+                hint: shouldn't；this project
+      - key: take-advantage
+        type: vocab_sentence_building
+        title: 说利用一个机会
+        vocabWord: take advantage of
+        vocabMeaning: 利用机会或条件
+        direction: zh_to_en
+        patterns:
+          - chunk: take advantage of
+            items:
+              - zh: 你应该利用这个机会。
+                answer: You should take advantage of this opportunity.
+                hint: this opportunity
+              - zh: 你应该利用这个安静的早晨来学习。
+                answer: You should take advantage of the quiet morning to study.
+                hint: the quiet morning；to study
+      - key: take-over
+        type: vocab_sentence_building
+        title: 说谁来接手
+        vocabWord: take over
+        vocabMeaning: 接管；接手
+        direction: zh_to_en
+        patterns:
+          - chunk: take over
+            items:
+              - zh: 她上个月接手了这个项目。
+                answer: She took over the project last month.
+                hint: the project；last month
+              - zh: 你出差的时候谁来接手？
+                answer: Who will take over while you're away?
+                hint: while you're away
+      - key: take-place
+        type: vocab_sentence_building
+        title: 说事情在何时何地发生
+        vocabWord: take place
+        vocabMeaning: 发生；举行
+        direction: zh_to_en
+        patterns:
+          - chunk: take place
+            items:
+              - zh: 会议将在周五举行。
+                answer: The meeting will take place on Friday.
+                hint: The meeting；on Friday
+              - zh: 事故是在哪里发生的？
+                answer: Where did the accident take place?
+                hint: Where；the accident
+      - key: take-action
+        type: vocab_sentence_building
+        title: 说该采取行动
+        vocabWord: take action
+        vocabMeaning: 采取行动
+        direction: zh_to_en
+        patterns:
+          - chunk: take action
+            items:
+              - zh: 我们需要趁还来得及采取行动。
+                answer: We need to take action before it's too late.
+                hint: before it's too late
+              - zh: 要是我们还不采取行动，问题会更严重。
+            answer: The problem will get worse if we don't take action.
+            hint: get worse
+      - key: take-it-takes
+        type: pattern_drill
+        title: 说做某事要花多久
+        pattern: It takes [someone] [time] to [do].
+        patternMeaning: 某人做某事需要花多少时间
+        direction: zh_to_en
+        items:
+          - zh: 我去上班通常要花大约半小时。
+            answer: It usually takes me about half an hour to get to work.
+            hint: usually；about half an hour
+          - zh: 她花了两天完成报告。
+            answer: It took her two days to finish the report.
+            hint: two days；the report
+          - zh: 你回家要多久？
+            answer: How long does it take you to get home?
+            hint: How long
+      - key: take-it-takes-listen
+        type: pattern_drill
+        title: 听懂对方说要花多久
+        pattern: It takes [someone] [time] to [do].
+        patternMeaning: 某人做某事需要花多少时间
+        direction: en_to_zh
+        items:
+          - en: It took me two hours to finish the report.
+            answer: 我花了两个小时完成报告。
+            hint: two hours；the report
+          - en: How long does it take you to get to work?
+            answer: 你去上班要多久？
+            hint: How long
+      - key: take-time-build
+        type: sentence_decomposition
+        title: 把上班要花的时间说完整
+        sourceKind: pattern
+        sourceText: It takes [someone] [time] to [do].
+        fullSentence: It usually takes me about half an hour to get to work.
+        fullSentenceZh: 我去上班通常要花大约半小时。
+        levels:
+          - level: 1
+            label: 核心句
+            en: It takes me half an hour to get to work.
+            zh: 我去上班要花半小时。
+            highlight: ''
+            hint: 先说花了多少时间
+          - level: 2
+            label: 加大约
+            en: It takes me about half an hour to get to work.
+            zh: 我去上班要花大约半小时。
+            highlight: about
+            hint: 补上大约
+          - level: 3
+            label: 完整句
+            en: It usually takes me about half an hour to get to work.
+            zh: 我去上班通常要花大约半小时。
+            highlight: usually
+            hint: 补上通常
