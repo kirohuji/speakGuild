@@ -106,7 +106,7 @@ export class SceneRoleplayTurnDto {
 }
 
 export class WarmupTurnJudgeDto {
-  @IsString()
+  @IsIn(['chunk_substitution', 'vocab_drill', 'vocab_sentence_building', 'pattern_drill', 'sentence_decomposition'])
   stepType:
     | 'chunk_substitution'
     | 'vocab_drill'
@@ -114,7 +114,7 @@ export class WarmupTurnJudgeDto {
     | 'pattern_drill'
     | 'sentence_decomposition';
 
-  @IsString()
+  @IsIn(['zh_to_en', 'en_to_zh'])
   @IsOptional()
   direction?: 'zh_to_en' | 'en_to_zh';
 
@@ -131,6 +131,12 @@ export class WarmupTurnJudgeDto {
   @IsString()
   @IsOptional()
   targetText?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(20)
+  @IsOptional()
+  requiredWords?: string[];
 
   @IsString()
   @IsOptional()

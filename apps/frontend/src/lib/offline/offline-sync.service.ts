@@ -1,3 +1,6 @@
+import { checkInRepository, type CheckInPayload } from './check-in.repository'
+import { pointsApi } from '@/features/points/api'
+import { useUserStore } from '@/stores/user.store'
 import { prepareRecordingPayload, uploadUserRecording, RecordingDependencyError } from './user-recordings'
 import { replayNotebookMutation, findPulledNotebook } from './notebook-sync'
 import { serializeNotebookWrite } from './notebook-mutations'
@@ -15,7 +18,6 @@ import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
 import { syncOutbox, type SyncEntityType, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository, notifyLearningLibraryChanged } from './learning-content.repository'
-import { learningPackService } from './learning-pack.service'
 import { emitPracticeSyncFailed, scriptRepository } from './script.repository'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
@@ -38,6 +40,9 @@ export interface OfflineSyncResult {
 // for an already-running foreground sync instead of treating it as a no-op.
 let accountResetInProgress = false
 let activeSyncPromise: Promise<OfflineSyncResult> | null = null
+let activeSyncScope: SyncScope = 'all'
+let continuationTimer: ReturnType<typeof setTimeout> | undefined
+const lastAutomaticSync = new Map<string, number>()
 
 function userSyncCursorKey(userId?: string | null) {
   return userId ? `sync:user:${userId}:cursor` : USER_SYNC_CURSOR_KEY
@@ -101,6 +106,26 @@ async function applyPracticeSessionItem(item: any, localSessionId?: string | nul
   }
   if (item.status !== 'analyzed' || !item.analysisResult) return
 
+  if (item.summaryOnly) {
+    const id = `session:${item.id}`
+    const existing = await localDb.get<any>('practice_records', id)
+    if (existing?.syncStatus === 'pending') return
+    await localDb.put('practice_records', {
+      ...existing, id, type: 'history', remoteId: item.id, sessionId: item.id,
+      topicId: item.topicId, sceneId: item.sceneId, status: item.status,
+      record: {
+        recordId: item.id, sessionId: item.id, topicId: item.topicId,
+        topicName: item.sceneSnapshot?.title || '英语输出训练',
+        questionId: item.topicId, questionText: item.topicSnapshot?.title || '练习题目',
+        practiceCount: item.turnCount ?? 0, lastPracticeAt: toIsoString(item.startedAt),
+        status: item.status, score: item.analysisResult?.overallScore ?? null,
+        summary: item.analysisResult?.summary ?? null,
+        completedAt: toIsoString(item.completedAt), analyzedAt: toIsoString(item.analyzedAt),
+      },
+      updatedAt: toIsoString(item.updatedAt), syncStatus: 'synced',
+    })
+    return
+  }
   const fullSession = await practiceApi.getSession(item.id).catch(() => null)
   if (!fullSession?.analysisResult || fullSession.status !== 'analyzed') return
 
@@ -191,9 +216,9 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
   const pendingExpressions = new Set(pending.filter(op => ['word_entry', 'chunk_entry', 'pattern_entry'].includes(op.entityType))
     .map(op => `${op.entityType.replace('_entry', '')}:${op.entityId}`))
   const hasPending = (row: any) => row && (pendingIds.has(row.id) || pendingExpressions.has(row.expressionEntryId))
-  for (const item of changed?.expressionItems ?? []) {
-    await applyExpressionItem(item)
-  }
+  const remoteExpressions = new Map<string, any>((changed?.expressions ?? changed?.expressionItems ?? []).map((item: any) => [item.id, item]))
+  const savedExpressions = new Map<string, Awaited<ReturnType<typeof learningContentRepository.saveRemoteExpressionEntry>>>()
+  for (const item of remoteExpressions.values()) savedExpressions.set(item.id, await learningContentRepository.saveRemoteExpressionEntry(item))
 
   {
     const notebookAliases = new Map<string, string>()
@@ -212,8 +237,10 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
         remoteId: notebook.id, remoteUpdatedAt: notebook.updatedAt, remoteVersion: notebook.version, syncStatus: 'synced' } })
     }
     for (const item of changed?.learningNotebookItems ?? []) {
-      if (!item?.id || !item?.expressionItem) continue
-      const expression = await learningContentRepository.saveRemoteExpressionEntry(item.expressionItem)
+      if (!item?.id) continue
+      const remoteExpression = item.expressionItem ?? remoteExpressions.get(item.expressionItemId)
+      if (!remoteExpression) throw new Error('Missing notebook expression dependency')
+      const expression = savedExpressions.get(remoteExpression.id) ?? await learningContentRepository.saveRemoteExpressionEntry(remoteExpression)
       if (!expression) continue
       const aliases = await localDb.findByIndex<any>('learning_notebooks', 'remote_id', item.notebookId)
       const notebookId = notebookAliases.get(item.notebookId) ?? aliases[0]?.id ?? item.notebookId
@@ -360,6 +387,18 @@ async function replayItem(
   item: SyncOutboxItem,
   expressionCache?: { items: any[] },
 ): Promise<boolean> {
+  if (item.entityType === 'check_in') {
+    const payload = item.payload as CheckInPayload
+    if (accountResetInProgress || payload.ownerId !== getCurrentSessionSnapshot()?.user?.id) throw new Error('签到账号已变化')
+    const result = await pointsApi.checkIn({ ownerId: payload.ownerId, date: payload.date, occurredAt: payload.occurredAt,
+      timeZone: payload.timeZone, clientMutationId: item.clientMutationId })
+    if (!result.status || result.date !== payload.date) throw new Error('服务端尚不支持离线签到，请稍后同步')
+    await checkInRepository.acknowledge(payload, result)
+    if (getCurrentSessionSnapshot()?.user?.id === payload.ownerId && useUserStore.getState().currentUserId === payload.ownerId) {
+      useUserStore.getState().setPointsBalance(result.points)
+    }
+    return true
+  }
   if (item.entityType === 'user_recording') { await uploadUserRecording((item.payload as { reference: string }).reference); return true }
   if (['daily_practice', 'practice_turn', 'topic_submission'].includes(item.entityType)) item = { ...item, payload: await prepareRecordingPayload(item.payload) }
   if (item.entityType === 'notebook' || item.entityType === 'notebook_item') return replayNotebookMutation(item)
@@ -611,8 +650,13 @@ const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
 }
 
 export const offlineSyncService = {
-  pauseForAccountReset() { accountResetInProgress = true },
-  resumeForAccount() { accountResetInProgress = false },
+  pauseForAccountReset() {
+    accountResetInProgress = true
+    checkInRepository.pause()
+    clearTimeout(continuationTimer)
+    lastAutomaticSync.clear()
+  },
+  resumeForAccount() { accountResetInProgress = false; checkInRepository.resume() },
   async waitForIdle() { await activeSyncPromise?.catch(() => undefined) },
   async syncPending(userId: string) {
     if (accountResetInProgress || activeSyncPromise || typeof document === 'undefined' || document.visibilityState !== 'visible' || !navigator.onLine) return
@@ -664,8 +708,9 @@ export const offlineSyncService = {
     const MAX_PULL_DURATION_MS = 30_000
     const pullStartedAt = Date.now()
 
+    let pendingTypes = types
     while (true) {
-      const result = await syncApi.pull(cursors, types)
+      const result = await syncApi.pull(cursors, pendingTypes)
       if (accountResetInProgress || (userId && (getCurrentSessionSnapshot()?.user?.id !== userId || result.userId !== userId))) throw new Error('Account changed')
       await serializeNotebookWrite(() => batchStatisticsNotifications(() => applyUserPullChanges(result.changed, result.deleted, { id: cursorKey, value: JSON.stringify(result.cursors) })))
       for (const run of result.changed.dailyPracticeRuns ?? []) {
@@ -678,6 +723,7 @@ export const offlineSyncService = {
         (result.changed.chunkProgresses?.length ?? 0) +
         (result.changed.practiceSessions?.length ?? 0) +
         (result.changed.practiceTurns?.length ?? 0) +
+        (result.changed.topicSessions?.length ?? 0) +
         (result.changed.practiceWarmupRecords?.length ?? 0) +
         (result.changed.dailyPracticeRuns?.length ?? 0)
         + (result.changed.learningNotebooks?.length ?? 0)
@@ -692,7 +738,7 @@ export const offlineSyncService = {
       finalCursors = result.cursors
 
       // 检查是否所有类型都已拉完
-      dailyHistoryComplete = !result.hasMore.dailyPracticeRuns
+      dailyHistoryComplete ||= !result.hasMore.dailyPracticeRuns
       const anyMore = Object.values(result.hasMore).some(Boolean)
       if (!anyMore) { complete = true; break }
 
@@ -703,6 +749,10 @@ export const offlineSyncService = {
         break
       }
       cursors = result.cursors
+      pendingTypes = [...new Set(Object.entries(result.hasMore).filter(([, more]) => more).map(([type]) => ({
+        deletedExpressionItems: 'expressionItems', deletedLearningNotebooks: 'learningNotebooks',
+        deletedLearningNotebookItems: 'learningNotebookItems',
+      })[type] ?? type))]
     }
 
     if ((!types || types.includes('dailyPracticeRuns')) && dailyHistoryComplete) {
@@ -727,7 +777,7 @@ export const offlineSyncService = {
     return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted, dailyPracticeRunIds: [...dailyPracticeRunIds], complete }
   },
 
-  async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope; retryNow?: boolean }): Promise<OfflineSyncResult> {
+  async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope; retryNow?: boolean; automatic?: boolean }): Promise<OfflineSyncResult> {
     userId ??= getCurrentSessionSnapshot()?.user?.id
     if (accountResetInProgress) throw new Error('Account data reset in progress')
     if (typeof navigator !== 'undefined' && !navigator.onLine) return { push: { synced: 0, failed: 0, skipped: 0, remaining: await localDb.countWhere('outbox', [{ column: 'status', value: ['pending', 'failed'] }]) }, pull: null, refreshedPacks: [], offline: true }
@@ -740,9 +790,15 @@ export const offlineSyncService = {
     // start a fresh pass after the in-flight pass completes, rather than merely
     // sharing a promise whose flush phase may already have finished.
     if (activeSyncPromise) {
+      if (options?.automatic && (activeSyncScope === 'all' || activeSyncScope === (options.scope ?? 'all'))) return activeSyncPromise
       await activeSyncPromise
       return this.sync(userId, options)
     }
+    const automaticKey = `${userId}:${options?.scope ?? 'all'}`
+    if (options?.automatic && Date.now() - (lastAutomaticSync.get(automaticKey) ?? 0) < 30_000) {
+      return { push: { synced: 0, failed: 0, skipped: 0 }, pull: null, refreshedPacks: [] }
+    }
+    activeSyncScope = options?.scope ?? 'all'
     if (options?.retryNow) {
       const failed = (await localDb.list<SyncOutboxItem>('outbox')).filter(item => item.status === 'failed' && (!outboxTypes || outboxTypes.has(item.entityType)))
       await localDb.commitLocalWrites(failed.map(item => ({ table: 'outbox', value: { ...item, status: 'pending', nextRetryAt: new Date().toISOString() } })))
@@ -763,10 +819,27 @@ export const offlineSyncService = {
           await pullRemoteDailyProgress(dailyItemIds)
         }
 
-        // 学习包内容更新：仅全量同步时检查（局部同步不刷新内容）
-        const refreshedPacks = (!options?.scope || options.scope === 'all')
-          ? await this.refreshContentUpdates()
-          : []
+        // Content updates use the existing version check and download queue.
+        // They must not delay personal-data synchronization.
+        const refreshedPacks: string[] = []
+        if (!options?.scope || options.scope === 'all') {
+          void import('@/stores/learning.store').then(({ useLearningStore }) => {
+            if (!accountResetInProgress && getCurrentSessionSnapshot()?.user?.id === userId) {
+              return useLearningStore.getState().checkPackUpdates(true)
+            }
+          }).catch(error => logger.warn('pack update check failed', error))
+        }
+        if (pull.complete) lastAutomaticSync.set(automaticKey, Date.now())
+        else {
+          lastAutomaticSync.delete(automaticKey)
+          clearTimeout(continuationTimer)
+          continuationTimer = setTimeout(() => {
+            if (!accountResetInProgress && getCurrentSessionSnapshot()?.user?.id === userId) {
+              void this.sync(userId, { quiet: true, scope: options?.scope, automatic: true })
+                .catch(error => logger.warn('sync continuation failed', error))
+            }
+          }, 1000)
+        }
         void refreshLearningBadgeFromTodayRun().catch(() => undefined)
         const pendingErrors = push.remaining > 0 ? (await localDb.list<SyncOutboxItem>('outbox'))
           .filter(item => item.status === 'failed' && (!outboxTypes || outboxTypes.has(item.entityType)))
@@ -795,108 +868,6 @@ export const offlineSyncService = {
     } finally {
       if (activeSyncPromise === running) activeSyncPromise = null
     }
-  },
-
-  /** 检查公共内容更新，返回需要刷新的学习包 ID 列表 */
-  async checkContentUpdates(): Promise<string[]> {
-    try {
-      const versionRecord = await localDb.get<{ value?: string }>('kv', 'sync:content:since')
-      const manifest = await syncApi.contentManifest(versionRecord?.value ?? null)
-
-      // 收集所有变更涉及的内容 ID
-      const changedIds = new Set<string>([
-        ...(manifest.changed?.scenes?.map((s: any) => s.id) ?? []),
-        ...(manifest.changed?.topics?.map((t: any) => t.id) ?? []),
-        ...(manifest.changed?.vocabularies?.map((v: any) => v.id) ?? []),
-        ...(manifest.changed?.chunks?.map((c: any) => c.id) ?? []),
-        ...(manifest.changed?.sentencePatterns?.map((p: any) => p.id) ?? []),
-        ...(manifest.changed?.storyEpisodes?.map((e: any) => e.id) ?? []),
-        ...(manifest.changed?.dictionaries?.map((d: any) => d.id) ?? []),
-      ])
-
-      if (changedIds.size === 0) return []
-
-      // 找出哪些已安装学习包的内容发生了变更
-      const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[]; storyEpisodes?: string[]; inkScripts?: string[] } }>('downloaded_packs')
-      const stalePacks = packs
-        .filter((pack) => {
-          const ids = [
-            ...(pack.manifest?.topics ?? []),
-            ...(pack.manifest?.vocabularies ?? []),
-            ...(pack.manifest?.chunks ?? []),
-            ...(pack.manifest?.sentencePatterns ?? []),
-            ...(pack.manifest?.storyEpisodes ?? []),
-            ...(pack.manifest?.inkScripts ?? []),
-          ]
-          return ids.some((id) => changedIds.has(id))
-        })
-        .map((pack) => pack.packId)
-
-      return stalePacks
-    } catch (error) {
-      logger.warn('content manifest check failed:', error)
-      return []
-    }
-  },
-
-  async refreshContentUpdates(): Promise<string[]> {
-    const versionRecord = await localDb.get<{ value?: string }>('kv', 'sync:content:since')
-    const manifest = await syncApi.contentManifest(versionRecord?.value ?? null)
-    const changedIds = new Set<string>([
-      ...(manifest.changed?.scenes?.map((s: any) => s.id) ?? []),
-      ...(manifest.changed?.topics?.map((t: any) => t.id) ?? []),
-      ...(manifest.changed?.vocabularies?.map((v: any) => v.id) ?? []),
-      ...(manifest.changed?.chunks?.map((c: any) => c.id) ?? []),
-      ...(manifest.changed?.sentencePatterns?.map((p: any) => p.id) ?? []),
-      ...(manifest.changed?.storyEpisodes?.map((e: any) => e.id) ?? []),
-      ...(manifest.changed?.dictionaries?.map((d: any) => d.id) ?? []),
-    ])
-
-    if (changedIds.size === 0) {
-      if (manifest.generatedAt) {
-        await localDb.put('kv', {
-          id: 'sync:content:since',
-          value: manifest.generatedAt,
-          updatedAt: new Date().toISOString(),
-        })
-      }
-      return []
-    }
-
-    const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[]; storyEpisodes?: string[]; inkScripts?: string[] } }>('downloaded_packs')
-    const stalePacks = packs
-      .filter((pack) => {
-        const ids = [
-          ...(pack.manifest?.topics ?? []),
-          ...(pack.manifest?.vocabularies ?? []),
-          ...(pack.manifest?.chunks ?? []),
-          ...(pack.manifest?.sentencePatterns ?? []),
-          ...(pack.manifest?.storyEpisodes ?? []),
-          ...(pack.manifest?.inkScripts ?? []),
-        ]
-        return ids.some((id) => changedIds.has(id))
-      })
-      .map((pack) => pack.packId)
-
-    const refreshed: string[] = []
-    for (const packId of stalePacks) {
-      try {
-        await learningPackService.installUnit(packId)
-        refreshed.push(packId)
-      } catch (error) {
-        logger.warn('pack refresh failed', { packId, error: errorMessage(error) })
-      }
-    }
-
-    if (manifest.generatedAt && refreshed.length === stalePacks.length) {
-      await localDb.put('kv', {
-        id: 'sync:content:since',
-        value: manifest.generatedAt,
-        updatedAt: new Date().toISOString(),
-      })
-    }
-
-    return refreshed
   },
 
   async flush(outboxTypes?: ReadonlySet<SyncEntityType>): Promise<{ synced: number; failed: number; skipped: number; remaining: number; operations: Record<string, number> }> {
@@ -999,7 +970,7 @@ export const offlineSyncService = {
     let replayPasses = 0
     while (madeProgress && replayPasses++ < 2) {
       madeProgress = false
-      const pending = (await syncOutbox.listPending(outboxTypes)).sort((a, b) => Number(b.entityType === 'notebook') - Number(a.entityType === 'notebook') || a.createdAt.localeCompare(b.createdAt))
+      const pending = (await syncOutbox.listPending(outboxTypes)).sort((a, b) => Number(b.entityType === 'notebook') - Number(a.entityType === 'notebook') || Number(b.entityType === 'check_in') - Number(a.entityType === 'check_in') || (a.entityType === 'check_in' && b.entityType === 'check_in' ? a.entityId.localeCompare(b.entityId) : a.createdAt.localeCompare(b.createdAt)))
 
       for (const item of pending) {
         if (bulkEntityTypes.has(item.entityType)) {

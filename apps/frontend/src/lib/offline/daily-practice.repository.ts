@@ -1,3 +1,4 @@
+import { sentenceBuildingPrompts } from '@/features/practice/lib/warmup-reference'
 import { prepareRecordingPayload } from './user-recordings'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
 import type { UnitDetail } from '@/features/learning/api/learning-api'
@@ -617,7 +618,7 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
         for (const [idx, prompt] of (item.vocabs ?? []).entries()) push(prompt, idx)
       } else if (type === 'vocab_sentence_building') {
         for (const [patternIndex, pattern] of (item.patterns ?? []).entries()) {
-          for (const [idx, prompt] of (pattern.items ?? []).entries()) push({ ...prompt, pattern }, idx, {
+          for (const [idx, prompt] of sentenceBuildingPrompts<any>(pattern).entries()) push({ ...prompt, pattern }, idx, {
             pattern,
             patternIndex,
             label: `${item.vocabWord || '词汇'} + ${pattern.chunk || item.vocabWord || ''}`,
@@ -1274,6 +1275,7 @@ export const dailyPracticeRepository = {
   },
 
   async syncAdHocRun(params: {
+    clientRunKey?: string
     packId: string
     topicId: string
     topicTitle: string
@@ -1293,7 +1295,7 @@ export const dailyPracticeRepository = {
       .map((progress) => progress.itemId)
     const scoreValues = params.records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
     const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
-    const clientRunId = `guided:${params.topicId}:${date}`
+    const clientRunId = `guided:${params.clientRunKey ?? params.topicId}:${date}`
     const payload = {
       run: {
         id: clientRunId,

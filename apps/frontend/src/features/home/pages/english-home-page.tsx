@@ -1,3 +1,4 @@
+import { localDateKey } from '@/lib/date/calendar-date'
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
@@ -63,9 +64,24 @@ export function EnglishHomePage() {
   // 进页面触发所有首页数据拉取（store 内部按日期/标志位缓存）
   useEffect(() => {
     fetchDailySentence()
-    fetchCheckInStatus()
     fetchSpecialNotifications()
-  }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications])
+  }, [fetchDailySentence, fetchSpecialNotifications])
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+    let date = localDateKey()
+    const refresh = () => { date = localDateKey(); void fetchCheckInStatus() }
+    refresh()
+    const timer = setInterval(() => { if (date !== localDateKey()) refresh() }, 30_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    window.addEventListener('online', refresh)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('online', refresh)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [session?.user?.id, fetchCheckInStatus])
 
   const onboardingCompletedSegments = useOnboardingStore((s) => s.completedSegments)
   useEffect(() => {

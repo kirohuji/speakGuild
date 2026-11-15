@@ -285,7 +285,12 @@ export class LibraryFieldBatchService {
         const fillEmptyDefinition = touchDefinition && mode === 'fill' && !definitionText;
         if (touchMeaning || touchDescription || touchExamples || (touchDefinition && mode === 'regenerate') || fillEmptyDefinition || touchDifficulty) {
           const definitions = (row.definitionEn ?? '').split('; ').map((item) => item.trim()).filter(Boolean);
-          const generated = await this.adminContentAiService.enrichVocabulary({
+          const fieldOnly = mode === 'regenerate' && !touchMeaning && !touchDefinition && !touchDifficulty;
+          const focused = fieldOnly ? await this.adminContentAiService.regenerateLearningFields({
+            kind: 'word', text: row.word, meaning: row.meaning, definitions, description: row.description, examples: row.examples,
+            fields: [...(touchDescription ? ['description' as const] : []), ...(touchExamples ? ['examples' as const] : [])],
+          }, usageCallback(usage)) : null;
+          const generated = focused ? { meaning: '', description: focused.description ?? '', generatedExamples: focused.examples ?? [], learnerDefinitions: [], difficulty: '' } : await this.adminContentAiService.enrichVocabulary({
             word: row.word,
             definitions,
             examples: this.exampleEns(row.examples),
@@ -400,7 +405,12 @@ export class LibraryFieldBatchService {
         const touchDescription = mode !== 'normalize' && selected('description', descriptionNeedsWork(row.description, mode, 'text'));
         const touchExamples = selected('examples', examplesNeedWork(row.examples, mode));
         if (touchMeaning || touchDescription || touchExamples) {
-          const generated = kind === 'chunk'
+          const generated = mode === 'regenerate' && !touchMeaning
+            ? { meaning: '', description: '', examples: [], ...await this.adminContentAiService.regenerateLearningFields({
+              kind, text: row.label, meaning: meaningForPrompt(row.meaning), description: row.description, examples: row.examples,
+              fields: [...(touchDescription ? ['description' as const] : []), ...(touchExamples ? ['examples' as const] : [])],
+            }, usageCallback(usage)) }
+            : kind === 'chunk'
             ? await this.adminContentAiService.enrichChunk({ text: row.label, meaning: meaningForPrompt(row.meaning) }, usageCallback(usage))
             : await this.adminContentAiService.enrichPattern({ pattern: row.label, meaning: meaningForPrompt(row.meaning) }, usageCallback(usage));
           if (touchMeaning && generated.meaning.trim() && !isPlaceholderMeaning(generated.meaning)) data.meaning = generated.meaning.trim();

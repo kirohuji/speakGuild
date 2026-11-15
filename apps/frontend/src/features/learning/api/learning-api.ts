@@ -590,7 +590,7 @@ export const learningApi = {
       onDownloadProgress: (event) => onDownloadProgress?.(event.loaded, event.total),
     }),
 
-  checkPacks: (installed: Array<{ packId: string; version?: number }>) =>
+  checkPacks: (installed: Array<{ packId: string; version?: number; source?: string }>) =>
     post<{ updates: PackUpdateInfo[] }>('/learning/packs/check', { installed }),
 
   /** V2: 下载 delta 增量包 */

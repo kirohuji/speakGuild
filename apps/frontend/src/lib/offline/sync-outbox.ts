@@ -2,6 +2,7 @@ import { localDb } from './unified-storage'
 import { createId } from './utils'
 
 export type SyncEntityType =
+  | 'check_in'
   | 'user_recording'
   | 'notebook'
   | 'notebook_item'

@@ -1,9 +1,14 @@
 import { create } from 'zustand'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { get } from '@/lib/request'
-import { pointsApi, type CheckInStatus } from '@/features/points/api'
+import { type CheckInStatus } from '@/features/points/api'
 import { getSpecialNotifications, type SpecialNotification } from '@/features/notification/api'
-import { useUserStore } from '@/stores/user.store'
+import { checkInRepository, subscribeCheckInsChanged } from '@/lib/offline/check-in.repository'
+import { getCurrentSessionSnapshot } from '@/providers/auth-session'
+import i18n from '@/lib/i18n'
+
+let checkInEpoch = 0
+let checkInStatusRequest = 0
 
 // ---- 每日句子 ----
 
@@ -46,6 +51,7 @@ interface HomeStore {
   fetchDailySentence: () => Promise<void>
   fetchCheckInStatus: () => Promise<void>
   fetchSpecialNotifications: () => Promise<void>
+  resetCheckIn: () => void
   checkIn: () => Promise<string> // 返回成功消息，失败 throw
 }
 
@@ -82,13 +88,21 @@ export const useHomeStore = create<HomeStore>()((set, getState) => ({
     }
   },
 
+  resetCheckIn() { checkInEpoch++; set({ checkInStatus: null, checkInLoading: false }) },
+
   async fetchCheckInStatus() {
+    const owner = getCurrentSessionSnapshot()?.user?.id
+    if (!owner) return
+    const epoch = checkInEpoch
+    const request = ++checkInStatusRequest
+    const isCurrent = () => request === checkInStatusRequest && epoch === checkInEpoch && getCurrentSessionSnapshot()?.user?.id === owner
     try {
-      const status = await pointsApi.getCheckInStatus()
-      set({ checkInStatus: status })
-    } catch {
-      // 静默失败
-    }
+      const cached = await checkInRepository.readStatus()
+      if (isCurrent()) set({ checkInStatus: cached })
+      if (!navigator.onLine) return
+      const fresh = await checkInRepository.refreshStatus()
+      if (isCurrent()) set({ checkInStatus: fresh })
+    } catch { /* Local status remains usable when offline or during an account transition. */ }
   },
 
   async fetchSpecialNotifications() {
@@ -104,34 +118,28 @@ export const useHomeStore = create<HomeStore>()((set, getState) => ({
   },
 
   async checkIn() {
+    if (getState().checkInLoading) return i18n.t('home.checkInSaved')
+    const owner = getCurrentSessionSnapshot()?.user?.id
+    const epoch = checkInEpoch
+    checkInStatusRequest++
     set({ checkInLoading: true })
     try {
-      const result = await pointsApi.checkIn()
-      // 签到后刷新状态
-      const status = await pointsApi.getCheckInStatus()
-      set({ checkInStatus: status, checkInLoading: false })
-      // 同步统一用户 store 的积分余额（points 为签到后的总余额）
-      if (typeof result.points === 'number') {
-        useUserStore.getState().setPointsBalance(result.points)
+      const status = await checkInRepository.checkIn()
+      if (epoch !== checkInEpoch || getCurrentSessionSnapshot()?.user?.id !== owner) throw new Error(i18n.t('home.checkInFailed'))
+      set({ checkInStatus: status })
+      if (navigator.onLine && owner) {
+        void import('@/lib/offline/offline-sync.service').then(({ offlineSyncService }) => offlineSyncService.syncPending(owner)).catch(() => undefined)
       }
-      return result.message
-    } catch (e) {
-      const message = String((e as any)?.response?.data?.message || (e as Error)?.message || '')
-      // 弱网未拉到状态时用户可能点到「已签到」接口：按已打卡收敛，避免反复点
-      if (message.includes('已经签到') || /already\s*checked\s*in/i.test(message)) {
-        try {
-          const status = await pointsApi.getCheckInStatus()
-          set({ checkInStatus: status, checkInLoading: false })
-        } catch {
-          set({
-            checkInStatus: { checkedIn: true, todayPoints: 0, currentStreak: 0 },
-            checkInLoading: false,
-          })
-        }
-      } else {
-        set({ checkInLoading: false })
-      }
-      throw e
-    }
+      return i18n.t('home.checkInSaved')
+    } finally { if (epoch === checkInEpoch) set({ checkInLoading: false }) }
   },
 }))
+
+subscribeCheckInsChanged(() => {
+  const owner = getCurrentSessionSnapshot()?.user?.id
+  if (!owner) return
+  const epoch = checkInEpoch
+  void checkInRepository.readStatus().then(status => {
+    if (epoch === checkInEpoch && getCurrentSessionSnapshot()?.user?.id === owner) useHomeStore.setState({ checkInStatus: status })
+  }).catch(() => undefined)
+})

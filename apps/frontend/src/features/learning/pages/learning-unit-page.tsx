@@ -658,6 +658,7 @@ export function LearningUnitPage() {
 
       {/* Dialog */}
       <LearningInsightDialog
+          practiceUnitId={unitId}
         items={currentDialogItems}
         index={Math.min(dialogIndex, Math.max(currentDialogItems.length - 1, 0))}
         open={dialogOpen}

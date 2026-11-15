@@ -1,3 +1,4 @@
+import { targetIsUsed, meaningConflict } from './warmup-answer-rules'
 import type { DrillDirection } from '@/features/practice/api/english-practice-api'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { warmupModelManager, type LocalWarmupModelLoadConfig } from './warmup-model-manager'
@@ -15,6 +16,7 @@ export interface WarmupTurnJudgeInput {
   expectedAnswer?: string
   userAnswer: string
   targetText?: string
+  requiredWords?: string[]
   targetMeaning?: string
 }
 
@@ -215,59 +217,25 @@ export function preloadWarmupLocalJudge(
   })
 }
 
-function looksLikePastParticiple(token: string) {
-  const normalized = token.toLowerCase()
-  if (normalized === 'got' || normalized === 'been') return true
-  if (/(ed|en|ne|wn)$/i.test(normalized)) return true
-  return new Set([
-    'done',
-    'had',
-    'made',
-    'taken',
-    'seen',
-    'gone',
-    'come',
-    'found',
-    'left',
-    'lost',
-    'heard',
-    'read',
-    'written',
-    'eaten',
-    'drunk',
-    'known',
-  ]).has(normalized)
-}
-
-function expandAmbiguousApostropheS(subject: string, nextToken = '') {
-  return `${subject} ${looksLikePastParticiple(nextToken) ? 'has' : 'is'}${nextToken ? ` ${nextToken}` : ''}`
-}
-
 function expandEnglishContractions(value: string) {
   return value
     .toLowerCase()
+    .replace(/[’‘]/g, "'")
     .replace(/\bi'm\b/g, 'i am')
     .replace(/\byou're\b/g, 'you are')
     .replace(/\bwe're\b/g, 'we are')
     .replace(/\bthey're\b/g, 'they are')
-    .replace(/\b(he|she|it|that|there|who|what|where|when|why|how)'s(?:\s+([a-z]+))?\b/g, (_match, subject: string, nextToken?: string) => (
-      expandAmbiguousApostropheS(subject, nextToken)
-    ))
     .replace(/\bcan't\b/g, 'cannot')
     .replace(/\bwon't\b/g, 'will not')
-    .replace(/\bn't\b/g, ' not')
+    .replace(/n't\b/g, ' not')
     .replace(/\b([a-z]+)'ll\b/g, '$1 will')
     .replace(/\b([a-z]+)'ve\b/g, '$1 have')
-    .replace(/\b([a-z]+)'d\b/g, '$1 would')
     .replace(/\b([a-z]+)'re\b/g, '$1 are')
     .replace(/\b([a-z]+)'m\b/g, '$1 am')
 }
 
 function normalizeText(value: string) {
   return expandEnglishContractions(value)
-    .replace(/\ball of them\b/g, 'they')
-    .replace(/\ball of us\b/g, 'we')
-    .replace(/\bboth of them\b/g, 'they')
     .replace(/[^\p{L}\p{N}\s']/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -287,39 +255,12 @@ function cosine(a: number[], b: number[]) {
   return dot / Math.sqrt(aNorm * bNorm)
 }
 
-function splitTargets(targetText?: string) {
-  if (!targetText) return []
-  return targetText
-    .split(/[,，、/|;]/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
-function normalizeTargetSkeleton(target: string) {
-  return normalizeText(target
-    .replace(/\[[^\]]+\]/g, ' ')
-    .replace(/\([^)]*\)/g, ' ')
-    .replace(/_{2,}/g, ' ')
-    .replace(/\.{2,}/g, ' '))
-}
-
-function targetCandidates(target: string) {
-  return Array.from(new Set([normalizeText(target), normalizeTargetSkeleton(target)]))
-    .map((item) => item.trim())
-    .filter((item) => item.length >= 2)
-}
-
-function hasTarget(userAnswer: string, targetText?: string) {
-  const normalizedAnswer = normalizeText(userAnswer)
-  const targets = splitTargets(targetText)
-  if (!targets.length) return true
-  return targets.some((target) => targetCandidates(target).some((candidate) => normalizedAnswer.includes(candidate)))
-}
-
-function answerContainsExpected(userAnswer: string, expectedAnswer?: string) {
-  const normalizedAnswer = normalizeText(userAnswer)
-  const normalizedExpected = normalizeText(expectedAnswer ?? '')
-  return normalizedExpected.length >= 3 && normalizedAnswer.includes(normalizedExpected)
+function answerMatchesExpected(userAnswer: string, expectedAnswer?: string) {
+  // Preserve internal punctuation and symbols: 10% is not 10, $5 is not €5.
+  const normalize = (value: string) => expandEnglishContractions(value.normalize('NFKC'))
+    .trim().replace(/[.!?。！？]+$/u, '').replace(/\s+/g, ' ').trim()
+  const expected = normalize(expectedAnswer ?? '')
+  return expected.length > 0 && normalize(userAnswer) === expected
 }
 
 function tokenOverlap(a: string, b?: string) {
@@ -345,6 +286,7 @@ function makeResult(params: {
   confidence: number
   targetMatched: boolean
   expectedAnswer?: string
+  feedback?: string
 }): LocalJudgeOutput {
   const passed = params.score === 'strong' || params.score === 'ok'
   const correction = params.score === 'weak' || params.score === 'miss' ? params.expectedAnswer || null : null
@@ -359,14 +301,14 @@ function makeResult(params: {
   return {
     passed,
     score: params.score,
-    feedback,
+    feedback: params.feedback ?? feedback,
     correction,
-    confidence: params.confidence,
-    fallback: params.confidence < 0.58,
+    confidence: Math.min(params.confidence, 1),
+    fallback: false,
   }
 }
 
-export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promise<LocalJudgeOutput> {
+export function judgeExactWarmupAnswer(input: WarmupTurnJudgeInput): LocalJudgeOutput | null {
   const userAnswer = input.userAnswer.trim()
   if (!userAnswer) {
     return {
@@ -379,10 +321,23 @@ export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promi
     }
   }
 
-  if (answerContainsExpected(userAnswer, input.expectedAnswer)) {
-    return makeResult({ score: 'strong', confidence: 1, targetMatched: true, expectedAnswer: input.expectedAnswer })
+  const languageMatches = input.direction === 'en_to_zh'
+    ? /\p{Script=Han}/u.test(userAnswer)
+    : /[a-z]/i.test(userAnswer) && !/\p{Script=Han}/u.test(userAnswer)
+  if (languageMatches && answerMatchesExpected(userAnswer, input.expectedAnswer)) {
+    return { ...makeResult({ score: 'strong', confidence: 1, targetMatched: true, expectedAnswer: input.expectedAnswer }), fallback: input.direction !== 'en_to_zh' && (!!input.targetText?.trim() || !!input.requiredWords?.length) }
   }
 
+  return null
+}
+
+export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promise<LocalJudgeOutput> {
+  const exact = judgeExactWarmupAnswer(input)
+  if (exact) {
+    if (!input.userAnswer.trim() || targetIsUsed(input)) return { ...exact, fallback: false }
+    return makeResult({ score: 'weak', confidence: 1, targetMatched: false, expectedAnswer: input.expectedAnswer })
+  }
+  const userAnswer = input.userAnswer.trim()
   const variantId = usePreferencesStore.getState().localAiWarmupModelVariant
   const config = await warmupModelManager.getLoadConfig(variantId)
   if (!config) throw new Error('local warmup model is not downloaded')
@@ -395,30 +350,26 @@ export async function judgeWarmupTurnLocally(input: WarmupTurnJudgeInput): Promi
   }, 8_000)
   if (!response.ok || !response.embeddings) throw new Error(response.error || 'local model failed')
 
-  const [userEmbedding, expectedEmbedding, promptEmbedding] = response.embeddings
-  const expectedSimilarity = cosine(userEmbedding, expectedEmbedding)
-  const promptSimilarity = cosine(userEmbedding, promptEmbedding)
-  const containsExpected = answerContainsExpected(userAnswer, input.expectedAnswer)
-  const lexicalScore = tokenOverlap(userAnswer, input.expectedAnswer)
-  const semanticScore = Math.max(expectedSimilarity, promptSimilarity * 0.92, lexicalScore * 0.88)
-  const targetMatched = input.direction === 'en_to_zh' || hasTarget(userAnswer, input.targetText)
+  return judgeWarmupEmbeddings(input, response.embeddings)
+}
 
-  if (containsExpected && targetMatched) {
-    return makeResult({ score: 'strong', confidence: Math.max(0.9, semanticScore), targetMatched, expectedAnswer: input.expectedAnswer })
-  }
-
-  if (lexicalScore >= 0.72 && targetMatched) {
-    return makeResult({ score: 'ok', confidence: Math.max(0.72, semanticScore), targetMatched, expectedAnswer: input.expectedAnswer })
-  }
-
-  if (semanticScore >= 0.82 && targetMatched) {
-    return makeResult({ score: 'strong', confidence: semanticScore, targetMatched, expectedAnswer: input.expectedAnswer })
-  }
-  if (semanticScore >= 0.66 && targetMatched) {
-    return makeResult({ score: 'ok', confidence: semanticScore, targetMatched, expectedAnswer: input.expectedAnswer })
-  }
-  if (semanticScore >= 0.56 || !targetMatched) {
-    return makeResult({ score: 'weak', confidence: Math.max(semanticScore, 0.6), targetMatched, expectedAnswer: input.expectedAnswer })
-  }
-  return makeResult({ score: 'miss', confidence: semanticScore, targetMatched, expectedAnswer: input.expectedAnswer })
+/** Scoring is separate from inference so real model vectors can be regression-tested. */
+export function judgeWarmupEmbeddings(input: WarmupTurnJudgeInput, embeddings: number[][]): LocalJudgeOutput {
+  const exact = judgeExactWarmupAnswer(input)
+  const targetMatched = targetIsUsed(input)
+  if (exact && targetMatched) return { ...exact, fallback: false }
+  const englishAnswer = /[a-z]/i.test(input.userAnswer)
+  const languageMatched = input.direction === 'en_to_zh' ? /\p{Script=Han}/u.test(input.userAnswer) : englishAnswer
+  const conflict = languageMatched ? meaningConflict(input) : '请按题目要求的语言回答。'
+  if (conflict) return makeResult({ score: 'miss', confidence: 1, targetMatched, expectedAnswer: input.expectedAnswer, feedback: conflict })
+  if (!targetMatched) return makeResult({ score: 'weak', confidence: 1, targetMatched, expectedAnswer: input.expectedAnswer, feedback: '意思可能接近，但目标表达还没有正确用上。' })
+  // English MiniLM cannot replace a missing English reference with a Chinese prompt.
+  if (!input.expectedAnswer?.trim()) throw new Error('这道题缺少参考答案，请更新学习包后重试。')
+  const [userEmbedding, expectedEmbedding] = embeddings
+  const similarity = cosine(userEmbedding, expectedEmbedding)
+  const lexicalScore = tokenOverlap(input.userAnswer, input.expectedAnswer)
+  const semanticScore = Math.max(similarity, lexicalScore * 0.88)
+  const threshold = input.direction === 'en_to_zh' ? 0.6 : 0.66
+  const score = semanticScore >= 0.82 ? 'strong' : semanticScore >= threshold ? 'ok' : semanticScore >= 0.5 ? 'weak' : 'miss'
+  return makeResult({ score, confidence: semanticScore, targetMatched, expectedAnswer: input.expectedAnswer })
 }

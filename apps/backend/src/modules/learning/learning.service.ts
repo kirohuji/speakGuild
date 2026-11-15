@@ -2314,6 +2314,7 @@ export class LearningService {
     if (!source) throw new NotFoundException('学习包不存在或已被删除，请刷新页面');
     const baseManifest = {
       ...source.manifest,
+      source: overrides ? 'published' : 'dynamic',
       version: overrides?.version ?? source.manifest.version,
       title: overrides?.title ?? source.manifest.title,
     };
@@ -2492,12 +2493,13 @@ export class LearningService {
     };
   }
 
-  async checkLearningPacks(userId: string, installed: Array<{ packId: string; version?: number }>) {
+  async checkLearningPacks(userId: string, installed: Array<{ packId: string; version?: number; source?: string }>) {
     console.log(`[learning-pack/check] checking ${installed.length} installed packs for user ${userId}`)
     const updates: any[] = [];
     for (const pack of installed ?? []) {
       if (!pack?.packId) continue;
       try {
+        await this.assertLearningPackAccess(userId, pack.packId, { allowExistingProgress: true });
         const published = await this.getPublishedLearningPackage(pack.packId);
         if (!published) {
           console.log(`[learning-pack/check]   ${pack.packId.slice(-8)}: no published version, skip`)
@@ -2506,7 +2508,7 @@ export class LearningService {
 
         const latestVersion = published.version;
         const currentVersion = Number(pack.version ?? 0);
-        if (latestVersion <= currentVersion) {
+        if (pack.source !== 'dynamic' && latestVersion <= currentVersion) {
           console.log(`[learning-pack/check]   ${pack.packId.slice(-8)}: up to date (v${currentVersion})`)
           continue;
         }
@@ -2514,7 +2516,7 @@ export class LearningService {
         const versionSpan = latestVersion - currentVersion;
 
         // V2: 检查是否有直接 delta（当前版本 → 最新版本）
-        const delta = versionSpan === 1
+        const delta = pack.source !== 'dynamic' && versionSpan > 0 && versionSpan <= 3
           ? await (this.prisma as any).deltaPackage.findUnique({
               where: { packId_fromVersion_toVersion: { packId: published.id, fromVersion: currentVersion, toVersion: latestVersion } },
               include: { fileAsset: { select: { id: true, size: true } } },

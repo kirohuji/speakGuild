@@ -20,7 +20,7 @@ const ALIAS: Record<string, string> = {
 const ORDER = ['核心含义', '用法提示', '易错点', '常见搭配'];
 
 /** 词汇、句块、句式的讲解共用这一套排版。生成提示词和检查规范都以此为准。 */
-export const DESCRIPTION_LAYOUT_RULE = '讲解排版必须和词汇、句块、句式完全一致。轻量 Markdown，依次写全四个小节，不能省略、不能改名，也不能用句式解析、使用场景、替换练习、类似表达等别名。每个小节先写标题再直接写正文，标题只能是「**核心含义：**」「**用法提示：**」「**易错点：**」「**常见搭配：**」。冒号在加粗里面，标题结束后直接接正文，禁止再加一组 **。小节之间空一行，每一小节只有一段，段内不要换行，不要用列表或项目符号。常见搭配写成同一行，用顿号连接，英文短语放在反引号里。';
+export const DESCRIPTION_LAYOUT_RULE = '面向中国 B1-B2 学习者，具体、准确、详细但精炼，中文正文建议160–260字，复杂内容最多320字，不计算标题、英文及标记。依次写全四节：**核心含义：**、**用法提示：**、**易错点：**、**常见搭配：**，标题不能改名。冒号在加粗内，后面空一格再写正文，禁止重复加粗标记。每节一个短段，小节间空一行；段内不用列表、编号或堆叠换行。核心含义说清最常用意思或句式槽位关系，不罗列冷僻义；用法提示给具体结构、使用场景或必要的语气区别；易错点指出一个真实易错点并给简短正确用法，不能只说注意语境或多练习。不重复释义，不写空泛套话，不扩写成长文。常见搭配优先3条自然、常用且互不重复的搭配（可靠搭配不足可2条，必要时最多4条），每条写成“`English phrase`（简短中文译法）”，用顿号连接为同一短段；句型则给可自然填入槽位的搭配。英文用反引号，中文翻译用全角括号（），不得凭空编造译法。';
 
 const HEADING_SOURCE = Object.keys(ALIAS).sort((left, right) => right.length - left.length).join('|');
 /** 库里的标题是 **核心含义：** ，冒号在加粗里面。也接受 **核心含义**： 和纯文本「核心含义：」。 */
@@ -37,17 +37,17 @@ function stripStrayBold(body: string): string {
 function normalizeBody(body: string): string {
   return stripStrayBold(body)
     .split('\n')
-    .map((line) => stripStrayBold(line.trim()).replace(/^[-*•]\s+/, '').trim())
+    .map((line) => stripStrayBold(line.trim()).replace(/^(?:[-*•]|\d+[.)、])\s+/, '').trim())
     .filter(Boolean)
-    .join('');
+    .reduce((text, line) => !text ? line : `${text}${/[。！？；：.!?;:]$/.test(text) ? '' : '；'}${line}`, '');
 }
 
 /** 常见搭配和单词讲解一样：同一行，顿号连接，不用列表。 */
 function flattenCollocations(body: string): string {
   const lines = stripStrayBold(body).split('\n').map((line) => stripStrayBold(line.trim())).filter(Boolean);
-  if (!lines.some((line) => /^[-*•]\s+/.test(line))) return lines.join('');
+  if (!lines.some((line) => /^(?:[-*•]|\d+[.)、])\s+/.test(line))) return lines.join('').replace(/\(([^)]*)\)/g, '（$1）');
   const prose = lines
-    .map((line) => line.replace(/^[-*•]\s+/, '').replace(/\(([^)]*)\)/g, '（$1）').replace(/[。；;，,、]\s*$/, '').trim())
+    .map((line) => line.replace(/^(?:[-*•]|\d+[.)、])\s+/, '').replace(/\(([^)]*)\)/g, '（$1）').replace(/[。；;，,、]\s*$/, '').trim())
     .filter(Boolean)
     .join('、');
   return prose ? (prose.endsWith('。') ? prose : `${prose}。`) : '';

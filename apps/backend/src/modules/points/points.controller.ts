@@ -1,3 +1,4 @@
+import { CheckInDto } from './dto/check-in.dto';
 import { MakeupCheckInDto } from './dto/makeup-check-in.dto';
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
@@ -47,9 +48,9 @@ export class PointsController {
 
   /** 每日签到 */
   @Post('check-in')
-  async checkIn(@Req() req: Request) {
+  async checkIn(@Req() req: Request, @Body() body: CheckInDto) {
     const session = await requireAuthSession(req);
-    return this.pointsService.checkIn(session.user.id, requestTimeZone(req));
+    return this.pointsService.checkIn(session.user.id, requestTimeZone(req), body ?? {});
   }
 
   /** 积分流水 */

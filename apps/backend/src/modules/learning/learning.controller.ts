@@ -127,7 +127,7 @@ export class LearningController {
   @Post('packs/check')
   async checkPacks(
     @Req() req: Request,
-    @Body() body: { installed?: Array<{ packId: string; version?: number }> },
+    @Body() body: { installed?: Array<{ packId: string; version?: number; source?: string }> },
   ) {
     const session = await requireAuthSession(req);
     return this.learningService.checkLearningPacks(session.user.id, body.installed ?? []);

@@ -26,11 +26,13 @@ import { AdminFileAssetsController } from './admin-file-assets.controller';
 import { ContentAccessService } from './content-access.service';
 import { ContentReviewController } from './content-review.controller';
 import { ContentReviewService } from './content-review.service';
+import { InsightContentController } from './insight-content.controller';
+import { InsightContentService } from './insight-content.service';
 
 @Module({
   imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule, AdminTasksModule, AiModelModule, ContentExperienceModule],
-  controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController, NarrativeVideoController, AdminFileAssetsController, ContentReviewController],
-  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService, AdminContentAiService, ContentAccessService, ContentReviewService],
+  controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController, NarrativeVideoController, AdminFileAssetsController, ContentReviewController, InsightContentController],
+  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService, AdminContentAiService, ContentAccessService, ContentReviewService, InsightContentService],
   exports: [SystemConfigService],
 })
 export class AdminModule {}

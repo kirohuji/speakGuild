@@ -1,3 +1,5 @@
+import { checkInRepository } from '@/lib/offline/check-in.repository'
+import { useHomeStore } from '@/stores/home.store'
 import { getOutboxVersion, subscribeOutboxChanged } from '@/lib/offline/storage-events'
 import { waitForActivityWrites } from '@/stores/practice-activity.store'
 import { useLearningStatisticsStore } from '@/stores/learning-statistics.store'
@@ -56,7 +58,7 @@ function useAppForegroundSync(userId: string | undefined, enabled: boolean) {
       if (now - lastSyncRef.current < 30_000) return
       lastSyncRef.current = now
 
-      void offlineSyncService.sync(userId, { quiet: true }).catch((error) => {
+      void offlineSyncService.sync(userId, { quiet: true, automatic: true }).catch((error) => {
         console.warn('[offline-sync] foreground sync failed:', error)
       })
       void rescheduleLearningReminder().catch((error) => {
@@ -178,6 +180,7 @@ function setOfflineDataOwner(userId: string | null) {
 
 async function clearUserScopedClientData(options: { preservePersistentData?: boolean } = {}) {
   offlineSyncService.pauseForAccountReset()
+  useHomeStore.getState().resetCheckIn()
   await offlineSyncService.waitForIdle()
   if (!options.preservePersistentData) usePracticeActivityStore.getState().reset()
   await waitForActivityWrites().catch(() => undefined)
@@ -185,6 +188,7 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
   useDailyPracticeStore.getState().reset()
   useLearningStore.getState().resetUserState()
   await waitForCheckInCacheWrites().catch(() => undefined)
+  await checkInRepository.waitForWrites()
   if (!options.preservePersistentData) {
     await serializeNotebookWrite(() => offlineStorageService.clearUserData())
   }
@@ -200,7 +204,7 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
 
 function startBackgroundLoginRestore(userId: string) {
   useOfflineSyncStore.getState().setLoginRestorePending(true)
-  void offlineSyncService.sync(userId, { quiet: true })
+  void offlineSyncService.sync(userId, { quiet: true, automatic: true })
     .catch((error) => {
       console.warn('[auth] background offline restore failed; retained local data:', error)
     })
@@ -219,10 +223,12 @@ async function prepareOfflineDataForUser(userId: string) {
   try {
     const ownerId = getOfflineDataOwner()
     offlineSyncService.pauseForAccountReset()
+    useHomeStore.getState().resetCheckIn()
     await offlineSyncService.waitForIdle()
     await useDailyPracticeStore.getState().waitForPendingWrites()
     await waitForActivityWrites()
     await waitForCheckInCacheWrites()
+    await checkInRepository.waitForWrites()
     await serializeNotebookWrite(async () => undefined)
     const { reused, archiveId } = await prepareAccountData(userId, { ownerId, cachedUserId: readCachedSession()?.user.id ?? null }, () => clearUserScopedClientData())
     if (archiveId) toast('旧版本地数据已单独保留，未合并到当前账号')

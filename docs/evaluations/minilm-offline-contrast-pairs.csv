@@ -1,0 +1,19 @@
+variant,reference,comparison,similarity
+q8,I like coffee.,I do not like coffee.,0.7963710856452215
+q8,I take her home.,She takes me home.,0.899562372479447
+q8,I bought three apples.,I bought two apples.,0.9123906373597929
+q8,I get used to working alone.,I get used to work alone.,0.9787706637251269
+q8,I'll get back to you tomorrow.,I will reply to you tomorrow.,0.7168492445420807
+q8,我花了两个小时完成报告。,我花了两天完成报告。,0.8975488939497706
+fp16,I like coffee.,I do not like coffee.,0.8024662761544773
+fp16,I take her home.,She takes me home.,0.9051360885940991
+fp16,I bought three apples.,I bought two apples.,0.9276751648434524
+fp16,I get used to working alone.,I get used to work alone.,0.9854466428303442
+fp16,I'll get back to you tomorrow.,I will reply to you tomorrow.,0.7202997473752405
+fp16,我花了两个小时完成报告。,我花了两天完成报告。,0.9157178938844593
+fp32,I like coffee.,I do not like coffee.,0.8024633251146152
+fp32,I take her home.,She takes me home.,0.9051041155746824
+fp32,I bought three apples.,I bought two apples.,0.9277366696726451
+fp32,I get used to working alone.,I get used to work alone.,0.9854422810404257
+fp32,I'll get back to you tomorrow.,I will reply to you tomorrow.,0.7202696016000197
+fp32,我花了两个小时完成报告。,我花了两天完成报告。,0.9157028445846771

@@ -1,3 +1,4 @@
+import { sentenceBuildingPrompts } from '@/features/practice/lib/warmup-reference'
 import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type React from 'react'
@@ -640,8 +641,9 @@ export function TodayTaskPage() {
             headerContent: targetWord,
             render: () => (
               <ChunkOutputDrillCard
-                chunk={{ text: targetWord, meaning: item.vocabMeaning || '', description: null }}
-                items={[prompt as SimplePromptItem]}
+                requiredWords={vocabWord ? [vocabWord] : undefined}
+                chunk={{ text: patternChunk, meaning: item.vocabMeaning || '', description: null }}
+                items={[{ ...prompt, answer: prompt.answer?.trim() ? prompt.answer : sentenceBuildingPrompts<SimplePromptItem>(pattern)[source.promptIndex]?.answer } as SimplePromptItem]}
                 stepId={sid}
                 stepType="vocab_sentence_building"
                 direction={item.direction ?? 'zh_to_en'}

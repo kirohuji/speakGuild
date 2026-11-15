@@ -43,6 +43,7 @@ const en = {
       checkIn: 'Daily Check-in',
       checkingIn: 'Checking in...',
       checkInFailed: 'Check-in failed',
+      checkInSaved: 'Checked in',
     },
     practice: {
       back: 'Back to Library',
@@ -2327,8 +2328,8 @@ const en = {
       randomOrderOn: 'Shuffle questions within the same training stage of the current topic',
       randomOrderOff: 'Follow the teaching order of the current topic',
       localAiWarmupJudge: 'Use Local AI Judge',
-      localAiWarmupJudgeOn: 'Knowledge practice uses the local model first, with cloud fallback when uncertain',
-      localAiWarmupJudgeOff: 'Knowledge practice uses the cloud fast judge',
+      localAiWarmupJudgeOn: 'Prefer the downloaded local model; practice also works offline',
+      localAiWarmupJudgeOff: 'Use cloud judging online and the downloaded local model offline',
       learningReminder: 'Learning Reminder',
       reminderOn: 'Remind at {{time}} daily if learning is incomplete',
       reminderOff: 'No local learning reminders will be sent',

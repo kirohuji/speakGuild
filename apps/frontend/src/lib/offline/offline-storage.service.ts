@@ -42,6 +42,7 @@ const USER_SCOPED_KV_KEYS = new Set([
 
 /** kv 表中按前缀归属当前用户的 key */
 const USER_SCOPED_KV_PREFIXES = [
+  'check-in:',
   'user-recording:',
   'session-map:',
   'expression-cache:',

@@ -54,6 +54,7 @@ const TAB_SWIPE_DISTANCE = 70
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
+  sourceId?: string | null
   notebookItemId?: string
   notebookId?: string
   chunkText: string | null; sceneName: string | null; masteryStatus: string
@@ -366,7 +367,7 @@ export function ExpressionLibraryPage() {
       const vocab = expr.vocabulary
       return {
         kind: 'word' as const,
-        id: `word:${expr.original ?? expr.id}`,
+        id: vocab?.id || expr.sourceId || `word:${expr.original ?? expr.id}`,
         word: vocab?.word || expr.original || '',
         meaning: vocab?.meaning || expr.chunkText || expr.corrected || undefined,
         partOfSpeech: vocab?.partOfSpeech,
@@ -386,7 +387,7 @@ export function ExpressionLibraryPage() {
       const remoteData = (expr as any).contentData
       return {
         kind: 'pattern' as const,
-        id: expr.id,
+        id: remoteData?.id || expr.sourceId || expr.id,
         pattern: remoteData?.pattern || expr.chunkText || expr.corrected || '',
         meaning: remoteData?.meaning || expr.original || '',
         slots: remoteData?.slots,
@@ -400,7 +401,7 @@ export function ExpressionLibraryPage() {
     const remoteData = (expr as any).contentData
     return {
       kind: 'chunk' as const,
-      id: expr.id,
+      id: remoteData?.id || expr.sourceId || expr.id,
       text: remoteData?.text || expr.chunkText || expr.corrected || '',
       meaning: remoteData?.meaning || expr.original || '',
       description: remoteData?.description,

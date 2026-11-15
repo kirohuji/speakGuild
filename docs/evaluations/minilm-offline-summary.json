@@ -1,0 +1,140 @@
+{
+  "environment": "Desktop headless Chromium, Transformers.js 4.2.0, WASM single thread, local resources only, graphOptimizationLevel disabled. Not a phone benchmark.",
+  "method": "Real embeddings from each of 3 SHA-256-verified model files, replayed through the unchanged judgeWarmupTurnLocally via a test Worker bridge. This tests the isolated local scoring function, not current API routing.",
+  "models": [
+    {
+      "variantId": "q8",
+      "sourceCommit": "751bff37182d3f1213fa05d7196b954e230abad9",
+      "files": [
+        {
+          "path": "config.json",
+          "size": 650,
+          "sha256": "7135149f7cffa1a573466c6e4d8423ed73b62fd2332c575bf738a0d033f70df7",
+          "assetId": "cmwghz33i002g139pl5ynzjt1"
+        },
+        {
+          "path": "tokenizer.json",
+          "size": 711661,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0",
+          "assetId": "cmwghz5lj002l139pv9woidpb"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "size": 366,
+          "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3",
+          "assetId": "cmwghz6fl002q139pd00llq9d"
+        },
+        {
+          "path": "onnx/model_quantized.onnx",
+          "size": 22972370,
+          "sha256": "afdb6f1a0e45b715d0bb9b11772f032c399babd23bfc31fed1c170afc848bdb1",
+          "assetId": "cmwghzna8002v139ptqy2kgir"
+        }
+      ]
+    },
+    {
+      "variantId": "fp16",
+      "sourceCommit": "751bff37182d3f1213fa05d7196b954e230abad9",
+      "files": [
+        {
+          "path": "config.json",
+          "size": 650,
+          "sha256": "7135149f7cffa1a573466c6e4d8423ed73b62fd2332c575bf738a0d033f70df7",
+          "assetId": "cmwghz33i002g139pl5ynzjt1"
+        },
+        {
+          "path": "tokenizer.json",
+          "size": 711661,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0",
+          "assetId": "cmwghz5lj002l139pv9woidpb"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "size": 366,
+          "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3",
+          "assetId": "cmwghz6fl002q139pd00llq9d"
+        },
+        {
+          "path": "onnx/model_fp16.onnx",
+          "size": 45297825,
+          "sha256": "2cdb5e58291813b6d6e248ed69010100246821a367fa17b1b81ae9483744533d",
+          "assetId": "cmwhmyydl0078138s0ta0lc3y"
+        }
+      ]
+    },
+    {
+      "variantId": "fp32",
+      "sourceCommit": "751bff37182d3f1213fa05d7196b954e230abad9",
+      "files": [
+        {
+          "path": "config.json",
+          "size": 650,
+          "sha256": "7135149f7cffa1a573466c6e4d8423ed73b62fd2332c575bf738a0d033f70df7",
+          "assetId": "cmwghz33i002g139pl5ynzjt1"
+        },
+        {
+          "path": "tokenizer.json",
+          "size": 711661,
+          "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0",
+          "assetId": "cmwghz5lj002l139pv9woidpb"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "size": 366,
+          "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3",
+          "assetId": "cmwghz6fl002q139pd00llq9d"
+        },
+        {
+          "path": "onnx/model.onnx",
+          "size": 90387606,
+          "sha256": "759c3cd2b7fe7e93933ad23c4c9181b7396442a2ed746ec7c1d46192c469c46e",
+          "assetId": "cmwhn0wkp008a138sbmihrxrr"
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "variant": "q8",
+      "cases": 151,
+      "matched": 131,
+      "falsePass": 9,
+      "falseReject": 11,
+      "nonExactCases": 44,
+      "nonExactMatched": 24,
+      "loadMs": 1080.5,
+      "embeddingMedianMs": 15.699999999254942,
+      "embeddingP95Ms": 20.699999999254942,
+      "externalRequests": 0,
+      "browser": "149.0.7827.55"
+    },
+    {
+      "variant": "fp16",
+      "cases": 151,
+      "matched": 131,
+      "falsePass": 9,
+      "falseReject": 11,
+      "nonExactCases": 44,
+      "nonExactMatched": 24,
+      "loadMs": 1252.5999999996275,
+      "embeddingMedianMs": 48.09999999962747,
+      "embeddingP95Ms": 55.90000000037253,
+      "externalRequests": 0,
+      "browser": "149.0.7827.55"
+    },
+    {
+      "variant": "fp32",
+      "cases": 151,
+      "matched": 131,
+      "falsePass": 9,
+      "falseReject": 11,
+      "nonExactCases": 44,
+      "nonExactMatched": 24,
+      "loadMs": 1429.699999999255,
+      "embeddingMedianMs": 22.199999999254942,
+      "embeddingP95Ms": 29.700000001117587,
+      "externalRequests": 0,
+      "browser": "149.0.7827.55"
+    }
+  ]
+}

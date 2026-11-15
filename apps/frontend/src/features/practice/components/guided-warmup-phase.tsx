@@ -1,3 +1,4 @@
+import { sentenceBuildingPrompts } from '../lib/warmup-reference'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Lightbulb, ListMusic, Loader2 } from 'lucide-react'
@@ -51,6 +52,7 @@ export function GuidedWarmupPhase({
   topicId,
   topicTitle,
   warmupItems,
+  sessionId,
   onBack,
   onComplete,
 }: {
@@ -58,14 +60,16 @@ export function GuidedWarmupPhase({
   topicId: string
   topicTitle: string
   warmupItems: any[]
+  /** A filtered knowledge-point session keeps its progress separate from the full topic. */
+  sessionId?: string
   onBack: () => void
   onComplete: () => void
 }) {
   const { t } = useTranslation()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'admin'
-  const storageKey = `guided-progress:${topicId}`
-  const sessionStorageKey = `guided-session:${topicId}`
+  const storageKey = `guided-progress:${sessionId ?? topicId}`
+  const sessionStorageKey = `guided-session:${sessionId ?? topicId}`
   const [warmupRunSeed, setWarmupRunSeed] = useState(() => {
     try {
       const existing = localStorage.getItem(sessionStorageKey)
@@ -77,7 +81,7 @@ export function GuidedWarmupPhase({
       return String(Date.now())
     }
   })
-  const recordStorageKey = `guided-warmup:${topicId}:${warmupRunSeed}:records`
+  const recordStorageKey = `guided-warmup:${sessionId ?? topicId}:${warmupRunSeed}:records`
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // ── Store (must be before flatSteps) ──
@@ -146,7 +150,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
         })
       } else if (item.type === 'vocab_sentence_building') {
         for (const pattern of item.patterns ?? []) {
-          ;((pattern.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
+          ;(sentenceBuildingPrompts<SimplePromptItem>(pattern)).forEach((prompt) => {
             const direction = item.direction ?? 'zh_to_en'
             const ref = getSimplePromptReference(prompt, direction)
             references.push({
@@ -196,9 +200,10 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       headerContent: string
       render: (localStepId: string) => ReactNode
     }) => {
+      const origin = params.item.__practiceContext ?? { packId, topicId, topicTitle }
       const itemId = createWarmupPracticeItemId({
-        packId: packId || 'unknown-pack',
-        topicId,
+        packId: origin.packId || 'unknown-pack',
+        topicId: origin.topicId,
         type: params.type,
         item: params.item,
         prompt: params.prompt,
@@ -206,10 +211,10 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       })
       const candidate: DailyPracticeCandidate | null = packId ? {
         itemId,
-        packId,
+        packId: origin.packId,
         packTitle: '',
-        topicId,
-        topicTitle,
+        topicId: origin.topicId,
+        topicTitle: origin.topicTitle,
         type: params.type,
         item: params.item,
         prompt: params.prompt,
@@ -281,7 +286,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
         })
       } else if (item.type === 'vocab_sentence_building') {
         for (const [patternIndex, pattern] of (item.patterns ?? []).entries()) {
-          ;((pattern.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
+          ;(sentenceBuildingPrompts<SimplePromptItem>(pattern)).forEach((sub, subIdx) => {
             const ref = getSimplePromptReference(sub, item.direction ?? 'zh_to_en')
             makeStep({
               item,
@@ -295,10 +300,11 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               headerContent: item.vocabWord || pattern.chunk || ref.promptText || '',
               render: (flatId) => (
                 <ChunkOutputDrillCard
-                  chunk={{ text: item.vocabWord || pattern.chunk, meaning: item.vocabMeaning || '' }}
+                  chunk={{ text: pattern.chunk || item.vocabWord, meaning: item.vocabMeaning || '' }}
                   items={[sub]}
                   stepId={flatId}
                   stepType="vocab_sentence_building"
+                  requiredWords={item.vocabWord ? [item.vocabWord] : undefined}
                   direction={item.direction ?? 'zh_to_en'}
                   kind="word"
                   groupTitle={item.vocabWord}
@@ -523,7 +529,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
         setAssessing(false)
       }
       if (packId && itemIds.length) {
-        dailyPracticeRepository.syncAdHocRun({ packId, topicId, topicTitle, itemIds, records })
+        dailyPracticeRepository.syncAdHocRun({ packId, topicId, topicTitle, itemIds, records, clientRunKey: sessionId })
           .then((res) => {
             if (res.warmupRecordId) {
               practiceRepository.markWarmupRecordSynced(recordStorageKey, res.warmupRecordId).catch(() => undefined)
@@ -535,7 +541,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
         finish()
       }
     }
-  }, [allDone, flatSteps, needsReviewRound, packId, recordStorageKey, t, topicId, topicTitle, assessing, lastAssessment, warmupStore])
+  }, [allDone, flatSteps, needsReviewRound, packId, recordStorageKey, sessionId, t, topicId, topicTitle, assessing, lastAssessment, warmupStore])
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)

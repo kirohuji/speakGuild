@@ -20,6 +20,7 @@ interface ChunkOutputDrillCardProps {
   items: { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }[]
   stepId: string
   stepType?: 'chunk_substitution' | 'vocab_sentence_building'
+  requiredWords?: string[]
   groupTitle?: string
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
@@ -75,6 +76,7 @@ export function ChunkOutputDrillCard({
   onAttempt,
   disableSkip,
   reviewData,
+  requiredWords,
 }: ChunkOutputDrillCardProps) {
   // ── 只读回顾模式：走完全相同的渲染路径，仅初始化状�?+ 禁用交互 ──
   const isReview = !!reviewData
@@ -163,6 +165,7 @@ export function ChunkOutputDrillCard({
         userAnswer: userInput.trim(),
         targetText: isZhToEn ? chunk.text : undefined,
         targetMeaning: chunk.meaning,
+        requiredWords: isZhToEn ? requiredWords : undefined,
       })
       const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
@@ -175,18 +178,19 @@ export function ChunkOutputDrillCard({
         onAttempt?.({ stepId, outcome: 'correct', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
       } else {
         setStatus('failed')
-        setFeedback(t('practiceSession.tryAgain'))
+        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
         setCorrection(judgement.correction || expectedAnswer || '')
-        onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.tryAgain'), correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType, zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.tryAgain'), groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
+        onComplete?.(currentIdx, false, judgement.score)
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || t('practiceSession.tryAgain'), correction: judgement.correction || expectedAnswer || '', hintLevel, score: judgement.score })
+        store.recordEntry({ stepId, stepType, zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || t('practiceSession.tryAgain'), groupTitle, displayLabel: typeLabel, score: judgement.score, usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
         onAttempt?.({ stepId, outcome: 'incorrect', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
       }
     } catch (err: any) {
-      setStatus('failed')
+      setStatus('idle')
+      setCorrection('')
       setFeedback(err?.message || t('practiceSession.warmupDrill.feedbackUnavailable'))
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, onAttempt, onComplete, stepId, stepType, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, chunk.text, chunk.meaning, typeLabel, t])
+  }, [userInput, current, status, currentIdx, isZhToEn, onAttempt, onComplete, stepId, stepType, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, chunk.text, chunk.meaning, requiredWords, typeLabel, t])
 
 
   if (!current) return null
@@ -334,7 +338,7 @@ export function ChunkOutputDrillCard({
         <div className={cn('rounded-lg px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
           <div className="flex items-center gap-1.5">
             {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
-            <p className="text-xs font-medium">{status === 'passed' ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
+            <p className="text-xs font-medium">{status === 'passed' ? t('practiceSession.warmupDrill.correct') : status === 'idle' ? '本次未判定' : t('practiceSession.tryAgain')}</p>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">{displayFeedback}</p>
           {correction && (status === 'passed' || skipped || isReview) && (

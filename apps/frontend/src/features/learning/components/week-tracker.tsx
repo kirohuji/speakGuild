@@ -1,3 +1,4 @@
+import { checkInRepository } from '@/lib/offline/check-in.repository'
 import { DailyActivityChart } from './daily-activity-chart'
 import { toast } from 'sonner'
 import { ActivityInfoCard, CompactActivityChart, ExpandedActivityChart, getChartCardPosition, getChartCardTopByRatio, useLearningChartConfig } from './activity-chart'
@@ -171,7 +172,7 @@ export function CheckInCalendarDrawer({
   }, [today, weekStart])
   const selectedKey = selectedDay ? localDateKey(selectedDay) : todayKey
   const calendarMatches = view==='day' ? Boolean(data?.startDate && data.endDate && data.startDate<=selectedKey && data.endDate>=selectedKey) : data?.startDate === visibleRange.startDate && data?.endDate === visibleRange.endDate
-  const activeCalendar = calendarMatches ? data : null
+  const activeCalendar = calendarMatches && (!data?.offlineOnly || data.dates.includes(selectedKey)) ? data : null
   const makeupState = makeupAvailability(selectedKey, activeCalendar, online, todayKey)
   const canOfferMakeup = view === 'day' && selectedKey < todayKey && !activeCalendar?.dates.includes(selectedKey)
   const makeupReason = makeupState === 'insufficient'
@@ -227,6 +228,8 @@ export function CheckInCalendarDrawer({
       const result = await pointsApi.makeupCheckIn(quote.date)
       if (getCurrentSessionSnapshot()?.user?.id !== owner) return
       if (useUserStore.getState().currentUserId === owner) useUserStore.getState().setPointsBalance(result.points)
+      await checkInRepository.rememberStatus(result.status)
+      if (getCurrentSessionSnapshot()?.user?.id !== owner) return
       useHomeStore.setState({ checkInStatus: result.status })
       useLearningStore.setState(state => {
         const current = state.checkInData
@@ -273,7 +276,7 @@ export function CheckInCalendarDrawer({
                 <CalendarCheck className="size-3.5" />
                 {view==='day'?t('learning.dayChart.checkInStatus'):t('learning.activeDays', { defaultValue: '练习天数' })}
               </div>
-              {canOfferMakeup ? <Button type="button" variant="outline" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={makeupState !== 'ready' || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { void prepareMakeup() }}>
+              {canOfferMakeup ? <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={makeupState !== 'ready' || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { void prepareMakeup() }}>
                 {makeupBusy && <Spinner data-icon="inline-start" />}
                 {t('learning.dayDetails.makeup')}
               </Button> : <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>}
@@ -364,8 +367,8 @@ export function CheckInCalendarDrawer({
       </DrawerContent>
     </Drawer>
     <Dialog open={Boolean(quote)} onOpenChange={value => { if (!value && !submittingRef.current) setQuote(null) }}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="app-surface drawer-surface w-[90vw] max-w-sm gap-5 rounded-2xl border-0 p-5 shadow-none sm:p-6">
+        <DialogHeader className="text-left">
           <DialogTitle>{t('learning.dayDetails.confirmTitle', { date: quote ? format(parseISO(quote.date),'PPP',{locale:calendarLocale}) : '' })}</DialogTitle>
           <DialogDescription>{t('learning.dayDetails.confirmDescription', { cost: quote?.cost })}</DialogDescription>
         </DialogHeader>
@@ -373,8 +376,8 @@ export function CheckInCalendarDrawer({
           <span>{t('learning.dayDetails.balance', { balance: quote?.balance })}</span>
           <span>{t('learning.dayDetails.afterBalance', { balance: (quote?.balance ?? 0)-(quote?.cost ?? 0) })}</span>
         </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" disabled={makeupBusy} onClick={() => setQuote(null)}>{t('common.cancel')}</Button>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="secondary" disabled={makeupBusy} onClick={() => setQuote(null)}>{t('common.cancel')}</Button>
           <Button type="button" disabled={makeupBusy || !online} onClick={() => { void confirmMakeup() }}>{makeupBusy && <Spinner data-icon="inline-start" />}{t('learning.dayDetails.confirm', { cost: quote?.cost })}</Button>
         </DialogFooter>
       </DialogContent>

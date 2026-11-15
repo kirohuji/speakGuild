@@ -23,6 +23,7 @@ const zhCN = {
       checkIn: '每日打卡',
       checkingIn: '签到中...',
       checkInFailed: '签到失败',
+      checkInSaved: '签到成功',
       am: '上午',
       pm: '下午',
       hero: {
@@ -2327,8 +2328,8 @@ const zhCN = {
       randomOrderOn: '随机排列当前话题同一训练阶段内的题目',
       randomOrderOff: '按当前话题的教学顺序排列题目',
       localAiWarmupJudge: '使用本地 AI 判断',
-      localAiWarmupJudgeOn: '知识点练习优先用本地模型判题，模糊时回退云端',
-      localAiWarmupJudgeOff: '知识点练习使用云端快速判题',
+      localAiWarmupJudgeOn: '优先使用已下载的本地模型判题；断网也可练习',
+      localAiWarmupJudgeOff: '联网使用云端判题；离线使用已下载的本地模型',
       learningReminder: '学习提醒',
       reminderOn: '每天 {{time}} 提醒未完成学习',
       reminderOff: '关闭后不会发送本地学习提醒',

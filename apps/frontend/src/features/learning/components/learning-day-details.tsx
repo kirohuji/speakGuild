@@ -22,7 +22,7 @@ export function LearningDayDetails({ date, dateLabel, today, statistics, history
   const message = availability === 'insufficient' ? t('learning.dayDetails.insufficient', { cost: calendar?.makeup?.cost, balance: calendar?.makeup?.pointsBalance })
     : t(`learning.dayDetails.${availability}`)
   return (
-    <section className="flex shrink-0 flex-col gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3.5" aria-label={t('learning.dayDetails.title')}>
+    <section className="flex shrink-0 flex-col gap-3 rounded-2xl bg-muted/30 p-3.5" aria-label={t('learning.dayDetails.title')}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold">{dateLabel}</p>
         <Badge variant={madeUp ? 'outline' : 'secondary'}>
@@ -42,10 +42,10 @@ export function LearningDayDetails({ date, dateLabel, today, statistics, history
       {unknown && <p className="text-xs text-muted-foreground">{t('learning.dayDetails.historyPending')}</p>}
       {!unknown && !statistics && <p className="text-xs text-muted-foreground">{t('learning.dayDetails.noPractice')}</p>}
       {date < today && !checked && (
-        <div className="flex flex-col gap-2 border-t border-border/60 pt-3">
+        <div className="flex flex-col gap-2 pt-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs leading-relaxed text-muted-foreground">{t('learning.dayDetails.makeupHint')}</p>
-            <Button type="button" size="sm" variant="outline" disabled={availability !== 'ready' || busy} onClick={onMakeup}>
+            <Button type="button" size="sm" variant="secondary" disabled={availability !== 'ready' || busy} onClick={onMakeup}>
               {busy ? <Spinner data-icon="inline-start" /> : <CalendarCheck data-icon="inline-start" />}
               {calendar?.makeup ? t('learning.dayDetails.makeupButton', { cost: calendar.makeup.cost }) : t('learning.dayDetails.makeup')}
             </Button>

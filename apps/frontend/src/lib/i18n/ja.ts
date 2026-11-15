@@ -43,6 +43,7 @@ const ja = {
       checkIn: 'デイリーチェックイン',
       checkingIn: 'チェックイン中...',
       checkInFailed: 'チェックインに失敗しました',
+      checkInSaved: 'チェックインしました',
     },
     practice: {
       back: '問題集に戻る',
@@ -2327,8 +2328,8 @@ const ja = {
       randomOrderOn: '現在のトピックで同じ練習段階の問題だけを並べ替えます',
       randomOrderOff: '現在のトピックの学習順に問題を並べます',
       localAiWarmupJudge: 'ローカル AI 判定を使う',
-      localAiWarmupJudgeOn: '知識ポイント練習はローカルモデルを優先し、不確実な場合はクラウドに戻します',
-      localAiWarmupJudgeOff: '知識ポイント練習はクラウドの高速判定を使います',
+      localAiWarmupJudgeOn: 'ダウンロード済みのローカルモデルを優先し、オフラインでも採点します',
+      localAiWarmupJudgeOff: 'オンラインではクラウド、オフラインではダウンロード済みモデルで採点します',
       learningReminder: '学習リマインダー',
       reminderOn: '毎日 {{time}} に未完了の学習を通知',
       reminderOff: 'ローカル通知は送信されません',

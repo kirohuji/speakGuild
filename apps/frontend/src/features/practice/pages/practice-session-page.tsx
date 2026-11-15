@@ -594,8 +594,8 @@ export function PracticeSessionPage() {
     }))
     const patterns: LearningInsightItem[] = detail.sentencePatterns?.length
       ? detail.sentencePatterns.map((p, i) => ({
-          kind: 'pattern', id: `pattern:${i}`, pattern: p.pattern,
-          meaning: p.meaning, example: p.example, description: p.description, difficulty: p.difficulty, sceneName,
+          kind: 'pattern', id: p.id ? `pattern:${p.id}` : `pattern:${i}`, pattern: p.pattern,
+          meaning: p.meaning, example: p.example, examples: p.examples, description: p.description, difficulty: p.difficulty, sceneName,
         }))
       : []
     return [...words, ...chunks, ...patterns]
@@ -1158,6 +1158,7 @@ export function PracticeSessionPage() {
         </div>
 
         <LearningInsightDialog
+          practiceUnitId={detail?.scene.id}
           items={allInsightItems}
           index={Math.min(insightIndex, Math.max(allInsightItems.length - 1, 0))}
           open={insightOpen}
@@ -1361,6 +1362,7 @@ export function PracticeSessionPage() {
 
       </div>
       <LearningInsightDialog
+          practiceUnitId={detail?.scene.id}
         items={allInsightItems}
         index={Math.min(insightIndex, Math.max(allInsightItems.length - 1, 0))}
         open={insightOpen}

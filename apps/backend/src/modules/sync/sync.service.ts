@@ -434,23 +434,28 @@ export class SyncService {
   }
 
   // ══════════════════════════════════════════════════
-  // PULL: 增量拉取用户数据（分页，每页最多 500 条）
+  // PULL: 增量拉取用户数据（分页，每种类型每页最多 100 条）
   // ══════════════════════════════════════════════════
 
-  private static readonly PULL_PAGE_SIZE = 500;
+  private static readonly PULL_PAGE_SIZE = 100;
 
-  async pull(userId: string, cursors: Record<string, string>, types?: string[]) {
+  async pull(userId: string, cursors: Record<string, string>, types?: string[], compact = false) {
     // types 为空 = 拉取全部类型；否则只拉取指定的类型（如生词本/今日任务各自的同步按钮）
     const want = (t: string) => !types || types.length === 0 || types.includes(t);
     const [expressionTime, expressionId = ''] = (cursors.expressionItems ?? '').split('|');
     const sinceExpression = expressionTime ? new Date(expressionTime) : new Date(0);
-    const sinceSceneProgress = cursors.sceneProgresses ? new Date(cursors.sceneProgresses) : new Date(0);
-    const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
-    const sincePracticeSession = cursors.practiceSessions ? new Date(cursors.practiceSessions) : new Date(0);
-    const sinceWarmupRecord = cursors.practiceWarmupRecords ? new Date(cursors.practiceWarmupRecords) : new Date(0);
+    const [sceneProgressesTime, sceneProgressesId = ''] = (cursors.sceneProgresses ?? '').split('|');
+    const sinceSceneProgress = sceneProgressesTime ? new Date(sceneProgressesTime) : new Date(0);
+    const [chunkProgressesTime, chunkProgressesId = ''] = (cursors.chunkProgresses ?? '').split('|');
+    const sinceChunkProgress = chunkProgressesTime ? new Date(chunkProgressesTime) : new Date(0);
+    const [practiceSessionsTime, practiceSessionsId = ''] = (cursors.practiceSessions ?? '').split('|');
+    const sincePracticeSession = practiceSessionsTime ? new Date(practiceSessionsTime) : new Date(0);
+    const [practiceWarmupRecordsTime, practiceWarmupRecordsId = ''] = (cursors.practiceWarmupRecords ?? '').split('|');
+    const sinceWarmupRecord = practiceWarmupRecordsTime ? new Date(practiceWarmupRecordsTime) : new Date(0);
     const [runTime, runId = ''] = (cursors.dailyPracticeRuns ?? '').split('|');
     const sinceDailyPracticeRun = runTime ? new Date(runTime) : new Date(0);
-    const sinceTopicSession = cursors.topicSessions ? new Date(cursors.topicSessions) : new Date(0);
+    const [topicSessionsTime, topicSessionsId = ''] = (cursors.topicSessions ?? '').split('|');
+    const sinceTopicSession = topicSessionsTime ? new Date(topicSessionsTime) : new Date(0);
     const [deletedExpressionTime, deletedExpressionId = ''] = (cursors.deletedExpressionItems ?? '').split('|');
     const sinceDeletedExpression = deletedExpressionTime ? new Date(deletedExpressionTime) : new Date(0);
     const [notebookTime, notebookId = ''] = (cursors.learningNotebooks ?? '').split('|');
@@ -479,18 +484,18 @@ export class SyncService {
         take: SyncService.PULL_PAGE_SIZE,
       }) : Promise.resolve([]),
       want('sceneProgresses') ? this.prisma.userSceneProgress.findMany({
-        where: { userId, updatedAt: { gt: sinceSceneProgress } },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceSceneProgress } }, { updatedAt: sinceSceneProgress, id: { gt: sceneProgressesId } }] },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
       }) : Promise.resolve([]),
       want('chunkProgresses') ? this.prisma.userChunkProgress.findMany({
-        where: { userId, updatedAt: { gt: sinceChunkProgress } },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceChunkProgress } }, { updatedAt: sinceChunkProgress, id: { gt: chunkProgressesId } }] },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
       }) : Promise.resolve([]),
       want('practiceSessions') ? this.prisma.practiceSession.findMany({
-        where: { userId, updatedAt: { gt: sincePracticeSession }, status: 'analyzed' },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sincePracticeSession } }, { updatedAt: sincePracticeSession, id: { gt: practiceSessionsId } }], status: 'analyzed' },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
         select: {
           id: true,
@@ -499,8 +504,10 @@ export class SyncService {
           inkScriptId: true,
           status: true,
           turnCount: true,
+          topicSnapshot: true,
+          sceneSnapshot: true,
           analysisResult: true,
-          analysisRaw: true,
+          analysisRaw: !compact,
           analysisError: true,
           startedAt: true,
           completedAt: true,
@@ -509,8 +516,8 @@ export class SyncService {
         },
       }) : Promise.resolve([]),
       want('practiceWarmupRecords') ? (this.prisma as any).practiceWarmupRecord.findMany({
-        where: { userId, updatedAt: { gt: sinceWarmupRecord } },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceWarmupRecord } }, { updatedAt: sinceWarmupRecord, id: { gt: practiceWarmupRecordsId } }] },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
         select: {
           id: true,
@@ -554,8 +561,8 @@ export class SyncService {
         },
       }) : Promise.resolve([]),
       want('topicSessions') ? this.prisma.topicSession.findMany({
-        where: { userId, updatedAt: { gt: sinceTopicSession }, status: 'analyzed' },
-        orderBy: { updatedAt: 'asc' },
+        where: { userId, OR: [{ updatedAt: { gt: sinceTopicSession } }, { updatedAt: sinceTopicSession, id: { gt: topicSessionsId } }], status: 'analyzed' },
+        orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
         take: SyncService.PULL_PAGE_SIZE,
         select: {
           id: true,
@@ -563,7 +570,7 @@ export class SyncService {
           sceneId: true,
           status: true,
           analysisResult: true,
-          analysisRaw: true,
+          analysisRaw: !compact,
           analysisError: true,
           startedAt: true,
           completedAt: true,
@@ -624,22 +631,15 @@ export class SyncService {
         })
       : [];
 
-    // 每种类型独立计算 cursor：取该类型返回记录中最大的时间戳
-    function maxTime(items: any[], field: string): string | null {
-      if (items.length === 0) return null;
-      const max = Math.max(...items.map((i) => i[field]?.getTime?.() ?? 0));
-      return max > 0 ? new Date(max).toISOString() : null;
-    }
-
     // 未参与本次拉取的类型保持原 cursor 不变，避免跳过其增量。
     const nextCursors = {
       expressionItems: want('expressionItems') ? ((expressionItems.length ? `${expressionItems.at(-1).updatedAt.toISOString()}|${expressionItems.at(-1).id}` : null) ?? cursors.expressionItems ?? null) : (cursors.expressionItems ?? null),
-      sceneProgresses: want('sceneProgresses') ? (maxTime(sceneProgresses, 'updatedAt') ?? cursors.sceneProgresses ?? null) : (cursors.sceneProgresses ?? null),
-      chunkProgresses: want('chunkProgresses') ? (maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null) : (cursors.chunkProgresses ?? null),
-      practiceSessions: want('practiceSessions') ? (maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null) : (cursors.practiceSessions ?? null),
-      practiceWarmupRecords: want('practiceWarmupRecords') ? (maxTime(practiceWarmupRecords, 'updatedAt') ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
+      sceneProgresses: want('sceneProgresses') ? ((sceneProgresses.length ? `${sceneProgresses.at(-1).updatedAt.toISOString()}|${sceneProgresses.at(-1).id}` : null) ?? cursors.sceneProgresses ?? null) : (cursors.sceneProgresses ?? null),
+      chunkProgresses: want('chunkProgresses') ? ((chunkProgresses.length ? `${chunkProgresses.at(-1).updatedAt.toISOString()}|${chunkProgresses.at(-1).id}` : null) ?? cursors.chunkProgresses ?? null) : (cursors.chunkProgresses ?? null),
+      practiceSessions: want('practiceSessions') ? ((practiceSessions.length ? `${practiceSessions.at(-1).updatedAt.toISOString()}|${practiceSessions.at(-1).id}` : null) ?? cursors.practiceSessions ?? null) : (cursors.practiceSessions ?? null),
+      practiceWarmupRecords: want('practiceWarmupRecords') ? ((practiceWarmupRecords.length ? `${practiceWarmupRecords.at(-1).updatedAt.toISOString()}|${practiceWarmupRecords.at(-1).id}` : null) ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
       dailyPracticeRuns: want('dailyPracticeRuns') ? (dailyPracticeRuns.length ? `${dailyPracticeRuns.at(-1).updatedAt.toISOString()}|${dailyPracticeRuns.at(-1).id}` : cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
-      topicSessions: want('topicSessions') ? (maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
+      topicSessions: want('topicSessions') ? ((topicSessions.length ? `${topicSessions.at(-1).updatedAt.toISOString()}|${topicSessions.at(-1).id}` : null) ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
       deletedExpressionItems: want('expressionItems') ? ((deletedExpressionItems.length ? `${deletedExpressionItems.at(-1).deletedAt.toISOString()}|${deletedExpressionItems.at(-1).id}` : null) ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),
       learningNotebooks: want('learningNotebooks') ? ((learningNotebooks.length ? `${learningNotebooks.at(-1).updatedAt.toISOString()}|${learningNotebooks.at(-1).id}` : null) ?? cursors.learningNotebooks ?? null) : (cursors.learningNotebooks ?? null),
       learningNotebookItems: want('learningNotebookItems') ? ((learningNotebookItems.length ? `${learningNotebookItems.at(-1).updatedAt.toISOString()}|${learningNotebookItems.at(-1).id}` : null) ?? cursors.learningNotebookItems ?? null) : (cursors.learningNotebookItems ?? null),
@@ -663,22 +663,37 @@ export class SyncService {
       deletedLearningNotebookItems: want('learningNotebookItems') && deletedLearningNotebookItems.length >= SyncService.PULL_PAGE_SIZE,
     };
 
-    const enrichedExpressionItems = want('expressionItems')
-      ? await this.enrichExpressionItems(expressionItems)
-      : [];
-    const enrichedNotebookItems = want('learningNotebookItems')
-      ? await this.enrichNotebookExpressionItems(learningNotebookItems)
-      : [];
+    // Notebook dependencies must travel with their page even in a scoped pull.
+    const expressions = new Map(expressionItems.map(item => [item.id, item]));
+    if (compact) for (const item of learningNotebookItems) {
+      if (item.expressionItem) expressions.set(item.expressionItem.id, item.expressionItem);
+    }
+    const enrichedExpressionItems = await this.enrichExpressionItems([...expressions.values()]);
+    const enrichedNotebookItems = compact
+      ? learningNotebookItems.map(({ expressionItem, ...item }) => item)
+      : await this.enrichNotebookExpressionItems(learningNotebookItems);
 
     return {
       userId,
       cursors: nextCursors,
       hasMore,
       changed: {
-        expressionItems: enrichedExpressionItems,
+        expressionItems: compact ? expressionItems.map(item => ({ id: item.id })) : enrichedExpressionItems,
+        ...(compact ? { expressions: enrichedExpressionItems.map(item => {
+          const { vocabulary, contentData, ...expression } = item as typeof item & { vocabulary?: unknown; contentData?: unknown };
+          return { ...expression, sourceSnapshot: mergeContentSnapshots(expression.sourceSnapshot, vocabulary ?? contentData) };
+        }) } : {}),
         sceneProgresses: want('sceneProgresses') ? sceneProgresses : [],
         chunkProgresses: want('chunkProgresses') ? chunkProgresses : [],
-        practiceSessions: want('practiceSessions') ? practiceSessions : [],
+        practiceSessions: compact ? practiceSessions.map(({ analysisResult, ...item }) => ({
+          ...item,
+          // History lists need only a summary; full review uses the existing detail API/cache.
+          analysisResult: analysisResult && typeof analysisResult === 'object' ? {
+            overallScore: (analysisResult as any).overallScore,
+            summary: (analysisResult as any).summary,
+          } : null,
+          summaryOnly: true,
+        })) : practiceSessions,
         practiceWarmupRecords: want('practiceWarmupRecords') ? practiceWarmupRecords : [],
         dailyPracticeRuns: want('dailyPracticeRuns') ? dailyPracticeRuns : [],
         topicSessions: want('topicSessions') ? topicSessions : [],

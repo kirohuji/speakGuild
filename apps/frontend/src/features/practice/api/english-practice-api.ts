@@ -1,14 +1,8 @@
-import { del, get, patch, post } from '@/lib/request'
-import { judgeWarmupTurnLocally, type WarmupTurnJudgeInput } from '@/lib/local-ai/warmup-local-judge'
-import { warmupModelManager } from '@/lib/local-ai/warmup-model-manager'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { del, get, patch, post } from '@/lib/request'
+import { judgeExactWarmupAnswer, judgeWarmupTurnLocally, type WarmupTurnJudgeInput } from '@/lib/local-ai/warmup-local-judge'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { toast } from 'sonner'
-
-function isLocalModelHealthError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error ?? '')
-  return /not downloaded|file was not found|local_files_only|failed to fetch|model failed|no available backend|Unable to load from local path/i.test(message)
-}
 
 function isBrowserOffline() {
   return typeof navigator !== 'undefined' && navigator.onLine === false
@@ -206,6 +200,8 @@ export interface TopicDetail {
     masteryStatus: string
   }[]
   sentencePatterns?: Array<{
+    id?: string
+    examples?: unknown
     pattern: string
     meaning: string
     slots: string[]
@@ -344,55 +340,27 @@ export const practiceAiApi = {
   }>('/practice-ai/dialogue-turn', dto),
 
   judgeWarmupTurn: async (dto: WarmupTurnJudgeInput) => {
-    const preferences = usePreferencesStore.getState()
-    const preferLocal = preferences.localAiWarmupJudgeEnabled
-    const offline = isBrowserOffline()
-    if (preferLocal || offline) {
+    const local = isBrowserOffline() || usePreferencesStore.getState().localAiWarmupJudgeEnabled
+    if (local) {
+      const exact = judgeExactWarmupAnswer(dto)
+      if (exact && !exact.fallback) return exact
       try {
-        const modelStatus = await warmupModelManager.getStatus(preferences.localAiWarmupModelVariant)
-        if (modelStatus.installing) {
-          toast.info('本地 AI 模型正在下载，下载完成后将自动用于判题')
-          if (!offline) {
-            return judgeWarmupTurnRemotely(dto, getCurrentSessionSnapshot()?.user?.role === 'admin' ? '本地 AI 下载中，已切到云端判题' : undefined)
-          }
-          throw new Error('本地 AI 模型正在下载，离线时暂不可判题')
-        }
-
-        const local = await judgeWarmupTurnLocally(dto)
-        if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
-          toast.info(`本地 AI 已判断：${local.passed ? '通过' : '未通过'} · ${local.score}${local.fallback ? ' · 低置信' : ''}`)
-        }
-        if (!offline && (!local.passed || local.fallback)) {
-          return judgeWarmupTurnRemotely(
-            dto,
-            getCurrentSessionSnapshot()?.user?.role === 'admin'
-              ? local.fallback
-                ? '本地 AI 低置信，已切到云端复判'
-                : '本地 AI 未通过，已切到云端复判'
-              : undefined,
-          )
-        }
-        if (preferLocal || !local.fallback) {
-          return {
-            passed: local.passed,
-            score: local.score,
-            feedback: local.feedback,
-            correction: local.correction,
-          }
-        }
+        return await judgeWarmupTurnLocally(dto)
       } catch (error) {
-        console.warn('[warmup-local-judge] fallback to server:', error)
-        if (isLocalModelHealthError(error)) {
-          usePreferencesStore.getState().setLocalAiWarmupJudgeEnabled(false)
-          if (getCurrentSessionSnapshot()?.user?.role === 'admin') {
-            toast.warning('本地 AI 模型加载失败，已回退云端并关闭本地判断，请在存储管理中重新下载')
-          }
-        }
-        if (offline) throw error
+        if (isBrowserOffline()) throw error
+        // A missing/broken model can use the cloud online; a negative grade is still a grade.
+        console.warn('[warmup-local-judge] local inference failed:', error)
       }
     }
 
-    return judgeWarmupTurnRemotely(dto)
+    try {
+      return await judgeWarmupTurnRemotely(dto)
+    } catch (error) {
+      // Some WebViews still report online after connectivity is lost.
+      const kind = (error as { kind?: string })?.kind
+      if (!local && ['offline', 'network', 'timeout'].includes(kind ?? '')) return judgeWarmupTurnLocally(dto)
+      throw error
+    }
   },
 
   analyzeSession: (sessionId: string) =>

@@ -38,6 +38,8 @@ import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/feat
 import { type TopicDetail } from '../api/english-practice-api'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
+import { InsightPracticeButton } from './insight-practice-button'
+import { InsightRegenerateButton, useInsightRegeneration } from './insight-regeneration'
 import { patternSlotLabel, type PatternSlot } from '@/features/learning/lib/pattern-slot'
 
 type VocabularyInsight = {
@@ -347,6 +349,7 @@ function RichText({ text }: { text: string }) {
 }
 
 interface LearningInsightDialogProps {
+  practiceUnitId?: string
   items: LearningInsightItem[]
   index: number
   open: boolean
@@ -359,6 +362,7 @@ interface LearningInsightDialogProps {
 }
 
 export function LearningInsightDialog({
+  practiceUnitId,
   items,
   index,
   open,
@@ -396,6 +400,7 @@ export function LearningInsightDialog({
   useEffect(() => {
     if (!open) return
     const handler = (event: KeyboardEvent) => {
+      if (document.querySelector('[data-insight-practice]')) return
       if (event.key === 'ArrowLeft') gotoPrev()
       if (event.key === 'ArrowRight') gotoNext()
     }
@@ -405,6 +410,7 @@ export function LearningInsightDialog({
 
   // 触摸滑动切换
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (document.querySelector('[data-insight-practice]')) return
     if (e.touches.length !== 1) {
       touchAxis.current = 'vertical'
       return
@@ -415,6 +421,7 @@ export function LearningInsightDialog({
   }, [])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (document.querySelector('[data-insight-practice]')) return
     if (touchAxis.current !== 'pending' || e.touches.length !== 1) return
     const deltaX = e.touches[0].clientX - touchStartX.current
     const deltaY = e.touches[0].clientY - touchStartY.current
@@ -424,6 +431,7 @@ export function LearningInsightDialog({
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      if (document.querySelector('[data-insight-practice]')) return
       if (touchAxis.current !== 'horizontal') return
       const deltaX = e.changedTouches[0].clientX - touchStartX.current
       const deltaY = e.changedTouches[0].clientY - touchStartY.current
@@ -464,9 +472,9 @@ export function LearningInsightDialog({
 
             {/* Content - 中间弹性区域，可滚动 */}
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {current.kind === 'word' && <WordInsight item={current} hideSave={hideSaveActions} />}
-              {current.kind === 'chunk' && <ChunkInsightView item={current} hideSave={hideSaveActions} />}
-              {current.kind === 'pattern' && <PatternInsightView item={current} hideSave={hideSaveActions} />}
+              {current.kind === 'word' && <WordInsight item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
+              {current.kind === 'chunk' && <ChunkInsightView item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
+              {current.kind === 'pattern' && <PatternInsightView item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
             </div>
 
             {/* Footer - 固定在底部 */}
@@ -631,7 +639,8 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   )
 }
 
-function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hideSave?: boolean }) {
+function WordInsight({ item: original, hideSave = false, practiceUnitId }: { item: VocabularyInsight; hideSave?: boolean; practiceUnitId?: string }) {
+  const { item, onUpdated } = useInsightRegeneration(original)
   const { t } = useTranslation()
   const [dictData, setDictData] = useState<DictionaryEntry | null | 'loading'>(null)
   const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>(null)
@@ -733,11 +742,12 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         </TabsList>
         </div>
         {!hideSave && (
-          <Button onClick={saveWord} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="h-8 shrink-0 gap-1.5 rounded-lg px-2.5 text-xs">
+          <Button onClick={saveWord} disabled={saving} variant={saved ? 'secondary' : 'default'} size="icon" className="size-8 shrink-0" aria-label={saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')} title={saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}>
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
-            {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
+        <InsightPracticeButton item={item} unitId={practiceUnitId} />
+        <InsightRegenerateButton item={item} field={activeTab} onUpdated={onUpdated} />
       </div>
       <div className="relative min-h-0 flex-1">
         {/* 讲解 */}
@@ -1049,7 +1059,8 @@ function DictionarySenseRow({ sense, index }: { sense: DictionarySense; index: n
   )
 }
 
-function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hideSave?: boolean }) {
+function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: { item: ChunkInsight; hideSave?: boolean; practiceUnitId?: string }) {
+  const { item, onUpdated } = useInsightRegeneration(original)
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
@@ -1094,11 +1105,12 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
         </TabsList>
         </div>
         {!hideSave && (
-          <Button onClick={saveChunk} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="h-8 shrink-0 gap-1.5 rounded-lg px-2.5 text-xs">
+          <Button onClick={saveChunk} disabled={saving} variant={saved ? 'secondary' : 'default'} size="icon" className="size-8 shrink-0" aria-label={saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')} title={saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}>
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
-            {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
+        <InsightPracticeButton item={item} unitId={practiceUnitId} />
+        <InsightRegenerateButton item={item} field={activeTab} onUpdated={onUpdated} />
       </div>
       <div className="relative min-h-0 flex-1">
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
@@ -1131,7 +1143,8 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   )
 }
 
-function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; hideSave?: boolean }) {
+function PatternInsightView({ item: original, hideSave = false, practiceUnitId }: { item: PatternInsight; hideSave?: boolean; practiceUnitId?: string }) {
+  const { item, onUpdated } = useInsightRegeneration(original)
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
@@ -1177,11 +1190,12 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         </TabsList>
         </div>
         {!hideSave && (
-          <Button onClick={savePattern} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="h-8 shrink-0 gap-1.5 rounded-lg px-2.5 text-xs">
+          <Button onClick={savePattern} disabled={saving} variant={saved ? 'secondary' : 'default'} size="icon" className="size-8 shrink-0" aria-label={saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')} title={saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}>
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
-            {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
+        <InsightPracticeButton item={item} unitId={practiceUnitId} />
+        <InsightRegenerateButton item={item} field={activeTab} onUpdated={onUpdated} />
       </div>
       <div className="relative min-h-0 flex-1">
         <TabsContent value="structure" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">

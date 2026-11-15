@@ -1,0 +1,220 @@
+{
+  "scope": "Direct application service methods against the configured live cloud model; not deployed HTTP/mobile E2E. No learning records written.",
+  "warmup": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "thinkingDisabled": 8,
+    "reasoningResponses": 0,
+    "usage": {
+      "tokens": 8152
+    },
+    "results": [
+      {
+        "id": "get-to-work:0:0",
+        "group": "说到公司",
+        "dto": {
+          "stepType": "chunk_substitution",
+          "direction": "zh_to_en",
+          "prompt": "我通常九点到公司。",
+          "expectedAnswer": "I usually get to work at nine.",
+          "userAnswer": "I usually get to work at nine.",
+          "targetText": "get to work",
+          "targetMeaning": "到公司"
+        },
+        "category": "reference",
+        "expectedPass": true,
+        "actual": {
+          "passed": true,
+          "score": "strong",
+          "feedback": "翻译准确，正确使用了目标短语 get to work。",
+          "correction": null,
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"met\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"翻译准确，正确使用了目标短语 get to work。\",\"correction\":null}"
+        },
+        "matched": true,
+        "ms": 1354
+      },
+      {
+        "id": "get-to-work:0:0:missing-target:109",
+        "group": "说到公司",
+        "dto": {
+          "stepType": "chunk_substitution",
+          "direction": "zh_to_en",
+          "prompt": "我通常九点到公司。",
+          "expectedAnswer": "I usually get to work at nine.",
+          "userAnswer": "I usually arrive at work at nine.",
+          "targetText": "get to work",
+          "targetMeaning": "到公司"
+        },
+        "category": "missing-target",
+        "expectedPass": false,
+        "actual": {
+          "passed": false,
+          "score": "weak",
+          "feedback": "意思正确，但未使用要求的短语 get to work，arrive at work 虽同义却避开了学习目标。",
+          "correction": "I usually get to work at nine.",
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"missing\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"意思正确，但未使用要求的短语 get to work，arrive at work 虽同义却避开了学习目标。\",\"correction\":\"I usually get to work at nine.\"}"
+        },
+        "matched": true,
+        "ms": 793
+      },
+      {
+        "id": "get-to-work:0:0:negation:110",
+        "group": "说到公司",
+        "dto": {
+          "stepType": "chunk_substitution",
+          "direction": "zh_to_en",
+          "prompt": "我通常九点到公司。",
+          "expectedAnswer": "I usually get to work at nine.",
+          "userAnswer": "I usually do not get to work at nine.",
+          "targetText": "get to work",
+          "targetMeaning": "到公司"
+        },
+        "category": "negation",
+        "expectedPass": false,
+        "actual": {
+          "passed": false,
+          "score": "miss",
+          "feedback": "译文加了否定，意思变成“我通常九点不到公司”，与原句相反。",
+          "correction": "I usually get to work at nine.",
+          "raw": "{\"meaning\":\"incorrect\",\"languageAppropriate\":true,\"targetUsage\":\"met\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"译文加了否定，意思变成“我通常九点不到公司”，与原句相反。\",\"correction\":\"I usually get to work at nine.\"}"
+        },
+        "matched": true,
+        "ms": 892
+      },
+      {
+        "id": "get-to-work-listen:0:0:chinese-paraphrase:114",
+        "group": "听懂对方说到公司",
+        "dto": {
+          "stepType": "chunk_substitution",
+          "direction": "en_to_zh",
+          "prompt": "Did you get to work on time this morning?",
+          "expectedAnswer": "你今天早上按时到公司了吗？",
+          "userAnswer": "今天上午你准时到单位了吗？",
+          "targetMeaning": "到公司"
+        },
+        "category": "chinese-paraphrase",
+        "expectedPass": true,
+        "actual": {
+          "passed": true,
+          "score": "strong",
+          "feedback": "译文准确传达了“今天早上按时到公司”的意思，用词自然。",
+          "correction": null,
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"not_required\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"译文准确传达了“今天早上按时到公司”的意思，用词自然。\",\"correction\":null}"
+        },
+        "matched": true,
+        "ms": 1112
+      },
+      {
+        "id": "get-used-to-new:0:1:target-grammar:136",
+        "group": "习惯一件新的事",
+        "dto": {
+          "stepType": "pattern_drill",
+          "direction": "zh_to_en",
+          "prompt": "我花了几个星期才习惯在家工作。",
+          "expectedAnswer": "It took me a few weeks to get used to working from home.",
+          "userAnswer": "It took me a few weeks to get used to work from home.",
+          "targetText": "get used to [noun/doing]",
+          "targetMeaning": "逐渐习惯某事；to 后接名词或 V-ing"
+        },
+        "category": "target-grammar",
+        "expectedPass": false,
+        "actual": {
+          "passed": false,
+          "score": "weak",
+          "feedback": "意思正确，但目标结构“get used to [noun/doing]”要求 to 后接名词或 V-ing，这里应为 working from home，而不是 work。",
+          "correction": "It took me a few weeks to get used to working from home.",
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"missing\",\"expression\":\"minor_issues\",\"confidence\":\"high\",\"feedback\":\"意思正确，但目标结构“get used to [noun/doing]”要求 to 后接名词或 V-ing，这里应为 working from home，而不是 work。\",\"correction\":\"It took me a few weeks to get used to working from home.\"}"
+        },
+        "matched": true,
+        "ms": 940
+      },
+      {
+        "id": "get-state:0:0",
+        "group": "说事情变得怎样",
+        "dto": {
+          "stepType": "vocab_sentence_building",
+          "direction": "zh_to_en",
+          "prompt": "给我五分钟准备一下。",
+          "expectedAnswer": "Give me five minutes to get ready.",
+          "userAnswer": "Give me five minutes to get ready.",
+          "targetText": "get ready",
+          "targetMeaning": "变得；进入某种状态",
+          "requiredWords": [
+            "get"
+          ]
+        },
+        "category": "reference",
+        "expectedPass": true,
+        "actual": {
+          "passed": true,
+          "score": "strong",
+          "feedback": "翻译准确，正确使用了目标短语 get ready 和 required word get。",
+          "correction": null,
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"met\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"翻译准确，正确使用了目标短语 get ready 和 required word get。\",\"correction\":null}"
+        },
+        "matched": true,
+        "ms": 945
+      },
+      {
+        "id": "take-it-takes:0:1",
+        "group": "说做某事要花多久",
+        "dto": {
+          "stepType": "pattern_drill",
+          "direction": "zh_to_en",
+          "prompt": "她花了两天完成报告。",
+          "expectedAnswer": "It took her two days to finish the report.",
+          "userAnswer": "It took her two days to finish the report.",
+          "targetText": "It takes [someone] [time] to [do].",
+          "targetMeaning": "某人做某事需要花多少时间"
+        },
+        "category": "reference",
+        "expectedPass": true,
+        "actual": {
+          "passed": true,
+          "score": "strong",
+          "feedback": "翻译准确，且正确使用了 It takes [someone] [time] to [do] 句型。",
+          "correction": null,
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"met\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"翻译准确，且正确使用了 It takes [someone] [time] to [do] 句型。\",\"correction\":null}"
+        },
+        "matched": true,
+        "ms": 973
+      },
+      {
+        "id": "take-someone-somewhere:0:1",
+        "group": "说带某人去别处",
+        "dto": {
+          "stepType": "pattern_drill",
+          "direction": "zh_to_en",
+          "prompt": "开完会我送她回家。",
+          "expectedAnswer": "I'll take her home after the meeting.",
+          "userAnswer": "I'll take her home after the meeting.",
+          "targetText": "take [someone] to [place]",
+          "targetMeaning": "带某人前往某地；home 前通常不加 to"
+        },
+        "category": "reference",
+        "expectedPass": true,
+        "actual": {
+          "passed": true,
+          "score": "strong",
+          "feedback": "翻译准确，正确使用了 take someone to place 结构（home 前不加 to）。",
+          "correction": null,
+          "raw": "{\"meaning\":\"correct\",\"languageAppropriate\":true,\"targetUsage\":\"met\",\"expression\":\"natural\",\"confidence\":\"high\",\"feedback\":\"翻译准确，正确使用了 take someone to place 结构（home 前不加 to）。\",\"correction\":null}"
+        },
+        "matched": true,
+        "ms": 1123
+      }
+    ]
+  },
+  "vn": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "passed": true,
+    "feedback": "回答清晰自然，准确说出了到达时间。",
+    "intent": "say_arrival_time",
+    "thinkingDisabled": 1,
+    "reasoningResponses": 0,
+    "usage": {
+      "tokens": 911
+    }
+  }
+}

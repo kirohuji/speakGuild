@@ -25,6 +25,7 @@ function learningPackDownloadUrl(unitId: string) {
 }
 
 export interface LearningPackManifest {
+  source?: 'published' | 'dynamic'
   packId: string
   version: number
   title: string

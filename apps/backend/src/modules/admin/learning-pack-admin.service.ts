@@ -148,6 +148,11 @@ export class LearningPackAdminService {
     });
     const version = input?.version ?? Number(latest?.version ?? 0) + 1;
     if (version <= 0) throw new BadRequestException('版本号必须大于 0');
+    const existingVersion = await (this.prisma as any).learningPackage.findUnique({
+      where: { sceneId_version: { sceneId, version } },
+      select: { fileAssetId: true },
+    });
+    if (existingVersion?.fileAssetId) throw new BadRequestException('该版本已有学习包，请使用新版本号');
 
     const title = input?.title?.trim() || scene.title;
     const record = await (this.prisma as any).learningPackage.upsert({
@@ -238,6 +243,11 @@ export class LearningPackAdminService {
     });
     const version = input.version ?? Number(latest?.version ?? 0) + 1;
     if (version <= 0) throw new BadRequestException('版本号必须大于 0');
+    const existingVersion = await (this.prisma as any).learningPackage.findUnique({
+      where: { sceneId_version: { sceneId: input.sceneId, version } },
+      select: { fileAssetId: true },
+    });
+    if (existingVersion?.fileAssetId) throw new BadRequestException('该版本已有学习包，请使用新版本号');
 
     const { buffer, filename } = await this.readAssetBuffer(input.assetId);
     const manifestSnapshot = this.readManifestFromZip(buffer);
@@ -245,6 +255,9 @@ export class LearningPackAdminService {
       throw new BadRequestException('zip 内 manifest.packId 与所选学习单元不一致');
     }
 
+    if (Number(manifestSnapshot?.version) !== version) {
+      throw new BadRequestException('zip 内版本号与发布版本号不一致');
+    }
     const title = input.title?.trim() || manifestSnapshot?.title || scene.title;
     const existing = await (this.prisma as any).learningPackage.findUnique({
       where: { sceneId_version: { sceneId: input.sceneId, version } },

@@ -718,6 +718,7 @@ export function ExpressionPrepSection({
       )}
 
       <LearningInsightDialog
+          practiceUnitId={contentSource?.unitId}
         items={currentDialogItems}
         index={Math.min(dialogIndex, Math.max(currentDialogItems.length - 1, 0))}
         open={dialogOpen}

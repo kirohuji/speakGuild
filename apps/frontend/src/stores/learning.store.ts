@@ -1,3 +1,5 @@
+import { checkInRepository, subscribeCheckInsChanged } from '@/lib/offline/check-in.repository'
+import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { showRequestError } from '@/lib/request-feedback'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { create } from 'zustand'
@@ -51,6 +53,10 @@ export interface DownloadTask {
 let checkInRequestGeneration = 0
 let checkInCacheWrites: Promise<void> = Promise.resolve()
 export async function waitForCheckInCacheWrites() { await checkInCacheWrites }
+let packCheckPromise: Promise<void> | null = null
+let packCheckGeneration = 0
+let lastPackCheckKey = ''
+let lastPackCheckAt = 0
 const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
 const activePackTaskIds = new Set<string>()
 const activePackTaskControllers = new Map<string, AbortController>()
@@ -326,7 +332,11 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       ])
       if (generation !== checkInRequestGeneration) return null
       if (status?.today === localDateKey()) set({ checkInStreak: status.currentStreak })
-      if (cached) set({ checkInData: cached.value, checkInLoading: false })
+      if (cached) await checkInRepository.rememberCalendar(cached.value)
+      const local = await checkInRepository.overlayCalendar(startDate, endDate, cached?.value ?? null)
+      if (generation !== checkInRequestGeneration) return null
+      set({ checkInData: local, checkInStreak: local.currentStreak, checkInLoading: false })
+      if (!navigator.onLine) return local
       const data = await pointsApi.getCheckInCalendar(startDate, endDate)
       if (generation !== checkInRequestGeneration) return null
       checkInCacheWrites = checkInCacheWrites.catch(() => undefined).then(async () => {
@@ -336,8 +346,11 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       })
       await checkInCacheWrites
       if (generation !== checkInRequestGeneration) return null
-      set({ checkInData: data, checkInStreak: data.currentStreak, checkInLoading: false })
-      return data
+      await checkInRepository.rememberCalendar(data, true)
+      const merged = await checkInRepository.overlayCalendar(startDate, endDate, data)
+      if (generation !== checkInRequestGeneration) return null
+      set({ checkInData: merged, checkInStreak: merged.currentStreak, checkInLoading: false })
+      return merged
     } catch {
       if (generation === checkInRequestGeneration) set({ checkInLoading: false })
       return null
@@ -485,28 +498,47 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async checkPackUpdates(silent = true) {
-    const downloadedPacks = await learningPackService.listInstalled()
-    const installed = downloadedPacks
-      .filter((pack) => pack.status === 'installed')
-      .map((pack) => ({ packId: pack.packId, version: pack.version }))
-    if (installed.length === 0) {
-      set({ downloadedPacks, availablePackUpdates: [] })
-      return
+    if (!navigator.onLine) return
+    const userId = getCurrentSessionSnapshot()?.user?.id
+    if (!userId) return
+    if (packCheckPromise) {
+      await packCheckPromise
+      if (silent) return
     }
-
-    try {
-      const result = await learningApi.checkPacks(installed)
-      set({ downloadedPacks, availablePackUpdates: result.updates })
-      if (!silent && result.updates.length > 0) {
-        toast.info(i18n.t('learning.packUpdatesAvailable'))
+    const generation = packCheckGeneration
+    const isCurrent = () => generation === packCheckGeneration && getCurrentSessionSnapshot()?.user?.id === userId
+    const running = (async () => {
+      const downloadedPacks = await learningPackService.listInstalled()
+      if (!isCurrent()) return
+      const installed = downloadedPacks
+        .filter((pack) => pack.status === 'installed')
+        .map((pack) => ({ packId: pack.packId, version: pack.version, source: pack.manifest?.source }))
+      const key = `${userId}:${JSON.stringify([...installed].sort((a, b) => a.packId.localeCompare(b.packId)))}`
+      if (installed.length === 0) {
+        set({ downloadedPacks, availablePackUpdates: [] })
+        return
       }
-    } catch (error) {
-      set({ downloadedPacks })
-      console.warn('[learning-store]   → 检查失败', error)
-      if (!silent) {
-        showRequestError(error, i18n.t('learning.packUpdateCheckFailed'))
+      if (silent && key === lastPackCheckKey && Date.now() - lastPackCheckAt < 30 * 60_000) return
+      try {
+        const result = await learningApi.checkPacks(installed)
+        if (!isCurrent()) return
+        // Installation/uninstallation may have completed while this request was in flight.
+        const current = await learningPackService.listInstalled()
+        if (!isCurrent()) return
+        set({ downloadedPacks: current, availablePackUpdates: result.updates.filter(update =>
+          current.some(pack => pack.status === 'installed' && pack.packId === update.packId && pack.version === update.fromVersion)) })
+        lastPackCheckKey = key
+        lastPackCheckAt = Date.now()
+        if (!silent && getState().availablePackUpdates.length > 0) toast.info(i18n.t('learning.packUpdatesAvailable'))
+      } catch (error) {
+        if (!isCurrent()) return
+        set({ downloadedPacks })
+        console.warn('[learning-store] pack update check failed', error)
+        if (!silent) showRequestError(error, i18n.t('learning.packUpdateCheckFailed'))
       }
-    }
+    })()
+    packCheckPromise = running
+    try { await running } finally { if (packCheckPromise === running) packCheckPromise = null }
   },
 
   async downloadUnitPack(unitId) {
@@ -618,9 +650,14 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   resetUserState() {
+    packCheckGeneration++
+    packCheckPromise = null
+    lastPackCheckKey = ''
+    lastPackCheckAt = 0
     checkInRequestGeneration++
     set({
       myUnits: [],
+      availablePackUpdates: [],
       myLoading: true,
       shopUnits: [],
       shopTotal: 0,
@@ -764,7 +801,13 @@ async function processDownloadQueue() {
 
     const update = useLearningStore.getState().availablePackUpdates.find((u) => u.packId === next.packId)
     if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
-      await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal)
+      try {
+        await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal)
+      } catch (error) {
+        if (controller.signal.aborted) throw error
+        console.warn('[learning-store] delta failed; falling back to full package', error)
+        await learningPackService.installUnit(next.packId, onProgress, controller.signal)
+      }
     } else {
       // Native install returns after content+deferred index (installed); asset
       // files continue in drainPackAssetMaterializeQueue inside installUnit.
@@ -903,3 +946,19 @@ export async function startupPackSync() {
   await store.fetchDownloadedPacks()
   await store.checkPackUpdates(true)
 }
+
+// Local check-ins update an open calendar without a network request.
+subscribeCheckInsChanged(() => {
+  const owner = getCurrentSessionSnapshot()?.user?.id
+  const generation = checkInRequestGeneration
+  const current = useLearningStore.getState().checkInData
+  if (!owner) return
+  void (async () => {
+    const status = await checkInRepository.readStatus()
+    const merged = current?.startDate && current.endDate
+      ? await checkInRepository.overlayCalendar(current.startDate, current.endDate, current) : null
+    if (generation !== checkInRequestGeneration || getCurrentSessionSnapshot()?.user?.id !== owner) return
+    useLearningStore.setState(state => ({ checkInStreak: status.currentStreak,
+      ...(merged && state.checkInData === current ? { checkInData: merged } : {}) }))
+  })().catch(() => undefined)
+})

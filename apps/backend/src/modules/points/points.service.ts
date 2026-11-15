@@ -1,8 +1,10 @@
+import { CheckInDto } from './dto/check-in.dto';
 import { Prisma } from '@prisma/client';
 import { LearningStatisticsService } from '../../common/learning-statistics/learning-statistics.service';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
+  dateKeyInTimeZone,
   addDateKeyDays,
   formatDateKey,
   parseDateKey,
@@ -138,14 +140,30 @@ export class PointsService {
   }
 
   /** Perform daily check-in */
-  async checkIn(userId: string, timeZone: string) {
-    const todayKey = todayDateKey(timeZone);
+  async checkIn(userId: string, timeZone: string, input: CheckInDto = {}) {
+    if (input.ownerId && input.ownerId !== userId) throw new BadRequestException('签到账号已变化');
+    let todayKey = todayDateKey(timeZone);
+    if (input.date !== undefined) {
+      const occurredAt = new Date(input.occurredAt ?? '');
+      if (!input.timeZone || !Number.isFinite(occurredAt.getTime())) throw new BadRequestException('离线签到需要有效的发生时间和时区');
+      try { new Intl.DateTimeFormat('en', { timeZone: input.timeZone }).format(); }
+      catch { throw new BadRequestException('签到时区无效'); }
+      if (occurredAt.getTime() > Date.now() + 5 * 60_000
+        || input.date > todayDateKey(input.timeZone)
+        || dateKeyInTimeZone(occurredAt, input.timeZone) !== input.date) {
+        throw new BadRequestException('签到日期与发生时间不一致，或日期在未来');
+      }
+      todayKey = input.date;
+    }
     const today = parseCalendarDate(todayKey);
 
     const result = await this.prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT id FROM "user" WHERE id=${userId} FOR UPDATE`;
       const existing = await tx.userCheckIn.findUnique({ where: { userId_date: { userId, date: today } } });
-      if (existing) throw new BadRequestException('今天已经签到过了');
+      if (existing) {
+        const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { points: true } });
+        return { points: user.points, earned: existing.points, streak: existing.streak, alreadyApplied: true, isMakeup: existing.isMakeup };
+      }
       const yesterdayKey = formatDateKey(addDateKeyDays(today,-1));
       const streak = (await this.streakAt(userId,yesterdayKey,tx))+1;
       const points = CHECK_IN_BASE_POINTS + Math.min(streak-1,STREAK_BONUS_CAP);
@@ -153,11 +171,15 @@ export class PointsService {
       const updated = await tx.user.update({ where: { id:userId },data: { points: { increment:points } }, select:{ points:true } });
       await tx.pointTransaction.create({ data: { userId,type:'check_in',amount:points,balance:updated.points,
         description:`每日签到 +${points}积分（连续${streak}天）`,referenceId:checkIn.id } });
-      return { points:updated.points,earned:points,streak };
+      return { points:updated.points,earned:points,streak,alreadyApplied:false,isMakeup:false };
     });
     const { earned: points, streak } = result;
 
     return {
+      date: todayKey,
+      alreadyApplied: result.alreadyApplied,
+      isMakeup: result.isMakeup,
+      status: await this.getCheckInStatus(userId, timeZone),
       points: result.points,
       earned: points,
       streak,
