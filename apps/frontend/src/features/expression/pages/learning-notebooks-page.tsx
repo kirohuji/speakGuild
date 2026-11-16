@@ -2,7 +2,7 @@ import { showRequestError } from '@/lib/request-feedback'
 import { LEARNING_LIBRARY_CHANGED_EVENT } from '@/lib/offline/learning-content.repository'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BookCopy, ChevronRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
+import { BookCopy, ChevronRight, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -171,6 +171,14 @@ export function LearningNotebooksPage() {
     setMode('manage')
   }
 
+  const closeCurrentLayer = () => {
+    if (mode === 'rename' || mode === 'delete') {
+      setMode('manage')
+      return
+    }
+    setMode(null)
+  }
+
   const submitName = async () => {
     const value = name.trim()
     if (!value) {
@@ -263,8 +271,8 @@ export function LearningNotebooksPage() {
         </>
       )}
 
-      <Drawer open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
-        <DrawerContent className="rounded-t-[28px] bg-background drawer-surface">
+      <Drawer open={mode !== null} onOpenChange={(open) => !open && closeCurrentLayer()}>
+        <DrawerContent className="rounded-t-[28px] border-0 bg-background shadow-none drawer-surface">
           {(mode === 'create' || mode === 'rename') && (
             <>
               <DrawerHeader className="text-left">
@@ -287,7 +295,7 @@ export function LearningNotebooksPage() {
                 />
               </div>
               <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setMode(null)}>
+                <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={closeCurrentLayer}>
                   {t('learningNotebooks.cancel')}
                 </Button>
                 <Button className="flex-1" onClick={() => void submitName()} disabled={submitting}>
@@ -312,6 +320,7 @@ export function LearningNotebooksPage() {
                     setMode('rename')
                   }}
                 >
+                  <Pencil data-icon="inline-start" />
                   {t('learningNotebooks.renameAction')}
                 </Button>
                 <Button variant="destructive" className="justify-start border-0 shadow-none" onClick={() => setMode('delete')}>

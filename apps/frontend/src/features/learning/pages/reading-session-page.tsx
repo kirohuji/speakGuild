@@ -2,7 +2,7 @@ import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Loader2, MessageSquareText, RotateCcw, Sparkles, TextQuote, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Loader2, MessageSquareText, RotateCcw, Sparkles, TextQuote, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -90,7 +90,7 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
           <section className="rounded-lg bg-muted/30 p-4">
             <div className="mb-2 flex items-center gap-2"><BookOpen className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">{t('learning.readingGuide')}</p></div>
             {topic.description?.trim() && <MarkdownRenderer content={topic.description} className="text-muted-foreground prose-p:my-1" />}
-            <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" onClick={onOpenGuide}><BookOpen className="size-4" />{t('learning.teachingGuide')}</Button>
+            <Button variant="outline-primary" className="mt-4 min-h-11 w-full shadow-none" onClick={onOpenGuide}><BookOpen className="size-4" />{t('practiceVn.teaching')}</Button>
           </section>
         )}
 
@@ -197,6 +197,7 @@ function ReadingAnswerPage({
   const [analysisError, setAnalysisError] = useState<string | null>(review?.analysisError ?? null)
   const [saving, setSaving] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [questionsCollapsed, setQuestionsCollapsed] = useState(false)
   const [view, setView] = useState<'answer' | 'analysis'>(isReview ? 'analysis' : 'answer')
   const answersRef = useRef(answers)
   const sessionIdRef = useRef<string | null>(null)
@@ -310,7 +311,7 @@ function ReadingAnswerPage({
 
   return (
     <div className="app-surface drawer-surface fixed inset-0 z-[10000] flex h-[100dvh] w-full max-w-[100vw] flex-col overflow-hidden pt-safe text-foreground">
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+      <header className="shrink-0 px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BookOpen className="size-4" /></span>
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.readingPractice')}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug">{topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
@@ -339,7 +340,12 @@ function ReadingAnswerPage({
       {view === 'analysis' && hasCompletedAttempt ? (
         <ReadingAnalysisPanel analysis={analysisResult} error={analysisError} onClose={onClose} />
       ) : (
-        <main className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]">
+        <main className={cn(
+          'grid min-h-0 min-w-0 flex-1 transition-[grid-template-rows] duration-300 ease-out',
+          questionsCollapsed
+            ? 'grid-rows-[minmax(0,1fr)_3rem]'
+            : 'grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]',
+        )}>
           <section className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain" aria-label={t('learning.readingArticle')}>
             <article className="mx-auto w-full max-w-3xl min-w-0 px-4 pb-6 pt-4 sm:px-6">
               <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
@@ -352,8 +358,8 @@ function ReadingAnswerPage({
             </article>
           </section>
 
-          <section className="flex min-h-0 min-w-0 flex-col border-t border-border/70 bg-card shadow-[0_-8px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_20px_rgba(0,0,0,0.25)]" aria-label={t('learning.readingQuestions')}>
-            <div className="mx-auto flex w-full max-w-3xl min-w-0 shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
+          <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-muted/10" aria-label={t('learning.readingQuestions')}>
+            <div className="mx-auto flex w-full max-w-3xl min-w-0 shrink-0 items-center gap-2 px-4 py-2">
               <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
                 {questions.map((_: any, index: number) => (
                   <button
@@ -361,12 +367,12 @@ function ReadingAnswerPage({
                     type="button"
                     onClick={() => setCurrentQuestion(index)}
                     className={cn(
-                      'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold',
+                      'flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
                       currentQuestion === index
-                        ? 'border-primary bg-primary text-primary-foreground'
+                        ? 'bg-primary text-primary-foreground'
                         : answers[String(index)]
-                          ? 'border-primary/30 bg-primary/10 text-primary'
-                          : 'border-border bg-background text-muted-foreground',
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted/70 text-muted-foreground',
                     )}
                     aria-label={t('learning.questionNumberAria', { number: index + 1 })}
                   >
@@ -407,9 +413,22 @@ function ReadingAnswerPage({
                     {t('learning.submitEvaluation')}
                   </Button>
                 ) : null}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setQuestionsCollapsed((collapsed) => !collapsed)}
+                  aria-label={t(questionsCollapsed ? 'learning.expandQuestions' : 'learning.collapseQuestions')}
+                  title={t(questionsCollapsed ? 'learning.expandQuestions' : 'learning.collapseQuestions')}
+                  className="border-0 bg-muted/70 text-muted-foreground shadow-none hover:bg-muted hover:text-foreground"
+                >
+                  <ChevronDown className={cn('size-4 transition-transform duration-300', questionsCollapsed && 'rotate-180')} />
+                </Button>
               </div>
             </div>
-            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+            <div className={cn(
+              'min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain transition-opacity duration-200',
+              questionsCollapsed && 'pointer-events-none opacity-0',
+            )}>
               <div className="mx-auto w-full max-w-3xl min-w-0 px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
                 {question
                   ? (
@@ -425,7 +444,7 @@ function ReadingAnswerPage({
                       })}
                     />
                     )
-                  : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">{t('learning.noComprehensionQuestions')}</p>}
+                  : <p className="rounded-lg bg-muted/30 p-8 text-center text-sm text-muted-foreground">{t('learning.noComprehensionQuestions')}</p>}
               </div>
             </div>
           </section>
@@ -459,13 +478,13 @@ function ReadingQuestion({ index, question, value, onChange, readOnly = false }:
               disabled={readOnly}
               onClick={() => onChange(option.value)}
               className={cn(
-                'flex min-h-12 w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
-                value === option.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background text-foreground',
+                'flex min-h-12 w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                value === option.value ? 'bg-primary/10 text-foreground' : 'bg-background text-foreground',
               )}
             >
               <span className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
-                value === option.value ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+                'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                value === option.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
               )}
               >
                 {question.type === 'boolean' ? (optionIndex === 0 ? '✓' : '×') : String.fromCharCode(65 + optionIndex)}
@@ -479,7 +498,7 @@ function ReadingQuestion({ index, question, value, onChange, readOnly = false }:
           value={value}
           onChange={(event) => onChange(event.target.value)}
           readOnly={readOnly}
-          className="min-h-28 resize-y bg-background"
+          className="min-h-28 resize-y border-0 bg-background shadow-none focus-visible:ring-0"
           placeholder={t('learning.readingAnswerPlaceholder')}
         />
       )}

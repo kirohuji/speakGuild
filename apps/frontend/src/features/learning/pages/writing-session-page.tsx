@@ -278,8 +278,8 @@ function WritingPreparePage({
             ) : (
               <p className="text-sm leading-6 text-muted-foreground">{t('learning.readGuideFirst')}</p>
             )}
-            <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" size="default" onClick={onOpenGuide}>
-              <BookOpen className="size-4" />{t('learning.teachingGuide')}
+            <Button variant="outline-primary" className="mt-4 min-h-11 w-full shadow-none" size="default" onClick={onOpenGuide}>
+              <BookOpen className="size-4" />{t('practiceVn.teaching')}
             </Button>
           </section>
         )}
@@ -713,7 +713,7 @@ function WritingEditor({
       data-writing-compose
       className="app-surface drawer-surface fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden pt-safe"
     >
-      <header data-writing-compose-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+      <header data-writing-compose-header className="shrink-0 px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><FilePenLine className="size-4" /></span>
           <div className="min-w-0 flex-1">
@@ -774,7 +774,7 @@ function WritingEditor({
       </div>
       )}
 
-      <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
+      <footer className="shrink-0 bg-muted/10 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p data-writing-footer-meta className="truncate text-xs text-muted-foreground">{({ message: t('learning.genreMessage'), journal: t('learning.genreJournal'), email: t('learning.genreEmail'), paragraph: t('learning.genreParagraph'), essay: t('learning.genreEssay'), dialogue: t('learning.genreDialogue'), translation: t('learning.genreTranslation') } as Record<string, string>)[config.genre ?? ''] || config.genre || t('learning.freeWriting')}</p>
@@ -930,7 +930,7 @@ function TranslationEditor({
 
   return (
     <div data-keyboard-overlay="writing" data-writing-translation className="app-surface drawer-surface fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden pt-safe">
-      <header data-writing-translation-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+      <header data-writing-translation-header className="shrink-0 px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? t('learning.zhToEnBadge') : t('learning.enToZhBadge')}</Badge><span data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
@@ -953,8 +953,8 @@ function TranslationEditor({
             </article>
           </section>
 
-          <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label={answerLanguage}>
-            <div data-writing-translation-nav className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
+          <section className="flex min-h-0 flex-col bg-muted/10" aria-label={answerLanguage}>
+            <div data-writing-translation-nav className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 px-4 py-2">
               <Button variant="ghost" size="sm" className="h-8 border-0 bg-primary/10 px-2.5 text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={activeIndex === 0} onClick={() => selectSegment(activeIndex - 1)}><ChevronLeft className="size-4" />{scope === 'article' ? t('learning.prevParagraph') : t('learning.prevSentence')}</Button>
               <span className="min-w-0 flex-1 truncate text-center text-xs tabular-nums text-muted-foreground">{t('learning.completedCount', { count: answeredCount, total: segments.length })}</span>
               <div className="flex shrink-0 items-center gap-1.5">
@@ -1180,7 +1180,7 @@ function DialogueEditor({
       {/* Header — 与段落/论文一致：键盘时只收紧 padding、隐藏 meta，保留图标/徽章/标题/操作 */}
       <header
         className={cn(
-          'shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background transition-[padding] duration-200',
+          'shrink-0 transition-[padding] duration-200',
           keyboardComposing ? 'px-4 py-2 sm:px-6' : 'px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4',
         )}
       >
@@ -1321,7 +1321,7 @@ function DialogueEditor({
 
           {/* Turn progress dots — 键盘打开时隐藏，避免占输入空间 */}
           {turns.length > 1 && !keyboardComposing && (
-            <div className="mt-4 border-t border-border/50 pt-4">
+            <div className="mt-4 bg-muted/20 py-4">
               <div className="flex items-center justify-center gap-2">
                 {turns.map((_, i) => {
                   const isAnswered = (responses[i] ?? '').trim()
@@ -1354,7 +1354,7 @@ function DialogueEditor({
 
       {/* Footer — 键盘打开时直接不渲染，避免与 CSS 抢优先级 */}
       {!(session.readOnly && hideRetry) && !keyboardComposing && (
-      <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
+      <footer className="shrink-0 bg-muted/10 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           {session.readOnly ? (
             <Button size="lg" onClick={() => void session.startNewAttempt().then(() => { setResponses({}); setCurrentIndex(0); setView('editor') })} className="w-full gap-1.5 rounded-full">

@@ -1287,11 +1287,16 @@ export function TodayTaskPage() {
               type="button"
               onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
               disabled={manualSyncing || !isOnline}
-              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
               aria-label={isOnline ? '同步今日任务' : t('common.offline')}
               title={isOnline ? '同步今日任务' : t('common.offline')}
             >
-              {!isOnline ? <WifiOff className="size-[17px]" /> : <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />}
+              <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
+              {!isOnline && (
+                <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
+                  <WifiOff className="size-2.5" />
+                </span>
+              )}
               {isOnline && hasPendingSync && !manualSyncing && (
                 <span className="absolute -right-0.5 -top-0.5">
                   <AlertCircle className="size-3.5 text-amber-500" />

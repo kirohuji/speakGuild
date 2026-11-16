@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn'
 
 export function MarkdownContent({ content, className }: { content: string; className?: string }) {
   return (
-    <article className={cn(`
+    <article data-markdown-content className={cn(`
       text-sm leading-relaxed text-foreground
       [&_h1]:font-display [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-0 [&_h1]:mb-4 [&_h1]:text-foreground
       [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-foreground

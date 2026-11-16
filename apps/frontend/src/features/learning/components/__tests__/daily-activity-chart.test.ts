@@ -1,5 +1,6 @@
 import {describe,expect,it} from 'vitest'
 import {dailyChartData} from '../daily-activity-chart'
+import {getRestrainedChartDomainMax} from '../activity-chart'
 describe('day chart data',()=>{
  it('shows a zero baseline for a day with no practice',()=>{
   const rows=dailyChartData([])
@@ -19,5 +20,14 @@ describe('day chart data',()=>{
   expect(rows[12].minutes).toBe(0)
   expect(rows[13].minutes).toBeNull()
   expect(rows[13].questions).toBeNull()
+ })
+})
+
+describe('expanded chart scaling',()=>{
+ it('keeps ordinary values at or below half height',()=>{
+  expect(getRestrainedChartDomainMax([0,30,60],60)).toBe(120)
+ })
+ it('lets unusually large values use the upper half with headroom',()=>{
+  expect(getRestrainedChartDomainMax([180],60)).toBe(207)
  })
 })

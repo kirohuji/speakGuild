@@ -276,7 +276,7 @@ export function CheckInCalendarDrawer({
                 <CalendarCheck className="size-3.5" />
                 {view==='day'?t('learning.dayChart.checkInStatus'):t('learning.activeDays', { defaultValue: '练习天数' })}
               </div>
-              {canOfferMakeup ? <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={makeupState !== 'ready' || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { void prepareMakeup() }}>
+              {canOfferMakeup ? <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={!['ready', 'insufficient'].includes(makeupState) || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { if (makeupState === 'insufficient') { toast.error(makeupReason); return } void prepareMakeup() }}>
                 {makeupBusy && <Spinner data-icon="inline-start" />}
                 {t('learning.dayDetails.makeup')}
               </Button> : <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>}
@@ -372,13 +372,9 @@ export function CheckInCalendarDrawer({
           <DialogTitle>{t('learning.dayDetails.confirmTitle', { date: quote ? format(parseISO(quote.date),'PPP',{locale:calendarLocale}) : '' })}</DialogTitle>
           <DialogDescription>{t('learning.dayDetails.confirmDescription', { cost: quote?.cost })}</DialogDescription>
         </DialogHeader>
-        <div className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-3 text-sm tabular-nums">
-          <span>{t('learning.dayDetails.balance', { balance: quote?.balance })}</span>
-          <span>{t('learning.dayDetails.afterBalance', { balance: (quote?.balance ?? 0)-(quote?.cost ?? 0) })}</span>
-        </div>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="secondary" disabled={makeupBusy} onClick={() => setQuote(null)}>{t('common.cancel')}</Button>
-          <Button type="button" disabled={makeupBusy || !online} onClick={() => { void confirmMakeup() }}>{makeupBusy && <Spinner data-icon="inline-start" />}{t('learning.dayDetails.confirm', { cost: quote?.cost })}</Button>
+        <DialogFooter className="flex-row gap-3 space-x-0">
+          <Button className="min-w-0 flex-1 rounded-xl" type="button" variant="secondary" disabled={makeupBusy} onClick={() => setQuote(null)}>{t('common.cancel')}</Button>
+          <Button className="min-w-0 flex-1 rounded-xl" type="button" disabled={makeupBusy || !online} onClick={() => { void confirmMakeup() }}>{makeupBusy && <Spinner data-icon="inline-start" />}{t('learning.dayDetails.confirm')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -416,7 +412,7 @@ function LearningPeriodHeader({ label, loading, onPrevious, onNext, canGoNext, p
 }
 
 function formatDuration(seconds: number, t: any) {
-  if (seconds > 0 && seconds < 60) return t('learning.dayDetails.lessMinute')
+  if (seconds > 0 && seconds < 60) return '<1'
   return t('learning.minutesWithCount', { count: Math.ceil(Math.max(0, seconds) / 60) })
 }
 
@@ -587,6 +583,7 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
     period={format(year, 'yyyy')} onPrevious={onPrevYear} onNext={onNextYear} canGoNext={canGoToNextYear}
     previousLabel="Previous year" nextLabel="Next year"
     items={items} selectedKey={selectedMonthIndex === null ? undefined : String(selectedMonthIndex + 1)} onSelect={setSelectedMonthIndex}
+    minimumMinutes={600}
     footer={<div className="grid grid-cols-12 [--cell-size:2.15rem]">
       {values.map((item, index) => {
         const monthDate = startOfMonth(new Date(year.getFullYear(), index, 1))

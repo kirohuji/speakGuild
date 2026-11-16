@@ -38,6 +38,23 @@
 }
 
 @layer base {
+  /* Mobile app surfaces behave like native controls: text selection is only
+     enabled for explicit input fields and rendered Markdown documents. */
+  body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'],
+  [data-markdown-content] {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   /* ═══════════════════════════════════════════════════════
      漫语町 · ManYuDing 品牌配色系统
      设计关键词：深蓝背景 / 白色留白 / 橙红点睛 / 简洁线条

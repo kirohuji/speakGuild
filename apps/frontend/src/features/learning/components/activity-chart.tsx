@@ -34,6 +34,14 @@ export function getChartDomainMax(values: number[], minimum: number) {
   return Math.max(minimum, Math.ceil(maximum * 1.15))
 }
 
+// Keep ordinary activity in the lower half of the day/year plot. Once the
+// value crosses the ordinary range, the domain follows it with light headroom
+// so genuinely large totals can still use the upper half of the chart.
+export function getRestrainedChartDomainMax(values: number[], ordinaryMaximum: number) {
+  const maximum = Math.max(0, ...values)
+  return Math.max(ordinaryMaximum * 2, Math.ceil(maximum * 1.15))
+}
+
 export function ActivityInfoCard({ title, minutes, questions }: { title: string; minutes: number; questions: number }) {
   const { t } = useTranslation()
   return (
@@ -127,7 +135,7 @@ export function ExpandedActivityChart({ title, hint, period, onPrevious, onNext,
   const config = useLearningChartConfig()
   const selectedIndex = items.findIndex(item => item.key === selectedKey)
   const selected = items[selectedIndex]
-  const minutesMax = getChartDomainMax(items.map(item => item.minutes ?? 0), minimumMinutes)
+  const minutesMax = getRestrainedChartDomainMax(items.map(item => item.minutes ?? 0), minimumMinutes)
   const questionsMax = getChartDomainMax(items.map(item => item.questions ?? 0), minimumQuestions)
   const ratio = selected ? Math.max((selected.minutes ?? 0) / minutesMax, (selected.questions ?? 0) / questionsMax) : 0
   return <section className="flex h-[440px] min-w-0 flex-none flex-col overflow-hidden rounded-2xl bg-background" aria-label={title}>

@@ -422,7 +422,7 @@ export function AssessmentAnswerInput({
               isRecording
                 ? 'bg-rose-500 text-white'
                 : voiceError
-                  ? 'bg-destructive/10 text-destructive ring-1 ring-destructive/25'
+                  ? 'bg-destructive/10 text-destructive'
                   : 'bg-muted/75 text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
             aria-label={isRecording ? t('profile.placement.voiceStop') : t('profile.placement.voiceButton')}

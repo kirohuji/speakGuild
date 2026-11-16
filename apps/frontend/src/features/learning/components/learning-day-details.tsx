@@ -18,7 +18,7 @@ export function LearningDayDetails({ date, dateLabel, today, statistics, history
   const availability = makeupAvailability(date, calendar, online, today)
   const unknown = !statistics && !historyComplete
   const seconds = statistics?.activeSeconds ?? 0
-  const duration = unknown ? '—' : seconds > 0 && seconds < 60 ? t('learning.dayDetails.lessMinute') : t('learning.minutesWithCount', { count: Math.ceil(seconds / 60) })
+  const duration = unknown ? '—' : seconds > 0 && seconds < 60 ? '<1' : t('learning.minutesWithCount', { count: Math.ceil(seconds / 60) })
   const message = availability === 'insufficient' ? t('learning.dayDetails.insufficient', { cost: calendar?.makeup?.cost, balance: calendar?.makeup?.pointsBalance })
     : t(`learning.dayDetails.${availability}`)
   return (

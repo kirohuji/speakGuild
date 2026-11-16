@@ -29,7 +29,7 @@ describe('learning calendar and daily details',()=>{
   it('shows the selected day rather than monthly totals, with sub-minute precision',()=>{
     wrap(<LearningDayDetails {...props} statistics={{questionCount:12,activeSeconds:45}}/>)
     expect(screen.getByText('12 题')).toBeInTheDocument()
-    expect(screen.getByText('不足 1 分钟')).toBeInTheDocument()
+    expect(screen.getByText('<1')).toBeInTheDocument()
     expect(screen.getByRole('button',{name:'200 积分补签'})).toBeEnabled()
   })
   it('allows makeup without learning and disables monetary actions offline',()=>{

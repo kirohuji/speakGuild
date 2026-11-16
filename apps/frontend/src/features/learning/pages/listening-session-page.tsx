@@ -132,7 +132,7 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
           <section className="rounded-lg bg-muted/30 p-4">
             <div className="mb-2 flex items-center gap-2"><Info className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">{t('learning.topicDescription')}</p></div>
             {topic.description?.trim() && <MarkdownRenderer content={topic.description} className="text-muted-foreground prose-p:my-1" />}
-            <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" size="default" onClick={onOpenGuide}><Headphones className="size-4" />{t('learning.teachingGuide')}</Button>
+            <Button variant="outline-primary" className="mt-4 min-h-11 w-full shadow-none" size="default" onClick={onOpenGuide}><Headphones className="size-4" />{t('practiceVn.teaching')}</Button>
           </section>
         )}
 

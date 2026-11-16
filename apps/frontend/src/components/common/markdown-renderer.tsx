@@ -86,6 +86,7 @@ export function MarkdownRenderer({ content, className, variant = 'default', head
 
   return (
     <div
+      data-markdown-content
       className={cn(
         // 正文颜色走语义 token，避免仅依赖 dark:prose-invert（typography 默认字色在暗色下偏黑）
         'prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed text-foreground',

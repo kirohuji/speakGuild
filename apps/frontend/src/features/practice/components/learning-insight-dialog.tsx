@@ -478,7 +478,7 @@ export function LearningInsightDialog({
             </div>
 
             {/* Footer - 固定在底部 */}
-            <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
+            <div className={cn('flex shrink-0 items-center justify-between gap-3 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
               <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                 <ChevronLeft className="size-4" /> {t('insight.prev')}
               </Button>
@@ -582,7 +582,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const { play: playAudio, stop: stopAudio, isPlaying } = useCachedAudio()
 
   return (
-    <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-9 md:px-6">
+    <div className="shrink-0 px-5 pb-4 pt-9 md:px-6">
       <div className="flex items-start gap-3">
         <div className={cn('mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl', iconTone)}>
           <Icon className="size-[18px]" />
