@@ -1,6 +1,7 @@
 import { applyNotebookMutation } from './notebook-sync';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import AdmZip = require('adm-zip');
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { hasContentText, keepRicher, looksLikeContentSnapshot, mergeContentSnapshots } from '../../common/content-snapshot';
 
@@ -759,6 +760,83 @@ export class SyncService {
     return items.map((item) => item.expressionItem
       ? { ...item, expressionItem: byId.get(item.expressionItem.id) ?? item.expressionItem }
       : item);
+  }
+
+  /**
+   * Cold-start bulk pull: aggregate compact pages into one zip (`payload.json`).
+   * Falls back to incomplete=true when uncompressed JSON would exceed the size cap
+   * so the client can resume with normal cursor pull.
+   */
+  async buildPullSnapshotZip(userId: string): Promise<{ buffer: Buffer; complete: boolean; bytes: number }> {
+    const MAX_UNCOMPRESSED_BYTES = 8 * 1024 * 1024;
+    const MAX_PAGES = 40;
+    let cursors: Record<string, string> = {};
+    let pages = 0;
+    let complete = false;
+    const changed: Record<string, any[]> = {};
+    const deleted: Record<string, string[]> = {};
+    let finalCursors: Record<string, string | null> = {};
+    let finalHasMore: Record<string, boolean> = {};
+
+    const mergeArrays = (target: Record<string, any[]>, source: Record<string, any[] | undefined>) => {
+      for (const [key, rows] of Object.entries(source ?? {})) {
+        if (!Array.isArray(rows) || rows.length === 0) continue;
+        if (!target[key]) target[key] = [];
+        target[key].push(...rows);
+      }
+    };
+    const mergeDeleted = (target: Record<string, string[]>, source: Record<string, string[] | undefined>) => {
+      for (const [key, ids] of Object.entries(source ?? {})) {
+        if (!Array.isArray(ids) || ids.length === 0) continue;
+        if (!target[key]) target[key] = [];
+        target[key].push(...ids);
+      }
+    };
+
+    while (pages < MAX_PAGES) {
+      pages += 1;
+      const page = await this.pull(userId, cursors, undefined, true);
+      const nextChanged: Record<string, any[]> = { ...changed };
+      for (const key of Object.keys(nextChanged)) nextChanged[key] = [...(nextChanged[key] ?? [])];
+      const nextDeleted: Record<string, string[]> = { ...deleted };
+      for (const key of Object.keys(nextDeleted)) nextDeleted[key] = [...(nextDeleted[key] ?? [])];
+      mergeArrays(nextChanged, page.changed as any);
+      mergeDeleted(nextDeleted, page.deleted as any);
+      const probe = Buffer.byteLength(JSON.stringify({ changed: nextChanged, deleted: nextDeleted, cursors: page.cursors }), 'utf8');
+      if (probe > MAX_UNCOMPRESSED_BYTES && pages > 1) {
+        complete = false;
+        break;
+      }
+      Object.assign(changed, nextChanged);
+      Object.assign(deleted, nextDeleted);
+      finalCursors = page.cursors;
+      finalHasMore = page.hasMore;
+      const anyMore = Object.values(page.hasMore).some(Boolean);
+      if (!anyMore) {
+        complete = true;
+        break;
+      }
+      if (probe > MAX_UNCOMPRESSED_BYTES) {
+        complete = false;
+        break;
+      }
+      cursors = Object.fromEntries(
+        Object.entries(page.cursors).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].length > 0),
+      );
+    }
+
+    const payload = {
+      userId,
+      complete,
+      cursors: finalCursors,
+      hasMore: finalHasMore,
+      changed,
+      deleted,
+    };
+    const zip = new AdmZip();
+    zip.addFile('payload.json', Buffer.from(JSON.stringify(payload), 'utf8'));
+    const buffer = zip.toBuffer();
+    return { buffer, complete, bytes: buffer.length };
   }
 
   // ══════════════════════════════════════════════════

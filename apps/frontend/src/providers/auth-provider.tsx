@@ -295,7 +295,7 @@ interface AuthContextValue {
   refreshSession: (options?: { revokeOtherSessions?: boolean; allowCacheFallback?: boolean }) => Promise<Session | null>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
-  signOut: () => Promise<void>
+  signOut: (options?: { forceOffline?: boolean }) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -471,11 +471,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signOut = async () => {
-    if (!managementRoute && !navigator.onLine) throw new Error(t('learningNotebooks.offlineLogoutBlocked'))
+  const signOut = async (options?: { forceOffline?: boolean }) => {
+    const forceOffline = Boolean(options?.forceOffline)
+    if (!managementRoute && !navigator.onLine && !forceOffline) {
+      throw new Error(t('learningNotebooks.offlineLogoutBlocked'))
+    }
     // User-scoped local storage is removed on logout. Do not make logout a
     // destructive path for an interrupted Today run or any queued practice data.
-    if (session?.user.id && !managementRoute) {
+    if (session?.user.id && !managementRoute && !forceOffline) {
       // 答题入队是异步的。先等这条链路写完本地事实，再把未交付的历史补进队列并上传。
       const { useDailyPracticeStore } = await import('@/stores/daily-practice.store')
       await useDailyPracticeStore.getState().waitForPendingWrites()

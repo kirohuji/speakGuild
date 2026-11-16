@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
+import { useBgmSuppress } from '@/lib/bgm-suppress'
 import { isIOS } from '@/lib/native'
 import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
@@ -229,6 +230,7 @@ export function TodayTaskPage() {
   const hydrateWarmupSession = useWarmupSessionStore((s) => s.hydrateSession)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  useBgmSuppress('today-task-practice', drawerOpen)
   /** 错题重练弹窗：独立 state 控制，只在主轮刚完成的当次会话中弹出 */
   const [weakReviewPromptOpen, setWeakReviewPromptOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
@@ -1268,26 +1270,14 @@ export function TodayTaskPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
       {/* ── Header ── */}
-      <div className="mb-3 flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          {targetPackId && plan.units[0] && (
-            <Link
-              to="/learning"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="size-3.5" />
-              <span className="truncate">{plan.units[0].title}</span>
-            </Link>
-          )}
-        </div>
-        {isMobile && (
-          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
-            {/* 换一批：暂时隐藏，随机逻辑后续统一在 buildTodayPlan 内调整 */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1">
+          {isMobile && (
             <button
               type="button"
               onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
               disabled={manualSyncing || !isOnline}
-              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
+              className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-background/36 text-muted-foreground backdrop-blur-2xl transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
               aria-label={isOnline ? '同步今日任务' : t('common.offline')}
               title={isOnline ? '同步今日任务' : t('common.offline')}
             >
@@ -1303,16 +1293,27 @@ export function TodayTaskPage() {
                 </span>
               )}
             </button>
-            <button
-              type="button"
-              onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-              data-spotlight="today-records"
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-              aria-label={t('todayTask.practiceRecords')}
+          )}
+          {targetPackId && plan.units[0] && (
+            <Link
+              to="/learning"
+              className="inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ClipboardList className="size-[18px]" />
-            </button>
-          </div>
+              <ChevronLeft className="size-3.5 shrink-0" />
+              <span className="truncate">{plan.units[0].title}</span>
+            </Link>
+          )}
+        </div>
+        {isMobile && (
+          <button
+            type="button"
+            onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+            data-spotlight="today-records"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background/36 text-muted-foreground backdrop-blur-2xl transition-colors hover:bg-background/45 hover:text-foreground"
+            aria-label={t('todayTask.practiceRecords')}
+          >
+            <ClipboardList className="size-[18px]" />
+          </button>
         )}
       </div>
 

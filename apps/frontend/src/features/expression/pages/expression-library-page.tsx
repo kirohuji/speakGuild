@@ -24,6 +24,11 @@ import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
 import { learningNotebookRepository, offlineSyncService } from '@/lib/offline'
+import {
+  computePlaylistWindow,
+  hasExpressionTitle,
+  shouldReloadPlaylistWindow,
+} from '@/lib/offline/playlist-window'
 import { useAuth } from '@/providers/auth-provider'
 import { useMembershipPurchase } from '@/features/membership/components/membership-purchase-drawer'
 import type { LearningNotebook } from '@/features/practice/api/english-practice-api'
@@ -110,13 +115,17 @@ export function ExpressionLibraryPage() {
     return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update) }
   }, [])
 
-  // Dialog
+  // Dialog — windowed playlist: keep a ±1 page slice in memory, track absolute total/offset
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogIndex, setDialogIndex] = useState(0)
   const [dialogItems, setDialogItems] = useState<LearningInsightItem[]>([])
+  const [dialogTotal, setDialogTotal] = useState(0)
+  const [dialogWindowOffset, setDialogWindowOffset] = useState(0)
   const [immersiveOpen, setImmersiveOpen] = useState(false)
   const [immersiveIndex, setImmersiveIndex] = useState(0)
   const [immersiveItems, setImmersiveItems] = useState<ImmersivePlayerItem[]>([])
+  const [immersiveTotal, setImmersiveTotal] = useState(0)
+  const [immersiveWindowOffset, setImmersiveWindowOffset] = useState(0)
 
   // 展开的列表项
   const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set())
@@ -362,13 +371,15 @@ export function ExpressionLibraryPage() {
 
   // ---- dialog ----
   const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
-  const visibleDialogItems: LearningInsightItem[] = result.items.map((expr) => {
+  const mapExprToInsight = useCallback((expr: Expression): LearningInsightItem | null => {
     if (apiType === 'word') {
       const vocab = expr.vocabulary
+      const word = (vocab?.word || expr.original || '').trim()
+      if (!word) return null
       return {
         kind: 'word' as const,
         id: vocab?.id || expr.sourceId || `word:${expr.original ?? expr.id}`,
-        word: vocab?.word || expr.original || '',
+        word,
         meaning: vocab?.meaning || expr.chunkText || expr.corrected || undefined,
         partOfSpeech: vocab?.partOfSpeech,
         phoneticUs: vocab?.phoneticUs,
@@ -385,10 +396,12 @@ export function ExpressionLibraryPage() {
     }
     if (apiType === 'scene_phrase') {
       const remoteData = (expr as any).contentData
+      const pattern = (remoteData?.pattern || expr.chunkText || expr.corrected || '').trim()
+      if (!pattern) return null
       return {
         kind: 'pattern' as const,
         id: remoteData?.id || expr.sourceId || expr.id,
-        pattern: remoteData?.pattern || expr.chunkText || expr.corrected || '',
+        pattern,
         meaning: remoteData?.meaning || expr.original || '',
         slots: remoteData?.slots,
         example: remoteData?.example || expr.corrected,
@@ -399,33 +412,113 @@ export function ExpressionLibraryPage() {
       }
     }
     const remoteData = (expr as any).contentData
+    const text = (remoteData?.text || expr.chunkText || expr.corrected || '').trim()
+    if (!text) return null
     return {
       kind: 'chunk' as const,
       id: remoteData?.id || expr.sourceId || expr.id,
-      text: remoteData?.text || expr.chunkText || expr.corrected || '',
+      text,
       meaning: remoteData?.meaning || expr.original || '',
       description: remoteData?.description,
       examples: remoteData?.examples as any,
       sceneName: expr.sceneName ?? undefined,
       saved: true, // 已在学习库中
     }
-  })
+  }, [apiType])
+
+  const visibleListItems = useMemo(
+    () => result.items.filter((expr) => hasExpressionTitle(expr as any, apiType)),
+    [apiType, result.items],
+  )
+
+  const visibleDialogItems: LearningInsightItem[] = useMemo(
+    () => visibleListItems.map(mapExprToInsight).filter((item): item is LearningInsightItem => Boolean(item)),
+    [mapExprToInsight, visibleListItems],
+  )
+
+  const loadInsightWindow = useCallback(async (startIndex: number) => {
+    if (!notebookId) {
+      const index = Math.min(startIndex, Math.max(visibleDialogItems.length - 1, 0))
+      return { items: visibleDialogItems, index, total: visibleDialogItems.length, windowOffset: 0 }
+    }
+    const { absoluteIndex, windowStart, windowSize, indexInWindow } = computePlaylistWindow({
+      absoluteIndex: startIndex,
+      total: result.total,
+      pageSize: PAGE_SIZE,
+    })
+    const page = await learningNotebookRepository.listCachedExpressionPage({
+      ...localListRequest,
+      limit: windowSize,
+      offset: windowStart,
+    })
+    const items = (page.items as Expression[])
+      .map(mapExprToInsight)
+      .filter((item): item is LearningInsightItem => Boolean(item))
+    return {
+      items,
+      index: Math.min(Math.max(indexInWindow, 0), Math.max(items.length - 1, 0)),
+      total: page.total,
+      windowOffset: windowStart,
+    }
+  }, [localListRequest, mapExprToInsight, notebookId, result.total, visibleDialogItems])
 
   const openDialog = useCallback((items: LearningInsightItem[], startIndex: number) => {
     if (items.length === 0) return
-    setDialogItems(items)
-    setDialogIndex(Math.min(startIndex, items.length - 1))
-    setDialogOpen(true)
-  }, [])
+    void loadInsightWindow(startIndex).then(({ items: windowItems, index, total, windowOffset }) => {
+      const nextItems = windowItems.length > 0 ? windowItems : items
+      if (nextItems.length === 0) return
+      setDialogItems(nextItems)
+      setDialogIndex(Math.min(index, nextItems.length - 1))
+      setDialogTotal(total)
+      setDialogWindowOffset(windowOffset)
+      setDialogOpen(true)
+    })
+  }, [loadInsightWindow])
+
+  const handleDialogAbsoluteIndex = useCallback((absoluteIndex: number) => {
+    const inWindow = absoluteIndex - dialogWindowOffset
+    if (!shouldReloadPlaylistWindow(inWindow, dialogItems.length)) {
+      setDialogIndex(inWindow)
+      return
+    }
+    void loadInsightWindow(absoluteIndex).then(({ items, index, total, windowOffset }) => {
+      if (items.length === 0) return
+      setDialogItems(items)
+      setDialogIndex(index)
+      setDialogTotal(total)
+      setDialogWindowOffset(windowOffset)
+    })
+  }, [dialogItems.length, dialogWindowOffset, loadInsightWindow])
 
   const openImmersivePlayer = useCallback((items: LearningInsightItem[], startIndex: number) => {
     if (!requireMembership()) return
-    const mappedItems = mapInsightItemsToImmersiveItems(items)
-    if (mappedItems.length === 0) return
-    setImmersiveItems(mappedItems)
-    setImmersiveIndex(Math.min(startIndex, mappedItems.length - 1))
-    setImmersiveOpen(true)
-  }, [requireMembership])
+    void loadInsightWindow(startIndex).then(({ items: windowItems, index, total, windowOffset }) => {
+      const source = windowItems.length > 0 ? windowItems : items
+      const mappedItems = mapInsightItemsToImmersiveItems(source)
+      if (mappedItems.length === 0) return
+      setImmersiveItems(mappedItems)
+      setImmersiveIndex(Math.min(index, mappedItems.length - 1))
+      setImmersiveTotal(total)
+      setImmersiveWindowOffset(windowOffset)
+      setImmersiveOpen(true)
+    })
+  }, [loadInsightWindow, requireMembership])
+
+  const handleImmersiveAbsoluteIndex = useCallback((absoluteIndex: number) => {
+    const inWindow = absoluteIndex - immersiveWindowOffset
+    if (!shouldReloadPlaylistWindow(inWindow, immersiveItems.length)) {
+      setImmersiveIndex(inWindow)
+      return
+    }
+    void loadInsightWindow(absoluteIndex).then(({ items, index, total, windowOffset }) => {
+      const mapped = mapInsightItemsToImmersiveItems(items)
+      if (mapped.length === 0) return
+      setImmersiveItems(mapped)
+      setImmersiveIndex(Math.min(index, mapped.length - 1))
+      setImmersiveTotal(total)
+      setImmersiveWindowOffset(windowOffset)
+    })
+  }, [immersiveItems.length, immersiveWindowOffset, loadInsightWindow])
 
   useEffect(() => {
     if (!deepLinkKind || !deepLinkValue || loading) return
@@ -838,10 +931,10 @@ export function ExpressionLibraryPage() {
     | { kind: 'item'; expression: Expression; index: number; id: string }
     | { kind: 'date'; key: string; label: string; ids: string[] }
   >>(() => {
-    if (!groupByDate) return result.items.map((expression, index) => ({ kind: 'item', expression, index, id: expression.id }))
+    if (!groupByDate) return visibleListItems.map((expression, index) => ({ kind: 'item', expression, index, id: expression.id }))
     const formatter = new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })
     const groups = new Map<string, { label: string; items: Array<{ expression: Expression; index: number }> }>()
-    result.items.forEach((expression, index) => {
+    visibleListItems.forEach((expression, index) => {
       const date = new Date(expression.createdAt)
       const key = Number.isNaN(date.getTime()) ? 'unknown' : localDateKey(date)
       const label = Number.isNaN(date.getTime()) ? t('expressionLib.unknownDate') : formatter.format(date)
@@ -853,7 +946,7 @@ export function ExpressionLibraryPage() {
       { kind: 'date' as const, key, label: group.label, ids: group.items.map(({ expression }) => expression.id) },
       ...group.items.map(({ expression, index }) => ({ kind: 'item' as const, expression, index, id: expression.id })),
     ])
-  }, [groupByDate, i18n.language, result.items, t])
+  }, [groupByDate, i18n.language, t, visibleListItems])
 
   const renderVirtualList = (immersiveClassName: string) => (
     <Virtuoso
@@ -1186,7 +1279,7 @@ export function ExpressionLibraryPage() {
               </div>
             </div>
           )}
-          <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <DrawerFooter className="flex-row gap-3 border-t border-border/60 bg-muted/10 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <Button
               variant="secondary"
               className="flex-1 border-0 shadow-none"
@@ -1209,16 +1302,37 @@ export function ExpressionLibraryPage() {
       </Drawer>
 
       <LearningInsightDialog
-        items={dialogItems} index={dialogIndex} open={dialogOpen}
-        onOpenChange={setDialogOpen} onIndexChange={setDialogIndex}
+        items={dialogItems}
+        index={dialogIndex}
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open)
+          if (!open) {
+            setDialogItems([])
+            setDialogTotal(0)
+            setDialogWindowOffset(0)
+          }
+        }}
+        onIndexChange={handleDialogAbsoluteIndex}
+        total={dialogTotal}
+        windowOffset={dialogWindowOffset}
         hideSaveActions
       />
       <ImmersivePlayerDialog
         items={immersiveItems}
         index={Math.min(immersiveIndex, Math.max(immersiveItems.length - 1, 0))}
         open={immersiveOpen}
-        onOpenChange={setImmersiveOpen}
-        onIndexChange={setImmersiveIndex}
+        onOpenChange={(open) => {
+          setImmersiveOpen(open)
+          if (!open) {
+            setImmersiveItems([])
+            setImmersiveTotal(0)
+            setImmersiveWindowOffset(0)
+          }
+        }}
+        onIndexChange={handleImmersiveAbsoluteIndex}
+        total={immersiveTotal}
+        windowOffset={immersiveWindowOffset}
       />
       {membershipDrawer}
     </div>

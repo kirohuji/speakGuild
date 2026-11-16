@@ -72,6 +72,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
   const [deleteMessage, setDeleteMessage] = useState('')
   const [testingLearningReminder, setTestingLearningReminder] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [logoutOfflineConfirm, setLogoutOfflineConfirm] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
 
   // ─── 版本更新 ──────────────────────────────────────
@@ -301,8 +302,9 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
     if (logoutLoading) return
     setLogoutLoading(true)
     try {
-      await signOut()
+      await signOut(logoutOfflineConfirm ? { forceOffline: true } : undefined)
       setShowLogoutDialog(false)
+      setLogoutOfflineConfirm(false)
       navigate('/auth/login')
     } catch (error: any) {
       showRequestError(error, t('profile.logoutFailed', { defaultValue: '退出登录失败，请重试' }))
@@ -551,7 +553,10 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={() => { if (!navigator.onLine) { toast.info(t('learningNotebooks.offlineLogoutBlocked')); return }; setShowLogoutDialog(true) }}
+            onClick={() => {
+              setLogoutOfflineConfirm(!navigator.onLine)
+              setShowLogoutDialog(true)
+            }}
             className="w-full text-center text-sm font-medium text-red-500"
           >
             {t('profile.logout')}
@@ -649,7 +654,11 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showLogoutDialog} onOpenChange={(open) => { if (!logoutLoading) setShowLogoutDialog(open) }}>
+      <Dialog open={showLogoutDialog} onOpenChange={(open) => {
+        if (logoutLoading) return
+        setShowLogoutDialog(open)
+        if (!open) setLogoutOfflineConfirm(false)
+      }}>
         <DialogContent
           className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
           onOpenAutoFocus={(event) => event.preventDefault()}
@@ -657,14 +666,16 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           <DialogHeader>
             <DialogTitle>{t('profile.logout')}</DialogTitle>
             <DialogDescription className="text-sm leading-6 text-muted-foreground">
-              {t('profile.logoutConfirmHint')}
+              {logoutOfflineConfirm
+                ? t('learningNotebooks.offlineLogoutConfirm')
+                : t('profile.logoutConfirmHint')}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+          <DialogFooter className="flex-row justify-end gap-2 space-x-0 border-t border-border/60 bg-muted/10 -mx-5 -mb-5 mt-2 px-5 py-4 sm:rounded-b-2xl">
             <Button
               variant="secondary"
               className="flex-1 border-0 shadow-none sm:flex-none"
-              onClick={() => setShowLogoutDialog(false)}
+              onClick={() => { setShowLogoutDialog(false); setLogoutOfflineConfirm(false) }}
               disabled={logoutLoading}
             >
               {t('common.cancel')}

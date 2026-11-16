@@ -1,4 +1,5 @@
 import instance from '@/lib/request'
+import { getBearerToken } from '@/features/auth/client'
 
 const SYNC_BASE = '/sync'
 
@@ -69,5 +70,24 @@ export const syncApi = {
   async contentManifest(since?: string | null): Promise<ContentManifest> {
     const params = since ? { since } : {}
     return instance.get(`${SYNC_BASE}/content/manifest`, { params }) as any
+  },
+
+  /** Cold-start zip snapshot (bypasses JSON interceptor via fetch). */
+  async pullSnapshot(): Promise<{ buffer: ArrayBuffer; complete: boolean }> {
+    const base = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '')
+    const token = getBearerToken()
+    const response = await fetch(`${base}${SYNC_BASE}/pull/snapshot`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/zip',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+    if (!response.ok) {
+      throw new Error(`sync snapshot failed: ${response.status}`)
+    }
+    const complete = response.headers.get('X-Sync-Snapshot-Complete') === '1'
+    const buffer = await response.arrayBuffer()
+    return { buffer, complete }
   },
 }

@@ -48,6 +48,8 @@ export function RootLayout() {
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
   const bottomNavVisible = useLayoutStore((s) => s.bottomNavVisible)
+  const loginRestorePending = useOfflineSyncStore((s) => s.loginRestorePending)
+  const restoreProgress = useOfflineSyncStore((s) => s.restoreProgress)
   const isMobile = useIsMobile()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
   const isHomePage = pathname === '/'
@@ -171,6 +173,17 @@ export function RootLayout() {
           onNotificationOpen={() => setNotificationDrawerOpen(true)}
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
+      )}
+      {!isAuthPage && loginRestorePending && (
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-40 flex justify-center px-4">
+          <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-foreground shadow-sm ring-1 ring-border/60 backdrop-blur-xl">
+            <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
+            <span className="min-w-0 truncate">
+              {restoreProgress?.message
+                || t('todayTask.restoringProgress', { defaultValue: '正在同步学习进度' })}
+            </span>
+          </div>
+        </div>
       )}
       <main ref={mainRef} className={cn('min-h-0 flex-1 pt-0', isMobile ? (isExpressionNotebookDetail ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain') : 'overflow-visible', `${
         immersiveMode

@@ -1,5 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { BadRequestException, Body, Controller, Get, Header, Post, Query, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { SyncService } from './sync.service';
 import { requireAuthSession } from '../auth/session.util';
 
@@ -38,6 +38,18 @@ export class SyncController {
       throw new BadRequestException('同步游标或类型格式无效');
     }
     return this.syncService.pull(session.user.id, cursors, types, compact === 'true');
+  }
+
+  /** Cold-start zip snapshot of compact user pull pages */
+  @Get('pull/snapshot')
+  @Header('Content-Type', 'application/zip')
+  async pullSnapshot(@Req() req: Request, @Res() res: Response) {
+    const session = await requireAuthSession(req);
+    const { buffer, complete } = await this.syncService.buildPullSnapshotZip(session.user.id);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="sync-snapshot.zip"');
+    res.setHeader('X-Sync-Snapshot-Complete', complete ? '1' : '0');
+    res.send(buffer);
   }
 
   /** 公共内容增量 manifest */

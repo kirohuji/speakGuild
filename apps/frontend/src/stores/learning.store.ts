@@ -164,9 +164,17 @@ async function checkNetworkBeforeDownload(): Promise<boolean> {
 
     // 当前是蜂窝网络
     if (wifiOnlyMedia) {
-      // 仅 WiFi 模式 → 阻止，弹提示
-      toast.error(i18n.t('profile.wifiOnlyBlocked'), {
-        duration: 4000,
+      // 仅 WiFi 模式 → 阻止，并提示可在设置中修改下载开关
+      toast.error(i18n.t('profile.wifiOnlyBlockedHint', {
+        defaultValue: `${i18n.t('profile.wifiOnlyBlocked')}。可在设置中关闭「仅使用 WIFI 下载」。`,
+      }), {
+        duration: 5000,
+        action: {
+          label: i18n.t('nav.settings', { defaultValue: '设置' }),
+          onClick: () => {
+            window.location.hash = '#/profile'
+          },
+        },
       })
       return false
     }

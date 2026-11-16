@@ -15,6 +15,7 @@ import { MobileGestureProvider } from '@/providers/mobile-gesture-provider'
 import { RootLayout } from '@/layout/root-layout'
 import { ErrorBoundary } from '@/components/common/error-boundary'
 import { CellularDownloadConfirmDialog } from '@/components/common/cellular-download-confirm-dialog'
+import { BgmRouteSuppressor } from '@/components/common/bgm-route-suppressor'
 import { installMediaPlaybackTracking, stopTransientMediaPlayback } from '@/lib/media-playback-lifecycle'
 import { ScriptVideoTaskMonitor } from '@/features/scripts/components/script-video-task-monitor'
 // ── 首屏必需：静态导入 ──
@@ -115,6 +116,7 @@ export default function App() {
           <AuthProvider>
             <ThemePresetProvider>
             <HashRouter>
+            <BgmRouteSuppressor />
             <MediaPlaybackLifecycle />
             <CellularDownloadConfirmDialog />
             <LearningClientProviders>

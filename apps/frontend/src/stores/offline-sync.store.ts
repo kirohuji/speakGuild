@@ -14,6 +14,12 @@ export interface OfflineSyncLogEntry {
   error?: string | null
 }
 
+export type OfflineRestoreProgress = {
+  phase: 'push' | 'snapshot' | 'pull' | 'done'
+  pages: number
+  message: string
+}
+
 interface OfflineSyncState {
   isSyncing: boolean
   /**
@@ -22,6 +28,8 @@ interface OfflineSyncState {
    * Memory-only; not persisted.
    */
   loginRestorePending: boolean
+  /** Memory-only progress for cold-start / login restore UI. */
+  restoreProgress: OfflineRestoreProgress | null
   currentLogId: string | null
   lastSyncedAt: string | null
   /** 当前这次成功 pull 实际包含的今日任务 run；仅内存态，用于避免把无关同步当成任务更新。 */
@@ -37,6 +45,7 @@ interface OfflineSyncState {
     pulledDailyPracticeRunIds?: string[]
   }) => void
   setLoginRestorePending: (pending: boolean) => void
+  setRestoreProgress: (progress: OfflineRestoreProgress | null) => void
   clearLogs: () => void
   reset: () => void
 }
@@ -60,6 +69,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
     (set) => ({
       isSyncing: false,
       loginRestorePending: false,
+      restoreProgress: null,
       currentLogId: null,
       lastSyncedAt: null,
       lastPulledDailyPracticeRunIds: [],
@@ -108,7 +118,13 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
       },
 
       setLoginRestorePending(pending) {
-        set({ loginRestorePending: pending })
+        set(pending
+          ? { loginRestorePending: true }
+          : { loginRestorePending: false, restoreProgress: null })
+      },
+
+      setRestoreProgress(progress) {
+        set({ restoreProgress: progress })
       },
 
       clearLogs() {
@@ -119,6 +135,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
         set({
           isSyncing: false,
           loginRestorePending: false,
+          restoreProgress: null,
           currentLogId: null,
           lastSyncedAt: null,
           lastPulledDailyPracticeRunIds: [],

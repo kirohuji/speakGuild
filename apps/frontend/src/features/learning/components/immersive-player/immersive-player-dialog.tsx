@@ -27,6 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/cn'
+import { useBgmSuppress } from '@/lib/bgm-suppress'
 import { isIOS, isNative } from '@/lib/native'
 import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
@@ -41,6 +42,10 @@ type ImmersivePlayerDialogProps = {
   items: ImmersivePlayerItem[]
   index: number
   onIndexChange: (index: number) => void
+  /** Absolute playlist size (may exceed windowed `items.length`). */
+  total?: number
+  /** Absolute offset of `items[0]` in the full playlist. */
+  windowOffset?: number
 }
 
 const TYPE_META = {
@@ -141,8 +146,11 @@ export function ImmersivePlayerDialog({
   items,
   index,
   onIndexChange,
+  total,
+  windowOffset = 0,
 }: ImmersivePlayerDialogProps) {
   const { t } = useTranslation()
+  useBgmSuppress('immersive-player-dialog', open)
   const settings = useImmersivePlayerPreferences((s) => s.settings)
   const updateSettings = useImmersivePlayerPreferences((s) => s.updateSettings)
   const current = items[index] ?? null
@@ -166,21 +174,28 @@ export function ImmersivePlayerDialog({
     setStatus(nextStatus)
   }, [])
 
-  const hasPrev = index > 0
-  const hasNext = index < items.length - 1
+  const playlistTotal = Math.max(total ?? items.length, items.length)
+  const absoluteIndex = windowOffset + index
+  const usesAbsoluteIndex = total != null
+  const hasPrev = absoluteIndex > 0
+  const hasNext = absoluteIndex < playlistTotal - 1
+
+  const emitIndexChange = useCallback((nextAbsolute: number) => {
+    onIndexChange(usesAbsoluteIndex ? nextAbsolute : nextAbsolute - windowOffset)
+  }, [onIndexChange, usesAbsoluteIndex, windowOffset])
 
   const gotoPrev = useCallback((continuePlayback = false) => {
     if (!hasPrev) return
     continueAfterIndexChangeRef.current = continuePlayback
-    onIndexChange(index - 1)
-  }, [hasPrev, index, onIndexChange])
+    emitIndexChange(absoluteIndex - 1)
+  }, [absoluteIndex, emitIndexChange, hasPrev])
 
   const gotoNext = useCallback((continuePlayback = false) => {
-    if (!hasNext && !(settings.loopQueue && items.length > 0)) return
+    if (!hasNext && !(settings.loopQueue && playlistTotal > 0)) return
     continueAfterIndexChangeRef.current = continuePlayback
-    if (hasNext) onIndexChange(index + 1)
-    else onIndexChange(0)
-  }, [hasNext, index, items.length, onIndexChange, settings.loopQueue])
+    if (hasNext) emitIndexChange(absoluteIndex + 1)
+    else emitIndexChange(0)
+  }, [absoluteIndex, emitIndexChange, hasNext, playlistTotal, settings.loopQueue])
 
   const cancelGapWait = useCallback(() => {
     const gap = gapWaitRef.current
@@ -300,14 +315,14 @@ export function ImmersivePlayerDialog({
       if (runRef.current !== runId) return
       const latestSettings = useImmersivePlayerPreferences.getState().settings
       if (latestSettings.autoNext && (hasNext || latestSettings.loopQueue)) {
-        if (!hasNext && latestSettings.loopQueue && items.length === 1) {
+        if (!hasNext && latestSettings.loopQueue && playlistTotal === 1) {
           void playFromCurrentRef.current?.()
         } else if (hasNext) {
           continueAfterIndexChangeRef.current = true
-          onIndexChange(index + 1)
+          emitIndexChange(absoluteIndex + 1)
         } else {
           continueAfterIndexChangeRef.current = true
-          onIndexChange(0)
+          emitIndexChange(0)
         }
       } else {
         setPlaybackStatus('ended')
@@ -320,7 +335,7 @@ export function ImmersivePlayerDialog({
         toast.error(t('immersivePlayer.playFailed'))
       }
     }
-  }, [current, gotoNext, gotoPrev, hasNext, index, items.length, mediaMetadataLabels, onIndexChange, setPlaybackStatus, settings, t, waitForItemGap])
+  }, [absoluteIndex, current, emitIndexChange, gotoNext, gotoPrev, hasNext, mediaMetadataLabels, playlistTotal, setPlaybackStatus, settings, t, waitForItemGap])
 
   const togglePlay = useCallback(async () => {
     if (status === 'playing' && gapWaitRef.current) {
@@ -511,7 +526,7 @@ export function ImmersivePlayerDialog({
                     </h2>
                     {settings.textVisible && (
                       <p className="mt-1 line-clamp-1 break-words text-sm leading-relaxed text-muted-foreground">
-                        {current.sceneName || `${index + 1} / ${items.length}`}
+                        {current.sceneName || `${absoluteIndex + 1} / ${playlistTotal}`}
                       </p>
                     )}
                   </div>
@@ -523,7 +538,7 @@ export function ImmersivePlayerDialog({
               <div className={cn('mx-auto flex min-h-full max-w-xl flex-col gap-5', hiddenText ? 'items-center justify-center' : 'pt-2 md:pt-2')}>
                 {!hiddenText && (
                 <div className="text-center">
-                  <p className="text-xs tabular-nums text-muted-foreground">{index + 1} / {items.length}</p>
+                  <p className="text-xs tabular-nums text-muted-foreground">{absoluteIndex + 1} / {playlistTotal}</p>
                   {current.meaning && <WordMeaningLines meaning={current.meaning} align="center" />}
                 </div>
                 )}
@@ -618,7 +633,7 @@ export function ImmersivePlayerDialog({
             return
           }
           continueAfterIndexChangeRef.current = status === 'playing' || status === 'loading'
-          onIndexChange(nextIndex)
+          emitIndexChange(windowOffset + nextIndex)
           setQueueOpen(false)
         }}
       />

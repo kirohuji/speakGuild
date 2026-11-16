@@ -258,8 +258,8 @@ export function SpotlightOverlay({
                   <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>
                   <DialogDescription>{t('common.exitOnboardingDesc')}</DialogDescription>
                 </DialogHeader>
-                <DialogFooter className="!flex-row justify-center gap-2">
-                  <Button variant="outline" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
+                <DialogFooter className="!flex-row justify-center gap-2 border-t border-border/60 bg-muted/10 -mx-6 -mb-6 mt-2 px-6 py-4 sm:rounded-b-lg">
+                  <Button variant="secondary" className="border-0 shadow-none" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
                   <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
                 </DialogFooter>
               </DialogContent>
@@ -429,8 +429,8 @@ export function SpotlightOverlay({
             <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>
             <DialogDescription>{t('common.exitOnboardingDesc')}</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="!flex-row justify-center gap-2">
-            <Button variant="outline" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
+          <DialogFooter className="!flex-row justify-center gap-2 border-t border-border/60 bg-muted/10 -mx-6 -mb-6 mt-2 px-6 py-4 sm:rounded-b-lg">
+            <Button variant="secondary" className="border-0 shadow-none" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
             <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
           </DialogFooter>
         </DialogContent>

@@ -14,7 +14,7 @@ import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practic
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { writeNqtrSave } from '@/features/nqtr/api/nqtr-save-api'
 import { toast } from 'sonner'
-import { syncApi } from './sync-api'
+import { syncApi, type PullResult } from './sync-api'
 import { localDb } from './unified-storage'
 import { syncOutbox, type SyncEntityType, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository, notifyLearningLibraryChanged } from './learning-content.repository'
@@ -24,8 +24,14 @@ import { upsertWarmupRecordEntries } from './warmup-record-index'
 import { dailyPracticeRepository, pullRemoteDailyProgress, restoreRemoteDailyPracticeRun } from './daily-practice.repository'
 import { toIsoString, errorMessage, resolveSessionId } from './utils'
 import { createLogger } from './logger'
+import { resolveSyncScope, type SyncScope } from './sync-scope'
+import { readSyncSnapshotZip } from './sync-snapshot'
 
 const logger = createLogger('offline-sync')
+
+export type { SyncScope } from './sync-scope'
+export { resolveSyncScope } from './sync-scope'
+export { readSyncSnapshotZip } from './sync-snapshot'
 
 const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
 
@@ -634,21 +640,6 @@ async function replayItem(
   return false
 }
 
-/**
- * 局部同步范围：只同步各自页面相关的数据，避免「生词本同步顺带拉今日任务」等
- * 跨页面副作用。'all'（默认）表示完整同步全部类型。
- */
-export type SyncScope = 'all' | 'today' | 'notebook'
-
-const SCOPE_OUTBOX_TYPES: Record<Exclude<SyncScope, 'all'>, ReadonlySet<SyncEntityType>> = {
-  today: new Set<SyncEntityType>(['daily_practice', 'learning_activity', 'user_recording']),
-  notebook: new Set<SyncEntityType>(['notebook', 'notebook_item', 'word_entry', 'chunk_entry', 'pattern_entry']),
-}
-const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
-  today: ['dailyPracticeRuns', 'practiceWarmupRecords'],
-  notebook: ['expressionItems', 'learningNotebooks', 'learningNotebookItems'],
-}
-
 export const offlineSyncService = {
   pauseForAccountReset() {
     accountResetInProgress = true
@@ -703,13 +694,74 @@ export const offlineSyncService = {
     let complete = false
     let dailyHistoryComplete = false
     let finalCursors: Record<string, string | null> = { ...cursors }
+    const syncStore = useOfflineSyncStore.getState()
+    const reportProgress = (phase: 'snapshot' | 'pull', pages: number, message: string) => {
+      if (syncStore.loginRestorePending || syncStore.isSyncing) {
+        syncStore.setRestoreProgress({ phase, pages, message })
+      }
+    }
+
+    const countChanged = (changed: PullResult['changed']) =>
+      (changed.expressionItems?.length ?? 0)
+      + (changed.sceneProgresses?.length ?? 0)
+      + (changed.chunkProgresses?.length ?? 0)
+      + (changed.practiceSessions?.length ?? 0)
+      + (changed.practiceTurns?.length ?? 0)
+      + (changed.topicSessions?.length ?? 0)
+      + (changed.practiceWarmupRecords?.length ?? 0)
+      + (changed.dailyPracticeRuns?.length ?? 0)
+      + (changed.learningNotebooks?.length ?? 0)
+      + (changed.learningNotebookItems?.length ?? 0)
+
+    const countDeleted = (deleted: PullResult['deleted']) =>
+      (deleted.expressionItems?.length ?? 0)
+      + (deleted.sceneProgresses?.length ?? 0)
+      + (deleted.chunkProgresses?.length ?? 0)
+      + (deleted.learningNotebooks?.length ?? 0)
+      + (deleted.learningNotebookItems?.length ?? 0)
+
+    // Cold start (no cursors, full pull): prefer one zip snapshot, then resume with pages.
+    const notebooksComplete = (await localDb.get<{ value?: boolean }>('kv', 'sync:user:notebooks-complete'))?.value
+    const isColdStart = !types && Object.keys(cursors).length === 0 && !notebooksComplete
+    if (isColdStart) {
+      try {
+        reportProgress('snapshot', 0, '正在下载同步快照')
+        const snapshot = await syncApi.pullSnapshot()
+        const payload = await readSyncSnapshotZip(snapshot.buffer)
+        if (userId && payload.userId !== userId) throw new Error('Account changed')
+        reportProgress('snapshot', 1, '正在写入同步快照')
+        await serializeNotebookWrite(() => batchStatisticsNotifications(() => applyUserPullChanges(
+          payload.changed,
+          payload.deleted,
+          { id: cursorKey, value: JSON.stringify(payload.cursors) },
+        )))
+        for (const run of payload.changed.dailyPracticeRuns ?? []) {
+          if (typeof run?.clientRunId === 'string' && run.clientRunId) dailyPracticeRunIds.add(run.clientRunId)
+        }
+        totalChanged += countChanged(payload.changed)
+        totalDeleted += countDeleted(payload.deleted)
+        finalCursors = payload.cursors
+        cursors = Object.fromEntries(
+          Object.entries(payload.cursors).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].length > 0),
+        )
+        dailyHistoryComplete ||= !payload.hasMore?.dailyPracticeRuns
+        if (payload.complete || snapshot.complete || !Object.values(payload.hasMore ?? {}).some(Boolean)) {
+          complete = true
+        }
+      } catch (error) {
+        logger.warn('cold-start snapshot failed, falling back to paged pull', error)
+      }
+    }
 
     // 循环分页拉取，直到所有类型 hasMore 均为 false。
     const MAX_PULL_DURATION_MS = 30_000
     const pullStartedAt = Date.now()
+    let pullPages = 0
 
     let pendingTypes = types
-    while (true) {
+    while (!complete) {
+      pullPages += 1
+      reportProgress('pull', pullPages, `正在同步数据（第 ${pullPages} 页）`)
       const result = await syncApi.pull(cursors, pendingTypes)
       if (accountResetInProgress || (userId && (getCurrentSessionSnapshot()?.user?.id !== userId || result.userId !== userId))) throw new Error('Account changed')
       await serializeNotebookWrite(() => batchStatisticsNotifications(() => applyUserPullChanges(result.changed, result.deleted, { id: cursorKey, value: JSON.stringify(result.cursors) })))
@@ -717,23 +769,8 @@ export const offlineSyncService = {
         if (typeof run?.clientRunId === 'string' && run.clientRunId) dailyPracticeRunIds.add(run.clientRunId)
       }
 
-      totalChanged +=
-        (result.changed.expressionItems?.length ?? 0) +
-        (result.changed.sceneProgresses?.length ?? 0) +
-        (result.changed.chunkProgresses?.length ?? 0) +
-        (result.changed.practiceSessions?.length ?? 0) +
-        (result.changed.practiceTurns?.length ?? 0) +
-        (result.changed.topicSessions?.length ?? 0) +
-        (result.changed.practiceWarmupRecords?.length ?? 0) +
-        (result.changed.dailyPracticeRuns?.length ?? 0)
-        + (result.changed.learningNotebooks?.length ?? 0)
-        + (result.changed.learningNotebookItems?.length ?? 0)
-      totalDeleted +=
-        (result.deleted.expressionItems?.length ?? 0) +
-        (result.deleted.sceneProgresses?.length ?? 0) +
-        (result.deleted.chunkProgresses?.length ?? 0)
-        + (result.deleted.learningNotebooks?.length ?? 0)
-        + (result.deleted.learningNotebookItems?.length ?? 0)
+      totalChanged += countChanged(result.changed)
+      totalDeleted += countDeleted(result.deleted)
 
       finalCursors = result.cursors
 
@@ -774,6 +811,9 @@ export const offlineSyncService = {
       await localDb.put('kv', { id: 'sync:user:notebooks-complete', value: true })
       notifyLearningLibraryChanged()
     }
+    if (syncStore.restoreProgress) {
+      syncStore.setRestoreProgress({ phase: 'done', pages: 0, message: '同步完成' })
+    }
     return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted, dailyPracticeRunIds: [...dailyPracticeRunIds], complete }
   },
 
@@ -783,8 +823,7 @@ export const offlineSyncService = {
     if (typeof navigator !== 'undefined' && !navigator.onLine) return { push: { synced: 0, failed: 0, skipped: 0, remaining: await localDb.countWhere('outbox', [{ column: 'status', value: ['pending', 'failed'] }]) }, pull: null, refreshedPacks: [], offline: true }
     if (userId && getCurrentSessionSnapshot()?.user?.id !== userId) throw new Error('Account changed')
     // 局部同步：只上传/拉取该范围对应的类型；'all'/不传 = 完整同步。
-    const outboxTypes = options?.scope && options.scope !== 'all' ? SCOPE_OUTBOX_TYPES[options.scope] : undefined
-    const pullTypes = options?.scope && options.scope !== 'all' ? SCOPE_PULL_TYPES[options.scope] : undefined
+    const { outboxTypes, pullTypes } = resolveSyncScope(options?.scope)
     // A snapshot can be enqueued while a foreground sync is already pulling.
     // Callers that need a durability barrier (notably sign-out) must therefore
     // start a fresh pass after the in-flight pass completes, rather than merely

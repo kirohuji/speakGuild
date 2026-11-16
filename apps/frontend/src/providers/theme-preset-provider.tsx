@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemePresetStore } from '@/stores/theme-preset.store';
 import { usePreferencesStore } from '@/stores/preferences.store';
 import { applyPresetColors, clearPresetColors } from '@/lib/theme-preset-utils';
+import { isBgmSuppressed, subscribeBgmSuppress } from '@/lib/bgm-suppress';
 
 interface ThemePresetContextValue {
   /** 可用主题列表 */
@@ -30,6 +31,7 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
   const store = useThemePresetStore();
   const { bgmEnabled, bgmVolume } = usePreferencesStore();
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bgmSuppressed = useSyncExternalStore(subscribeBgmSuppress, isBgmSuppressed, () => false);
 
   const userId = session?.user?.id ?? null;
 
@@ -79,7 +81,7 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
     const audio = bgmAudioRef.current;
     if (!audio) return;
 
-    if (!bgmEnabled || !store.activePreset?.bgmUrl) {
+    if (!bgmEnabled || !store.activePreset?.bgmUrl || bgmSuppressed) {
       audio.pause();
       return;
     }
@@ -100,7 +102,7 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       document.removeEventListener('pointerdown', resumePlayback);
     };
-  }, [bgmEnabled, store.activePreset?.bgmUrl]);
+  }, [bgmEnabled, bgmSuppressed, store.activePreset?.bgmUrl]);
 
   return (
     <ThemePresetContext.Provider

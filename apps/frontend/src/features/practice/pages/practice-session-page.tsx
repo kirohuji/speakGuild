@@ -269,7 +269,7 @@ export function PracticeSessionPage() {
     const hasWarmup = projected
       ? warmupItems.length > 0
       : Boolean(detail.topic?.metadata?.outputTraining?.enabled && detail.topic?.metadata?.outputTraining?.pipeline?.length > 0)
-    const canShowPractice = !flagsLoaded || scriptPracticeEnabled
+    const canShowPractice = (!flagsLoaded || scriptPracticeEnabled) && Boolean(inkJson)
 
     if (hasWarmup && !onboardingCompletedSegments['practice-warmup']) {
       useOnboardingStore.getState().tryStartSegment('practice-warmup')
@@ -286,6 +286,7 @@ export function PracticeSessionPage() {
     warmupItems.length,
     flagsLoaded,
     scriptPracticeEnabled,
+    inkJson,
     onboardingCompletedSegments,
   ])
 
@@ -996,7 +997,7 @@ export function PracticeSessionPage() {
     )
   }
 
-  const canShowPractice = !flagsLoaded || scriptPracticeEnabled
+  const canShowPractice = (!flagsLoaded || scriptPracticeEnabled) && Boolean(inkJson)
   const hasWarmup = projected
     ? warmupItems.length > 0
     : Boolean(detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0)
@@ -1377,9 +1378,10 @@ export function PracticeSessionPage() {
             <DialogTitle>{t('practiceSession.abandonTitle')}</DialogTitle>
             <DialogDescription>{t('practiceSession.abandonDesc')}</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="!flex-row justify-center gap-2">
-            <Button variant="secondary" className="border-0 shadow-none" onClick={() => setConfirmAbandonOpen(false)}>{t('practiceSession.continuePractice')}</Button>
+          <DialogFooter className="!flex-row justify-center gap-2 border-t border-border/60 bg-muted/10 -mx-6 -mb-6 mt-2 px-6 py-4 sm:rounded-b-lg">
             <Button
+              variant="secondary"
+              className="border-0 shadow-none"
               onClick={() => {
                 setConfirmAbandonOpen(false)
                 setTurnFeedback(null)
@@ -1388,6 +1390,7 @@ export function PracticeSessionPage() {
             >
               {t('practiceSession.abandon')}
             </Button>
+            <Button onClick={() => setConfirmAbandonOpen(false)}>{t('practiceSession.continuePractice')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -68,6 +68,12 @@ function canUseCloud(fallbackToCloud: boolean) {
   return fallbackToCloud && !isOffline()
 }
 
+function isChineseLanguage(language?: string) {
+  if (!language) return false
+  const normalized = language.toLowerCase()
+  return normalized.startsWith('zh') || normalized.includes('chinese')
+}
+
 function toResult(audioBlob: Blob, text: string): TranscribeRecordingResult {
   return {
     audioBase64: '',
@@ -127,36 +133,47 @@ export async function transcribeVoiceInput(
   language?: string,
 ): Promise<TranscribeRecordingResult> {
   const preferences = usePreferencesStore.getState()
-  if (!preferences.localSttEnabled) {
-    return cloudTranscribe(audioBlob, filename, language)
+  const offline = isOffline()
+  const chinese = isChineseLanguage(language)
+
+  // English-only local models: fail fast before worker/decode for Chinese.
+  if (chinese && (offline || preferences.localSttEnabled)) {
+    throw new Error('本地暂不支持中文语音识别，请改用键盘输入或联网后重试')
   }
 
-  const fallbackToCloud = preferences.localSttFallbackToCloud
-  const variantId = preferences.localSttModelVariant
-  const status = await localSttModelManager.getStatus(variantId)
+  // Offline English must stay on-device — never attempt a cloud round-trip.
+  if (offline || preferences.localSttEnabled) {
+    const fallbackToCloud = !offline && preferences.localSttFallbackToCloud
+    const variantId = preferences.localSttModelVariant
+    const status = await localSttModelManager.getStatus(variantId)
 
-  if (status.installing) {
-    toast.info('本地 STT 模型正在下载，下载完成后将自动用于语音识别')
-    if (canUseCloud(fallbackToCloud)) return cloudTranscribe(audioBlob, filename, language)
-    throw new Error('本地 STT 模型正在下载中，离线时暂时无法识别')
+    if (status.installing) {
+      toast.info('本地 STT 模型正在下载，下载完成后将自动用于语音识别')
+      if (canUseCloud(fallbackToCloud)) return cloudTranscribe(audioBlob, filename, language)
+      throw new Error('本地 STT 模型正在下载中，离线时暂时无法识别')
+    }
+
+    const config = await localSttModelManager.getLoadConfig(variantId)
+    if (!config) {
+      if (canUseCloud(fallbackToCloud)) return cloudTranscribe(audioBlob, filename, language)
+      throw new Error(offline
+        ? '本地语音识别模型未准备好。请先在设置中下载英语识别模型'
+        : '本地 STT 模型尚未准备好')
+    }
+
+    try {
+      const audio = await decodeAudioBlobToMono16k(audioBlob)
+      const response = await requestWorker({ type: 'transcribe', config, audio, language })
+      if (!response.ok) throw new Error(response.error || 'local stt failed')
+      const text = (response.text ?? '').trim()
+      if (!text) throw new Error('未识别到有效英语内容，请再说一次')
+      return toResult(audioBlob, text)
+    } catch (error) {
+      console.warn('[local-stt] transcribe failed:', error)
+      if (canUseCloud(fallbackToCloud)) return cloudTranscribe(audioBlob, filename, language)
+      throw error instanceof Error ? error : new Error('本地语音识别失败')
+    }
   }
 
-  const config = await localSttModelManager.getLoadConfig(variantId)
-  if (!config) {
-    if (canUseCloud(fallbackToCloud)) return cloudTranscribe(audioBlob, filename, language)
-    throw new Error('本地 STT 模型尚未准备好')
-  }
-
-  try {
-    const audio = await decodeAudioBlobToMono16k(audioBlob)
-    const response = await requestWorker({ type: 'transcribe', config, audio, language })
-    if (!response.ok) throw new Error(response.error || 'local stt failed')
-    const text = (response.text ?? '').trim()
-    if (!text) throw new Error('local stt empty result')
-    return toResult(audioBlob, text)
-  } catch (error) {
-    console.warn('[local-stt] transcribe failed:', error)
-    if (canUseCloud(fallbackToCloud)) return cloudTranscribe(audioBlob, filename, language)
-    throw error
-  }
+  return cloudTranscribe(audioBlob, filename, language)
 }

@@ -70,6 +70,9 @@ export function MobileStorageView() {
   const [modelDownload, setModelDownload] = useState<{ active: boolean; percent: number; file?: string }>({ active: false, percent: 0 })
   const [sttModelDownload, setSttModelDownload] = useState<{ active: boolean; percent: number; file?: string }>({ active: false, percent: 0 })
   const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean; models: boolean; sttModels: boolean }>({ packs: false, assets: false, sync: false, models: false, sttModels: false })
+  const [packVisibleCount, setPackVisibleCount] = useState(10)
+  const [outboxVisibleCount, setOutboxVisibleCount] = useState(10)
+  const STORAGE_PAGE_SIZE = 10
   const {
     localAiWarmupJudgeEnabled,
     localAiWarmupModelVariant,
@@ -481,7 +484,7 @@ export function MobileStorageView() {
         </div>
       </IosSection>
 
-      <IosSection header={t('settings.storage.localAiModels', { defaultValue: '本地 AI 模型' })}>
+      {isNative() && <IosSection header={t('settings.storage.localAiModels', { defaultValue: '本地 AI 模型' })}>
         <IosRow
           icon={BrainCircuit}
           iconBg="bg-indigo-500"
@@ -803,7 +806,7 @@ export function MobileStorageView() {
             </div>
           </div>
         )}
-      </IosSection>
+      </IosSection>}
 
       <IosSection header={t('profile.localLearningData', { defaultValue: '本地学习数据' })}>
         <IosRow
@@ -833,7 +836,7 @@ export function MobileStorageView() {
               <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPacks')}</p>
             ) : (
               <div>
-                {details.packs.map((pack) => (
+                {details.packs.slice(0, packVisibleCount).map((pack) => (
                   <div key={pack.packId} className={detailRowClass}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex flex-1 items-center gap-2">
@@ -869,6 +872,15 @@ export function MobileStorageView() {
                     {pack.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{pack.lastError}</p>}
                   </div>
                 ))}
+                {details.packs.length > packVisibleCount && (
+                  <button
+                    type="button"
+                    className="w-full py-3 text-center text-xs font-medium text-primary"
+                    onClick={() => setPackVisibleCount((count) => count + STORAGE_PAGE_SIZE)}
+                  >
+                    {t('common.loadMore', { defaultValue: '加载更多' })} ({details.packs.length - packVisibleCount})
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -930,7 +942,7 @@ export function MobileStorageView() {
               <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPendingOps')}</p>
             ) : (
               <div>
-                {details.outbox.map((item) => (
+                {details.outbox.slice(0, outboxVisibleCount).map((item) => (
                   <div key={item.id} className={detailRowClass}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="min-w-0 truncate text-sm font-medium">{outboxLabel(item.entityType)} · {operationLabel(item.operation)}</p>
@@ -943,6 +955,15 @@ export function MobileStorageView() {
                     <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{t('settings.storage.retryCount', { count: item.retryCount })} · {new Date(item.updatedAt).toLocaleString()}</p>
                   </div>
                 ))}
+                {details.outbox.length > outboxVisibleCount && (
+                  <button
+                    type="button"
+                    className="w-full py-3 text-center text-xs font-medium text-primary"
+                    onClick={() => setOutboxVisibleCount((count) => count + STORAGE_PAGE_SIZE)}
+                  >
+                    {t('common.loadMore', { defaultValue: '加载更多' })} ({details.outbox.length - outboxVisibleCount})
+                  </button>
+                )}
               </div>
             )}
           </div>

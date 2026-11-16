@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
+import { useBgmSuppress } from '@/lib/bgm-suppress'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
@@ -355,6 +356,10 @@ interface LearningInsightDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onIndexChange: (index: number) => void
+  /** Absolute playlist size (may exceed windowed `items.length`). */
+  total?: number
+  /** Absolute offset of `items[0]` in the full playlist. */
+  windowOffset?: number
   /** 在"我的学习库"页面使用时设为 true，隐藏保存按钮 */
   hideSaveActions?: boolean
   /** 'inspect' | 'guided' | 'review' — review 模式底部显示复述输入 */
@@ -368,13 +373,19 @@ export function LearningInsightDialog({
   open,
   onOpenChange,
   onIndexChange,
+  total,
+  windowOffset = 0,
   hideSaveActions = false,
   mode,
 }: LearningInsightDialogProps) {
   const { t } = useTranslation()
+  useBgmSuppress('learning-insight-dialog', open)
   const current = items[index] ?? null
-  const hasPrev = index > 0
-  const hasNext = index < items.length - 1
+  const playlistTotal = Math.max(total ?? items.length, items.length)
+  const absoluteIndex = windowOffset + index
+  const usesAbsoluteIndex = total != null
+  const hasPrev = absoluteIndex > 0
+  const hasNext = absoluteIndex < playlistTotal - 1
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -388,13 +399,17 @@ export function LearningInsightDialog({
     void deferredPackAssetService.preload([current.audioUsUrl, current.audioUkUrl])
   }, [open, current])
 
+  const emitIndexChange = useCallback((nextAbsolute: number) => {
+    onIndexChange(usesAbsoluteIndex ? nextAbsolute : nextAbsolute - windowOffset)
+  }, [onIndexChange, usesAbsoluteIndex, windowOffset])
+
   const gotoPrev = useCallback(() => {
-    if (hasPrev) onIndexChange(index - 1)
-  }, [hasPrev, index, onIndexChange])
+    if (hasPrev) emitIndexChange(absoluteIndex - 1)
+  }, [absoluteIndex, emitIndexChange, hasPrev])
 
   const gotoNext = useCallback(() => {
-    if (hasNext) onIndexChange(index + 1)
-  }, [hasNext, index, onIndexChange])
+    if (hasNext) emitIndexChange(absoluteIndex + 1)
+  }, [absoluteIndex, emitIndexChange, hasNext])
 
   // 键盘导航
   useEffect(() => {
@@ -443,7 +458,7 @@ export function LearningInsightDialog({
   )
 
   const selectFromPlaylist = (idx: number) => {
-    onIndexChange(idx)
+    emitIndexChange(windowOffset + idx)
     setPlaylistOpen(false)
   }
 
@@ -482,8 +497,8 @@ export function LearningInsightDialog({
               <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                 <ChevronLeft className="size-4" /> {t('insight.prev')}
               </Button>
-              <span className="text-xs text-muted-foreground">
-                {index + 1} / {items.length}
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {absoluteIndex + 1} / {playlistTotal}
               </span>
               <div className="flex items-center gap-1.5">
                 <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
@@ -650,7 +665,13 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
-  const { play: playAudio } = useCachedAudio()
+  const { play: playCachedAudio, isPlaying } = useCachedAudio()
+  const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const playAudio = useCallback(async (url?: string | null) => {
+    if (!url) return
+    setPlayingExampleUrl(url)
+    await playCachedAudio(url)
+  }, [playCachedAudio])
   const { hasAttempted, resetAttempted, runOnce } = useAttemptedRequest()
 
   useEffect(() => {
@@ -660,7 +681,12 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
     setDictionaryRequested(false)
     resetAttempted()
     setShowUncommon(false)
+    setPlayingExampleUrl(null)
   }, [item.word, resetAttempted])
+
+  useEffect(() => {
+    if (!isPlaying) setPlayingExampleUrl(null)
+  }, [isPlaying])
 
   useEffect(() => {
     if (hideSave) return
@@ -799,7 +825,7 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
                 </div>
               ) : examples.length ? (
                 examples.slice(0, 6).map((example, index) => (
-                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} audioUrl={example.audioUrl} onPlayAudio={playAudio} />
+                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} audioUrl={example.audioUrl} onPlayAudio={playAudio} playing={Boolean(example.audioUrl && playingExampleUrl === example.audioUrl && isPlaying)} />
                 ))
               ) : (
                 <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">{t('insight.noExamples')}</p>
@@ -1066,7 +1092,21 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
   const [saved, setSaved] = useState(item.saved ?? false)
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
-  const { play: playAudio } = useCachedAudio()
+  const { play: playCachedAudio, isPlaying } = useCachedAudio()
+  const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const playAudio = useCallback(async (url?: string | null) => {
+    if (!url) return
+    setPlayingExampleUrl(url)
+    await playCachedAudio(url)
+  }, [playCachedAudio])
+
+  useEffect(() => {
+    setPlayingExampleUrl(null)
+  }, [item.text])
+
+  useEffect(() => {
+    if (!isPlaying) setPlayingExampleUrl(null)
+  }, [isPlaying])
 
   useEffect(() => {
     if (hideSave) return
@@ -1124,7 +1164,7 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
               {item.examples?.length ? (
-                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={(ex as any).audioUrl} onPlayAudio={playAudio} />)
+                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={(ex as any).audioUrl} onPlayAudio={playAudio} playing={Boolean((ex as any).audioUrl && playingExampleUrl === (ex as any).audioUrl && isPlaying)} />)
               ) : (
                 <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
               )}
@@ -1155,7 +1195,21 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
   const primaryExample = item.example || examples[0]?.en
   const primaryExampleZh = examples[0]?.zh ?? item.meaning ?? ''
   const [activeTab, setActiveTab] = useState('description')
-  const { play: playAudio } = useCachedAudio()
+  const { play: playCachedAudio, isPlaying } = useCachedAudio()
+  const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const playAudio = useCallback(async (url?: string | null) => {
+    if (!url) return
+    setPlayingExampleUrl(url)
+    await playCachedAudio(url)
+  }, [playCachedAudio])
+
+  useEffect(() => {
+    setPlayingExampleUrl(null)
+  }, [item.pattern])
+
+  useEffect(() => {
+    if (!isPlaying) setPlayingExampleUrl(null)
+  }, [isPlaying])
 
   useEffect(() => {
     if (hideSave) return
@@ -1226,7 +1280,7 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
               {examples.length > 0 ? (
-                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={ex.audioUrl} onPlayAudio={playAudio} />)
+                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={ex.audioUrl} onPlayAudio={playAudio} playing={Boolean(ex.audioUrl && playingExampleUrl === ex.audioUrl && isPlaying)} />)
               ) : (
                 <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
               )}
@@ -1245,25 +1299,30 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
   )
 }
 
-function ExampleBlock({ en, zh, note, level, audioUrl, onPlayAudio }: {
+function ExampleBlock({ en, zh, note, level, audioUrl, onPlayAudio, playing = false }: {
   en: string
   zh?: string
   note?: string
   level?: string
   audioUrl?: string | null
   onPlayAudio?: (url: string) => void
+  playing?: boolean
 }) {
   const { t } = useTranslation()
   return (
-    <div className="rounded-md bg-muted/60 p-3">
+    <div className={cn('rounded-md p-3', playing ? 'bg-primary/10' : 'bg-muted/60')}>
       <div className="flex items-start gap-2">
         <p className="min-w-0 flex-1 font-english text-sm font-medium leading-relaxed text-foreground">{en}</p>
         {audioUrl && onPlayAudio && (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onPlayAudio(audioUrl) }}
-            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            className={cn(
+              'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-background hover:text-foreground',
+              playing ? 'bg-primary/15 text-primary' : 'text-muted-foreground',
+            )}
             aria-label={t('insight.playExample')}
+            aria-pressed={playing}
           >
             <Volume2 className="size-3.5" />
           </button>

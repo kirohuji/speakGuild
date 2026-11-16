@@ -27,6 +27,7 @@ import {
   LockKeyhole,
   Maximize2,
   Play,
+  RefreshCw,
   RotateCcw,
   Search,
   ShoppingBag,
@@ -97,8 +98,9 @@ import {
 } from '@/features/vn-engine/prepare-story-vn-entry'
 import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
-import { practiceRepository, scriptRepository } from '@/lib/offline'
+import { offlineSyncService, practiceRepository, scriptRepository } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
+import { useOnlineStatus } from '@/hooks/use-online-status'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
 import { displayLearningUnitLocation } from '@/features/learning/lib/learning-unit-display'
@@ -242,6 +244,7 @@ export function ScriptCenterPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
   const userId = session?.user?.id ?? null
+  const online = useOnlineStatus()
   useVideoFullscreenOrientation()
   const [searchParams, setSearchParams] = useSearchParams()
   const panel = searchParams.get('panel')
@@ -250,6 +253,7 @@ export function ScriptCenterPage() {
   const [recordsOpen, setRecordsOpen] = useState(panel === 'records')
   const [downloadOpen, setDownloadOpen] = useState(false)
   const [publishHistoryOpen, setPublishHistoryOpen] = useState(false)
+  const [scriptSyncing, setScriptSyncing] = useState(false)
   const [practiceSameWork, setPracticeSameWork] = useState<ScriptWork | null>(null)
   const [shopFocus, setShopFocus] = useState<{ unitId: string; episodeId: string } | null>(null)
   const [shopUnits, setShopUnits] = useState<LearningUnitSummary[]>([])
@@ -658,10 +662,39 @@ export function ScriptCenterPage() {
     }
   }
 
+  const syncScripts = useCallback(async () => {
+    if (!userId || scriptSyncing || !online) return
+    setScriptSyncing(true)
+    try {
+      const result = await offlineSyncService.sync(userId, { quiet: true, scope: 'script' })
+      if (result.offline) {
+        toast.error(t('common.offline', { defaultValue: '当前离线' }))
+        return
+      }
+      await Promise.all([loadWorks(), refreshMyUnits()])
+      toast.success(t('scripts.syncDone', { defaultValue: '剧本数据已同步' }))
+    } catch (error) {
+      showRequestError(error, t('scripts.syncFailed', { defaultValue: '剧本同步失败' }))
+    } finally {
+      setScriptSyncing(false)
+    }
+  }, [loadWorks, online, refreshMyUnits, scriptSyncing, t, userId])
+
   return (
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-3">
       <div className="mb-3 flex items-center justify-between">
-        <div />
+        <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
+          <button
+            type="button"
+            onClick={() => void syncScripts()}
+            disabled={scriptSyncing || !online || !userId}
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:opacity-50"
+            aria-label={t('scripts.sync', { defaultValue: '同步剧本' })}
+            title={t('scripts.sync', { defaultValue: '同步剧本' })}
+          >
+            <RefreshCw className={cn('size-[18px]', scriptSyncing && 'animate-spin')} />
+          </button>
+        </div>
         <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
           <LearningPackDownloadStatusButton onClick={() => setDownloadOpen(true)} embedded />
           <button
