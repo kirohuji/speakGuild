@@ -1,0 +1,267 @@
+learning:
+  exercises:
+    pipeline:
+      - key: seem-tired
+        kind: chunk
+        type: chunk_substitution
+        title: 说某人看起来怎样
+        chunk: seem tired
+        chunkMeaning: 看起来很累
+        direction: zh_to_en
+        items:
+          - zh: 你看起来很累。
+            answer: You seem tired.
+            hint: You
+          - zh: 你今天看起来有点累。
+            answer: You seem a little tired today.
+            hint: a little；today
+          - zh: 他似乎对结果不太满意。
+            answer: He seems unhappy with the result.
+            hint: unhappy；the result
+      - key: seem-tired-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说看起来怎样
+        chunk: seem tired
+        chunkMeaning: 看起来很累
+        direction: en_to_zh
+        items:
+          - en: You seem tired.
+            answer: 你看起来很累。
+            hint: You
+          - en: You seem a little tired today.
+            answer: 你今天看起来有点累。
+            hint: a little；today
+          - en: He seems unhappy with the result.
+            answer: 他似乎对结果不太满意。
+            hint: unhappy；the result
+      - key: seem-know-answer
+        kind: chunk
+        type: chunk_substitution
+        title: 说某人似乎知道某事
+        chunk: seem to know the answer
+        chunkMeaning: 似乎知道答案
+        direction: zh_to_en
+        items:
+          - zh: 他似乎知道答案。
+            answer: He seems to know the answer.
+            hint: the answer
+          - zh: 她好像认识那个人。
+            answer: She seems to know that person.
+            hint: that person
+          - zh: 他们似乎已经决定了。
+            answer: They seem to have decided.
+            hint: decided
+      - key: seem-like-idea
+        kind: chunk
+        type: chunk_substitution
+        title: 说某事看起来是个好主意
+        chunk: seem like a good idea
+        chunkMeaning: 看起来是个好主意
+        direction: zh_to_en
+        items:
+          - zh: 这似乎是个好主意。
+            answer: It seems like a good idea.
+            hint: a good idea
+          - zh: 这看起来是个简单的办法，但我不确定。
+            answer: It seems like a simple solution, but I'm not sure.
+            hint: a simple solution
+          - zh: 听起来像是误会。
+            answer: It seems like a misunderstanding.
+            hint: a misunderstanding
+      - key: seem-changed-mind
+        kind: chunk
+        type: chunk_substitution
+        title: 说某人似乎已经改变主意
+        chunk: seem to have changed her mind
+        chunkMeaning: 似乎已经改变主意
+        direction: zh_to_en
+        items:
+          - zh: 她似乎已经改变主意了。
+            answer: She seems to have changed her mind.
+            hint: changed her mind
+          - zh: 他好像忘记约定了。
+            answer: He seems to have forgotten our appointment.
+            hint: our appointment
+          - zh: 他们似乎已经离开了。
+            answer: They seem to have left already.
+            hint: already
+      - key: seem-adjective-pattern
+        type: pattern_drill
+        title: 说某事看起来怎样
+        pattern: seem [adjective]
+        patternMeaning: 看起来处于某状态
+        direction: zh_to_en
+        items:
+          - zh: 这个计划似乎有风险。
+            answer: The plan seems risky.
+            hint: risky
+          - zh: 他的解释听起来合理。
+            answer: His explanation seems reasonable.
+            hint: reasonable
+          - zh: 你今天看起来很开心。
+            answer: You seem very happy today.
+            hint: very happy
+      - key: seem-to-do-pattern
+        type: pattern_drill
+        title: 说似乎在做某事
+        pattern: seem to [do]
+        patternMeaning: 似乎做某事
+        direction: zh_to_en
+        items:
+          - zh: 她似乎很有信心。
+            answer: She seems to be quite confident.
+            hint: confident
+          - zh: 这个应用好像能解决我们的问题。
+            answer: This app seems to solve our problem.
+            hint: solve our problem
+          - zh: 他似乎不太想谈这件事。
+            answer: He doesn't seem to want to talk about it.
+            hint: want to talk about it
+      - key: seem-like-pattern
+        type: pattern_drill
+        title: 说某事看起来像什么
+        pattern: seem like [noun]
+        patternMeaning: 似乎是某种事物
+        direction: zh_to_en
+        items:
+          - zh: 听起来像是我们在同一个城市。
+            answer: It seems like we're in the same city.
+            hint: the same city
+          - zh: 这看起来不像他的风格。
+            answer: It doesn't seem like his style.
+            hint: his style
+          - zh: 看起来是等公交的好地方。
+            answer: This seems like a good place to wait for the bus.
+            hint: a good place
+      - key: seem-to-have-pattern
+        type: pattern_drill
+        title: 说似乎已经做过某事
+        pattern: seem to have [past participle]
+        patternMeaning: 似乎已经做过某事
+        direction: zh_to_en
+        items:
+          - zh: 她似乎已经读过这本书。
+            answer: She seems to have read this book.
+            hint: read this book
+          - zh: 他们好像已经解决了问题。
+            answer: They seem to have solved the problem.
+            hint: solved the problem
+          - zh: 他似乎已经听说这个消息了。
+            answer: He seems to have heard the news.
+            hint: heard the news
+      - key: it-seems-that-pattern
+        type: pattern_drill
+        title: 说看起来整体情况如何
+        pattern: It seems that [clause]
+        patternMeaning: 看起来某事成立
+        direction: zh_to_en
+        items:
+          - zh: 看起来没有人注意到。
+            answer: It seems that nobody noticed.
+            hint: nobody noticed
+          - zh: 看起来我们得再等一会儿。
+            answer: It seems that we have to wait a bit longer.
+            hint: wait a bit longer
+          - zh: 看起来他已经知道了。
+            answer: It seems that he already knows.
+            hint: already knows
+      - key: there-seems-to-be-pattern
+        type: pattern_drill
+        title: 说好像存在什么问题
+        pattern: There seems to be [something]
+        patternMeaning: 好像有某事物
+        direction: zh_to_en
+        items:
+          - zh: 好像出了问题。
+            answer: There seems to be a problem.
+            hint: a problem
+          - zh: 好像有点误会。
+            answer: There seems to be a misunderstanding.
+            hint: a misunderstanding
+          - zh: 似乎没有别的办法。
+            answer: There seems to be no other way.
+            hint: no other way
+      - key: seem-likely-be-doing-as-if
+        type: vocab_sentence_building
+        title: 说很可能、似乎正在和仿佛
+        vocabWord: seem
+        vocabMeaning: 很可能；似乎正在；仿佛
+        direction: zh_to_en
+        patterns:
+          - chunk: seem likely to
+            items:
+              - zh: 他似乎很可能接受这份工作。
+                answer: He seems likely to accept the offer.
+                hint: accept the offer
+              - zh: 这场比赛期间很可能会下雨。
+                answer: It seems likely to rain during the match.
+                hint: rain during the match
+          - chunk: seem to be doing
+            items:
+              - zh: 她似乎正在忙别的事。
+                answer: She seems to be doing something else.
+                hint: something else
+              - zh: 他们似乎在等什么人。
+                answer: They seem to be waiting for someone.
+                hint: waiting for someone
+          - chunk: it seems as if
+            items:
+              - zh: 看起来好像没人知道该怎么办。
+                answer: It seems as if nobody knows what to do.
+                hint: nobody knows
+              - zh: 看起来好像要下雨了。
+                answer: It seems as if it's going to rain.
+                hint: going to rain
+      - key: seem-mind-build
+        type: sentence_decomposition
+        title: 把似乎改变主意这件事说完整
+        sourceKind: chunk
+        sourceText: seem to have changed her mind
+        fullSentence: She seems to have changed her mind about the trip.
+        fullSentenceZh: 关于这次旅行，她似乎已经改变主意了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: She seems to have changed her mind.
+            zh: 她似乎已经改变主意了。
+            highlight: ''
+            hint: 先说似乎改变主意了
+          - level: 2
+            label: 加频率
+            en: She seems to have changed her mind again.
+            zh: 她似乎又改变主意了。
+            highlight: again
+            hint: 补上又
+          - level: 3
+            label: 完整句
+            en: She seems to have changed her mind about the trip.
+            zh: 关于这次旅行，她似乎已经改变主意了。
+            highlight: about the trip
+            hint: 补上关于这次旅行
+      - key: seem-tired-build
+        type: sentence_decomposition
+        title: 把看起来有点累说完整
+        sourceKind: pattern
+        sourceText: seem [adjective]
+        fullSentence: You seem a little tired today, so let's take a break.
+        fullSentenceZh: 你今天看起来有点累，我们休息一下吧。
+        levels:
+          - level: 1
+            label: 核心句
+            en: You seem tired.
+            zh: 你看起来很累。
+            highlight: ''
+            hint: 先说看起来很累
+          - level: 2
+            label: 加程度
+            en: You seem a little tired today.
+            zh: 你今天看起来有点累。
+            highlight: a little tired today
+            hint: 补上有点累和今天
+          - level: 3
+            label: 完整句
+            en: You seem a little tired today, so let's take a break.
+            zh: 你今天看起来有点累，我们休息一下吧。
+            highlight: so let's take a break
+            hint: 补上休息一下

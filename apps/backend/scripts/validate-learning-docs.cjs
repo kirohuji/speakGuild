@@ -420,12 +420,35 @@ function analyzeFile(file, options) {
   const patternLabels = []
   const texts = []
   const verbUniverse = new Set()
-  const VERB_ALIASES = { used: 'use', using: 'use', "can't": 'help' }
+  const VERB_ALIASES = {
+    used: 'use',
+    using: 'use',
+    "can't": 'help',
+    made: 'make',
+    took: 'take',
+    got: 'get',
+    gave: 'give',
+    held: 'hold',
+    left: 'leave',
+    brought: 'bring',
+    kept: 'keep',
+    meant: 'mean',
+    spent: 'spend',
+    paid: 'pay',
+  }
   const verbOf = (text) => {
     const words = String(text ?? '').toLowerCase().match(/[a-z']+/g) || []
     for (const word of words) {
-      const candidate = VERB_ALIASES[word] ?? word
-      if (verbUniverse.has(candidate)) return candidate
+      const forms = [word]
+      for (const suffix of ['s', 'es', 'ed', 'd', 'ing']) {
+        if (word.endsWith(suffix) && word.length > suffix.length + 2) {
+          forms.push(word.slice(0, -suffix.length))
+        }
+      }
+      for (const form of forms) {
+        const candidate = VERB_ALIASES[form] ?? form
+        if (verbUniverse.has(candidate)) return candidate
+      }
     }
     return 'phrase'
   }

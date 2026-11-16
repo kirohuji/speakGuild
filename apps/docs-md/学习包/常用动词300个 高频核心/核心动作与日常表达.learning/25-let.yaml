@@ -1,0 +1,309 @@
+learning:
+  exercises:
+    pipeline:
+      - key: let-him-decide
+        kind: chunk
+        type: chunk_substitution
+        title: 说让某人自己决定
+        chunk: let him decide
+        chunkMeaning: 让他决定
+        direction: zh_to_en
+        items:
+          - zh: 让他自己决定。
+            answer: Let him decide for himself.
+            hint: for himself
+          - zh: 让孩子们自己选。
+            answer: Let the children choose.
+            hint: the children
+          - zh: 让我解释一下。
+            answer: Let me explain.
+            hint: explain
+      - key: let-him-decide-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说让谁来做
+        chunk: let him decide
+        chunkMeaning: 让他决定
+        direction: en_to_zh
+        items:
+          - en: Let him decide for himself.
+            answer: 让他自己决定。
+            hint: for himself
+          - en: Let the children choose.
+            answer: 让孩子们自己选。
+            hint: the children
+          - en: Let me explain.
+            answer: 让我解释一下。
+            hint: explain
+      - key: let-me-know
+        kind: chunk
+        type: chunk_substitution
+        title: 说有事告诉我
+        chunk: let me know when you're free
+        chunkMeaning: 你有空时告诉我
+        direction: zh_to_en
+        items:
+          - zh: 你有空的时候告诉我。
+            answer: Let me know when you're free.
+            hint: when you're free
+          - zh: 你需要帮助的话告诉我。
+            answer: Let me know if you need any help.
+            hint: if you need any help
+          - zh: 到之前给我发个消息。
+            answer: Let me know before you arrive.
+            hint: before you arrive
+      - key: let-happen-again
+        kind: chunk
+        type: chunk_substitution
+        title: 说别让这种事再发生
+        chunk: let this happen again
+        chunkMeaning: 让这件事再次发生
+        direction: zh_to_en
+        items:
+          - zh: 不要让这种事情再次发生。
+            answer: Don't let this happen again.
+            hint: Don't
+          - zh: 别让他再这样对你。
+            answer: Don't let him treat you like that again.
+            hint: treat you like that
+          - zh: 别让这件事影响你的决定。
+            answer: Don't let this affect your decision.
+            hint: affect your decision
+      - key: let-situation-worse
+        kind: chunk
+        type: chunk_substitution
+        title: 说别让情况变糟
+        chunk: let the situation get worse
+        chunkMeaning: 让情况变得更糟
+        direction: zh_to_en
+        items:
+          - zh: 不要让情况变得更糟。
+            answer: Don't let the situation get worse.
+            hint: the situation
+          - zh: 我们不该让房子变得太乱。
+            answer: We shouldn't let the house get too messy.
+            hint: the house
+          - zh: 别让伤口感染。
+            answer: Don't let the cut get infected.
+            hint: the cut
+      - key: let-team-down
+        kind: chunk
+        type: chunk_substitution
+        title: 说让某人失望
+        chunk: let the team down
+        chunkMeaning: 让团队失望
+        direction: zh_to_en
+        items:
+          - zh: 我不想让团队失望。
+            answer: I don't want to let the team down.
+            hint: the team
+          - zh: 他答应帮忙，但最后还是让我失望了。
+            answer: He promised to help but let me down in the end.
+            hint: in the end
+          - zh: 她不想让父母失望。
+            answer: She doesn't want to let her parents down.
+            hint: her parents
+      - key: let-go-past
+        kind: chunk
+        type: chunk_substitution
+        title: 说放下过去
+        chunk: let go of the past
+        chunkMeaning: 放下过去
+        direction: zh_to_en
+        items:
+          - zh: 你需要放下过去。
+            answer: You need to let go of the past.
+            hint: the past
+          - zh: 她放不下那段感情。
+            answer: She can't let go of that relationship.
+            hint: that relationship
+          - zh: 放手吧，别再纠结。
+            answer: Let it go and stop thinking about it.
+            hint: stop thinking about it
+      - key: let-someone-do-pattern
+        type: pattern_drill
+        title: 说让某人做某事
+        pattern: let [someone] [do]
+        patternMeaning: 允许某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 他们最后让我们回家了。
+            answer: They finally let us go home.
+            hint: go home
+          - zh: 他们不让我进大楼。
+            answer: They wouldn't let me enter the building.
+            hint: enter the building
+          - zh: 老师让我们提前走。
+            answer: The teacher let us leave early.
+            hint: leave early
+      - key: let-someone-know-pattern
+        type: pattern_drill
+        title: 说通知某人某件事
+        pattern: let [someone] know [clause]
+        patternMeaning: 告知某人某信息
+        direction: zh_to_en
+        items:
+          - zh: 你决定了就告诉我。
+            answer: Let me know when you decide.
+            hint: when you decide
+          - zh: 请告诉我会议什么时候开始。
+            answer: Please let me know when the meeting starts.
+            hint: the meeting starts
+          - zh: 她一有消息就通知我们。
+            answer: She'll let us know as soon as she hears anything.
+            hint: as soon as
+      - key: let-something-happen-pattern
+        type: pattern_drill
+        title: 说让某事发生
+        pattern: let [something] happen
+        patternMeaning: 允许某事发生
+        direction: zh_to_en
+        items:
+          - zh: 别让同样的事再发生。
+            answer: Don't let the same thing happen again.
+            hint: the same thing
+          - zh: 我不能让这种事发生。
+            answer: I can't let that happen.
+            hint: I can't
+          - zh: 她不会让这个错误影响我们的关系。
+            answer: She won't let this mistake affect our relationship.
+            hint: affect our relationship
+      - key: let-something-get-pattern
+        type: pattern_drill
+        title: 说任由某事变成某种状态
+        pattern: let [something] get [adjective]
+        patternMeaning: 任由某事变成某状态
+        direction: zh_to_en
+        items:
+          - zh: 注意别让水变得太热。
+            answer: Try not to let the water get too hot.
+            hint: the water
+          - zh: 他不想让对话变得尴尬。
+            answer: He didn't want to let the conversation get awkward.
+            hint: the conversation
+          - zh: 别让事情拖得太久。
+            answer: Don't let things drag on too long.
+            hint: drag on too long
+      - key: let-someone-down-pattern
+        type: pattern_drill
+        title: 说让某人失望
+        pattern: let [someone] down
+        patternMeaning: 令某人失望
+        direction: zh_to_en
+        items:
+          - zh: 他从来不会让朋友失望。
+            answer: He never lets his friends down.
+            hint: his friends
+          - zh: 这次别让我失望。
+            answer: Don't let me down this time.
+            hint: this time
+          - zh: 我们答应过他们，不能让他们失望。
+            answer: We promised them, so we can't let them down.
+            hint: promised them
+      - key: let-go-of-pattern
+        type: pattern_drill
+        title: 说放开或放下某物
+        pattern: let go of [something]
+        patternMeaning: 放手或放下某物
+        direction: zh_to_en
+        items:
+          - zh: 她终于放下了那段感情。
+            answer: She finally let go of that relationship.
+            hint: finally
+          - zh: 你需要放下那些旧想法。
+            answer: You need to let go of those old ideas.
+            hint: old ideas
+          - zh: 他松开绳子，跳了下去。
+            answer: He let go of the rope and jumped.
+            hint: the rope
+      - key: let-in-out-alone-it-go
+        type: vocab_sentence_building
+        title: 说让人进出、更不用说和放下
+        vocabWord: let
+        vocabMeaning: 让进出；更不用说；放下
+        direction: zh_to_en
+        patterns:
+          - chunk: let someone in
+            items:
+              - zh: 你能让我进去吗？
+                answer: Can you let me in?
+                hint: in
+              - zh: 请让快递员进来。
+                answer: Please let the delivery man in.
+                hint: the delivery man
+          - chunk: let someone out
+            items:
+              - zh: 请把狗放出去。
+                answer: Please let the dog out.
+                hint: the dog
+              - zh: 老师让我们提前出去了。
+                answer: The teacher let us out early.
+                hint: early
+          - chunk: let alone
+            items:
+              - zh: 我连车都买不起，更不用说房子了。
+                answer: I can't afford a car, let alone a house.
+                hint: a house
+              - zh: 他连话都说不清楚，更别提演讲了。
+                answer: He can't speak clearly, let alone give a speech.
+                hint: give a speech
+          - chunk: let it go
+            items:
+              - zh: 就放下这件事吧。
+                answer: Just let it go.
+                hint: Just
+              - zh: 过去的事就让它过去吧。
+                answer: Let it go and move on.
+                hint: move on
+      - key: let-know-build
+        type: sentence_decomposition
+        title: 把有事告诉我这件事说完整
+        sourceKind: chunk
+        sourceText: let me know when you're free
+        fullSentence: Let me know if you need any help.
+        fullSentenceZh: 你需要帮助的话告诉我。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let me know.
+            zh: 告诉我。
+            highlight: ''
+            hint: 先说告诉我
+          - level: 2
+            label: 加时间
+            en: Let me know when you're free.
+            zh: 你有空的时候告诉我。
+            highlight: when you're free
+            hint: 补上你有空的时候
+          - level: 3
+            label: 完整句
+            en: Let me know if you need any help.
+            zh: 你需要帮助的话告诉我。
+            highlight: if you need any help
+            hint: 补上如果需要帮助
+      - key: let-down-build
+        type: sentence_decomposition
+        title: 把不想让团队失望说完整
+        sourceKind: chunk
+        sourceText: let the team down
+        fullSentence: I don't want to let the team down before the final match.
+        fullSentenceZh: 决赛前我不想让团队失望。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I don't want to let the team down.
+            zh: 我不想让团队失望。
+            highlight: ''
+            hint: 先说不想让团队失望
+          - level: 2
+            label: 加程度
+            en: I really don't want to let the team down.
+            zh: 我真的不想让团队失望。
+            highlight: really
+            hint: 补上真的
+          - level: 3
+            label: 完整句
+            en: I don't want to let the team down before the final match.
+            zh: 决赛前我不想让团队失望。
+            highlight: before the final match
+            hint: 补上决赛前

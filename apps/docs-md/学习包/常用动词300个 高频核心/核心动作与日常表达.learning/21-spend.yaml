@@ -1,0 +1,220 @@
+learning:
+  exercises:
+    pipeline:
+      - key: spend-money-coffee
+        kind: chunk
+        type: chunk_substitution
+        title: 说在某样东西上花太多钱
+        chunk: spend too much money on coffee
+        chunkMeaning: 在咖啡上花太多钱
+        direction: zh_to_en
+        items:
+          - zh: 我在咖啡上花太多钱了。
+            answer: I spend too much money on coffee.
+            hint: too much money
+          - zh: 他在游戏上花太多钱了。
+            answer: He spends too much money on games.
+            hint: games
+          - zh: 我们不该在包装上花那么多钱。
+            answer: We shouldn't spend so much money on packaging.
+            hint: packaging
+      - key: spend-money-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说钱花在哪
+        chunk: spend too much money on coffee
+        chunkMeaning: 在咖啡上花太多钱
+        direction: en_to_zh
+        items:
+          - en: I spend too much money on coffee.
+            answer: 我在咖啡上花太多钱了。
+            hint: too much money
+          - en: He spends too much money on games.
+            answer: 他在游戏上花太多钱了。
+            hint: games
+          - en: We shouldn't spend so much money on packaging.
+            answer: 我们不该在包装上花那么多钱。
+            hint: packaging
+      - key: spend-hours-problem
+        kind: chunk
+        type: chunk_substitution
+        title: 说在某件事上花几个小时
+        chunk: spend hours on this problem
+        chunkMeaning: 在这个问题上花几个小时
+        direction: zh_to_en
+        items:
+          - zh: 我们在这个问题上花了几个小时。
+            answer: We spent hours on this problem.
+            hint: hours
+          - zh: 她花了整个下午准备演示。
+            answer: She spent the whole afternoon on the presentation.
+            hint: the whole afternoon
+          - zh: 我在这份报告上花了两天。
+            answer: I spent two days on this report.
+            hint: two days
+      - key: spend-evening-reading
+        kind: chunk
+        type: chunk_substitution
+        title: 说花一段时间做某事
+        chunk: spend the evening reading
+        chunkMeaning: 晚上都在阅读
+        direction: zh_to_en
+        items:
+          - zh: 我晚上都在阅读。
+            answer: I spent the evening reading.
+            hint: reading
+          - zh: 她整个晚上都在和朋友聊天。
+            answer: She spent the whole evening talking to her friend.
+            hint: talking to her friend
+          - zh: 我们周末在收拾房子。
+            answer: We spent the weekend cleaning the flat.
+            hint: cleaning the flat
+      - key: spend-time-family
+        kind: chunk
+        type: chunk_substitution
+        title: 说和谁共度时间
+        chunk: spend more time with my family
+        chunkMeaning: 多陪陪家人
+        direction: zh_to_en
+        items:
+          - zh: 我想多陪陪家人。
+            answer: I want to spend more time with my family.
+            hint: more time
+          - zh: 她周末和朋友们待在一起。
+            answer: She spends weekends with her friends.
+            hint: weekends
+          - zh: 我们该多花点时间和客户在一起。
+            answer: We should spend more time with our clients.
+            hint: our clients
+      - key: spend-money-on-pattern
+        type: pattern_drill
+        title: 说在某事上花钱
+        pattern: spend [amount] on [something]
+        patternMeaning: 在某事上花钱
+        direction: zh_to_en
+        items:
+          - zh: 我在书上花了不少钱。
+            answer: I spend a lot of money on books.
+            hint: books
+          - zh: 他们在广告上花了几千块。
+            answer: They spent thousands on advertising.
+            hint: thousands；advertising
+          - zh: 你每月在交通上花多少钱？
+            answer: How much do you spend on transport each month?
+            hint: transport；each month
+      - key: spend-time-on-pattern
+        type: pattern_drill
+        title: 说在某事上花时间
+        pattern: spend [time] on [something]
+        patternMeaning: 在某事上花时间
+        direction: zh_to_en
+        items:
+          - zh: 我每天花一小时学英语。
+            answer: I spend an hour a day on English.
+            hint: an hour a day
+          - zh: 他在这辆旧车上花了太多时间。
+            answer: He spends too much time on that old car.
+            hint: that old car
+          - zh: 我们开了一上午的会。
+            answer: We spent the morning on meetings.
+            hint: the morning
+      - key: spend-time-doing-pattern
+        type: pattern_drill
+        title: 说花时间做某事
+        pattern: spend [time] [doing]
+        patternMeaning: 花时间做某事
+        direction: zh_to_en
+        items:
+          - zh: 我花了两个小时试着修这个问题。
+            answer: I spent two hours trying to fix the problem.
+            hint: trying to fix
+          - zh: 她花了一整天写报告。
+            answer: She spent the whole day writing the report.
+            hint: writing the report
+          - zh: 我们最后花了太多时间等回复。
+            answer: We eventually spent too much time waiting for a reply.
+            hint: waiting for a reply
+      - key: spend-time-with-pattern
+        type: pattern_drill
+        title: 说和某人共度时间
+        pattern: spend [time] with [someone]
+        patternMeaning: 与某人共度时间
+        direction: zh_to_en
+        items:
+          - zh: 我想和孩子们多待一会儿。
+            answer: I want to spend more time with my kids.
+            hint: my kids
+          - zh: 他去年夏天和祖父母住在一起。
+            answer: He spent last summer with his grandparents.
+            hint: last summer
+          - zh: 她每天和狗散步一小时。
+            answer: She spends an hour a day with her dog.
+            hint: an hour a day
+      - key: spend-time-doing-listen
+        type: pattern_drill
+        title: 听懂对方说花时间做了什么
+        pattern: spend [time] [doing]
+        patternMeaning: 花时间做某事
+        direction: en_to_zh
+        items:
+          - en: I spent two hours trying to fix the problem.
+            answer: 我花了两个小时试着解决这个问题。
+            hint: trying to fix
+          - en: She spent the whole day writing the report.
+            answer: 她花了一整天写报告。
+            hint: writing the report
+          - en: We spent too much time waiting for a reply.
+            answer: 我们花了太多时间等回复。
+            hint: waiting for a reply
+      - key: spend-doing-build
+        type: sentence_decomposition
+        title: 把花两个晚上修问题说完整
+        sourceKind: pattern
+        sourceText: spend [time] [doing]
+        fullSentence: I spent the whole evening trying to fix the problem.
+        fullSentenceZh: 我整个晚上都在试着解决这个问题。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I spent two hours trying to fix it.
+            zh: 我花了两个小时试着修它。
+            highlight: ''
+            hint: 先说花了两个小时
+          - level: 2
+            label: 加时段
+            en: I spent the whole evening trying to fix it.
+            zh: 我整个晚上都在试着修它。
+            highlight: the whole evening
+            hint: 补上整个晚上
+          - level: 3
+            label: 完整句
+            en: I spent the whole evening trying to fix the problem.
+            zh: 我整个晚上都在试着解决这个问题。
+            highlight: the problem
+            hint: 补上解决问题
+      - key: spend-family-build
+        type: sentence_decomposition
+        title: 把今年多陪家人说完整
+        sourceKind: chunk
+        sourceText: spend more time with my family
+        fullSentence: I want to spend more time with my family this year.
+        fullSentenceZh: 今年我想多陪陪家人。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I spend time with my family.
+            zh: 我和家人共度时光。
+            highlight: ''
+            hint: 先说和家人共度时光
+          - level: 2
+            label: 加程度
+            en: I want to spend more time with my family.
+            zh: 我想多陪陪家人。
+            highlight: more
+            hint: 补上多
+          - level: 3
+            label: 完整句
+            en: I want to spend more time with my family this year.
+            zh: 今年我想多陪陪家人。
+            highlight: this year
+            hint: 补上今年

@@ -1,0 +1,234 @@
+learning:
+  exercises:
+    pipeline:
+      - key: matter-to-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说某件事对谁重要
+        chunk: matter to me
+        chunkMeaning: 对我很重要
+        direction: zh_to_en
+        items:
+          - zh: 你的意见对我很重要。
+            answer: Your opinion matters to me.
+            hint: Your opinion
+          - zh: 这件事对我们所有人都很重要。
+            answer: This matters to all of us.
+            hint: all of us
+          - zh: 别人的看法对他重要吗？
+            answer: Does what other people think matter to him?
+            hint: other people think
+      - key: matter-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说什么对谁重要
+        chunk: matter to me
+        chunkMeaning: 对我很重要
+        direction: en_to_zh
+        items:
+          - en: Your opinion matters to me.
+            answer: 你的意见对我很重要。
+            hint: Your opinion
+          - en: This matters to all of us.
+            answer: 这件事对我们所有人都很重要。
+            hint: all of us
+          - en: Does what other people think matter to him?
+            answer: 别人的看法对他重要吗？
+            hint: other people think
+      - key: matter-whether
+        kind: chunk
+        type: chunk_substitution
+        title: 说某件事是否成立很重要
+        chunk: matter whether the information is accurate
+        chunkMeaning: 信息是否准确很重要
+        direction: zh_to_en
+        items:
+          - zh: 信息是否准确很重要。
+            answer: It matters whether the information is accurate.
+            hint: the information
+          - zh: 价格是否合理很重要。
+            answer: It matters whether the price is reasonable.
+            hint: the price
+          - zh: 你今天是开始还是明天开始，并不重要。
+            answer: It doesn't matter whether you start today or tomorrow.
+            hint: today or tomorrow
+      - key: matter-most
+        kind: chunk
+        type: chunk_substitution
+        title: 说什么最重要
+        chunk: matter most
+        chunkMeaning: 最重要
+        direction: zh_to_en
+        items:
+          - zh: 最重要的是你如何回应。
+            answer: What matters most is how you respond.
+            hint: how you respond
+          - zh: 最重要的是我们按时完成。
+            answer: What matters most is finishing on time.
+            hint: finishing on time
+          - zh: 在这里，安全最重要。
+            answer: Safety matters most here.
+            hint: Safety
+      - key: it-doesnt-matter-pattern
+        type: pattern_drill
+        title: 说某件事不重要或没关系
+        pattern: It doesn't matter if [clause]
+        patternMeaning: 某事是否发生都不重要
+        direction: zh_to_en
+        items:
+          - zh: 晚一点没关系。
+            answer: It doesn't matter if you're a little late.
+            hint: a little late
+          - zh: 在哪里见面并不重要。
+            answer: It doesn't matter much where we meet.
+            hint: much；where we meet
+          - zh: 谁先开始都无所谓。
+            answer: It doesn't matter who starts.
+            hint: who starts
+      - key: what-matters-pattern
+        type: pattern_drill
+        title: 说真正重要的是什么
+        pattern: What matters is [clause]
+        patternMeaning: 真正重要的是某事
+        direction: zh_to_en
+        items:
+          - zh: 真正重要的是你接下来怎么做。
+            answer: What matters is what you do next.
+            hint: what you do next
+          - zh: 真正重要的是这个系统是否真的有效。
+            answer: What matters is whether the system works in practice.
+            hint: in practice
+          - zh: 真正重要的是我们把它做对。
+            answer: What matters is that we get it right.
+            hint: get it right
+      - key: matter-to-pattern
+        type: pattern_drill
+        title: 说某件事对谁重要
+        pattern: matter to [someone]
+        patternMeaning: 对某人重要
+        direction: zh_to_en
+        items:
+          - zh: 你的反馈对我很重要。
+            answer: Your feedback matters to me.
+            hint: Your feedback
+          - zh: 细节对客户很重要。
+            answer: The details matter to the client.
+            hint: The details；the client
+          - zh: 公平对每个人都重要。
+            answer: Fairness matters to everyone.
+            hint: Fairness
+      - key: matter-whether-pattern
+        type: pattern_drill
+        title: 说是否成立很重要
+        pattern: matter whether [clause]
+        patternMeaning: 某事是否成立很重要
+        direction: zh_to_en
+        items:
+          - zh: 他是否同意很关键。
+            answer: It matters whether he agrees.
+            hint: he agrees
+          - zh: 数据是否准确很重要。
+            answer: It matters whether the data is accurate.
+            hint: the data
+          - zh: 颜色是否合适不重要。
+            answer: It doesn't matter whether the colour matches.
+            hint: the colour matches
+      - key: matter-most-pattern
+        type: pattern_drill
+        title: 说最重要的是什么
+        pattern: matter most
+        patternMeaning: 最为重要
+        direction: zh_to_en
+        items:
+          - zh: 最重要的是你享受这个过程。
+            answer: What matters most is enjoying the process.
+            hint: enjoying the process
+          - zh: 经验最重要。
+            answer: Experience matters most.
+            hint: Experience
+          - zh: 关键时刻，信任最重要。
+            answer: In a crisis, trust matters most.
+            hint: In a crisis
+      - key: matter-at-all-less-how-long
+        type: vocab_sentence_building
+        title: 说完全没关系、没那么重要和花多久都无所谓
+        vocabWord: matter
+        vocabMeaning: 完全没关系；没那么重要；都无所谓
+        direction: zh_to_en
+        patterns:
+          - chunk: doesn't matter at all
+            items:
+              - zh: 完全没关系。
+                answer: It doesn't matter at all.
+                hint: at all
+              - zh: 迟到几分钟完全没关系。
+                answer: Being a few minutes late doesn't matter at all.
+                hint: Being a few minutes late
+          - chunk: matter less
+            items:
+              - zh: 具体数字没有结果重要。
+                answer: The exact number matters less than the result.
+                hint: than the result
+              - zh: 穿什么没有你说什么重要。
+                answer: What you wear matters less than what you say.
+                hint: what you say
+          - chunk: it doesn't matter how long
+            items:
+              - zh: 花多长时间都没关系。
+                answer: It doesn't matter how long it takes.
+                hint: how long
+              - zh: 只要最后做对了，花多长时间都没关系。
+                answer: It doesn't matter how long it takes as long as we get it right.
+                hint: as long as
+      - key: matter-to-build
+        type: sentence_decomposition
+        title: 把意见对我很重要说完整
+        sourceKind: pattern
+        sourceText: matter to [someone]
+        fullSentence: Your opinion matters more to me than you probably realise.
+        fullSentenceZh: 你的意见对我来说比你可能意识到的更重要。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Your opinion matters to me.
+            zh: 你的意见对我很重要。
+            highlight: ''
+            hint: 先说对我很重要
+          - level: 2
+            label: 加程度
+            en: Your opinion matters more to me.
+            zh: 你的意见对我更重要。
+            highlight: more
+            hint: 补上更
+          - level: 3
+            label: 完整句
+            en: Your opinion matters more to me than you probably realise.
+            zh: 你的意见对我来说比你可能意识到的更重要。
+            highlight: than you probably realise
+            hint: 补上比你可能意识到的
+      - key: matter-most-build
+        type: sentence_decomposition
+        title: 把系统是否有效最重要说完整
+        sourceKind: chunk
+        sourceText: matter most
+        fullSentence: What matters most is whether the system works in practice.
+        fullSentenceZh: 最重要的是系统在实际使用中是否有效。
+        levels:
+          - level: 1
+            label: 核心句
+            en: What matters is whether the system works.
+            zh: 真正重要的是系统是否有效。
+            highlight: ''
+            hint: 先说系统是否有效
+          - level: 2
+            label: 加程度
+            en: What matters most is whether the system works.
+            zh: 最重要的是系统是否有效。
+            highlight: most
+            hint: 补上最
+          - level: 3
+            label: 完整句
+            en: What matters most is whether the system works in practice.
+            zh: 最重要的是系统在实际使用中是否有效。
+            highlight: in practice
+            hint: 补上在实际使用中

@@ -1,0 +1,243 @@
+learning:
+  exercises:
+    pipeline:
+      - key: happen-laptop
+        kind: chunk
+        type: chunk_substitution
+        title: 问某样东西怎么了
+        chunk: happen to your laptop
+        chunkMeaning: 你的电脑怎么了
+        direction: zh_to_en
+        items:
+          - zh: 你的电脑怎么了？
+            answer: What happened to your laptop?
+            hint: your laptop
+          - zh: 你的车怎么了？
+            answer: What happened to your car?
+            hint: your car
+          - zh: 我们的预订怎么了？
+            answer: What happened to our booking?
+            hint: our booking
+      - key: happen-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方问出了什么事
+        chunk: happen to your laptop
+        chunkMeaning: 你的电脑怎么了
+        direction: en_to_zh
+        items:
+          - en: What happened to your laptop?
+            answer: 你的电脑怎么了？
+            hint: your laptop
+          - en: What happened to your car?
+            answer: 你的车怎么了？
+            hint: your car
+          - en: What happened to their flight?
+            answer: 他们的航班怎么了？
+            hint: their flight
+      - key: happen-see-him
+        kind: chunk
+        type: chunk_substitution
+        title: 说碰巧看到某人
+        chunk: happen to see him
+        chunkMeaning: 碰巧看到他
+        direction: zh_to_en
+        items:
+          - zh: 我碰巧在火车上看到了他。
+            answer: I happened to see him on the train.
+            hint: on the train
+          - zh: 我碰巧在离开前看到了你的消息。
+            answer: I happened to see your message just before I left.
+            hint: just before I left
+          - zh: 她碰巧听到了我们的谈话。
+            answer: She happened to hear our conversation.
+            hint: our conversation
+      - key: happen-be-there
+        kind: chunk
+        type: chunk_substitution
+        title: 说碰巧在某个地方
+        chunk: happen to be there
+        chunkMeaning: 碰巧在那里
+        direction: zh_to_en
+        items:
+          - zh: 那天我碰巧在那里。
+            answer: I happened to be there that day.
+            hint: that day
+          - zh: 他碰巧也在同一家酒店。
+            answer: He happened to be at the same hotel.
+            hint: the same hotel
+          - zh: 我们碰巧路过，就进来了。
+            answer: We happened to be passing, so we came in.
+            hint: passing
+      - key: happen-overnight
+        kind: chunk
+        type: chunk_substitution
+        title: 说不会一夜之间发生
+        chunk: happen overnight
+        chunkMeaning: 一夜之间发生
+        direction: zh_to_en
+        items:
+          - zh: 改变不会一夜之间发生。
+            answer: Change doesn't happen overnight.
+            hint: Change
+          - zh: 信任不是一天建立的。
+            answer: Trust doesn't happen overnight.
+            hint: Trust
+          - zh: 这种变化发生得比我们想的快。
+            answer: This change happened faster than we expected.
+            hint: faster than we expected
+      - key: happen-to-pattern
+        type: pattern_drill
+        title: 说某人或某物遭遇了什么
+        pattern: happen to [someone/something]
+        patternMeaning: 某人或某物遭遇某事
+        direction: zh_to_en
+        items:
+          - zh: 这家公司怎么了？
+            answer: What happened to the company?
+            hint: the company
+          - zh: 我的手机怎么了？
+            answer: What happened to my phone?
+            hint: my phone
+          - zh: 孩子们怎么了？
+            answer: What happened to the kids?
+            hint: the kids
+      - key: happen-to-do-pattern
+        type: pattern_drill
+        title: 说碰巧做某事
+        pattern: happen to [do]
+        patternMeaning: 碰巧做某事
+        direction: zh_to_en
+        items:
+          - zh: 我碰巧认识她的哥哥。
+            answer: I happened to know her brother.
+            hint: her brother
+          - zh: 我们碰巧坐在同一张桌子。
+            answer: We happened to sit at the same table.
+            hint: the same table
+          - zh: 他碰巧带着伞。
+            answer: He happened to have an umbrella with him.
+            hint: an umbrella
+      - key: happen-to-be-pattern
+        type: pattern_drill
+        title: 说碰巧处于某种情况
+        pattern: happen to be [state/place]
+        patternMeaning: 碰巧处于某状态或位置
+        direction: zh_to_en
+        items:
+          - zh: 她碰巧是那里的经理。
+            answer: She happened to be the manager there.
+            hint: the manager
+          - zh: 我碰巧在附近。
+            answer: I happened to be nearby.
+            hint: nearby
+          - zh: 我们碰巧在同一趟航班上。
+            answer: We happened to be on the same flight.
+            hint: the same flight
+      - key: happen-overnight-pattern
+        type: pattern_drill
+        title: 说某事不会短期内发生
+        pattern: happen overnight
+        patternMeaning: 在短时间内发生
+        direction: zh_to_en
+        items:
+          - zh: 这种习惯不会一夜之间养成。
+            answer: This habit doesn't happen overnight.
+            hint: This habit
+          - zh: 真正的改变很少一夜之间发生。
+            answer: Real change rarely happens overnight.
+            hint: Real change；rarely
+          - zh: 成果不会一夜之间出现。
+            answer: Results don't happen overnight.
+            hint: Results
+      - key: happen-it-happens-again-chance
+        type: vocab_sentence_building
+        title: 说这种事难免、再次发生和纯属偶然
+        vocabWord: happen
+        vocabMeaning: 难免发生；再次发生；偶然发生
+        direction: zh_to_en
+        patterns:
+          - chunk: it happens
+            items:
+              - zh: 别担心这个错误，这种事难免。
+                answer: Don't worry about the mistake. It happens.
+                hint: Don't worry
+              - zh: 这种事有时就是会发生，别怪自己。
+                answer: These things happen sometimes, so don't blame yourself.
+                hint: don't blame yourself
+          - chunk: happen again
+            items:
+              - zh: 我希望这种事不会再发生。
+                answer: I hope it never happens again.
+                hint: never
+              - zh: 同样的错误又发生了一次。
+                answer: The same mistake happened again.
+                hint: The same mistake
+          - chunk: happen by chance
+            items:
+              - zh: 这些事件是偶然发生的。
+                answer: These events happened by chance.
+                hint: These events
+              - zh: 我们的相遇纯属偶然。
+                answer: Our meeting happened by chance.
+                hint: Our meeting
+          - chunk: as it happens
+            items:
+              - zh: 碰巧我认识一个能帮忙的人。
+                answer: As it happens, I know someone who can help.
+                hint: someone who can help
+              - zh: 碰巧我那天有空。
+                answer: As it happens, I'm free that day.
+                hint: that day
+      - key: happen-to-build
+        type: sentence_decomposition
+        title: 把电脑怎么了说完整
+        sourceKind: pattern
+        sourceText: happen to [someone/something]
+        fullSentence: What happened to your laptop?
+        fullSentenceZh: 你的电脑怎么了？
+        levels:
+          - level: 1
+            label: 核心句
+            en: What happened?
+            zh: 发生什么了？
+            highlight: ''
+            hint: 先问发生了什么
+          - level: 2
+            label: 加对象
+            en: What happened to it?
+            zh: 它怎么了？
+            highlight: to it
+            hint: 补上它怎么了
+          - level: 3
+            label: 完整句
+            en: What happened to your laptop?
+            zh: 你的电脑怎么了？
+            highlight: your laptop
+            hint: 换成你的电脑
+      - key: happen-to-do-build
+        type: sentence_decomposition
+        title: 把碰巧看到消息说完整
+        sourceKind: chunk
+        sourceText: happen to see him
+        fullSentence: I happened to see your message just before I left.
+        fullSentenceZh: 我碰巧在离开之前看到了你的消息。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I happened to see your message.
+            zh: 我碰巧看到了你的消息。
+            highlight: ''
+            hint: 先说碰巧看到了消息
+          - level: 2
+            label: 加时间
+            en: I happened to see your message this morning.
+            zh: 我今天早上碰巧看到了你的消息。
+            highlight: this morning
+            hint: 补上今天早上
+          - level: 3
+            label: 完整句
+            en: I happened to see your message just before I left.
+            zh: 我碰巧在离开之前看到了你的消息。
+            highlight: just before I left
+            hint: 补上在离开之前

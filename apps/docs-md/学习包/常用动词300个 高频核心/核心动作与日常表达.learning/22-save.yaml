@@ -1,0 +1,285 @@
+learning:
+  exercises:
+    pipeline:
+      - key: save-the-file
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒对方保存文件
+        chunk: save the file
+        chunkMeaning: 保存文件
+        direction: zh_to_en
+        items:
+          - zh: 别忘了保存文件。
+            answer: Don't forget to save the file.
+            hint: Don't forget
+          - zh: 保存之后把电脑关掉。
+            answer: Save the file and then shut down the computer.
+            hint: shut down the computer
+          - zh: 我每十分钟保存一次文档。
+            answer: I save the document every ten minutes.
+            hint: the document；every ten minutes
+      - key: save-the-file-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方提醒保存
+        chunk: save the file
+        chunkMeaning: 保存文件
+        direction: en_to_zh
+        items:
+          - en: Don't forget to save the file.
+            answer: 别忘了保存文件。
+            hint: Don't forget
+          - en: Save the file and then shut down the computer.
+            answer: 保存之后把电脑关掉。
+            hint: shut down the computer
+          - en: I save the document every ten minutes.
+            answer: 我每十分钟保存一次文档。
+            hint: the document；every ten minutes
+      - key: save-time
+        kind: chunk
+        type: chunk_substitution
+        title: 说节省时间
+        chunk: save time
+        chunkMeaning: 节省时间
+        direction: zh_to_en
+        items:
+          - zh: 这个快捷方法能节省很多时间。
+            answer: This shortcut saves a lot of time.
+            hint: This shortcut
+          - zh: 这个功能可能帮我们节省很多时间。
+            answer: This feature could save us a lot of time.
+            hint: could；us
+          - zh: 走这条路能省半个小时。
+            answer: Taking this road saves half an hour.
+            hint: Taking this road
+      - key: save-fire
+        kind: chunk
+        type: chunk_substitution
+        title: 说把人从危险中救出来
+        chunk: save him from the fire
+        chunkMeaning: 把他从火里救出来
+        direction: zh_to_en
+        items:
+          - zh: 消防员把他从火中救了出来。
+            answer: The firefighters saved him from the fire.
+            hint: The firefighters
+          - zh: 邻居把孩子们从水里救了上来。
+            answer: A neighbour saved the children from the water.
+            hint: the water
+          - zh: 医生救了她的命。
+            answer: The doctors saved her life.
+            hint: her life
+      - key: save-mistake
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮某人避免犯错
+        chunk: save me from making a mistake
+        chunkMeaning: 帮我避免犯错
+        direction: zh_to_en
+        items:
+          - zh: 你让我避免犯下严重错误。
+            answer: You saved me from making a serious mistake.
+            hint: a serious mistake
+          - zh: 你帮我避免了一个尴尬的错误。
+            answer: You saved me from making an embarrassing mistake.
+            hint: an embarrassing mistake
+          - zh: 谢谢你让我没白跑一趟。
+            answer: Thanks for saving me from a wasted trip.
+            hint: a wasted trip
+      - key: save-cake
+        kind: chunk
+        type: chunk_substitution
+        title: 说给某人留一点
+        chunk: save some cake for me
+        chunkMeaning: 给我留一点蛋糕
+        direction: zh_to_en
+        items:
+          - zh: 给我留一点蛋糕。
+            answer: Save some cake for me.
+            hint: some cake
+          - zh: 给我留个座位。
+            answer: Save me a seat.
+            hint: a seat
+          - zh: 给明天留一些饭。
+            answer: Save some food for tomorrow.
+            hint: for tomorrow
+      - key: save-up-computer
+        kind: chunk
+        type: chunk_substitution
+        title: 说攒钱买某样东西
+        chunk: save up for a new computer
+        chunkMeaning: 攒钱买新电脑
+        direction: zh_to_en
+        items:
+          - zh: 我正在攒钱买新电脑。
+            answer: I'm saving up for a new computer.
+            hint: a new computer
+          - zh: 她在攒钱买一辆自行车。
+            answer: She's saving up for a bike.
+            hint: a bike
+          - zh: 我们攒了半年才去旅行。
+            answer: We saved up for six months for the trip.
+            hint: for six months
+      - key: save-something-pattern
+        type: pattern_drill
+        title: 说节省空间、时间或麻烦
+        pattern: save [something]
+        patternMeaning: 保存或节省某物
+        direction: zh_to_en
+        items:
+          - zh: 云存储可以节省设备空间。
+            answer: Cloud storage can save space on your device.
+            hint: space；on your device
+          - zh: 这个办法能省很多麻烦。
+            answer: This approach saves a lot of trouble.
+            hint: trouble
+          - zh: 用这个模板可以省时间。
+            answer: Using this template saves time.
+            hint: this template
+      - key: save-from-something-pattern
+        type: pattern_drill
+        title: 说让某人免于某种危险
+        pattern: save [someone] from [something]
+        patternMeaning: 使某人免于危险或麻烦
+        direction: zh_to_en
+        items:
+          - zh: 他把我从麻烦里拉了出来。
+            answer: He saved me from trouble.
+            hint: trouble
+          - zh: 这把伞让我没被雨淋。
+            answer: This umbrella saved me from the rain.
+            hint: the rain
+          - zh: 这个决定让她免于更大的损失。
+            answer: This decision saved her from a bigger loss.
+            hint: a bigger loss
+      - key: save-from-doing-pattern
+        type: pattern_drill
+        title: 说让某人避免做某事
+        pattern: save [someone] from [doing]
+        patternMeaning: 避免某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 你让我没把文件删掉。
+            answer: You saved me from deleting the file.
+            hint: deleting the file
+          - zh: 她拦住了我，没让我说错话。
+            answer: She saved me from saying the wrong thing.
+            hint: saying the wrong thing
+          - zh: 这个提醒让我避免了重复犯错。
+            answer: This reminder saved me from making the same mistake again.
+            hint: making the same mistake
+      - key: save-for-someone-pattern
+        type: pattern_drill
+        title: 说给某人或以后留东西
+        pattern: save [something] for [someone]
+        patternMeaning: 为某人保留某物
+        direction: zh_to_en
+        items:
+          - zh: 给我留一半。
+            answer: Save half for me.
+            hint: half
+          - zh: 她把最后一块留给了弟弟。
+            answer: She saved the last piece for her brother.
+            hint: the last piece
+          - zh: 我把票留到周五再用。
+            answer: I'm saving my ticket for Friday.
+            hint: my ticket；Friday
+      - key: save-up-pattern
+        type: pattern_drill
+        title: 说为了什么攒钱
+        pattern: save up for [something]
+        patternMeaning: 为购买某物攒钱
+        direction: zh_to_en
+        items:
+          - zh: 她在攒钱买房。
+            answer: She's saving up for a flat.
+            hint: a flat
+          - zh: 我们正在攒钱办婚礼。
+            answer: We're saving up for a wedding.
+            hint: a wedding
+          - zh: 他攒了两年才买车。
+            answer: He saved up for two years to buy a car.
+            hint: to buy a car
+      - key: save-space-trouble-life
+        type: vocab_sentence_building
+        title: 说省空间、省麻烦和救命
+        vocabWord: save
+        vocabMeaning: 省空间；省麻烦；救命
+        direction: zh_to_en
+        patterns:
+          - chunk: save a lot of space
+            items:
+              - zh: 这个设计能省下不少空间。
+                answer: This design saves a lot of space.
+                hint: a lot of space
+              - zh: 把家具靠墙放能省空间。
+                answer: Putting the furniture against the wall saves space.
+                hint: against the wall
+          - chunk: save yourself the trouble
+            items:
+              - zh: 省点麻烦，先给他们打个电话吧。
+                answer: Save yourself the trouble and call them first.
+                hint: call them first
+              - zh: 省点麻烦，直接在网上订。
+                answer: Save yourself the trouble and book online.
+                hint: book online
+          - chunk: save someone's life
+            items:
+              - zh: 那个决定救了我的命。
+                answer: That decision saved my life.
+                hint: my life
+              - zh: 是邻居救了他的命。
+                answer: It was his neighbour who saved his life.
+                hint: his neighbour
+      - key: save-time-build
+        type: sentence_decomposition
+        title: 把帮我们省很多时间说完整
+        sourceKind: chunk
+        sourceText: save time
+        fullSentence: This feature could save us a lot of time.
+        fullSentenceZh: 这个功能可能帮我们节省很多时间。
+        levels:
+          - level: 1
+            label: 核心句
+            en: This feature saves time.
+            zh: 这个功能能省时间。
+            highlight: ''
+            hint: 先说能省时间
+          - level: 2
+            label: 加对象
+            en: This feature saves us time.
+            zh: 这个功能帮我们省时间。
+            highlight: us
+            hint: 补上帮我们
+          - level: 3
+            label: 完整句
+            en: This feature could save us a lot of time.
+            zh: 这个功能可能帮我们节省很多时间。
+            highlight: could save us a lot of time
+            hint: 补上可能、帮我们和很多
+      - key: save-up-build
+        type: sentence_decomposition
+        title: 把存钱买电脑说完整
+        sourceKind: chunk
+        sourceText: save up for a new computer
+        fullSentence: I'm trying to save enough money to buy a better laptop.
+        fullSentenceZh: 我正在努力存够钱买一台更好的笔记本电脑。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I'm saving up for a laptop.
+            zh: 我在攒钱买电脑。
+            highlight: ''
+            hint: 先说在攒钱买电脑
+          - level: 2
+            label: 加程度
+            en: I'm saving up enough money for a laptop.
+            zh: 我在攒够钱买电脑。
+            highlight: enough money
+            hint: 补上够钱
+          - level: 3
+            label: 完整句
+            en: I'm trying to save enough money to buy a better laptop.
+            zh: 我正在努力存够钱买一台更好的笔记本电脑。
+            highlight: to buy a better laptop
+            hint: 补上买更好的电脑

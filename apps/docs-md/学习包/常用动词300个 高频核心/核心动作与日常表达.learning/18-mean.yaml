@@ -1,0 +1,276 @@
+learning:
+  exercises:
+    pipeline:
+      - key: mean-same-thing
+        kind: chunk
+        type: chunk_substitution
+        title: 说两个东西意思一样
+        chunk: mean the same thing
+        chunkMeaning: 意思一样
+        direction: zh_to_en
+        items:
+          - zh: 这两个词意思一样吗？
+            answer: Do these two words mean the same thing?
+            hint: these two words
+          - zh: 这两个标志意思相同。
+            answer: These two signs mean the same thing.
+            hint: These two signs
+          - zh: 红色和绿色在这里意思不一样。
+            answer: Red and green don't mean the same thing here.
+            hint: Red and green
+      - key: mean-same-thing-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说什么意思一样
+        chunk: mean the same thing
+        chunkMeaning: 意思一样
+        direction: en_to_zh
+        items:
+          - en: Do these two words mean the same thing?
+            answer: 这两个词意思一样吗？
+            hint: these two words
+          - en: These two signs mean the same thing.
+            answer: 这两个标志意思相同。
+            hint: These two signs
+          - en: Red and green don't mean the same thing here.
+            answer: 红色和绿色在这里意思不一样。
+            hint: Red and green
+      - key: mean-taking-care
+        kind: chunk
+        type: chunk_substitution
+        title: 说某件事意味着什么
+        chunk: mean taking care of everything
+        chunkMeaning: 意味着所有事都要自己处理
+        direction: zh_to_en
+        items:
+          - zh: 独居意味着所有事情都要自己处理。
+            answer: Living alone means taking care of everything yourself.
+            hint: Living alone；yourself
+          - zh: 养狗意味着每天都要遛它。
+            answer: Having a dog means walking it every day.
+            hint: Having a dog；walking it
+          - zh: 学一门语言意味着要经常练习。
+            answer: Learning a language means practising regularly.
+            hint: practising regularly
+      - key: mean-to-call
+        kind: chunk
+        type: chunk_substitution
+        title: 说本来打算做某事
+        chunk: mean to call you
+        chunkMeaning: 本来打算给你打电话
+        direction: zh_to_en
+        items:
+          - zh: 我昨天本来打算给你打电话。
+            answer: I meant to call you yesterday.
+            hint: yesterday
+          - zh: 我本来想早点回复，但被工作耽搁了。
+            answer: I meant to reply earlier, but I got caught up with work.
+            hint: got caught up with work
+          - zh: 她不是故意迟到的。
+            answer: She didn't mean to be late.
+            hint: didn't mean
+      - key: mean-that-need
+        kind: chunk
+        type: chunk_substitution
+        title: 说这意味着某个结果
+        chunk: mean that we need more time
+        chunkMeaning: 意味着我们需要更多时间
+        direction: zh_to_en
+        items:
+          - zh: 这意味着我们需要更多时间。
+            answer: This means that we need more time.
+            hint: more time
+          - zh: 这意味着我们得改计划。
+            answer: That means we need to change the plan.
+            hint: change the plan
+          - zh: 如果下雨，就说明比赛要推迟。
+            answer: If it rains, it means the match will be postponed.
+            hint: postponed
+      - key: mean-a-lot
+        kind: chunk
+        type: chunk_substitution
+        title: 说某件事对某人很重要
+        chunk: mean a lot to me
+        chunkMeaning: 对我很重要
+        direction: zh_to_en
+        items:
+          - zh: 你的支持对我很重要。
+            answer: Your support means a lot to me.
+            hint: Your support
+          - zh: 这条建议对我意义很大。
+            answer: That piece of advice means a lot to me.
+            hint: That piece of advice
+          - zh: 这次机会对她很重要。
+            answer: This opportunity means a lot to her.
+            hint: This opportunity
+      - key: mean-something-pattern
+        type: pattern_drill
+        title: 说某个词或符号是什么意思
+        pattern: mean [something]
+        patternMeaning: 表示某种意思
+        direction: zh_to_en
+        items:
+          - zh: 这个词是什么意思？
+            answer: What does this word mean?
+            hint: this word
+          - zh: 这个符号表示危险。
+            answer: This symbol means danger.
+            hint: danger
+          - zh: 你刚才那句是什么意思？
+            answer: What did you mean by that?
+            hint: by that
+      - key: mean-doing-pattern
+        type: pattern_drill
+        title: 说做某事意味着什么
+        pattern: mean [doing]
+        patternMeaning: 意味着做某事
+        direction: zh_to_en
+        items:
+          - zh: 这样做意味着要花更多时间。
+            answer: Doing this means spending more time.
+            hint: spending more time
+          - zh: 搬到另一个城市意味着离开朋友。
+            answer: Moving to another city means leaving your friends.
+            hint: leaving your friends
+          - zh: 省钱意味着少点外卖。
+            answer: Saving money means ordering less takeaway.
+            hint: ordering less takeaway
+      - key: mean-to-do-pattern
+        type: pattern_drill
+        title: 说本来打算做某事
+        pattern: mean to [do]
+        patternMeaning: 打算做某事
+        direction: zh_to_en
+        items:
+          - zh: 我本来打算问你一个问题。
+            answer: I meant to ask you a question.
+            hint: ask you a question
+          - zh: 我们本来想早点到，但堵车了。
+            answer: We meant to arrive early, but there was traffic.
+            hint: there was traffic
+          - zh: 我不是故意打断你的。
+            answer: I didn't mean to interrupt you.
+            hint: interrupt you
+      - key: mean-that-pattern
+        type: pattern_drill
+        title: 说这件事意味着什么
+        pattern: mean that [clause]
+        patternMeaning: 意味着某个事实
+        direction: zh_to_en
+        items:
+          - zh: 这意味着我们得再等一天。
+            answer: This means that we have to wait another day.
+            hint: wait another day
+          - zh: 那是不是意味着你同意？
+            answer: Does that mean you agree?
+            hint: you agree
+          - zh: 这说明情况比我们想的更好。
+            answer: It means the situation is better than we thought.
+            hint: the situation
+      - key: mean-a-lot-pattern
+        type: pattern_drill
+        title: 说对某人意义很大
+        pattern: mean a lot to [someone]
+        patternMeaning: 对某人很重要
+        direction: zh_to_en
+        items:
+          - zh: 你的帮助对我意义很大。
+            answer: Your help means a lot to me.
+            hint: Your help
+          - zh: 朋友的话对他很重要。
+            answer: His friends' words mean a lot to him.
+            hint: His friends' words
+          - zh: 这个奖对团队意味着很多。
+            answer: This award means a lot to the team.
+            hint: This award
+      - key: mean-no-harm-business-well
+        type: vocab_sentence_building
+        title: 说没有恶意、是认真的和出于好意
+        vocabWord: mean
+        vocabMeaning: 没有恶意；是认真的；出于好意
+        direction: zh_to_en
+        patterns:
+          - chunk: mean no harm
+            items:
+              - zh: 我没有恶意。
+                answer: I meant no harm.
+                hint: no harm
+              - zh: 她不是想伤害你。
+                answer: She didn't mean any harm.
+                hint: any harm
+          - chunk: mean business
+            items:
+              - zh: 这次她是认真的。
+                answer: She means business this time.
+                hint: this time
+              - zh: 他们不是开玩笑，是认真的。
+                answer: They mean business; they're not joking.
+                hint: not joking
+          - chunk: mean well
+            items:
+              - zh: 我知道你是出于好意。
+                answer: I know you mean well.
+                hint: I know
+              - zh: 他出于好意，但方法不对。
+                answer: He means well, but he's going about it the wrong way.
+                hint: the wrong way
+          - chunk: I didn't mean that
+            items:
+              - zh: 我不是那个意思。
+                answer: I didn't mean that.
+                hint: that
+              - zh: 我的意思是，那不是我预期的结果。
+                answer: I mean, that's not what I expected.
+                hint: what I expected
+      - key: mean-doing-build
+        type: sentence_decomposition
+        title: 把这样做意味着更多时间说完整
+        sourceKind: pattern
+        sourceText: mean [doing]
+        fullSentence: Doing this means spending more time than we expected.
+        fullSentenceZh: 这样做意味着要花比我们预想更多的时间。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Doing this means spending more time.
+            zh: 这样做意味着要花更多时间。
+            highlight: ''
+            hint: 先说意味着花更多时间
+          - level: 2
+            label: 加比较
+            en: Doing this means spending more time than usual.
+            zh: 这样做意味着要比平时花更多时间。
+            highlight: than usual
+            hint: 补上比平时
+          - level: 3
+            label: 完整句
+            en: Doing this means spending more time than we expected.
+            zh: 这样做意味着要花比我们预想更多的时间。
+            highlight: than we expected
+            hint: 补上比我们预想
+      - key: mean-to-build
+        type: sentence_decomposition
+        title: 把本来想早点回复说完整
+        sourceKind: pattern
+        sourceText: mean to [do]
+        fullSentence: I meant to reply earlier, but I got caught up with work.
+        fullSentenceZh: 我本来想早点回复，但被工作耽搁了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I meant to reply.
+            zh: 我本来想回复。
+            highlight: ''
+            hint: 先说本来想回复
+          - level: 2
+            label: 加时间
+            en: I meant to reply earlier.
+            zh: 我本来想早点回复。
+            highlight: earlier
+            hint: 补上早点
+          - level: 3
+            label: 完整句
+            en: I meant to reply earlier, but I got caught up with work.
+            zh: 我本来想早点回复，但被工作耽搁了。
+            highlight: but I got caught up with work
+            hint: 补上被工作耽搁

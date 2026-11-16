@@ -1,0 +1,317 @@
+learning:
+  exercises:
+    pipeline:
+      - key: pay-for-dinner
+        kind: chunk
+        type: chunk_substitution
+        title: 说这顿饭谁来付
+        chunk: pay for dinner
+        chunkMeaning: 付晚饭的钱
+        direction: zh_to_en
+        items:
+          - zh: 晚饭我来付。
+            answer: I'll pay for dinner.
+            hint: I'll
+          - zh: 这次票钱我来付。
+            answer: I'll pay for the tickets this time.
+            hint: the tickets；this time
+          - zh: 她坚持要付咖啡的钱。
+            answer: She insisted on paying for the coffee.
+            hint: insisted on
+      - key: pay-for-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说谁来买单
+        chunk: pay for dinner
+        chunkMeaning: 付晚饭的钱
+        direction: en_to_zh
+        items:
+          - en: I'll pay for dinner.
+            answer: 晚饭我来付。
+            hint: I'll
+          - en: I'll pay for the tickets this time.
+            answer: 这次票钱我来付。
+            hint: the tickets；this time
+          - en: She insisted on paying for the coffee.
+            answer: 她坚持要付咖啡的钱。
+            hint: insisted on
+      - key: pay-him-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说为某件事付钱给某人
+        chunk: pay him for the work
+        chunkMeaning: 为这项工作付钱给他
+        direction: zh_to_en
+        items:
+          - zh: 他们为这项工作付给他钱。
+            answer: They paid him for the work.
+            hint: the work
+          - zh: 我们按小时付给她。
+            answer: We paid her by the hour.
+            hint: by the hour
+          - zh: 公司付钱请他做设计。
+            answer: The company paid him to design it.
+            hint: to design it
+      - key: pay-fifty-ticket
+        kind: chunk
+        type: chunk_substitution
+        title: 说花多少钱买了什么
+        chunk: pay fifty pounds for the ticket
+        chunkMeaning: 花五十英镑买这张票
+        direction: zh_to_en
+        items:
+          - zh: 我花五十英镑买了这张票。
+            answer: I paid fifty pounds for the ticket.
+            hint: fifty pounds
+          - zh: 她花三百块买了那双鞋。
+            answer: She paid three hundred yuan for those shoes.
+            hint: those shoes
+          - zh: 他为那台相机花了两千块。
+            answer: He paid two thousand yuan for that camera.
+            hint: that camera
+      - key: pay-attention-details
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒对方注意细节
+        chunk: pay attention to the details
+        chunkMeaning: 注意细节
+        direction: zh_to_en
+        items:
+          - zh: 注意细节。
+            answer: Pay attention to the details.
+            hint: the details
+          - zh: 你需要更加注意自己的表达方式。
+            answer: You need to pay more attention to the way you phrase things.
+            hint: the way you phrase things
+          - zh: 注意这个动词是怎样用的。
+            answer: Pay attention to how the verb is used.
+            hint: how the verb is used
+      - key: pay-you-back
+        kind: chunk
+        type: chunk_substitution
+        title: 说把钱还给某人
+        chunk: pay you back
+        chunkMeaning: 还你钱
+        direction: zh_to_en
+        items:
+          - zh: 我明天还你钱。
+            answer: I'll pay you back tomorrow.
+            hint: tomorrow
+          - zh: 我下个月把钱还给你。
+            answer: I'll pay the money back next month.
+            hint: the money；next month
+          - zh: 他还没还我上次借的钱。
+            answer: He hasn't paid me back for the last loan.
+            hint: the last loan
+      - key: paid-off
+        kind: chunk
+        type: chunk_substitution
+        title: 说努力终于有了回报
+        chunk: all that practice paid off
+        chunkMeaning: 那些练习终于有了回报
+        direction: zh_to_en
+        items:
+          - zh: 所有练习最终都有了回报。
+            answer: All the practice finally paid off.
+            hint: finally
+          - zh: 那些练习最终都得到了回报。
+            answer: All that practice eventually paid off.
+            hint: eventually
+          - zh: 她多年的努力终于有了结果。
+            answer: Years of hard work finally paid off.
+            hint: Years of hard work
+      - key: pay-for-pattern
+        type: pattern_drill
+        title: 说为某件事付款
+        pattern: pay for [something]
+        patternMeaning: 为某事付款
+        direction: zh_to_en
+        items:
+          - zh: 谁付的午餐钱？
+            answer: Who paid for lunch?
+            hint: lunch
+          - zh: 我不想让你为我的错误买单。
+            answer: I don't want you to pay for my mistake.
+            hint: my mistake
+          - zh: 我们各付各的吧。
+            answer: Let's each pay for our own.
+            hint: our own
+      - key: pay-someone-for-pattern
+        type: pattern_drill
+        title: 说为某件事付钱给某人
+        pattern: pay [someone] for [something]
+        patternMeaning: 为某事向某人付款
+        direction: zh_to_en
+        items:
+          - zh: 我付钱请人修了屋顶。
+            answer: I paid someone to fix the roof.
+            hint: to fix the roof
+          - zh: 他们付了她三个月的工资。
+            answer: They paid her for three months.
+            hint: three months
+          - zh: 我们付了设计师一笔费用。
+            answer: We paid the designer for the work.
+            hint: the designer
+      - key: pay-amount-pattern
+        type: pattern_drill
+        title: 说花某个金额买了什么
+        pattern: pay [amount] for [something]
+        patternMeaning: 花某金额购买某物
+        direction: zh_to_en
+        items:
+          - zh: 我为这张桌子付了八百块。
+            answer: I paid eight hundred yuan for this table.
+            hint: eight hundred yuan
+          - zh: 你为那台电视花了多少钱？
+            answer: How much did you pay for that TV?
+            hint: that TV
+          - zh: 他只为这本书花了十块。
+            answer: He only paid ten yuan for this book.
+            hint: only；this book
+      - key: pay-attention-pattern
+        type: pattern_drill
+        title: 说要注意什么事
+        pattern: pay attention to [something]
+        patternMeaning: 注意某事
+        direction: zh_to_en
+        items:
+          - zh: 注意听我说话。
+            answer: Pay attention to what I'm saying.
+            hint: what I'm saying
+          - zh: 她没注意路标。
+            answer: She didn't pay attention to the signs.
+            hint: the signs
+          - zh: 请特别注意日期。
+            answer: Please pay special attention to the dates.
+            hint: special；the dates
+      - key: pay-someone-back-pattern
+        type: pattern_drill
+        title: 说把钱还给某人
+        pattern: pay [someone] back
+        patternMeaning: 还某人的钱
+        direction: zh_to_en
+        items:
+          - zh: 我会尽快还你钱。
+            answer: I'll pay you back as soon as I can.
+            hint: as soon as I can
+          - zh: 你能先借我一百块吗？我明天还你。
+            answer: Can you lend me a hundred? I'll pay you back tomorrow.
+            hint: lend me a hundred
+          - zh: 她去年就把钱还清了。
+            answer: She paid the money back last year.
+            hint: last year
+      - key: pay-off-pattern
+        type: pattern_drill
+        title: 说还清债务或努力得到回报
+        pattern: pay off
+        patternMeaning: 还清；努力获得回报
+        direction: zh_to_en
+        items:
+          - zh: 他终于还清了债务。
+            answer: He finally paid off the debt.
+            hint: the debt
+          - zh: 我们五年内还清了贷款。
+            answer: We paid off the loan within five years.
+            hint: the loan；within five years
+          - zh: 所有的辛苦终于有了回报。
+            answer: All the hard work paid off.
+            hint: hard work
+      - key: pay-attention-listen
+        type: pattern_drill
+        title: 听懂对方提醒你注意什么
+        pattern: pay attention to [something]
+        patternMeaning: 注意某事
+        direction: en_to_zh
+        items:
+          - en: You need to pay more attention to the way you phrase things.
+            answer: 你需要更加注意自己的表达方式。
+            hint: the way you phrase things
+          - en: She didn't pay attention to the signs.
+            answer: 她没注意路标。
+            hint: the signs
+          - en: Please pay special attention to the dates.
+            answer: 请特别注意日期。
+            hint: special；the dates
+      - key: pay-bill-cash-fee
+        type: vocab_sentence_building
+        title: 说付账单、付现金和付手续费
+        vocabWord: pay
+        vocabMeaning: 付账单；付现金；付手续费
+        direction: zh_to_en
+        patterns:
+          - chunk: pay the bill
+            items:
+              - zh: 我来付账单。
+                answer: I'll pay the bill.
+                hint: the bill
+              - zh: 我们各付各的账单。
+                answer: Let's each pay our own bill.
+                hint: our own
+          - chunk: pay in cash
+            items:
+              - zh: 我可以付现金吗？
+                answer: Can I pay in cash?
+                hint: in cash
+              - zh: 这里只能付现金。
+                answer: You can only pay in cash here.
+                hint: only
+          - chunk: pay a small fee
+            items:
+              - zh: 你需要支付一小笔费用。
+                answer: You have to pay a small fee.
+                hint: a small fee
+              - zh: 改期要收手续费吗？
+                answer: Do I have to pay a fee to change the date?
+                hint: change the date
+      - key: pay-attention-build
+        type: sentence_decomposition
+        title: 把注意表达方式说完整
+        sourceKind: chunk
+        sourceText: pay attention to the details
+        fullSentence: You need to pay more attention to the way you phrase things.
+        fullSentenceZh: 你需要更加注意自己的表达方式。
+        levels:
+          - level: 1
+            label: 核心句
+            en: You need to pay attention to the details.
+            zh: 你需要注意细节。
+            highlight: ''
+            hint: 先说需要注意细节
+          - level: 2
+            label: 加程度
+            en: You need to pay more attention to the details.
+            zh: 你需要更加注意细节。
+            highlight: more
+            hint: 补上更加
+          - level: 3
+            label: 完整句
+            en: You need to pay more attention to the way you phrase things.
+            zh: 你需要更加注意自己的表达方式。
+            highlight: the way you phrase things
+            hint: 补上表达方式
+      - key: pay-off-build
+        type: sentence_decomposition
+        title: 把练习最终有回报说完整
+        sourceKind: chunk
+        sourceText: all that practice paid off
+        fullSentence: All that practice eventually paid off.
+        fullSentenceZh: 那些练习最终都得到了回报。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The practice paid off.
+            zh: 练习有了回报。
+            highlight: ''
+            hint: 先说练习有了回报
+          - level: 2
+            label: 加范围
+            en: All that practice paid off.
+            zh: 那些练习有了回报。
+            highlight: All that
+            hint: 补上所有那些
+          - level: 3
+            label: 完整句
+            en: All that practice eventually paid off.
+            zh: 那些练习最终都得到了回报。
+            highlight: eventually
+            hint: 补上最终

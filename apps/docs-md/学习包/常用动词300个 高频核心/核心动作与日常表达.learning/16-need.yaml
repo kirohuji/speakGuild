@@ -1,0 +1,284 @@
+learning:
+  exercises:
+    pipeline:
+      - key: need-more-time
+        kind: chunk
+        type: chunk_substitution
+        title: 说需要更多时间
+        chunk: need more time
+        chunkMeaning: 需要更多时间
+        direction: zh_to_en
+        items:
+          - zh: 我需要更多时间。
+            answer: I need more time.
+            hint: I need
+          - zh: 我们需要更多时间完成这件事。
+            answer: We need more time to finish this.
+            hint: to finish this
+          - zh: 最后一部分我们还需要时间吗？
+            answer: Do we need more time for the last part?
+            hint: for the last part
+      - key: need-more-time-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说还需要时间
+        chunk: need more time
+        chunkMeaning: 需要更多时间
+        direction: en_to_zh
+        items:
+          - en: I need more time.
+            answer: 我需要更多时间。
+            hint: I need
+          - en: We need more time to finish this.
+            answer: 我们需要更多时间完成这件事。
+            hint: to finish this
+          - en: Do we need more time for the last part?
+            answer: 最后一部分我们还需要时间吗？
+            hint: for the last part
+      - key: need-to-think
+        kind: chunk
+        type: chunk_substitution
+        title: 说需要想一想
+        chunk: need to think about it
+        chunkMeaning: 需要考虑一下
+        direction: zh_to_en
+        items:
+          - zh: 我需要考虑一下。
+            answer: I need to think about it.
+            hint: think about it
+          - zh: 我们需要先讨论一下。
+            answer: We need to talk about it first.
+            hint: talk about it first
+          - zh: 她想清楚之后再做决定。
+            answer: She needs to think it over before deciding.
+            hint: think it over
+      - key: need-you-to-check
+        kind: chunk
+        type: chunk_substitution
+        title: 说需要某人做某事
+        chunk: need you to check this
+        chunkMeaning: 需要你检查一下
+        direction: zh_to_en
+        items:
+          - zh: 我需要你检查一下。
+            answer: I need you to check this.
+            hint: check this
+          - zh: 我需要你在中午之前把文件发给我。
+            answer: I need you to send me the file before noon.
+            hint: before noon
+          - zh: 我需要你周五之前确认。
+            answer: I need you to confirm by Friday.
+            hint: by Friday
+      - key: need-cleaning
+        kind: chunk
+        type: chunk_substitution
+        title: 说某物需要被打理
+        chunk: need cleaning
+        chunkMeaning: 需要打扫
+        direction: zh_to_en
+        items:
+          - zh: 这个房间需要打扫。
+            answer: The room needs cleaning.
+            hint: The room
+          - zh: 这辆车需要洗了。
+            answer: The car needs washing.
+            hint: The car
+          - zh: 这些窗户也需要擦一下。
+            answer: These windows need cleaning too.
+            hint: These windows
+      - key: need-to-be-done
+        kind: chunk
+        type: chunk_substitution
+        title: 说某事需要被完成
+        chunk: need to be done
+        chunkMeaning: 需要被完成
+        direction: zh_to_en
+        items:
+          - zh: 这项工作今天需要完成。
+            answer: The work needs to be done today.
+            hint: today
+          - zh: 这一部分发布前需要修好。
+            answer: This part needs to be fixed before the release.
+            hint: before the release
+          - zh: 表格明天之前需要填好。
+            answer: The form needs to be filled in by tomorrow.
+            hint: by tomorrow
+      - key: need-something-pattern
+        type: pattern_drill
+        title: 说需要某样东西
+        pattern: need [something]
+        patternMeaning: 需要某物
+        direction: zh_to_en
+        items:
+          - zh: 你需要帮忙吗？
+            answer: Do you need any help?
+            hint: any help
+          - zh: 我们需要一把更大的椅子。
+            answer: We need a bigger chair.
+            hint: a bigger chair
+          - zh: 她需要一个安静的地方工作。
+            answer: She needs a quiet place to work.
+            hint: a quiet place
+      - key: need-to-do-pattern
+        type: pattern_drill
+        title: 说需要做某事
+        pattern: need to [do]
+        patternMeaning: 需要做某事
+        direction: zh_to_en
+        items:
+          - zh: 我需要知道发生了什么。
+            answer: I need to know what happened.
+            hint: what happened
+          - zh: 我们得在六点前出发。
+            answer: We need to leave before six.
+            hint: before six
+          - zh: 他需要多睡一会儿。
+            answer: He needs to get more sleep.
+            hint: get more sleep
+      - key: need-someone-to-do-pattern
+        type: pattern_drill
+        title: 说需要某人做某事
+        pattern: need [someone] to [do]
+        patternMeaning: 需要某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 我需要你帮我个忙。
+            answer: I need you to do me a favour.
+            hint: do me a favour
+          - zh: 我们需要有人接电话。
+            answer: We need someone to answer the phone.
+            hint: answer the phone
+          - zh: 她需要医生看看她的背。
+            answer: She needs a doctor to look at her back.
+            hint: look at her back
+      - key: need-doing-pattern
+        type: pattern_drill
+        title: 说某物需要被处理
+        pattern: need [doing]
+        patternMeaning: 需要被处理
+        direction: zh_to_en
+        items:
+          - zh: 这扇门需要修了。
+            answer: The door needs fixing.
+            hint: The door
+          - zh: 花园需要浇水。
+            answer: The garden needs watering.
+            hint: The garden
+          - zh: 我的自行车需要打气。
+            answer: My bike needs pumping up.
+            hint: My bike
+      - key: need-to-be-done-pattern
+        type: pattern_drill
+        title: 说某事需要被完成
+        pattern: need to be [past participle]
+        patternMeaning: 需要被处理或完成
+        direction: zh_to_en
+        items:
+          - zh: 报告周五之前需要交。
+            answer: The report needs to be submitted by Friday.
+            hint: by Friday
+          - zh: 这台机器需要清洁。
+            answer: This machine needs to be cleaned.
+            hint: This machine
+          - zh: 这些旧文件需要处理掉。
+            answer: These old files need to be dealt with.
+            hint: dealt with
+      - key: need-doing-listen
+        type: pattern_drill
+        title: 听懂对方说什么东西该弄了
+        pattern: need [doing]
+        patternMeaning: 需要被处理
+        direction: en_to_zh
+        items:
+          - en: The room needs cleaning.
+            answer: 这个房间需要打扫。
+            hint: The room
+          - en: The car needs washing.
+            answer: 这辆车需要洗了。
+            hint: The car
+          - en: These windows need cleaning too.
+            answer: 这些窗户也需要擦一下。
+            hint: These windows
+      - key: need-help-break-if-need-be
+        type: vocab_sentence_building
+        title: 说需要帮助、需要休息和如有必要
+        vocabWord: need
+        vocabMeaning: 需要帮助；需要休息；如有必要
+        direction: zh_to_en
+        patterns:
+          - chunk: need help
+            items:
+              - zh: 你需要帮助就告诉我。
+                answer: Let me know if you need help.
+                hint: Let me know
+              - zh: 她需要别人帮她搬家具。
+                answer: She needs help moving the furniture.
+                hint: moving the furniture
+          - chunk: need a break
+            items:
+              - zh: 我觉得我们需要休息一下。
+                answer: I think we need a break.
+                hint: I think
+              - zh: 你工作太久了，需要休息。
+                answer: You've been working too long and need a break.
+                hint: working too long
+          - chunk: if need be
+            items:
+              - zh: 如有必要，我会多待一会儿。
+                answer: I'll stay longer if need be.
+                hint: stay longer
+              - zh: 如有必要，我们可以加班。
+                answer: We can work late if need be.
+                hint: work late
+      - key: need-time-build
+        type: sentence_decomposition
+        title: 把还需要一点时间考虑说完整
+        sourceKind: chunk
+        sourceText: need more time
+        fullSentence: I need a little more time to think about it.
+        fullSentenceZh: 我还需要一点时间考虑。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I need more time.
+            zh: 我需要更多时间。
+            highlight: ''
+            hint: 先说需要更多时间
+          - level: 2
+            label: 加程度
+            en: I need a little more time.
+            zh: 我还需要一点时间。
+            highlight: a little
+            hint: 补上一点
+          - level: 3
+            label: 完整句
+            en: I need a little more time to think about it.
+            zh: 我还需要一点时间考虑。
+            highlight: to think about it
+            hint: 补上考虑
+      - key: need-fix-build
+        type: sentence_decomposition
+        title: 把发布前需要修好说完整
+        sourceKind: pattern
+        sourceText: need to be [past participle]
+        fullSentence: This part needs to be fixed before we release the update.
+        fullSentenceZh: 这一部分在发布更新之前需要修好。
+        levels:
+          - level: 1
+            label: 核心句
+            en: This part needs to be fixed.
+            zh: 这一部分需要修好。
+            highlight: ''
+            hint: 先说需要修好
+          - level: 2
+            label: 加时间
+            en: This part needs to be fixed before the release.
+            zh: 这一部分发布前需要修好。
+            highlight: before the release
+            hint: 补上发布前
+          - level: 3
+            label: 完整句
+            en: This part needs to be fixed before we release the update.
+            zh: 这一部分在发布更新之前需要修好。
+            highlight: before we release the update
+            hint: 补上发布更新之前

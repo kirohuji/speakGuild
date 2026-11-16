@@ -1,0 +1,284 @@
+learning:
+  exercises:
+    pipeline:
+      - key: want-some-coffee
+        kind: chunk
+        type: chunk_substitution
+        title: 说想要某样东西
+        chunk: want some coffee
+        chunkMeaning: 想喝点咖啡
+        direction: zh_to_en
+        items:
+          - zh: 我想喝点咖啡。
+            answer: I want some coffee.
+            hint: some coffee
+          - zh: 他想喝杯水。
+            answer: He wants a glass of water.
+            hint: a glass of water
+          - zh: 孩子们想吃冰淇淋。
+            answer: The kids want some ice cream.
+            hint: some ice cream
+      - key: want-coffee-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说想要什么
+        chunk: want some coffee
+        chunkMeaning: 想喝点咖啡
+        direction: en_to_zh
+        items:
+          - en: I want some coffee.
+            answer: 我想喝点咖啡。
+            hint: some coffee
+          - en: He wants a glass of water.
+            answer: 他想喝杯水。
+            hint: a glass of water
+          - en: The kids want some ice cream.
+            answer: 孩子们想吃冰淇淋。
+            hint: some ice cream
+      - key: want-leave-early
+        kind: chunk
+        type: chunk_substitution
+        title: 说想做某件事
+        chunk: want to leave early
+        chunkMeaning: 想早点走
+        direction: zh_to_en
+        items:
+          - zh: 我今天想早点走。
+            answer: I want to leave early today.
+            hint: leave early；today
+          - zh: 我们想周末去爬山。
+            answer: We want to go hiking this weekend.
+            hint: go hiking；this weekend
+          - zh: 她想换一份工作。
+            answer: She wants to change jobs.
+            hint: change jobs
+      - key: want-you-honest
+        kind: chunk
+        type: chunk_substitution
+        title: 说希望某人怎么做
+        chunk: want you to be honest
+        chunkMeaning: 希望你坦诚
+        direction: zh_to_en
+        items:
+          - zh: 我希望你对我坦诚。
+            answer: I want you to be honest with me.
+            hint: with me
+          - zh: 我想让你先听我说完。
+            answer: I want you to hear me out first.
+            hint: hear me out first
+          - zh: 我们希望你来参加。
+            answer: We want you to join us.
+            hint: join us
+      - key: want-this-finished
+        kind: chunk
+        type: chunk_substitution
+        title: 说希望某事被完成
+        chunk: want this finished
+        chunkMeaning: 希望这件事完成
+        direction: zh_to_en
+        items:
+          - zh: 我希望周五之前完成这个。
+            answer: I want this finished by Friday.
+            hint: by Friday
+          - zh: 我希望会议开始前把这件事完成。
+            answer: I want this done before the meeting starts.
+            hint: the meeting starts
+          - zh: 她想让报告今晚就发出去。
+            answer: She wants the report sent out tonight.
+            hint: sent out tonight
+      - key: want-room-clean
+        kind: chunk
+        type: chunk_substitution
+        title: 说希望某物处于某种状态
+        chunk: want the room clean
+        chunkMeaning: 希望房间干净
+        direction: zh_to_en
+        items:
+          - zh: 我希望他们到之前房间是干净的。
+            answer: I want the room clean before they arrive.
+            hint: before they arrive
+          - zh: 我希望桌子空出来。
+            answer: I want the table clear.
+            hint: the table clear
+          - zh: 他希望车加满油。
+            answer: He wants the car full of petrol.
+            hint: full of petrol
+      - key: want-something-pattern
+        type: pattern_drill
+        title: 说想要某个东西
+        pattern: want [something]
+        patternMeaning: 想要某物
+        direction: zh_to_en
+        items:
+          - zh: 我想要一张靠窗的票。
+            answer: I want a window seat.
+            hint: a window seat
+          - zh: 他想要一台新电脑。
+            answer: He wants a new laptop.
+            hint: a new laptop
+          - zh: 她只想要一个明确的答案。
+            answer: She just wants a clear answer.
+            hint: a clear answer
+      - key: want-to-do-pattern
+        type: pattern_drill
+        title: 说想做某件事
+        pattern: want to [do]
+        patternMeaning: 想做某事
+        direction: zh_to_en
+        items:
+          - zh: 我想知道发生了什么。
+            answer: I want to know what happened.
+            hint: what happened
+          - zh: 我想花点时间考虑一下再做决定。
+            answer: I want to spend some time thinking about it before I decide.
+            hint: before I decide
+          - zh: 他们想在市中心租个房子。
+            answer: They want to rent a flat in the city centre.
+            hint: rent a flat
+      - key: want-someone-to-do-pattern
+        type: pattern_drill
+        title: 说希望某人做某事
+        pattern: want [someone] to [do]
+        patternMeaning: 希望某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 我希望你确切地告诉我发生了什么。
+            answer: I want you to tell me exactly what happened.
+            hint: exactly
+          - zh: 我想让他先打个电话。
+            answer: I want him to call first.
+            hint: call first
+          - zh: 老师希望我们多提问。
+            answer: The teacher wants us to ask more questions.
+            hint: ask more questions
+      - key: want-something-past-participle-pattern
+        type: pattern_drill
+        title: 说希望某事被处理
+        pattern: want [something] [past participle]
+        patternMeaning: 希望某事完成
+        direction: zh_to_en
+        items:
+          - zh: 我想把头发剪短。
+            answer: I want my hair cut short.
+            hint: cut short
+          - zh: 她想让照片今天打印出来。
+            answer: She wants the photos printed today.
+            hint: printed today
+          - zh: 我们希望厨房下周刷完。
+            answer: We want the kitchen painted next week.
+            hint: painted next week
+      - key: want-something-adjective-pattern
+        type: pattern_drill
+        title: 说希望某物变成某种状态
+        pattern: want [something] [adjective]
+        patternMeaning: 希望某物处于某状态
+        direction: zh_to_en
+        items:
+          - zh: 我希望汤热一点。
+            answer: I want the soup a bit hotter.
+            hint: a bit hotter
+          - zh: 她想让花园更整齐。
+            answer: She wants the garden tidier.
+            hint: tidier
+          - zh: 我们希望房间安静一点。
+            answer: We want the room quieter.
+            hint: quieter
+      - key: want-someone-to-listen
+        type: pattern_drill
+        title: 听懂对方希望谁做什么
+        pattern: want [someone] to [do]
+        patternMeaning: 希望某人做某事
+        direction: en_to_zh
+        items:
+          - en: I want you to be honest with me.
+            answer: 我希望你对我坦诚。
+            hint: with me
+          - en: I want him to call first.
+            answer: 我想让他先打个电话。
+            hint: call first
+          - en: The teacher wants us to ask more questions.
+            answer: 老师希望我们多提问。
+            hint: ask more questions
+      - key: want-know-makesure-nothing
+        type: vocab_sentence_building
+        title: 说想知道、想确认和不想参与
+        vocabWord: want
+        vocabMeaning: 想知道；想确认；不想参与
+        direction: zh_to_en
+        patterns:
+          - chunk: want to know
+            items:
+              - zh: 我想知道他为什么走。
+                answer: I want to know why he left.
+                hint: why he left
+              - zh: 我们想知道接下来会发生什么。
+                answer: We want to know what happens next.
+                hint: what happens next
+          - chunk: want to make sure
+            items:
+              - zh: 我只是想确认一切都准备好了。
+                answer: I just want to make sure everything is ready.
+                hint: everything is ready
+              - zh: 我想确认我们没弄错日期。
+                answer: I want to make sure we have the right date.
+                hint: the right date
+          - chunk: want nothing to do with
+            items:
+              - zh: 我完全不想掺和他们的争吵。
+                answer: I want nothing to do with their argument.
+                hint: their argument
+              - zh: 她不想跟那个项目有任何关系。
+                answer: She wants nothing to do with that project.
+                hint: that project
+      - key: want-done-build
+        type: sentence_decomposition
+        title: 把希望会议前完成说完整
+        sourceKind: pattern
+        sourceText: want [something] [past participle]
+        fullSentence: I want this done before the meeting starts.
+        fullSentenceZh: 我希望在会议开始之前把这件事完成。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I want this done.
+            zh: 我希望这件事完成。
+            highlight: ''
+            hint: 先说希望这件事完成
+          - level: 2
+            label: 加时间
+            en: I want this done by Friday.
+            zh: 我希望周五之前完成。
+            highlight: by Friday
+            hint: 补上周五之前
+          - level: 3
+            label: 完整句
+            en: I want this done before the meeting starts.
+            zh: 我希望在会议开始之前把这件事完成。
+            highlight: before the meeting starts
+            hint: 补上会议开始之前
+      - key: want-know-build
+        type: sentence_decomposition
+        title: 把考虑之后再决定说完整
+        sourceKind: pattern
+        sourceText: want to [do]
+        fullSentence: I want to spend some time thinking about it before I decide.
+        fullSentenceZh: 我想花点时间考虑一下再做决定。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I want to think about it.
+            zh: 我想考虑一下。
+            highlight: ''
+            hint: 先说想考虑一下
+          - level: 2
+            label: 加程度
+            en: I want to spend some time thinking about it.
+            zh: 我想花点时间考虑一下。
+            highlight: spend some time
+            hint: 补上花点时间
+          - level: 3
+            label: 完整句
+            en: I want to spend some time thinking about it before I decide.
+            zh: 我想花点时间考虑一下再做决定。
+            highlight: before I decide
+            hint: 补上再做决定
