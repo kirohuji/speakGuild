@@ -41,3 +41,4 @@ reports/
 /scripts/
 .delta/
 .zed/
+.pnpm-store/

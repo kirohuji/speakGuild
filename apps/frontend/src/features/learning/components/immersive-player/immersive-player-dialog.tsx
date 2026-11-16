@@ -266,6 +266,8 @@ export function ImmersivePlayerDialog({
               if (runRef.current !== runId) return
               if (event.reason === 'remotePlay') setPlaybackStatus('playing')
               if (event.reason === 'remotePause') setPlaybackStatus('paused')
+              if (event.reason === 'remotePreviousTrack') gotoPrev(true)
+              if (event.reason === 'remoteNextTrack') gotoNext(true)
             },
             () => {
               if (runRef.current === runId) setPlaybackStatus('playing')
@@ -318,7 +320,7 @@ export function ImmersivePlayerDialog({
         toast.error(t('immersivePlayer.playFailed'))
       }
     }
-  }, [current, hasNext, index, items.length, mediaMetadataLabels, onIndexChange, setPlaybackStatus, settings, t, waitForItemGap])
+  }, [current, gotoNext, gotoPrev, hasNext, index, items.length, mediaMetadataLabels, onIndexChange, setPlaybackStatus, settings, t, waitForItemGap])
 
   const togglePlay = useCallback(async () => {
     if (status === 'playing' && gapWaitRef.current) {

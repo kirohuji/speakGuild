@@ -2242,6 +2242,18 @@ export class LearningService {
       }));
     }
 
+    // Vocabulary examples keep their generated TTS as durable asset:// URLs
+    // inside the examples JSON. Include every referenced clip in the package
+    // manifest so native installs can resolve those URLs to local files just
+    // like the word's US/UK pronunciation.
+    for (const vocabulary of packagedVocabularies) {
+      if (!Array.isArray(vocabulary?.examples)) continue;
+      for (const example of vocabulary.examples) {
+        const audioUrl = typeof example?.audioUrl === 'string' ? example.audioUrl.trim() : '';
+        if (audioUrl) this.pushAsset(assets, audioUrl, 'vocabulary_example_audio');
+      }
+    }
+
     const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0)
       + chapterVocabularies.length
       + (keepUnitKnowledge ? (unitVocabs?.length ?? 0) : 0);

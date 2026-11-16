@@ -103,7 +103,12 @@ export const immersivePlaybackService = {
   },
 
   async registerMediaActions(handlers: Partial<Record<MediaSessionAction, () => void>>) {
-    const actions = ['play', 'pause', 'previoustrack', 'nexttrack', 'stop'] as MediaSessionAction[]
+    // NativeAudio owns the iOS previous/next commands (and emits playbackState events for
+    // them). Registering the same commands through MediaSession would create two global
+    // MPRemoteCommandCenter targets. Web keeps using the browser Media Session API.
+    const actions = (Capacitor.getPlatform() === 'ios'
+      ? ['play', 'pause', 'stop']
+      : ['play', 'pause', 'previoustrack', 'nexttrack', 'stop']) as MediaSessionAction[]
     await Promise.all(actions.map((action) =>
       MediaSession.setActionHandler({ action }, handlers[action] ? () => handlers[action]?.() : null).catch(() => undefined),
     ))

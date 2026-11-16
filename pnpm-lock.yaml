@@ -8,6 +8,9 @@ overrides:
   sql.js: 1.11.0
 
 patchedDependencies:
+  '@capgo/capacitor-native-audio@8.4.15':
+    hash: db8e3e1b07dd1326af187bc4e1ec5a5c7efd26e1739aede1a4c9cc96c0e549c9
+    path: patches/@capgo__capacitor-native-audio@8.4.15.patch
   '@capgo/capacitor-wechat@8.0.32':
     hash: 643906a9ef3a7af4556b2c68af41c9bb36f8f69637556eaa5fdc206a772fd1e5
     path: patches/@capgo__capacitor-wechat@8.0.32.patch
@@ -332,7 +335,7 @@ importers:
         version: 8.0.28(@capacitor/core@8.3.1)
       '@capgo/capacitor-native-audio':
         specifier: ^8.4.15
-        version: 8.4.15(@capacitor/core@8.3.1)
+        version: 8.4.15(patch_hash=db8e3e1b07dd1326af187bc4e1ec5a5c7efd26e1739aede1a4c9cc96c0e549c9)(@capacitor/core@8.3.1)
       '@capgo/capacitor-social-login':
         specifier: ^8.3.22
         version: 8.3.22(@capacitor/core@8.3.1)
@@ -7945,7 +7948,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.1
 
-  '@capgo/capacitor-native-audio@8.4.15(@capacitor/core@8.3.1)':
+  '@capgo/capacitor-native-audio@8.4.15(patch_hash=db8e3e1b07dd1326af187bc4e1ec5a5c7efd26e1739aede1a4c9cc96c0e549c9)(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
