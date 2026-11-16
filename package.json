@@ -19,7 +19,8 @@
     "docs:export-learning": "pnpm --filter @manyu/backend docs:export-learning",
     "docs:sync": "pnpm --filter @manyu/backend docs:sync",
     "docs:sync-learning": "pnpm --filter @manyu/backend docs:sync-learning",
-    "docs:merge-learning": "pnpm --filter @manyu/backend docs:merge-learning"
+    "docs:merge-learning": "pnpm --filter @manyu/backend docs:merge-learning",
+    "docs:validate-learning": "pnpm --filter @manyu/backend docs:validate-learning"
   },
   "devDependencies": {
     "typescript": "^5.9.0"

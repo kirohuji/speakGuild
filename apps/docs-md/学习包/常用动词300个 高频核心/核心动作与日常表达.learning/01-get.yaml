@@ -32,6 +32,9 @@ learning:
           - zh: 我得在开会前到办公室。
             answer: I need to get to the office before the meeting.
             hint: before the meeting
+          - zh: 她九点前就到了办公室。
+            answer: She got to the office before nine.
+            hint: before nine
       - key: get-to-work-listen
         kind: chunk
         type: chunk_substitution
@@ -46,6 +49,9 @@ learning:
           - en: I called her after I got to work.
             answer: 我到公司后给她打了电话。
             hint: called her；after
+          - en: I got to work late because the bus was slow.
+            answer: 因为公交车慢，我到公司晚了。
+            hint: the bus was slow
       - key: get-state
         type: vocab_sentence_building
         title: 说事情变得怎样
@@ -91,6 +97,9 @@ learning:
           - zh: 你收到他的消息了吗？
             answer: Did you get a message from him?
             hint: 疑问句
+          - zh: 我昨天收到了他的消息。
+            answer: I got a message from him yesterday.
+            hint: yesterday
       - key: get-to-meet
         kind: chunk
         type: chunk_substitution
@@ -105,6 +114,9 @@ learning:
           - zh: 你有机会见到她吗？
             answer: Did you get to meet her?
             hint: 疑问句
+          - zh: 我们没机会见到她。
+            answer: We didn't get to meet her.
+            hint: didn't
       - key: get-him-agree
         kind: chunk
         type: chunk_substitution
@@ -119,6 +131,9 @@ learning:
           - zh: 你能让他同意吗？
             answer: Can you get him to agree?
             hint: Can you
+          - zh: 你能说服他改变主意吗？
+            answer: Can you get him to change his mind?
+            hint: change his mind
       - key: get-laptop-fixed
         kind: chunk
         type: chunk_substitution
@@ -133,6 +148,9 @@ learning:
           - zh: 我上周把电脑送去修好了。
             answer: I got my laptop fixed last week.
             hint: last week
+          - zh: 她昨天把车修好了。
+            answer: She got her car fixed yesterday.
+            hint: her car；yesterday
       - key: get-used-to-alone
         kind: chunk
         type: chunk_substitution
@@ -147,6 +165,9 @@ learning:
           - zh: 你正在习惯一个人工作吗？
             answer: Are you getting used to working alone?
             hint: 疑问句；进行时
+          - zh: 我已经习惯一个人工作了。
+            answer: I've got used to working alone.
+            hint: have got used
       - key: get-rid-of-files
         kind: chunk
         type: chunk_substitution
@@ -161,6 +182,9 @@ learning:
           - zh: 你把那些旧文件处理掉了吗？
             answer: Did you get rid of the old files?
             hint: 疑问句
+          - zh: 我们把旧家具处理掉吧。
+            answer: Let's get rid of the old furniture.
+            hint: Let's；the old furniture
       - key: get-in-touch-her
         kind: chunk
         type: chunk_substitution
@@ -175,6 +199,9 @@ learning:
           - zh: 你联系上她了吗？
             answer: Did you get in touch with her?
             hint: 疑问句
+          - zh: 请尽快联系她。
+            answer: Please get in touch with her as soon as possible.
+            hint: as soon as possible
       - key: get-back-to-you
         kind: chunk
         type: chunk_substitution
@@ -189,6 +216,9 @@ learning:
           - zh: 我看一下你的消息，今天下午回复你。
             answer: I'll check your message and get back to you this afternoon.
             hint: your message；this afternoon
+          - zh: 我查一下日程，稍后回复你。
+            answer: I'll check my schedule and get back to you.
+            hint: my schedule
       - key: get-back-to-you-listen
         kind: chunk
         type: chunk_substitution
@@ -203,6 +233,9 @@ learning:
           - en: Can I get back to you after lunch?
             answer: 我可以午饭后再回复你吗？
             hint: after lunch
+          - en: I'll get back to you as soon as I know.
+            answer: 我一知道就回复你。
+            hint: as soon as I know
       - key: get-i-got-it
         kind: chunk
         type: chunk_substitution
@@ -217,6 +250,9 @@ learning:
           - zh: 我明白了，所以我先给她打电话。
             answer: I got it, so I'll call her first.
             hint: so；call her first
+          - zh: 我明白了，我们先确认一下细节。
+            answer: I got it, so let's check the details first.
+            hint: check the details
       - key: get-to-place
         type: pattern_drill
         title: 换个地点说到达
@@ -246,6 +282,9 @@ learning:
           - zh: 你到家后给我打电话。
             answer: Call me when you get home.
             hint: Call me；when
+          - zh: 你通常几点到家？
+            answer: What time do you usually get home?
+            hint: usually
       - key: get-adjective
         type: pattern_drill
         title: 说别的变化
@@ -259,6 +298,9 @@ learning:
           - zh: 我在路上累了。
             answer: I got tired on the way.
             hint: on the way
+          - zh: 我的英语越来越好了。
+            answer: My English is getting better.
+            hint: My English
       - key: get-something-from
         type: pattern_drill
         title: 说从别人那里收到东西
@@ -272,6 +314,9 @@ learning:
           - zh: 她接到了姐姐的电话。
             answer: She got a call from her sister.
             hint: a call；her sister
+          - zh: 我们从他那里得到了很多帮助。
+            answer: We got a lot of help from him.
+            hint: a lot of help
       - key: get-to-do
         type: pattern_drill
         title: 说有机会做别的事
@@ -285,6 +330,9 @@ learning:
           - zh: 我们没机会把讨论做完。
             answer: We didn't get to finish the discussion.
             hint: didn't；the discussion
+          - zh: 我们终于有机会坐下来聊聊。
+            answer: We finally got to sit down and talk.
+            hint: finally；sit down and talk
       - key: get-someone-to-do
         type: pattern_drill
         title: 让别人去做一件事
@@ -298,6 +346,9 @@ learning:
           - zh: 我们没能让他们再多等一会儿。
             answer: We couldn't get them to wait a little longer.
             hint: couldn't；a little longer
+          - zh: 我让他把窗户关上。
+            answer: I got him to close the window.
+            hint: close the window
       - key: get-something-done
         type: pattern_drill
         title: 把事情办完
@@ -311,6 +362,9 @@ learning:
           - zh: 她昨晚把报告做完了。
             answer: She got the report finished last night.
             hint: the report；last night
+          - zh: 我需要把护照更新一下。
+            answer: I need to get my passport renewed.
+            hint: my passport
       - key: get-used-to-new
         type: pattern_drill
         title: 习惯一件新的事
@@ -324,6 +378,9 @@ learning:
           - zh: 我花了几个星期才习惯在家工作。
             answer: It took me a few weeks to get used to working from home.
             hint: a few weeks
+          - zh: 你习惯新的工作时间了吗？
+            answer: Have you got used to the new working hours?
+            hint: Have you；the new working hours
       - key: get-rid-of-other
         type: pattern_drill
         title: 去掉别的东西
@@ -337,6 +394,9 @@ learning:
           - zh: 我们把多余的椅子清掉吧。
             answer: Let's get rid of the extra chairs.
             hint: Let's；the extra chairs
+          - zh: 这个习惯很难改掉。
+            answer: It's hard to get rid of this habit.
+            hint: hard；this habit
       - key: get-in-touch-other
         type: pattern_drill
         title: 联系别人
@@ -350,6 +410,9 @@ learning:
           - zh: 你联系上老师了吗？
             answer: Did you get in touch with your teacher?
             hint: your teacher
+          - zh: 我会尽快联系你。
+            answer: I'll get in touch with you soon.
+            hint: soon
       - key: get-need-to
         type: pattern_drill
         title: 说自己需要做的事
@@ -366,6 +429,82 @@ learning:
           - zh: 我今天得联系她。
             answer: I need to get in touch with her today.
             hint: today
+      - key: get-ready-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说要准备
+        chunk: get ready
+        chunkMeaning: 准备好
+        direction: en_to_zh
+        items:
+          - en: Give me five minutes to get ready.
+            answer: 给我五分钟准备一下。
+            hint: five minutes
+          - en: We need to get ready before we go out.
+            answer: 我们出门前得准备好。
+            hint: before we go out
+          - en: She's getting ready for the interview.
+            answer: 她正在为面试做准备。
+            hint: for the interview
+      - key: get-used-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说习惯某件事
+        chunk: get used to working alone
+        chunkMeaning: 习惯一个人工作
+        direction: en_to_zh
+        items:
+          - en: I'm getting used to working alone.
+            answer: 我正在慢慢习惯一个人工作。
+            hint: 进行时
+          - en: It took me a few weeks to get used to working from home.
+            answer: 我花了几个星期才习惯在家工作。
+            hint: a few weeks
+          - en: You'll get used to the new schedule soon.
+            answer: 你很快就会习惯新的作息。
+            hint: soon；the new schedule
+      - key: get-something-done-listen
+        type: pattern_drill
+        title: 听懂对方说把事办完了
+        pattern: get [something] [past participle]
+        patternMeaning: 让某事得到处理或完成
+        direction: en_to_zh
+        items:
+          - en: I need to get my hair cut.
+            answer: 我得去剪头发了。
+            hint: my hair
+          - en: She got the report finished last night.
+            answer: 她昨晚把报告做完了。
+            hint: the report；last night
+          - en: We're getting the kitchen painted next week.
+            answer: 我们下周找人把厨房刷了。
+            hint: the kitchen；next week
+      - key: get-rid-of-build
+        type: sentence_decomposition
+        title: 把处理掉旧东西这件事说完整
+        sourceKind: chunk
+        sourceText: get rid of old files
+        fullSentence: I got rid of the old files that I no longer need.
+        fullSentenceZh: 我把不再需要的旧文件处理掉了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I got rid of the old files.
+            zh: 我把旧文件处理掉了。
+            highlight: ''
+            hint: 先说处理掉了旧文件
+          - level: 2
+            label: 加时间
+            en: I got rid of the old files this morning.
+            zh: 我今天上午把旧文件处理掉了。
+            highlight: this morning
+            hint: 补上今天上午
+          - level: 3
+            label: 完整句
+            en: I got rid of the old files that I no longer need.
+            zh: 我把不再需要的旧文件处理掉了。
+            highlight: that I no longer need
+            hint: 补上不再需要的
       - key: get-home-build
         type: sentence_decomposition
         title: 把到家之后的话说完整

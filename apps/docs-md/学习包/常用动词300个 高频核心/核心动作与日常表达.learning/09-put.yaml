@@ -1,0 +1,367 @@
+learning:
+  exercises:
+    pipeline:
+      - key: put-keys-table
+        kind: chunk
+        type: chunk_substitution
+        title: 说把东西放在某处
+        chunk: put the keys on the table
+        chunkMeaning: 把钥匙放在桌子上
+        direction: zh_to_en
+        items:
+          - zh: 把钥匙放在桌子上。
+            answer: Put the keys on the table.
+            hint: on the table
+          - zh: 把牛奶放进冰箱。
+            answer: Put the milk in the fridge.
+            hint: in the fridge
+          - zh: 把外套挂在门后。
+            answer: Put your coat behind the door.
+            hint: your coat；behind the door
+      - key: put-keys-table-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方问东西放哪了
+        chunk: put the keys on the table
+        chunkMeaning: 把钥匙放在桌子上
+        direction: en_to_zh
+        items:
+          - en: Where did you put the keys?
+            answer: 你把钥匙放哪儿了？
+            hint: Where
+          - en: I put the keys on the table.
+            answer: 我把钥匙放在桌子上了。
+            hint: on the table
+          - en: She put the book back on the shelf.
+            answer: 她把书放回书架上了。
+            hint: back on the shelf
+      - key: put-difficult-position
+        kind: chunk
+        type: chunk_substitution
+        title: 说让人陷入某种处境
+        chunk: put us in a difficult position
+        chunkMeaning: 使我们陷入困境
+        direction: zh_to_en
+        items:
+          - zh: 这个错误让我们陷入了困境。
+            answer: The mistake put us in a difficult position.
+            hint: The mistake
+          - zh: 别把我放在这么尴尬的位置上。
+            answer: Don't put me in such an awkward position.
+            hint: such an awkward position
+          - zh: 取消预订让我们很为难。
+            answer: Cancelling the booking put us in a difficult position.
+            hint: Cancelling the booking
+      - key: put-effort-into
+        kind: chunk
+        type: chunk_substitution
+        title: 说在某事上投入精力
+        chunk: put effort into my work
+        chunkMeaning: 把精力投入到工作中
+        direction: zh_to_en
+        items:
+          - zh: 她在工作中投入了很多精力。
+            answer: She puts a lot of effort into her work.
+            hint: a lot of effort
+          - zh: 你得在这门课上多下点功夫。
+            answer: You need to put more effort into this course.
+            hint: more effort；this course
+          - zh: 他为这个项目投入了很多时间。
+            answer: He put a lot of time into this project.
+            hint: a lot of time
+      - key: put-into-practice
+        kind: chunk
+        type: chunk_substitution
+        title: 说把学到的东西用起来
+        chunk: put what I've learned into practice
+        chunkMeaning: 把学到的东西付诸实践
+        direction: zh_to_en
+        items:
+          - zh: 把学到的东西用起来。
+            answer: Put what you've learned into practice.
+            hint: what you've learned
+          - zh: 只学不够，还得用起来。
+            answer: Learning isn't enough; you also need to put it into practice.
+            hint: isn't enough
+          - zh: 我们把计划付诸实践吧。
+            answer: Let's put the plan into practice.
+            hint: the plan
+      - key: put-on-jacket
+        kind: chunk
+        type: chunk_substitution
+        title: 说穿上戴上什么
+        chunk: put on a jacket
+        chunkMeaning: 穿上外套
+        direction: zh_to_en
+        items:
+          - zh: 穿件外套吧，外面很冷。
+            answer: Put on a jacket. It's cold outside.
+            hint: It's cold outside
+          - zh: 出门前穿上你的鞋。
+            answer: Put on your shoes before you go out.
+            hint: before you go out
+          - zh: 他戴上帽子就出去了。
+            answer: He put on his hat and went out.
+            hint: his hat；went out
+      - key: put-off-meeting
+        kind: chunk
+        type: chunk_substitution
+        title: 说推迟某件事
+        chunk: put off the meeting
+        chunkMeaning: 推迟会议
+        direction: zh_to_en
+        items:
+          - zh: 我们不得不推迟会议。
+            answer: We had to put the meeting off.
+            hint: had to
+          - zh: 会议推迟到下周一了。
+            answer: The meeting has been put off until next Monday.
+            hint: until next Monday
+          - zh: 别把决定拖到下周。
+            answer: Don't put the decision off until next week.
+            hint: until next week
+      - key: put-away-phone
+        kind: chunk
+        type: chunk_substitution
+        title: 说把东西收起来
+        chunk: put away my phone
+        chunkMeaning: 把手机收起来
+        direction: zh_to_en
+        items:
+          - zh: 请把手机收起来。
+            answer: Please put your phone away.
+            hint: your phone
+          - zh: 我需要专心时会把手机收起来。
+            answer: I put my phone away when I need to focus.
+            hint: when I need to focus
+          - zh: 把盘子收进柜子里。
+            answer: Put the plates away in the cupboard.
+            hint: in the cupboard
+      - key: put-on-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方叫你穿上
+        chunk: put on a jacket
+        chunkMeaning: 穿上外套
+        direction: en_to_zh
+        items:
+          - en: Put on a jacket. It's cold outside.
+            answer: 穿件外套吧，外面很冷。
+            hint: It's cold outside
+          - en: Put it on before you go out.
+            answer: 出门前把它穿上。
+            hint: before you go out
+          - en: She put on her glasses and started reading.
+            answer: 她戴上眼镜开始看书。
+            hint: her glasses
+      - key: put-something-somewhere
+        type: pattern_drill
+        title: 说把东西放到别处
+        pattern: put [something] [somewhere]
+        patternMeaning: 把某物放到某处
+        direction: zh_to_en
+        items:
+          - zh: 把你的包放在椅子上。
+            answer: Put your bag on the chair.
+            hint: on the chair
+          - zh: 我把书放在桌上了。
+            answer: I put the book on the desk.
+            hint: on the desk
+          - zh: 她把钥匙放进了口袋。
+            answer: She put the keys in her pocket.
+            hint: in her pocket
+      - key: put-someone-in-situation
+        type: pattern_drill
+        title: 说让人陷入某种处境
+        pattern: put [someone] in [situation]
+        patternMeaning: 使某人处于某种处境
+        direction: zh_to_en
+        items:
+          - zh: 这个决定让我们处境很尴尬。
+            answer: The decision put us in an awkward situation.
+            hint: The decision；awkward
+          - zh: 别让自己陷入危险。
+            answer: Don't put yourself in danger.
+            hint: yourself；danger
+          - zh: 一个小错误让我们陷入了麻烦。
+            answer: A small mistake put us in trouble.
+            hint: A small mistake
+      - key: put-something-into
+        type: pattern_drill
+        title: 说把资源投入到某事
+        pattern: put [something] into [something]
+        patternMeaning: 把资源投入某事
+        direction: zh_to_en
+        items:
+          - zh: 他为这个项目投入了很多钱。
+            answer: He put a lot of money into the project.
+            hint: a lot of money；the project
+          - zh: 我们应该把更多资源投入到研究上。
+            answer: We should put more resources into research.
+            hint: more resources；research
+          - zh: 她把全部时间都投入到孩子身上。
+            answer: She put all her time into her children.
+            hint: all her time
+      - key: put-into-practice-drill
+        type: pattern_drill
+        title: 说把计划或想法付诸实践
+        pattern: put [something] into practice
+        patternMeaning: 将某事付诸实践
+        direction: zh_to_en
+        items:
+          - zh: 这个想法很难付诸实践。
+            answer: This idea is hard to put into practice.
+            hint: hard
+          - zh: 你现在就该把学到的东西用起来。
+            answer: You should put what you've learned into practice right now.
+            hint: right now
+          - zh: 理论要付诸实践。
+            answer: Theory needs to be put into practice.
+            hint: Theory
+      - key: put-on-pattern
+        type: pattern_drill
+        title: 说穿戴上什么
+        pattern: put on [something]
+        patternMeaning: 穿戴某物
+        direction: zh_to_en
+        items:
+          - zh: 戴上帽子，外面很冷。
+            answer: Put on your hat; it's cold outside.
+            hint: it's cold outside
+          - zh: 她穿上外套就出门了。
+            answer: She put on her coat and left.
+            hint: her coat；left
+          - zh: 把你的鞋穿上。
+            answer: Put your shoes on.
+            hint: your shoes
+      - key: put-off-pattern
+        type: pattern_drill
+        title: 说把事情推迟
+        pattern: put off [something]
+        patternMeaning: 推迟某事
+        direction: zh_to_en
+        items:
+          - zh: 我们把会议推迟到周五。
+            answer: We put the meeting off until Friday.
+            hint: until Friday
+          - zh: 别再拖了。
+            answer: Don't put it off again.
+            hint: again
+          - zh: 他把去看医生的事一拖再拖。
+            answer: He kept putting off going to the doctor.
+            hint: kept；going to the doctor
+      - key: put-away-pattern
+        type: pattern_drill
+        title: 说把东西收好
+        pattern: put away [something]
+        patternMeaning: 收好某物
+        direction: zh_to_en
+        items:
+          - zh: 请把书收好。
+            answer: Please put the books away.
+            hint: the books
+          - zh: 把玩具收进箱子里。
+            answer: Put the toys away in the box.
+            hint: in the box
+          - zh: 我用完就把工具收好了。
+            answer: I put the tools away after I finished.
+            hint: after I finished
+      - key: put-off-listen
+        type: pattern_drill
+        title: 听懂对方说推迟了什么
+        pattern: put off [something]
+        patternMeaning: 推迟某事
+        direction: en_to_zh
+        items:
+          - en: We had to put the meeting off.
+            answer: 我们不得不推迟会议。
+            hint: had to
+          - en: The meeting has been put off until next Monday.
+            answer: 会议推迟到下周一了。
+            hint: until next Monday
+          - en: Don't put it off again.
+            answer: 别再拖了。
+            hint: again
+      - key: put-up-with-down-pressure
+        type: vocab_sentence_building
+        title: 说忍受、放下和施压
+        vocabWord: put
+        vocabMeaning: 忍受；放下；施压
+        direction: zh_to_en
+        patterns:
+          - chunk: put up with
+            items:
+              - zh: 我再也受不了这个噪音了。
+                answer: I can't put up with the noise anymore.
+                hint: anymore
+              - zh: 她忍受了这份工作很多年。
+                answer: She put up with the job for years.
+                hint: for years
+          - chunk: put down
+            items:
+              - zh: 把箱子放在那边。
+                answer: Put the box down over there.
+                hint: over there
+              - zh: 写下你的名字和电话。
+                answer: Put down your name and phone number.
+                hint: your name；phone number
+          - chunk: put pressure on
+            items:
+              - zh: 别给自己太大压力。
+                answer: Don't put too much pressure on yourself.
+                hint: on yourself
+              - zh: 这个决定给了团队很大压力。
+                answer: The decision put a lot of pressure on the team.
+                hint: a lot of pressure
+      - key: put-practice-build
+        type: sentence_decomposition
+        title: 把付诸实践这件事说完整
+        sourceKind: pattern
+        sourceText: put [something] into practice
+        fullSentence: Learning something is not enough; you also need to put it into practice.
+        fullSentenceZh: 只学会某件事还不够，你还需要把它真正用起来。
+        levels:
+          - level: 1
+            label: 核心句
+            en: You need to put it into practice.
+            zh: 你需要把它用起来。
+            highlight: ''
+            hint: 先说需要用起来
+          - level: 2
+            label: 加递进
+            en: You also need to put it into practice.
+            zh: 你还需要把它用起来。
+            highlight: also
+            hint: 补上还
+          - level: 3
+            label: 完整句
+            en: Learning something is not enough; you also need to put it into practice.
+            zh: 只学会某件事还不够，你还需要把它真正用起来。
+            highlight: Learning something is not enough
+            hint: 补上只学会还不够
+      - key: put-off-build
+        type: sentence_decomposition
+        title: 把推迟会议这件事说完整
+        sourceKind: chunk
+        sourceText: put off the meeting
+        fullSentence: We had to put the meeting off until next Monday because two people were away.
+        fullSentenceZh: 因为有两个人不在，我们不得不把会议推迟到下周一。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We put off the meeting.
+            zh: 我们把会议推迟了。
+            highlight: ''
+            hint: 先说推迟了会议
+          - level: 2
+            label: 加必要性
+            en: We had to put the meeting off.
+            zh: 我们不得不把会议推迟。
+            highlight: had to
+            hint: 补上不得不
+          - level: 3
+            label: 完整句
+            en: We had to put the meeting off until next Monday because two people were away.
+            zh: 因为有两个人不在，我们不得不把会议推迟到下周一。
+            highlight: because two people were away
+            hint: 补上下周一和因为两个人不在

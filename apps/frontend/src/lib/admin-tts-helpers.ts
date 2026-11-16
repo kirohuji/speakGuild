@@ -31,9 +31,6 @@ export async function getActiveTtsProvider(): Promise<AiProviderItem> {
   const ttsProviders = providers.tts ?? []
   const active = ttsProviders.find((item) => item.isActive) ?? ttsProviders[0]
   if (!active) throw new Error('请先在大模型管理中配置 TTS')
-  if (!['minimax', 'cartesia'].includes(active.provider)) {
-    throw new Error(`当前 TTS Provider (${active.provider}) 暂不支持内容语料库生成`)
-  }
   return active
 }
 
@@ -41,6 +38,10 @@ export async function getActiveTtsProvider(): Promise<AiProviderItem> {
  * 根据口音获取对应 voiceId
  */
 export function getTtsVoiceId(item: AiProviderItem, accent: TtsAccent): string | undefined {
+  if (item.provider === 'entts') {
+    if (accent === 'uk') return 'en-gb-female'
+    return 'en-us-female'
+  }
   const config = item.config ?? {}
   const accentKeys = accent === 'us'
     ? ['usVoiceIds', 'americanVoiceIds', 'voiceIdsUs', 'voiceUsList', 'usVoiceId', 'americanVoiceId', 'voiceIdUs', 'voiceUs']

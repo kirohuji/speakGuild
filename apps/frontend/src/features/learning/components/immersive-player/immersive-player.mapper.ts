@@ -1,11 +1,11 @@
 import type { LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
-import type { ImmersivePlayerItem, ImmersivePlaybackSettings, PlaybackSegment } from './immersive-player.types'
+import type { ImmersivePlayerExample, ImmersivePlayerItem, ImmersivePlaybackSettings, PlaybackSegment } from './immersive-player.types'
 
 function textOrEmpty(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-function normalizeExamples(value: unknown): Array<{ en: string; zh?: string; audioUrl?: string | null }> {
+function normalizeExamples(value: unknown): ImmersivePlayerExample[] {
   let raw = value
   if (typeof raw === 'string') {
     const text = raw.trim()
@@ -26,7 +26,7 @@ function normalizeExamples(value: unknown): Array<{ en: string; zh?: string; aud
       const audioUrl = textOrEmpty(record.audioUrl) || null
       return en ? { en, ...(zh ? { zh } : {}), ...(audioUrl ? { audioUrl } : {}) } : null
     })
-    .filter(Boolean) as Array<{ en: string; zh?: string; audioUrl?: string | null }>
+    .filter(Boolean) as ImmersivePlayerExample[]
 }
 
 export function mapInsightItemToImmersiveItem(item: LearningInsightItem): ImmersivePlayerItem {
@@ -44,13 +44,15 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
       exampleZh: example?.zh,
       mainAudioUrl: item.audioUsUrl || item.audioUkUrl,
       exampleAudioUrl: example?.audioUrl,
+      examples,
       sceneName: item.sceneName,
       source: item,
     }
   }
 
   if (item.kind === 'chunk') {
-    const example = item.examples?.[0]
+    const examples = normalizeExamples(item.examples)
+    const example = examples[0]
     return {
       id: item.id,
       kind: 'chunk',
@@ -59,7 +61,8 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
       insight: textOrEmpty(item.description),
       exampleEn: example?.en,
       exampleZh: example?.zh,
-      exampleAudioUrl: (example as any)?.audioUrl,
+      exampleAudioUrl: example?.audioUrl,
+      examples,
       sceneName: item.sceneName,
       source: item,
     }
@@ -76,6 +79,7 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
     exampleEn: item.example || example?.en,
     exampleZh: example?.zh,
     exampleAudioUrl: example?.audioUrl,
+    examples,
     sceneName: item.sceneName,
     source: item,
   }
@@ -85,8 +89,14 @@ export function mapInsightItemsToImmersiveItems(items: LearningInsightItem[]) {
   return items.map(mapInsightItemToImmersiveItem).filter((item) => item.title.trim())
 }
 
-/** 译文、例句、例句译文先不进入播放队列，设置里也先不露出。 */
-const INCLUDE_SECONDARY_PLAYBACK = false
+/** 释义和例句译文暂不进入播放队列。 */
+const INCLUDE_TRANSLATION_PLAYBACK = false
+
+function pickRandomPlayableExample(item: ImmersivePlayerItem): ImmersivePlayerExample | null {
+  const playable = (item.examples ?? []).filter((example) => example.en.trim() && example.audioUrl?.trim())
+  if (playable.length === 0) return null
+  return playable[Math.floor(Math.random() * playable.length)] ?? null
+}
 
 export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: ImmersivePlaybackSettings): PlaybackSegment[] {
   const base: PlaybackSegment[] = []
@@ -102,7 +112,7 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       subtitle: item.meaning,
     })
   }
-  if (INCLUDE_SECONDARY_PLAYBACK && settings.playMeaning && item.meaning?.trim()) {
+  if (INCLUDE_TRANSLATION_PLAYBACK && settings.playMeaning && item.meaning?.trim()) {
     base.push({
       id: `${item.id}:meaning`,
       itemId: item.id,
@@ -113,19 +123,20 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       subtitle: item.meaning,
     })
   }
-  if (INCLUDE_SECONDARY_PLAYBACK && settings.playExample && item.exampleEn?.trim()) {
+  const example = settings.playExample ? pickRandomPlayableExample(item) : null
+  if (example) {
     base.push({
       id: `${item.id}:example`,
       itemId: item.id,
       role: 'example',
-      text: item.exampleEn.trim(),
+      text: example.en.trim(),
       lang: 'en',
-      audioUrl: item.exampleAudioUrl,
+      audioUrl: example.audioUrl,
       title: item.title,
-      subtitle: item.exampleEn.trim(),
+      subtitle: example.en.trim(),
     })
   }
-  if (INCLUDE_SECONDARY_PLAYBACK && settings.playExampleTranslation && item.exampleZh?.trim()) {
+  if (INCLUDE_TRANSLATION_PLAYBACK && settings.playExampleTranslation && item.exampleZh?.trim()) {
     base.push({
       id: `${item.id}:exampleTranslation`,
       itemId: item.id,

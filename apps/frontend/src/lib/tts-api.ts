@@ -2,7 +2,7 @@ import instance, { get, post } from './request'
 
 // ---------- 类型定义 ----------
 
-export type TtsProviderKey = 'minimax' | 'cartesia' | 'hume' | 'elevenlabs'
+export type TtsProviderKey = 'minimax' | 'cartesia' | 'hume' | 'elevenlabs' | 'entts'
 
 export type TtsParamSchemaField = {
   key: string
@@ -91,7 +91,13 @@ export type SynthesizeEnttsAssetPayload = {
 }
 
 export type SynthesizeEnttsAssetResult = {
+  assetId: string
   url: string
+  expiresInSeconds: number
+  mimeType: string
+  model: string
+  voiceId?: string | null
+  configHash: string
   accent: 'uk' | 'us'
   gender: 'female' | 'male'
   provider: 'entts'

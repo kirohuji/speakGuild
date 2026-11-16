@@ -31,6 +31,9 @@ learning:
           - zh: 我没心情的时候，别想逗我笑。
             answer: Don't try to make me laugh when I'm not in the mood.
             hint: Don't try；when；not in the mood
+          - zh: 这个笑话总能让我笑。
+            answer: This joke always makes me laugh.
+            hint: always
       - key: make-it-say
         kind: chunk
         type: chunk_substitution
@@ -45,6 +48,9 @@ learning:
           - zh: 你明天的面试来得了吗？
             answer: Can you make it to the interview tomorrow?
             hint: the interview；tomorrow
+          - zh: 我今晚可能来不了。
+            answer: I might not be able to make it tonight.
+            hint: might not；tonight
       - key: make-it-attend
         kind: chunk
         type: chunk_substitution
@@ -59,6 +65,9 @@ learning:
           - en: Can you make it to the meeting at four?
             answer: 你能赶上四点的会吗？
             hint: the meeting；at four
+          - en: I don't think I can make it to dinner tonight.
+            answer: 我觉得今晚的晚饭我来不了。
+            hint: tonight
       - key: make-sense-say
         kind: chunk
         type: chunk_substitution
@@ -73,6 +82,9 @@ learning:
           - zh: 他突然改了主意，这说不通。
             answer: His sudden change of mind doesn't make sense.
             hint: sudden；change of mind
+          - zh: 这个计划从长远看是有道理的。
+            answer: The plan makes sense in the long run.
+            hint: in the long run
       - key: make-sense-listen
         kind: chunk
         type: chunk_substitution
@@ -87,6 +99,9 @@ learning:
           - en: That explanation doesn't make sense to me.
             answer: 那个解释对我来说说不通。
             hint: explanation；doesn't；to me
+          - en: Your plan makes sense to me.
+            answer: 我觉得你的计划说得通。
+            hint: Your plan
       - key: make-someone-do
         type: pattern_drill
         title: 让某人做一件事
@@ -116,6 +131,9 @@ learning:
           - zh: 我们被迫把结论全部重写了。
             answer: We were made to rewrite the conclusion completely.
             hint: the conclusion；completely
+          - zh: 我们被迫等了两个小时。
+            answer: We were made to wait for two hours.
+            hint: two hours
       - key: make-passive-listen
         type: pattern_drill
         title: 听懂对方说被迫做了什么
@@ -129,6 +147,9 @@ learning:
           - en: The students were made to rewrite the essay.
             answer: 学生们被迫把那篇文章重写了。
             hint: The students；the essay
+          - en: I was made to wait outside for ten minutes.
+            answer: 我被迫在外面等了十分钟。
+            hint: outside；ten minutes
       - key: make-result-states
         type: vocab_sentence_building
         title: 说造成了什么状态
@@ -165,6 +186,9 @@ learning:
           - zh: 全班让她当了组长，而不是让他当。
             answer: The class made her the group leader instead of him.
             hint: The class；instead of him
+          - zh: 他们让他当了队长。
+            answer: They made him captain.
+            hint: captain
       - key: make-it-easier
         type: pattern_drill
         title: 说做某事变得更容易或更难
@@ -241,6 +265,9 @@ learning:
           - zh: 你要是想赶上，发音上得再多努点力。
             answer: You need to make more of an effort with your pronunciation if you want to catch up.
             hint: your pronunciation；if；catch up
+          - zh: 她在会上努力发言了。
+            answer: She made an effort to speak up at the meeting.
+            hint: speak up；at the meeting
       - key: make-sure
         type: pattern_drill
         title: 提醒对方确认一件事
@@ -270,6 +297,9 @@ learning:
           - en: Did you make sure the windows were closed?
             answer: 你确认窗户关上了吗？
             hint: Did you；the windows
+          - en: Make sure you save the file before you leave.
+            answer: 离开前确认你保存了文件。
+            hint: save the file；before you leave
       - key: make-money
         kind: chunk
         type: chunk_substitution
@@ -284,6 +314,9 @@ learning:
           - zh: 他靠周末修电脑赚钱。
             answer: He makes money by fixing computers on weekends.
             hint: fixing computers；on weekends
+          - zh: 他靠教英语赚外快。
+            answer: He makes extra money by teaching English.
+            hint: extra money；teaching English
       - key: make-difference
         kind: chunk
         type: chunk_substitution
@@ -298,6 +331,167 @@ learning:
           - zh: 你昨天的那处修改真的起了作用。
             answer: The change you made yesterday really made a difference.
             hint: The change；yesterday；really
+          - zh: 每天读一个例句会对你的口语有帮助。
+            answer: Reading one example a day can make a difference to your speaking.
+            hint: one example a day；your speaking
+      - key: make-for-someone-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说为谁做了什么
+        chunk: make dinner for us
+        chunkMeaning: 给我们做了晚饭
+        direction: en_to_zh
+        items:
+          - en: She made dinner for us last night.
+            answer: 她昨晚给我们做了晚饭。
+            hint: last night
+          - en: Can you make a copy for the client before noon?
+            answer: 你能在中午前给客户复印一份吗？
+            hint: a copy；the client；before noon
+          - en: I'll make coffee for anyone who's still working.
+            answer: 谁还在忙，我就给谁煮咖啡。
+            hint: anyone；still working
+      - key: make-role-listen
+        type: pattern_drill
+        title: 听懂对方说让谁担任什么角色
+        pattern: make [someone] [noun]
+        patternMeaning: 使某人成为某种身份
+        direction: en_to_zh
+        items:
+          - en: They made him captain after the match.
+            answer: 他们赛后让他当了队长。
+            hint: after the match
+          - en: The class made her the group leader instead of him.
+            answer: 全班让她当了组长，而不是让他当。
+            hint: instead of him
+          - en: They made her the head of the department.
+            answer: 他们让她当了部门主管。
+            hint: the head of the department
+      - key: make-money-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说赚不赚钱
+        chunk: make money
+        chunkMeaning: 赚钱
+        direction: en_to_zh
+        items:
+          - en: This little shop still isn't making much money.
+            answer: 这家小店还不怎么赚钱。
+            hint: still；much
+          - en: He makes money by fixing computers on weekends.
+            answer: 他靠周末修电脑赚钱。
+            hint: fixing computers；on weekends
+          - en: They made money from the new product.
+            answer: 他们靠新产品赚了钱。
+            hint: the new product
+      - key: make-object-adjective
+        type: pattern_drill
+        title: 说让某个人或东西变成什么样
+        pattern: make [someone/something] [adjective]
+        patternMeaning: 使某人或某物变成某种状态
+        direction: zh_to_en
+        items:
+          - zh: 这个消息让大家很兴奋。
+            answer: The news made everyone excited.
+            hint: The news；excited
+          - zh: 你的解释让我更糊涂了。
+            answer: Your explanation made me even more confused.
+            hint: even more confused
+          - zh: 你这个样子让我更担心了。
+            answer: You're making me more worried.
+            hint: more worried
+      - key: make-decision
+        type: pattern_drill
+        title: 说做个决定
+        pattern: make a decision
+        patternMeaning: 作出决定
+        direction: zh_to_en
+        items:
+          - zh: 我们今晚就得定下来。
+            answer: We need to make a decision tonight.
+            hint: tonight
+          - zh: 决定之前，我们先看看数据。
+            answer: Let's look at the data before we make a decision.
+            hint: look at the data；before
+          - zh: 这个决定是我自己做的。
+            answer: I made this decision myself.
+            hint: myself
+      - key: make-progress
+        type: pattern_drill
+        title: 说在哪方面有进步
+        pattern: make progress
+        patternMeaning: 取得进展
+        direction: zh_to_en
+        items:
+          - zh: 我们已经在这个项目上取得了一些进展。
+            answer: We've made some progress on this project.
+            hint: on this project
+          - zh: 你在发音上进步了。
+            answer: You're making progress with your pronunciation.
+            hint: with your pronunciation
+          - zh: 只要每天练，就会有进步。
+            answer: You'll make progress if you practise every day.
+            hint: practise every day
+      - key: make-him-captain
+        kind: chunk
+        type: chunk_substitution
+        title: 说让某人当了队长
+        chunk: make him captain
+        chunkMeaning: 让他当队长
+        direction: zh_to_en
+        items:
+          - zh: 教练让他当了队长。
+            answer: The coach made him captain.
+            hint: The coach
+          - zh: 我们没想到他们会让他当队长。
+            answer: We didn't expect them to make him captain.
+            hint: didn't expect
+          - zh: 他们为什么让他当了队长？
+            answer: Why did they make him captain?
+            hint: Why
+      - key: make-it-easier-english
+        kind: chunk
+        type: chunk_substitution
+        title: 说让学英语变得更容易
+        chunk: make it easier to learn English
+        chunkMeaning: 让学英语变得更容易
+        direction: zh_to_en
+        items:
+          - zh: 每天读一点会让学英语变得更容易。
+            answer: Reading a little every day makes it easier to learn English.
+            hint: every day
+          - zh: 这些练习让学英语变得更容易了吗？
+            answer: Do these exercises make it easier to learn English?
+            hint: Do these exercises
+          - zh: 有个好老师会让学英语变得更容易。
+            answer: A good teacher makes it easier to learn English.
+            hint: A good teacher
+      - key: make-effort-build
+        type: sentence_decomposition
+        title: 把努力在会上发言这件事说完整
+        sourceKind: chunk
+        sourceText: make an effort
+        fullSentence: He made an effort to speak up in the meeting, even though he was nervous.
+        fullSentenceZh: 虽然很紧张，他还是在会上努力发了言。
+        levels:
+          - level: 1
+            label: 核心句
+            en: He made an effort.
+            zh: 他努力了。
+            highlight: ''
+            hint: 先说他努力了
+          - level: 2
+            label: 加目的
+            en: He made an effort to speak up in the meeting.
+            zh: 他在会上努力发言了。
+            highlight: to speak up in the meeting
+            hint: 补上努力发言
+          - level: 3
+            label: 完整句
+            en: He made an effort to speak up in the meeting, even though he was nervous.
+            zh: 虽然很紧张，他还是在会上努力发了言。
+            highlight: even though he was nervous
+            hint: 补上虽然很紧张
       - key: make-mind-build
         type: sentence_decomposition
         title: 把还没想好的理由说完整

@@ -22,6 +22,7 @@ import { TopicTeachingGenerateService } from './jobs/topic-teaching-generate.ser
 import { SceneTopicBatchGenerateService } from './jobs/scene-topic-batch-generate.service';
 import { AiModelModule } from '../ai-model/ai-model.module';
 import { ContentExperienceModule } from '../content-experiences/content-experience.module';
+import { TtsModule } from '../tts/tts.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ContentExperienceModule } from '../content-experiences/content-experien
     PracticeAiModule,
     AiModelModule,
     ContentExperienceModule,
+    TtsModule,
     BullModule.forRoot({
       connection: getRedisConnectionOptions(),
     }),

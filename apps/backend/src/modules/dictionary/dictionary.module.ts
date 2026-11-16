@@ -8,9 +8,10 @@ import { DictionaryPronunciationProviderService } from './dictionary-pronunciati
 import { AiModelModule } from '../ai-model/ai-model.module';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { DictionaryAudioService } from './dictionary-audio.service';
+import { EnttsProviderModule } from '../tts/entts-provider.module';
 
 @Module({
-  imports: [PrismaModule, AiModelModule, FileAssetsModule],
+  imports: [PrismaModule, AiModelModule, FileAssetsModule, EnttsProviderModule],
   controllers: [DictionaryController],
   providers: [
     DictionaryService,

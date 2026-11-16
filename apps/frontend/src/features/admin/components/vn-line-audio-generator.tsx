@@ -35,6 +35,13 @@ const MINIMAX_VOICES: Array<{ id: string; label: string }> = [
   { id: 'female-yujie', label: '御姐 (ZH)' },
 ]
 
+const ENTTS_VOICES: Array<{ id: string; label: string }> = [
+  { id: 'en-us-female', label: 'American English · Female' },
+  { id: 'en-us-male', label: 'American English · Male' },
+  { id: 'en-gb-female', label: 'British English · Female' },
+  { id: 'en-gb-male', label: 'British English · Male' },
+]
+
 type ParamValues = Record<string, string | number | boolean>
 
 interface VnLineAudioGeneratorProps {
@@ -112,7 +119,7 @@ export function VnLineAudioGenerator({
     const nextProvider = hasCharacterConfig ? (characterProvider ?? ttsBackend.provider) : ttsBackend.provider
     setProvider(nextProvider)
     setModel(hasCharacterConfig
-      ? characterTtsModel || (nextProvider === 'cartesia' ? 'sonic-english' : 'speech-2.8-hd')
+      ? characterTtsModel || (nextProvider === 'cartesia' ? 'sonic-3' : nextProvider === 'entts' ? 'standard' : nextProvider === 'hume' ? '2' : nextProvider === 'elevenlabs' ? 'eleven_multilingual_v2' : 'speech-2.8-hd')
       : ttsBackend.model)
     setVoiceId(hasCharacterConfig ? characterTtsVoice || '' : ttsBackend.voiceId ?? '')
     setParams(hasCharacterConfig ? characterTtsParams as ParamValues ?? {} : ttsBackend.params ?? {})
@@ -131,7 +138,7 @@ export function VnLineAudioGenerator({
 
   const currentSchema = schemas.find((schema) => schema.provider === provider)
   const currentModelSchema = currentSchema?.models.find((item) => item.model === model)
-  const voiceOptions = provider === 'cartesia' ? CARTESIA_VOICES : MINIMAX_VOICES
+  const voiceOptions = provider === 'cartesia' ? CARTESIA_VOICES : provider === 'entts' ? ENTTS_VOICES : provider === 'minimax' ? MINIMAX_VOICES : []
   const configLabel = useMemo(() => {
     const voiceLabel = voiceOptions.find((voice) => voice.id === voiceId)?.label || voiceId || '默认声音'
     return `${speaker ? `${speaker} · ` : ''}${provider} · ${model} · ${voiceLabel}`
@@ -228,12 +235,20 @@ export function VnLineAudioGenerator({
                 value={provider}
                 onChange={(event) => {
                   const nextProvider = event.target.value as TtsProviderKey
+                  const nextModel = schemas.find((schema) => schema.provider === nextProvider)?.models[0]?.model || ''
+                  const nextVoiceId = nextProvider === 'entts' ? 'en-us-female' : ''
                   setProvider(nextProvider)
-                  onTtsConfigChange?.({ provider: nextProvider, model, voiceId: voiceId || undefined, params })
+                  setModel(nextModel)
+                  setVoiceId(nextVoiceId)
+                  setParams({})
+                  onTtsConfigChange?.({ provider: nextProvider, model: nextModel, voiceId: nextVoiceId || undefined, params: {} })
                 }}
               >
                 <option value="minimax">MiniMax</option>
                 <option value="cartesia">Cartesia</option>
+                <option value="hume">Hume AI</option>
+                <option value="elevenlabs">ElevenLabs</option>
+                <option value="entts">ENTTS</option>
               </select>
             </label>
             <label className="space-y-1">
@@ -256,20 +271,33 @@ export function VnLineAudioGenerator({
 
           <label className="space-y-1">
             <span className="text-[11px] text-muted-foreground">声音</span>
-            <select
-              className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
-              value={voiceId}
+            {provider === 'hume' || provider === 'elevenlabs' ? (
+              <Input
+                className="h-8 text-xs"
+                value={voiceId}
+                placeholder={provider === 'hume' ? 'Voice name or ID' : 'Voice ID'}
                 onChange={(event) => {
                   const nextVoiceId = event.target.value
                   setVoiceId(nextVoiceId)
                   onTtsConfigChange?.({ provider, model, voiceId: nextVoiceId || undefined, params })
                 }}
-            >
-              <option value="">默认声音</option>
-              {voiceOptions.map((voice) => (
-                <option key={voice.id} value={voice.id}>{voice.label}</option>
-              ))}
-            </select>
+              />
+            ) : (
+              <select
+                className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
+                value={voiceId}
+                  onChange={(event) => {
+                    const nextVoiceId = event.target.value
+                    setVoiceId(nextVoiceId)
+                    onTtsConfigChange?.({ provider, model, voiceId: nextVoiceId || undefined, params })
+                  }}
+              >
+                <option value="">默认声音</option>
+                {voiceOptions.map((voice) => (
+                  <option key={voice.id} value={voice.id}>{voice.label}</option>
+                ))}
+              </select>
+            )}
           </label>
 
           {currentModelSchema?.fields.length ? (

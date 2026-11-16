@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-11-06T10:01:39.498Z",
+  "generatedAt": "2026-11-16T06:57:51.568Z",
   "documents": [
     {
       "topicId": "cmu296m4h000b15lcpn4zp30w",
@@ -20,9 +20,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "核心动作与日常表达",
       "path": "学习包/常用动词300个 高频核心/核心动作与日常表达.md",
-      "exportedSha256": "5f8b8c834d5e7fbbd77797ee93a38f76d84eff78963059be53e0f5cd255f092d",
+      "exportedSha256": "3a377e6884f54f1f08ffae5d780cfd04f4d8da8440370c1c3459f856657665df",
       "learningPath": "学习包/常用动词300个 高频核心/核心动作与日常表达.learning.md",
-      "exportedLearningSha256": "f627460a00426f73ca1f433cba240350735998e6a995b0e2fd1e5de0232cd704"
+      "exportedLearningSha256": "a6d5305fd618cde0670f08ec4d4b020a28dd8ddb48b04e89bc5d5e76566116be"
     },
     {
       "topicId": "cmuz4bd4424e13e54e608843f",
@@ -97,9 +97,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "移动、位置与变化",
       "path": "学习包/常用动词300个 高频核心/移动、位置与变化.md",
-      "exportedSha256": "da6f6a32e878ffdeb1f6a5c4c724dda6f441bb609e4061d5e292f3a244ab842f",
+      "exportedSha256": "fae685f06c98e9e2d9edc0b1f9257f6cf46d48a8a4b3d8033ea12c112685eca6",
       "learningPath": "学习包/常用动词300个 高频核心/移动、位置与变化.learning.md",
-      "exportedLearningSha256": "1ae3b06fab2426d918fb0c537f53cba8fd1e61e57acc738d3a28f511d904561c"
+      "exportedLearningSha256": "0ff20a58b321c3b7b7c9719517e9ce101abb434964dc253f3f32eea8a6ff6d7f"
     },
     {
       "topicId": "cmuza06210493e94472b97dc5",
@@ -163,7 +163,7 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "思考与判断",
       "path": "学习包/常用动词300个 高频核心/思考与判断.md",
-      "exportedSha256": "d9a3b6cc262c9b12ae548bac178e79a88536cf2115d88435cd9afe7b71465425",
+      "exportedSha256": "3b06c88238244e5b58b8602f7d718a83b738c2a7b72fd92b62d0a3cf8e85236d",
       "learningPath": "学习包/常用动词300个 高频核心/思考与判断.learning.md",
       "exportedLearningSha256": "4cdd1363c2410dfd1df1b5571925ba58611a7672f44a1eee8e3f4b9c7d598f5a"
     },
@@ -229,9 +229,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "沟通与表达",
       "path": "学习包/常用动词300个 高频核心/沟通与表达.md",
-      "exportedSha256": "c510a976dd4585b25986e5a42d38d4786b067c2e36b403ea5db636d895d7fe70",
+      "exportedSha256": "1a48a23e28afc019bdb857c6029059808451364a3b5b5a8f3a3d23d18c12d023",
       "learningPath": "学习包/常用动词300个 高频核心/沟通与表达.learning.md",
-      "exportedLearningSha256": "aaea77ffa7bb80021648aba524ff52ca1ec9c7d00c06ec1285a578d59cc7fabc"
+      "exportedLearningSha256": "b2fb186c48a2a372cf1defd47d76903bb700aa043535348c4981692612d29352"
     },
     {
       "topicId": "cmuza742db284c924669a9ffe",
@@ -295,9 +295,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "选择与意图",
       "path": "学习包/常用动词300个 高频核心/选择与意图.md",
-      "exportedSha256": "0c1663fd9e53b3bcf7f10ca3334c908a91cbcfee9314bd8f08fdc34e6b281ad5",
+      "exportedSha256": "c003f8536ab20949e5471a0e00c5023b8d918659d2316d462b545f0d41f7180d",
       "learningPath": "学习包/常用动词300个 高频核心/选择与意图.learning.md",
-      "exportedLearningSha256": "3f8c91ed19444aa42983c2d029e43fc1be5c9c43e0eb431e91cc32c0a1782607"
+      "exportedLearningSha256": "0433eff3c565cbbb3ffbadc786687defa71119b1921919a944d5e9eb71d16d39"
     },
     {
       "topicId": "cmuz355004a32ad143bdad13c",
@@ -372,9 +372,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "行动、尝试与完成",
       "path": "学习包/常用动词300个 高频核心/行动、尝试与完成.md",
-      "exportedSha256": "34541febaa2940a09047fc87e013fdc64a10e2091b299c62e112515ea51264de",
+      "exportedSha256": "751f9e8a75b095fca328980b262107283ebd746aaa147c634b56cdb000bc6883",
       "learningPath": "学习包/常用动词300个 高频核心/行动、尝试与完成.learning.md",
-      "exportedLearningSha256": "089d1e4b633fd9962df30232321135aca4bda446d11e83b6a519d43a914d5b5e"
+      "exportedLearningSha256": "0b744fb908b28c6a19f3b1ccde2af9d0442ebb2f223afef9eb4360dc2848ea33"
     },
     {
       "topicId": "cmuzhys8r0026sbr0kw8mjn48",
@@ -427,9 +427,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "人际关系与影响",
       "path": "学习包/常用动词300个 高频核心/人际关系与影响.md",
-      "exportedSha256": "66e898fd84c27f6971e163249048399a33d8f3b758d3a20bda52dac5ded9e5c3",
+      "exportedSha256": "70f27568db417966d7d1b542f395e1e92be89e44ae6fc27126c05315f2882b84",
       "learningPath": "学习包/常用动词300个 高频核心/人际关系与影响.learning.md",
-      "exportedLearningSha256": "21e19bb31c6191f190dce653ba6d7f2c756391da188418eb5e5468174d42f5b6"
+      "exportedLearningSha256": "9717020fb14bd3a5cfbdf6939bc913910da7b72ba895228fe436f098ce493e7d"
     },
     {
       "topicId": "cmuz07fea02e4198450db8daf",
@@ -482,9 +482,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "情绪、态度与经历",
       "path": "学习包/常用动词300个 高频核心/情绪、态度与经历.md",
-      "exportedSha256": "d9a772c20576e38346cc9eaeadc949a3960289760b988a59969abbcf2a48c6c0",
+      "exportedSha256": "d283a222239c9f36cec1d7ea8da8c0e26afc0ac67a4acfaaca8cbad0cb4f26b3",
       "learningPath": "学习包/常用动词300个 高频核心/情绪、态度与经历.learning.md",
-      "exportedLearningSha256": "e41d967b7d7c39fa78aef3d18855396b422af7d8e156831643edb29d153a31f4"
+      "exportedLearningSha256": "d06c5cc46693d45ad57115ee0ab0cd0429825f734b7d25fcf2c912c4f99f40eb"
     },
     {
       "topicId": "cmuz973af08d24d54fe3909e1",
@@ -537,9 +537,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "工作、学习与解决问题",
       "path": "学习包/常用动词300个 高频核心/工作、学习与解决问题.md",
-      "exportedSha256": "90f231aa883298d00ceb9773a8f2cd9846898ea04e9a04391693caee3cfb379e",
+      "exportedSha256": "83591f46207be158c3f0d1e117027795c24261d6eb579564432ad30b6dc31e43",
       "learningPath": "学习包/常用动词300个 高频核心/工作、学习与解决问题.learning.md",
-      "exportedLearningSha256": "21cf7d11784762f9b26e291827c14d7154f53922ab75313c67529ff8863f56b4"
+      "exportedLearningSha256": "41078c5fdb03d2e94079314651111f87845b3673323027bbaaa6bf272b575119"
     },
     {
       "topicId": "cmuz32d5ef8ffb64426786949",
@@ -592,9 +592,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "变化、趋势与结果",
       "path": "学习包/常用动词300个 高频核心/变化、趋势与结果.md",
-      "exportedSha256": "7b0c5c86330a4d7c4755a4f1c891b9e5947f3a3860e0831e55e5ce334d218756",
+      "exportedSha256": "5e66a32317e4cfa1c2067084f67fc2a6e628f3b4a79340a81a53432e43556e0b",
       "learningPath": "学习包/常用动词300个 高频核心/变化、趋势与结果.learning.md",
-      "exportedLearningSha256": "488cf66f72a1dd492204aefa7667678bb9a089cc677d3108a85d4522ea8bd963"
+      "exportedLearningSha256": "fe32d0b445aa1d6f74531772b51e70625e9295bc680eb892c8d6aff9a46b5dda"
     },
     {
       "topicId": "cmuz59214264675e4be4bd1d7",
@@ -658,9 +658,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "分析与说明",
       "path": "学习包/常用动词300个 高频核心/分析与说明.md",
-      "exportedSha256": "bfb572bce5ee7b0a56a3bf9a495b84a0b2df98208abfdcdfc9d75e8ab866f510",
+      "exportedSha256": "2840335bb5de07a0f9928e4b3b80e0873ae2ad9f8146b6cd8f17cfbe27372d8c",
       "learningPath": "学习包/常用动词300个 高频核心/分析与说明.learning.md",
-      "exportedLearningSha256": "3910f84083ecf3ec75da3a6a922e50092a13d8bdcc56d15930d3af4a40acd1f5"
+      "exportedLearningSha256": "4baf6398154e5fa2f1b4f72c9db6571c7cc351bfabae25f727bdbfe37ca7d13a"
     },
     {
       "topicId": "cmuzhyt07002csbr0w8ev2sd0",
@@ -724,9 +724,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "中高级观点与抽象表达",
       "path": "学习包/常用动词300个 高频核心/中高级观点与抽象表达.md",
-      "exportedSha256": "c5a41cc5d140d5aa8dc4586ed84c012ecebba0cc25cb155de15f182fef9d4420",
+      "exportedSha256": "15afc9be17a2288883470c05373ed479ec71576c4cf4315df1d2e2cc6b20033f",
       "learningPath": "学习包/常用动词300个 高频核心/中高级观点与抽象表达.learning.md",
-      "exportedLearningSha256": "f055e73cbc150d52c5cf288b386121d248542c6ced129b0d332bf1076fbe2bea"
+      "exportedLearningSha256": "235fcee851fe931b27d00139119f33caa0ec31fcbcd4b90569a2f0ae9eecc2d8"
     },
     {
       "topicId": "cmuz007312f4902c4c909d4e5",
@@ -2429,9 +2429,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "01｜不规则动词的基本结构",
       "path": "学习包/不规则动词专区/01｜不规则动词的基本结构.md",
-      "exportedSha256": "2faf8835311ec6b4bc48c8259cf45934d458e340144a694a08b348354c5e2162",
+      "exportedSha256": "39bb8f515a5ee5a4557c531956eb622f8e38b881366b992e0536a881ce1093eb",
       "learningPath": "学习包/不规则动词专区/01｜不规则动词的基本结构.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwlhs8c000bsbeev9e44bje",
@@ -2440,9 +2440,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "02｜三种形式相同的动词",
       "path": "学习包/不规则动词专区/02｜三种形式相同的动词.md",
-      "exportedSha256": "473e92d2d56a44549a0ed7cec2785bb652820de6c081b95097ffd1b7e59b8ab1",
+      "exportedSha256": "d232f0f56fb3826606a62a4ae7791c05174c5fd6a09ba18d9da1aa68f8849a8f",
       "learningPath": "学习包/不规则动词专区/02｜三种形式相同的动词.learning.md",
-      "exportedLearningSha256": "2fc5a31e4a749e85f06415fcd30f05baaf8a8505117f9d28bfca103e05893037"
+      "exportedLearningSha256": "e0df6fef23d0a34328635483fad2a810b2c91325c043e56a2ddb6d4133814114"
     },
     {
       "topicId": "cmuwlyifn000dsbeecb64nrt2",
@@ -2451,9 +2451,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "03｜过去式与过去分词相同的动词",
       "path": "学习包/不规则动词专区/03｜过去式与过去分词相同的动词.md",
-      "exportedSha256": "b116a65c489729352d15ab5dfec04f0a29813c976ea20105e04af4060bccbded",
+      "exportedSha256": "f92b23742c887383a4eb75ff783474d666623bdcb74e7b84e83fb3420963ef18",
       "learningPath": "学习包/不规则动词专区/03｜过去式与过去分词相同的动词.learning.md",
-      "exportedLearningSha256": "89c8ba24d062fad7ecc06790483661bd9caeb0f53cc3f4bedfc8038739763c76"
+      "exportedLearningSha256": "329325538d02a8c89513d4ad37e90eb0c2c03631268212aa8a6177a90aeaef45"
     },
     {
       "topicId": "cmuwlzk83000fsbee0igqm71u",
@@ -2462,9 +2462,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "04｜三种形式不同的动词",
       "path": "学习包/不规则动词专区/04｜三种形式不同的动词.md",
-      "exportedSha256": "2de00c152cdcef7e5a7c6d700827ec6877441d034858aa5f199fce9a4100ef5d",
+      "exportedSha256": "183d50b0377d05ef5bdad3dcfe80e29400cd7db2d4a952d2b95f5042f7faff55",
       "learningPath": "学习包/不规则动词专区/04｜三种形式不同的动词.learning.md",
-      "exportedLearningSha256": "643ff5e649715b21907f46185ed5ee51ee93628b2c244b1189a605f8b4cbe7cc"
+      "exportedLearningSha256": "e9a702d94800f11887988b2ed463e9f593eaf25ea8d405ad78696ef3617ddcb8"
     },
     {
       "topicId": "cmuwmcnad000hsbeeqxggtdda",
@@ -2473,9 +2473,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "05｜原形与过去分词相同的动词",
       "path": "学习包/不规则动词专区/05｜原形与过去分词相同的动词.md",
-      "exportedSha256": "1ac31ff20a9d8752b64453fee569558509074c08e3325f91de01a36e8eb188a1",
+      "exportedSha256": "8011c0c0ca41e0f2adcf68fcb88e843a5bd7bfc46acc9b8c4bd275ce2fa5d426",
       "learningPath": "学习包/不规则动词专区/05｜原形与过去分词相同的动词.learning.md",
-      "exportedLearningSha256": "cc082e3558a4490c13dedf14f01e5f6e9515d51141051501c9d1450629aedeb4"
+      "exportedLearningSha256": "6258700cf5bc17715817a531fc271a2f0f06ddf696ae9fa59915e2b23a59cf0e"
     },
     {
       "topicId": "cmuwme4lr000jsbee5v345diy",
@@ -2484,9 +2484,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "06｜高频核心不规则动词",
       "path": "学习包/不规则动词专区/06｜高频核心不规则动词.md",
-      "exportedSha256": "9f81fccfc7d65dc456e42bfd69b1a10ef3c95631d1ed1351ebd5c90b38665b3e",
+      "exportedSha256": "e39e66060627c82b58abdfe134971dc9083efe9b4e60f2a73902082d11f9caa8",
       "learningPath": "学习包/不规则动词专区/06｜高频核心不规则动词.learning.md",
-      "exportedLearningSha256": "34a54ba3a101f91141a437179a3a1364785b86fdd93168f13315a8670b0831e3"
+      "exportedLearningSha256": "81263ea86ac202102016ba08aa3bde09360cccaf7e4787e00ab71eae23e4df81"
     },
     {
       "topicId": "cmuwmevon000lsbeeijmh3d4f",
@@ -2495,9 +2495,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "07｜易混形式与特殊变化",
       "path": "学习包/不规则动词专区/07｜易混形式与特殊变化.md",
-      "exportedSha256": "3ac53ef0766ddc89860400f0eb71fe6eca940a68d9a69847ace1c520c8f5e260",
+      "exportedSha256": "09a6dc48e603d3598a624256081b1e73f45e58b242aa1cf7c62f8c49db9be0b4",
       "learningPath": "学习包/不规则动词专区/07｜易混形式与特殊变化.learning.md",
-      "exportedLearningSha256": "94d710443575149c2ed41e76c79f01530719a99a5e338ee36539d21ff6e32a20"
+      "exportedLearningSha256": "c84f263dc0efea5a3b3bda15fe923f0fffffdde44f1d348985218a63ddd17120"
     },
     {
       "topicId": "cmuwmfxt4000nsbeenmauaea1",
@@ -2506,7 +2506,7 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "08｜过去分词的实际使用",
       "path": "学习包/不规则动词专区/08｜过去分词的实际使用.md",
-      "exportedSha256": "6b299f21fb0cbce5b99d7d3c168af4c600f6c466e9c6e0039eda20b607b9d08c",
+      "exportedSha256": "8e5d650d42ebb61d2ea84874e762928bbad3f5348c626c5a728e9192358eda07",
       "learningPath": "学习包/不规则动词专区/08｜过去分词的实际使用.learning.md",
       "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
@@ -2517,9 +2517,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "附录｜不规则动词总表",
       "path": "学习包/不规则动词专区/附录｜不规则动词总表.md",
-      "exportedSha256": "38b7d8542bb37f2bc4fa6ad16bc63160d4bd08fac09e28b8a109a1d3882ae00e",
+      "exportedSha256": "f578143cd838296acebd1e1bf4910cd5eaa3c07f4a7837743dda34c98b64ba89",
       "learningPath": "学习包/不规则动词专区/附录｜不规则动词总表.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuz6435a6e93dee416da6606",
@@ -2539,9 +2539,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "闲聊业余爱好",
       "path": "写作包/英语对话：自然开场与接话/闲聊业余爱好.md",
-      "exportedSha256": "584a2692834c7a9e557bc18f36fb0f75159c5097007da636620e61eaa73bef88",
+      "exportedSha256": "f352227f09fc481ecac0c9c7fd65ede504f208944651c15778e388fce669e0fa",
       "learningPath": "写作包/英语对话：自然开场与接话/闲聊业余爱好.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmv104wg20007sbxfl677xu71",
@@ -2583,9 +2583,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "在图书馆偶遇",
       "path": "写作包/英语对话：自然开场与接话/在图书馆偶遇.md",
-      "exportedSha256": "dbc68f6b4f77247a9a33b2d28584d29e6486f23dfde8a2621481d308f4eac7ae",
+      "exportedSha256": "10770925cdab4b5cc2100f097f089f63087fb93980c9967cef87e1558d4c4f0b",
       "learningPath": "写作包/英语对话：自然开场与接话/在图书馆偶遇.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncs5k001rsbrpk7xy1rdm",
@@ -2627,9 +2627,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "讨论午饭在食堂",
       "path": "写作包/英语对话：自然开场与接话/讨论午饭在食堂.md",
-      "exportedSha256": "34d155485252d59abac418757dcd5a88565caac3e799fbfa091e899a4c3ff609",
+      "exportedSha256": "5560792e78b9207d9343d30184ae51b31c63ac491fbe397d2f40a6ee264f47f1",
       "learningPath": "写作包/英语对话：自然开场与接话/讨论午饭在食堂.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncs64001tsbrpxeienxrd",
@@ -2715,9 +2715,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "商量周末出游",
       "path": "写作包/英语对话：自然开场与接话/商量周末出游.md",
-      "exportedSha256": "2150f577deaf220f8685741c7f1603b9ab2508eb0cd1d68d14421a751d3a43de",
+      "exportedSha256": "11be86e110306df6af5d04220810b3e76c781634cb8b9e0225ed90a4504e49f1",
       "learningPath": "写作包/英语对话：自然开场与接话/商量周末出游.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncs7t001xsbrp9758gfcn",
@@ -2759,9 +2759,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "向朋友借东西",
       "path": "写作包/英语对话：自然开场与接话/向朋友借东西.md",
-      "exportedSha256": "5e422e98080c50ab11eb012f4366e10cf6e65097f7fc40e1b3727332525091b8",
+      "exportedSha256": "84b9a979399bca95cff72f4240cdeff31e10371bced8c0ce9c838d7e43acef65",
       "learningPath": "写作包/英语对话：自然开场与接话/向朋友借东西.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncs8d001zsbrpt2rzy6do",
@@ -2803,9 +2803,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "和室友聊一天",
       "path": "写作包/英语对话：自然开场与接话/和室友聊一天.md",
-      "exportedSha256": "7ad7be993cbcbb7d8139a2867d90507596bbf0d8fa344a483cf20876f7550b5a",
+      "exportedSha256": "223548cfea052c7f5f2c93ec4f650c5c2044bebedff7962f99c33a851d5aa0c1",
       "learningPath": "写作包/英语对话：自然开场与接话/和室友聊一天.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncs930021sbrplt4n11m7",
@@ -2847,9 +2847,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "告知可能迟到",
       "path": "写作包/英语对话：自然开场与接话/告知可能迟到.md",
-      "exportedSha256": "eb7f12c7a2de025d8fc55b8fe6b2e6b9e96cefbb20cd5661c1e7df2a9519860e",
+      "exportedSha256": "cb576f1b3bbd22da52513a7f7da725305111ecf95e2c37e578e60aa2605d96e1",
       "learningPath": "写作包/英语对话：自然开场与接话/告知可能迟到.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsbv0023sbrpq36rk362",
@@ -2891,9 +2891,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "购物时犹豫不决",
       "path": "写作包/英语对话：自然开场与接话/购物时犹豫不决.md",
-      "exportedSha256": "d9e2e7f50d599d0715b9210903bc37f05695b4301c147063ee287ebc71e1af3f",
+      "exportedSha256": "2efa996e5a0a865d5faa9c31cb93fa93b73397a4c547d193fcabef52102b0db1",
       "learningPath": "写作包/英语对话：自然开场与接话/购物时犹豫不决.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsch0025sbrp56u391qr",
@@ -2935,9 +2935,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "给游客指路",
       "path": "写作包/英语对话：自然开场与接话/给游客指路.md",
-      "exportedSha256": "8a3f7bf513b24ce8df1441f630e8dbe9eef7df8ca81aea97b253808314bdcac9",
+      "exportedSha256": "1445f62a3faaa200f4a7817a3bb65d47b64e0a5355b622ee6791fd948dcb1708",
       "learningPath": "写作包/英语对话：自然开场与接话/给游客指路.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncscy0027sbrpl17yo6uk",
@@ -2979,9 +2979,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "检查故障设备",
       "path": "写作包/英语对话：自然开场与接话/检查故障设备.md",
-      "exportedSha256": "ca7d08e9c265cba41de00eaf07602aa4fa99f8a446cf4880b5c4937423b3b49f",
+      "exportedSha256": "907f1812989f298fb93c7621dfeb1b2f7264175c9b01cf895a988455422b0ed8",
       "learningPath": "写作包/英语对话：自然开场与接话/检查故障设备.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsfo0029sbrps76gy4rn",
@@ -3023,9 +3023,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "在药店问诊",
       "path": "写作包/英语对话：自然开场与接话/在药店问诊.md",
-      "exportedSha256": "0826963813b333092f5c47e600c236f9e1ba716c186e11e7349d132db687b129",
+      "exportedSha256": "4747644bf7204682b50def2d8d03cf12333c26c388cdf1d16bac742ec79ba2ed",
       "learningPath": "写作包/英语对话：自然开场与接话/在药店问诊.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsge002bsbrpycslchf6",
@@ -3067,9 +3067,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "商量打扫宿舍",
       "path": "写作包/英语对话：自然开场与接话/商量打扫宿舍.md",
-      "exportedSha256": "4eecd13876fd6c50aa92ecd6eed1a16152d9765642fd2d7f03012a3fca19ac85",
+      "exportedSha256": "2c53afea518b72bf088cc032f0710fa39a4620c879e58b98a651cddcbaf26aff",
       "learningPath": "写作包/英语对话：自然开场与接话/商量打扫宿舍.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsh3002dsbrptoqfxuwe",
@@ -3111,9 +3111,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "答应帮忙搬家",
       "path": "写作包/英语对话：自然开场与接话/答应帮忙搬家.md",
-      "exportedSha256": "3cd6d3625ccd7de2099ecf9c29965b01d9aebcd88783e634f848a82f805e6e7c",
+      "exportedSha256": "961428a1aa979342dccaed5118b63a10e3944ade3cfc6389bc51de8d23c14757",
       "learningPath": "写作包/英语对话：自然开场与接话/答应帮忙搬家.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsht002fsbrp3o6bz1cu",
@@ -3155,9 +3155,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "说明买错商品",
       "path": "写作包/英语对话：自然开场与接话/说明买错商品.md",
-      "exportedSha256": "dc0eaf63330bfd6ece386593d7e002b03acbd25861ecc097d927602da5c1f286",
+      "exportedSha256": "d4674dd8ce1887844c2f2394be7ae881a67098ef3edfc80414569c726d939d81",
       "learningPath": "写作包/英语对话：自然开场与接话/说明买错商品.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsib002hsbrpamn84czh",
@@ -3199,9 +3199,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "商量换个地方",
       "path": "写作包/英语对话：自然开场与接话/商量换个地方.md",
-      "exportedSha256": "858a3b2b44e768f1a8d1bb3f7075ad9d831d0544720ab230e78f80e8e2561fa7",
+      "exportedSha256": "28130d979599cd4677ccae0b1b65ebbb8d14bf013b3eaa02f4840d88b7dddfda",
       "learningPath": "写作包/英语对话：自然开场与接话/商量换个地方.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsj3002jsbrpuiu1ipmq",
@@ -3243,9 +3243,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "核对见面时间",
       "path": "写作包/英语对话：自然开场与接话/核对见面时间.md",
-      "exportedSha256": "129447ba2cb169c8697f837bb3c2fe2d96d4264d07aedf02112d8754852f3a9e",
+      "exportedSha256": "bea0eafa648302a1d2027862dcf759a2ec16c69e296373cf2a5db9e22a0de5f0",
       "learningPath": "写作包/英语对话：自然开场与接话/核对见面时间.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsjl002lsbrpuf1hcqoh",
@@ -3287,9 +3287,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "临时取消约会",
       "path": "写作包/英语对话：自然开场与接话/临时取消约会.md",
-      "exportedSha256": "bc1478c143e1c867fc979577cbded0ef9cf25458cb325dd1b8ef5b965492e2f0",
+      "exportedSha256": "29a99f3288148b5b4bed099e17c7e8d961bb76ea52bcd3cd20623c8faa8fefe7",
       "learningPath": "写作包/英语对话：自然开场与接话/临时取消约会.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncsk3002nsbrpusmf752e",
@@ -3331,9 +3331,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "聊聊最近近况",
       "path": "写作包/英语对话：自然开场与接话/聊聊最近近况.md",
-      "exportedSha256": "f89a5640fe4459d8cfdc2bce0aae985c4192e540a8eb3630b6f41ff63729a6af",
+      "exportedSha256": "a614af7b70a3e3ebe8363213289b958430ffbd6e8518932c38b254260e0321f0",
       "learningPath": "写作包/英语对话：自然开场与接话/聊聊最近近况.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncskl002psbrphwxy3adn",
@@ -3375,9 +3375,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "评价一部电影",
       "path": "写作包/英语对话：自然开场与接话/评价一部电影.md",
-      "exportedSha256": "691a106fdbcecbdf1b2461bac5d0978f8831ae086e626f585d3f0321acfeffc1",
+      "exportedSha256": "6f34c3087678ac964e8b197c5a32b820da6ad167a81172a2af255d888a398e1b",
       "learningPath": "写作包/英语对话：自然开场与接话/评价一部电影.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmv104wjb000lsbxfapf6ir5k",
@@ -3408,9 +3408,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "谈论习惯变化",
       "path": "写作包/英语对话：自然开场与接话/谈论习惯变化.md",
-      "exportedSha256": "632dc7c66ddc74d19aa137148ee525783c4a1d96af80503518d00cbf82c22282",
+      "exportedSha256": "5146d708ed776bdbbf981c22c63430b55a9219df1d8d1eb28d4af96a5450d388",
       "learningPath": "写作包/英语对话：自然开场与接话/谈论习惯变化.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnct9y003zsbrpunyhbcpc",
@@ -3441,9 +3441,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "调整旅行计划",
       "path": "写作包/英语对话：自然开场与接话/调整旅行计划.md",
-      "exportedSha256": "2ec10ff2c9f78f1bff2c80374213b66a689c9823649ebdc5ecfc0f265d2883d9",
+      "exportedSha256": "72b3bc30b1ef53671637ee7bb7ef04d10ec0531776746187ac6bed0bdb16d73e",
       "learningPath": "写作包/英语对话：自然开场与接话/调整旅行计划.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnctag0041sbrp4fesqawv",
@@ -3474,9 +3474,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "吐槽日常开销",
       "path": "写作包/英语对话：自然开场与接话/吐槽日常开销.md",
-      "exportedSha256": "490647b540d77e23ee084e06d4eef13e694055953fcbe0ae2e044c4e08f1dcb1",
+      "exportedSha256": "67b8f2f4b26642cbd171211b501cf04b34adecee1f2a026e0eab4b15525ff489",
       "learningPath": "写作包/英语对话：自然开场与接话/吐槽日常开销.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnctb90043sbrp0lrnvphe",
@@ -3507,9 +3507,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "商量一个决定",
       "path": "写作包/英语对话：自然开场与接话/商量一个决定.md",
-      "exportedSha256": "c5e62beda6fc5d7895e6105ab23cd7e4dc071727ab898362320236e39bcd3e9e",
+      "exportedSha256": "172a65c0fc860ad894556f3031d5ba4e3276f60f5739e3440af66840e23377f2",
       "learningPath": "写作包/英语对话：自然开场与接话/商量一个决定.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnctcl0045sbrp99x9hh59",
@@ -3540,9 +3540,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "讲述昨天经历",
       "path": "写作包/英语对话：自然开场与接话/讲述昨天经历.md",
-      "exportedSha256": "463689f93c30de787d70e00772530b4a6c224f0049c75f8ed9f9756a22fead65",
+      "exportedSha256": "467ead461a8be46b27e17572f614005906a88bab34ebcf19018d8affcdb04ce7",
       "learningPath": "写作包/英语对话：自然开场与接话/讲述昨天经历.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmv104wk7000psbxfzaq46lu4",
@@ -3573,9 +3573,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "讨论新习惯",
       "path": "写作包/英语对话：自然开场与接话/讨论新习惯.md",
-      "exportedSha256": "78519b7e33bb21352da41366e70f1f678d6d9d58632129149b6bf677bdcc4989",
+      "exportedSha256": "0c68b6df2fe051fd48318de1930bd50b085105074f7fa23c718cd0cdcb5c58d4",
       "learningPath": "写作包/英语对话：自然开场与接话/讨论新习惯.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncth0004fsbrpaawirouw",
@@ -3606,9 +3606,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "商量收养流浪猫",
       "path": "写作包/英语对话：自然开场与接话/商量收养流浪猫.md",
-      "exportedSha256": "b988ef20e8d889c7ee04a1ed98b37b7e0cbb247dde192c9c6db105c703fe896d",
+      "exportedSha256": "917284ab3fbe4ee2049f293a716b8790a109bad237e2c5965d164c08d987275e",
       "learningPath": "写作包/英语对话：自然开场与接话/商量收养流浪猫.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncthi004hsbrp7vh90jqa",
@@ -3639,9 +3639,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "久别重逢闲聊",
       "path": "写作包/英语对话：自然开场与接话/久别重逢闲聊.md",
-      "exportedSha256": "079d6c4d1b274e07655fef7ab2697bad953063b61a65ec36d625904d3fe021ab",
+      "exportedSha256": "b6d4e7cbcbf03a9143c19e351fc89045b8dd72ca4b267302fb7df2aa2ed0d713",
       "learningPath": "写作包/英语对话：自然开场与接话/久别重逢闲聊.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncti2004jsbrp68ver2e7",
@@ -3672,9 +3672,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "协调周末安排",
       "path": "写作包/英语对话：自然开场与接话/协调周末安排.md",
-      "exportedSha256": "2b395c0a18a4e9ab729d29277f2bcf6cdf61315afb9970e6c1c697c2a1217f2d",
+      "exportedSha256": "744870a4c0d7a8bc31bf3ee7d81b6621faf1c7270a3263cab0bb9a92aeec2b82",
       "learningPath": "写作包/英语对话：自然开场与接话/协调周末安排.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnctij004lsbrpot4mdc8m",
@@ -3705,9 +3705,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "分析两难选择",
       "path": "写作包/英语对话：自然开场与接话/分析两难选择.md",
-      "exportedSha256": "c90ca747e478590e5b4bc31e047219a2145107bda2e1cb39617c58c853aa110f",
+      "exportedSha256": "db00061254c21811aeef413b23f92b8caf7fbe0c5022741302e7745e791c32b9",
       "learningPath": "写作包/英语对话：自然开场与接话/分析两难选择.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnctj0004nsbrp5mpi79rg",
@@ -3738,9 +3738,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "澄清误会经过",
       "path": "写作包/英语对话：自然开场与接话/澄清误会经过.md",
-      "exportedSha256": "44c37612e2cc9bdf201ee17fb9de9e44611babc26883a72d3aff630d81e482cf",
+      "exportedSha256": "8f2016c3b979fbd01c8b5d94158f0feb71872111945319f136065f82df1145f6",
       "learningPath": "写作包/英语对话：自然开场与接话/澄清误会经过.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmv104wpd001bsbxfge4x5f9k",
@@ -3771,9 +3771,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "路上堵车吐槽",
       "path": "写作包/英语对话：自然开场与接话/路上堵车吐槽.md",
-      "exportedSha256": "5b5d50ae7043fdddd9acc9ccb7a18e2f8f8681c7ec65c3d8d61787276bdbf7a6",
+      "exportedSha256": "cca17d89b947ebcd92257a1306ab13edc004ee99544daf560d71b8385c8055c8",
       "learningPath": "写作包/英语对话：自然开场与接话/路上堵车吐槽.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnculd006jsbrp73g0iuc1",
@@ -3804,9 +3804,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "友好表达分歧",
       "path": "写作包/英语对话：自然开场与接话/友好表达分歧.md",
-      "exportedSha256": "80a178a3ac2b11b771373ed26f881575b9fd6850c3e11ca9f0d73b89e52fff10",
+      "exportedSha256": "7e34700c93e782d8953a41aa1f0d4d8e3be70d33cddb97c4e49def4bf9febb5b",
       "learningPath": "写作包/英语对话：自然开场与接话/友好表达分歧.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgnculu006lsbrpwixenswv",
@@ -3837,9 +3837,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "追问事情进展",
       "path": "写作包/英语对话：自然开场与接话/追问事情进展.md",
-      "exportedSha256": "8b1804124554099314982ac73b88255d5ab296ead2bcf6e6f277a02f0372e471",
+      "exportedSha256": "f6348c6926d6e88ee0e9397c00daa6640b253e1a21affd47cb6ef9cf0ee12262",
       "learningPath": "写作包/英语对话：自然开场与接话/追问事情进展.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncumc006nsbrp2wfbx9uy",
@@ -3870,9 +3870,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "讨论假设情境",
       "path": "写作包/英语对话：自然开场与接话/讨论假设情境.md",
-      "exportedSha256": "91ad7bb656d87efcef4b2768763ddb2f797e38508a6de23b25565db0ee8d13de",
+      "exportedSha256": "3deb9d247c0cd1b75642a220c75a5e3e9f33955e2208c62e58c8a422f04ba949",
       "learningPath": "写作包/英语对话：自然开场与接话/讨论假设情境.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmv104wqm001hsbxf33xx280k",
@@ -3903,9 +3903,9 @@
       "packageTitle": "英语对话：自然开场与接话",
       "topicTitle": "自然闲聊收尾",
       "path": "写作包/英语对话：自然开场与接话/自然闲聊收尾.md",
-      "exportedSha256": "78fc64399b10cc0084abaab75673259129a3c90bef5fcd6937fa1d76fc85806a",
+      "exportedSha256": "7f1ac5307fe48144d51f7a3a7cc970045057ff0598905915ecd8e3b56e45bcb9",
       "learningPath": "写作包/英语对话：自然开场与接话/自然闲聊收尾.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmvgncuw40071sbrpdoxchorj",

@@ -1,0 +1,326 @@
+learning:
+  exercises:
+    pipeline:
+      - key: help-understand
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮某人理解某事
+        chunk: help me understand the problem
+        chunkMeaning: 帮我理解这个问题
+        direction: zh_to_en
+        items:
+          - zh: 她帮助我理解了这个问题。
+            answer: She helped me understand the problem.
+            hint: understand the problem
+          - zh: 这个解释帮助我理解了区别。
+            answer: This explanation helped me understand the difference.
+            hint: the difference
+          - zh: 你能帮我弄清楚出了什么问题吗？
+            answer: Can you help me figure out what's wrong?
+            hint: figure out；what's wrong
+      - key: help-understand-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说帮了谁理解
+        chunk: help me understand the problem
+        chunkMeaning: 帮我理解这个问题
+        direction: en_to_zh
+        items:
+          - en: She helped me understand the problem.
+            answer: 她帮助我理解了这个问题。
+            hint: understand the problem
+          - en: This explanation helped me understand the difference.
+            answer: 这个解释帮助我理解了区别。
+            hint: the difference
+          - en: Can you help me figure out what's wrong?
+            answer: 你能帮我弄清楚出了什么问题吗？
+            hint: figure out；what's wrong
+      - key: help-with-project
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮某人处理某件事
+        chunk: help me with the project
+        chunkMeaning: 帮我处理这个项目
+        direction: zh_to_en
+        items:
+          - zh: 他帮我处理这个项目。
+            answer: He helped me with the project.
+            hint: the project
+          - zh: 你能帮我搬一下行李吗？
+            answer: Can you help me with my luggage?
+            hint: my luggage
+          - zh: 她帮我准备了晚餐。
+            answer: She helped me with dinner.
+            hint: dinner
+      - key: help-with-report
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮忙处理某事
+        chunk: help with the report
+        chunkMeaning: 帮忙处理报告
+        direction: zh_to_en
+        items:
+          - zh: 你能帮忙处理报告吗？
+            answer: Can you help with the report?
+            hint: the report
+          - zh: 我需要有人帮忙布置场地。
+            answer: I need someone to help with the venue.
+            hint: the venue
+          - zh: 谢谢大家帮忙清理教室。
+            answer: Thanks for helping with the clean-up.
+            hint: the clean-up
+      - key: cant-help-laughing
+        kind: chunk
+        type: chunk_substitution
+        title: 说忍不住笑出来
+        chunk: can't help laughing
+        chunkMeaning: 忍不住笑
+        direction: zh_to_en
+        items:
+          - zh: 我忍不住笑了。
+            answer: I couldn't help laughing.
+            hint: laughing
+          - zh: 看到她的反应，我忍不住笑了。
+            answer: I couldn't help smiling when I saw her reaction.
+            hint: her reaction
+          - zh: 每次听到这个笑话我都忍不住笑。
+            answer: I can't help laughing every time I hear that joke.
+            hint: every time
+      - key: help-me-out
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮某人解围
+        chunk: help me out
+        chunkMeaning: 帮我一把
+        direction: zh_to_en
+        items:
+          - zh: 谢谢你帮我解围。
+            answer: Thanks for helping me out.
+            hint: Thanks for
+          - zh: 你能帮我顶一下班吗？
+            answer: Can you help me out tonight?
+            hint: tonight
+          - zh: 他失业时朋友们帮了他一把。
+            answer: His friends helped him out when he lost his job.
+            hint: when he lost his job
+      - key: help-out-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说帮了一把
+        chunk: help me out
+        chunkMeaning: 帮我一把
+        direction: en_to_zh
+        items:
+          - en: Thanks for helping me out.
+            answer: 谢谢你帮我解围。
+            hint: Thanks for
+          - en: Can you help me out tonight?
+            answer: 你能帮我顶一下班吗？
+            hint: tonight
+          - en: His friends helped him out when he lost his job.
+            answer: 他失业时朋友们帮了他一把。
+            hint: when he lost his job
+      - key: help-you-along
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮某人继续推进
+        chunk: help you along
+        chunkMeaning: 帮你继续推进
+        direction: zh_to_en
+        items:
+          - zh: 几个例子会帮助你继续学下去。
+            answer: A few examples will help you along.
+            hint: A few examples
+          - zh: 这些提示会帮他把报告写完。
+            answer: These tips will help him along with the report.
+            hint: with the report
+          - zh: 老师的反馈帮助她继续推进。
+            answer: Her teacher's feedback helped her along.
+            hint: feedback
+      - key: help-someone-do-pattern
+        type: pattern_drill
+        title: 说帮某人做某事
+        pattern: help [someone] (to) [do]
+        patternMeaning: 帮助某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 你能帮我把这些书搬上楼吗？
+            answer: Can you help me carry these books upstairs?
+            hint: carry these books upstairs
+          - zh: 她教我怎么用这个工具。
+            answer: She helped me use the tool.
+            hint: use the tool
+          - zh: 我们帮他找到了车钥匙。
+            answer: We helped him find his car keys.
+            hint: his car keys
+      - key: help-someone-with-pattern
+        type: pattern_drill
+        title: 说在某事上帮某人
+        pattern: help [someone] with [something]
+        patternMeaning: 在某事上帮助某人
+        direction: zh_to_en
+        items:
+          - zh: 你能帮我做作业吗？
+            answer: Can you help me with my homework?
+            hint: my homework
+          - zh: 邻居帮我们修了篱笆。
+            answer: Our neighbour helped us with the fence.
+            hint: the fence
+          - zh: 她帮我写了申请表。
+            answer: She helped me with the application form.
+            hint: the application form
+      - key: help-with-pattern
+        type: pattern_drill
+        title: 说帮忙处理某事
+        pattern: help with [something]
+        patternMeaning: 帮忙处理某事
+        direction: zh_to_en
+        items:
+          - zh: 有人能帮忙洗碗吗？
+            answer: Can someone help with the dishes?
+            hint: the dishes
+          - zh: 他志愿帮忙活动报名。
+            answer: He volunteered to help with registration.
+            hint: registration
+          - zh: 我需要帮忙整理数据。
+            answer: I need help with the data.
+            hint: the data
+      - key: cant-help-pattern
+        type: pattern_drill
+        title: 说忍不住做某事
+        pattern: can't help [doing]
+        patternMeaning: 忍不住做某事
+        direction: zh_to_en
+        items:
+          - zh: 我忍不住担心。
+            answer: I can't help worrying.
+            hint: worrying
+          - zh: 她忍不住哭了起来。
+            answer: She couldn't help crying.
+            hint: crying
+          - zh: 我们忍不住一直看手机。
+            answer: We can't help checking our phones.
+            hint: checking our phones
+      - key: cant-help-listen
+        type: pattern_drill
+        title: 听懂对方说忍不住做什么
+        pattern: can't help [doing]
+        patternMeaning: 忍不住做某事
+        direction: en_to_zh
+        items:
+          - en: I can't help worrying.
+            answer: 我忍不住担心。
+            hint: worrying
+          - en: She couldn't help crying.
+            answer: 她忍不住哭了起来。
+            hint: crying
+          - en: We can't help checking our phones.
+            answer: 我们忍不住一直看手机。
+            hint: checking our phones
+      - key: help-someone-out-pattern
+        type: pattern_drill
+        title: 说帮某人渡过难关
+        pattern: help [someone] out
+        patternMeaning: 帮某人解围
+        direction: zh_to_en
+        items:
+          - zh: 你能帮我们撑过这周吗？
+            answer: Can you help us out this week?
+            hint: this week
+          - zh: 她帮同事完成了演示。
+            answer: She helped her colleague out with the presentation.
+            hint: with the presentation
+          - zh: 他帮邻居遛了几天狗。
+            answer: He helped his neighbour out by walking the dog.
+            hint: by walking the dog
+      - key: help-someone-along-pattern
+        type: pattern_drill
+        title: 说帮某人继续推进
+        pattern: help [someone] along
+        patternMeaning: 帮助某人继续推进
+        direction: zh_to_en
+        items:
+          - zh: 导师的建议帮她推进了研究。
+            answer: Her mentor's advice helped her along with the research.
+            hint: with the research
+          - zh: 一点鼓励就能帮孩子继续练下去。
+            answer: A little encouragement will help the child along.
+            hint: encouragement
+          - zh: 那几个提示帮我们继续做下去。
+            answer: Those hints helped us along.
+            hint: Those hints
+      - key: help-yourself-cant-be-helped
+        type: vocab_sentence_building
+        title: 说请自取，或表示没办法
+        vocabWord: help
+        vocabMeaning: 自取；没办法
+        direction: zh_to_en
+        patterns:
+          - chunk: help yourself to some coffee
+            items:
+              - zh: 咖啡请自取。
+                answer: Help yourself to some coffee.
+                hint: some coffee
+              - zh: 水果请自取。
+                answer: Help yourself to the fruit.
+                hint: the fruit
+          - chunk: it can't be helped
+            items:
+              - zh: 很抱歉，但也没办法。
+                answer: I'm sorry, but it can't be helped.
+                hint: I'm sorry
+              - zh: 天气不好，这也是没办法的事。
+                answer: The weather is bad, but it can't be helped.
+                hint: The weather
+      - key: help-understand-build
+        type: sentence_decomposition
+        title: 把帮人理解问题这件事说完整
+        sourceKind: chunk
+        sourceText: help me understand the problem
+        fullSentence: She helped me understand the problem in a way I could actually use.
+        fullSentenceZh: 她以一种我能实际用上的方式帮我理解了这个问题。
+        levels:
+          - level: 1
+            label: 核心句
+            en: She helped me understand the problem.
+            zh: 她帮我理解这个问题。
+            highlight: ''
+            hint: 先说帮我理解问题
+          - level: 2
+            label: 加程度
+            en: She helped me understand the problem quickly.
+            zh: 她很快帮我理解了这个问题。
+            highlight: quickly
+            hint: 补上很快
+          - level: 3
+            label: 完整句
+            en: She helped me understand the problem in a way I could actually use.
+            zh: 她以一种我能实际用上的方式帮我理解了这个问题。
+            highlight: in a way I could actually use
+            hint: 补上我能实际用上的方式
+      - key: help-out-build
+        type: sentence_decomposition
+        title: 把朋友帮忙渡过难关说完整
+        sourceKind: pattern
+        sourceText: help [someone] out
+        fullSentence: My friends helped me out when I lost my job last year.
+        fullSentenceZh: 去年我失业时，朋友们帮了我一把。
+        levels:
+          - level: 1
+            label: 核心句
+            en: My friends helped me out.
+            zh: 朋友们帮了我一把。
+            highlight: ''
+            hint: 先说朋友们帮了我
+          - level: 2
+            label: 加时间
+            en: My friends helped me out last year.
+            zh: 去年朋友们帮了我一把。
+            highlight: last year
+            hint: 补上去年
+          - level: 3
+            label: 完整句
+            en: My friends helped me out when I lost my job last year.
+            zh: 去年我失业时，朋友们帮了我一把。
+            highlight: when I lost my job last year
+            hint: 补上失业的时候

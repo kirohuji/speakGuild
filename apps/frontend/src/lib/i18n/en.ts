@@ -1949,7 +1949,7 @@ const en = {
         continuousPlayback: 'Continue',
         playMainText: 'Play English',
         playMeaning: 'Play meaning',
-        playExample: 'Play example',
+        playExample: 'Play a random example',
         playExampleTranslation: 'Play example translation',
         autoNext: 'Auto next',
         loopQueue: 'Loop queue',

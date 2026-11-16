@@ -52,13 +52,14 @@ async function getActiveTtsProvider() {
   const ttsProviders = providers.tts ?? []
   const active = ttsProviders.find((item) => item.isActive) ?? ttsProviders[0]
   if (!active) throw new Error('请先在大模型管理中配置 TTS')
-  if (!['minimax', 'cartesia'].includes(active.provider)) {
-    throw new Error(`当前 TTS Provider (${active.provider}) 暂不支持内容语料库生成`)
-  }
   return active
 }
 
 function getTtsVoiceId(item: AiProviderItem, accent: TtsAccent) {
+  if (item.provider === 'entts') {
+    if (accent === 'uk') return 'en-gb-female'
+    return 'en-us-female'
+  }
   const config = item.config ?? {}
   const accentKeys = accent === 'us'
     ? ['usVoiceId', 'americanVoiceId', 'voiceIdUs', 'voiceUs']
@@ -1563,7 +1564,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       const arr = [...exs]
       arr[idx] = { ...arr[idx], audioUrl: result.url }
       setForm({ ...form, examples: arr })
-      toast.success(`例句音频已生成（${result.type === 'uk' ? '英' : '美'}/${result.gender === 'female' ? '女' : '男'}）`)
+      toast.success(`例句音频已生成（${result.provider}/${result.model}）`)
     } catch (err: any) {
       toast.error(err?.message || '例句音频生成失败')
     } finally {
@@ -1827,7 +1828,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                         <Play className="size-3.5" />
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="ENTTS 生成例句音频"
+                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="使用当前 TTS 生成例句音频"
                       disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
                       onClick={() => generateExampleAudio(i)}>
                       {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
@@ -1855,7 +1856,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                         <Play className="size-3" />
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="ENTTS 生成例句音频"
+                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="使用当前 TTS 生成例句音频"
                       disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
                       onClick={() => generateExampleAudio(i)}>
                       {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}

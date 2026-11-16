@@ -280,8 +280,13 @@ export function ImmersivePlayerDialog({
           const willRepeat = settings.repeatPerItem === 'infinite' && latestSettings.repeatPerItem === 'infinite'
           const willAdvance = latestSettings.autoNext && (hasNext || latestSettings.loopQueue)
           if (moreInThisPass || willRepeat || willAdvance) {
-            const continued = await waitForItemGap(runId)
-            if (!continued || runRef.current !== runId) return
+            // Native WebViews can freeze JS timers while the screen is locked. Continue inside
+            // the native completion callback so background auto-next cannot stall on setTimeout.
+            const webViewTimerIsReliable = !isNative() || document.visibilityState === 'visible'
+            if (webViewTimerIsReliable) {
+              const continued = await waitForItemGap(runId)
+              if (!continued || runRef.current !== runId) return
+            }
           }
         }
       } while (
@@ -304,6 +309,7 @@ export function ImmersivePlayerDialog({
         }
       } else {
         setPlaybackStatus('ended')
+        void immersivePlaybackService.clearSession()
       }
     } catch (error) {
       console.warn('[immersive-player] playback failed', error)
@@ -674,6 +680,11 @@ function ImmersiveSettingsDrawer({
                   onChange={(value) => onChange({ pauseGapSeconds: value })}
                 />
                 <p className="text-[11px] leading-4 text-muted-foreground">{t('immersivePlayer.settings.pauseGapHint')}</p>
+              </div>
+            </OptionGroup>
+            <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
+              <div className="overflow-hidden rounded-lg bg-muted/35">
+                <SwitchRow label={t('immersivePlayer.settings.playExample')} checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
               </div>
             </OptionGroup>
             <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>

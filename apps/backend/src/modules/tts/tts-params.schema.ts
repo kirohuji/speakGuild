@@ -2,6 +2,38 @@ import { TtsSchema } from './tts.types';
 
 export const TTS_PARAMS_SCHEMA: TtsSchema[] = [
   {
+    provider: 'entts',
+    models: [
+      {
+        model: 'standard',
+        label: 'ENTTS Standard',
+        requiresVoiceId: false,
+        fields: [
+          {
+            key: 'accent',
+            label: 'Accent',
+            type: 'select',
+            defaultValue: 'us',
+            options: [
+              { label: 'American English', value: 'us' },
+              { label: 'British English', value: 'uk' },
+            ],
+          },
+          {
+            key: 'gender',
+            label: 'Voice',
+            type: 'select',
+            defaultValue: 'female',
+            options: [
+              { label: 'Female', value: 'female' },
+              { label: 'Male', value: 'male' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
     provider: 'minimax',
     models: [
       'speech-2.8-hd',

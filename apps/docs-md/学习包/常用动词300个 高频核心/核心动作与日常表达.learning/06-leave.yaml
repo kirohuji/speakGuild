@@ -1,0 +1,427 @@
+learning:
+  exercises:
+    pipeline:
+      - key: leave-the-office
+        kind: chunk
+        type: chunk_substitution
+        title: 说几点离开办公室
+        chunk: leave the office
+        chunkMeaning: 离开办公室
+        direction: zh_to_en
+        items:
+          - zh: 我六点离开了办公室。
+            answer: I left the office at six.
+            hint: at six
+          - zh: 你昨天几点离开办公室的？
+            answer: What time did you leave the office yesterday?
+            hint: What time；yesterday
+          - zh: 她因为不舒服提前离开了办公室。
+            answer: She left the office early because she felt sick.
+            hint: early；felt sick
+      - key: leave-the-office-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说离开办公室
+        chunk: leave the office
+        chunkMeaning: 离开办公室
+        direction: en_to_zh
+        items:
+          - en: I left the office at six and went straight home.
+            answer: 我六点离开办公室，直接回家了。
+            hint: straight home
+          - en: She left the office without saying goodbye.
+            answer: 她没打招呼就离开了办公室。
+            hint: without saying goodbye
+          - en: We left the office together at seven.
+            answer: 我们七点一起离开了办公室。
+            hint: together；at seven
+      - key: leave-for-london
+        kind: chunk
+        type: chunk_substitution
+        title: 说出发去某地
+        chunk: leave for London
+        chunkMeaning: 出发去伦敦
+        direction: zh_to_en
+        items:
+          - zh: 我们明天出发去伦敦。
+            answer: We're leaving for London tomorrow.
+            hint: tomorrow
+          - zh: 他们出发去机场了吗？
+            answer: Have they left for the airport?
+            hint: the airport
+          - zh: 我们明天一早动身去北京。
+            answer: We're leaving for Beijing early tomorrow morning.
+            hint: early tomorrow morning
+      - key: leave-keys-home
+        kind: chunk
+        type: chunk_substitution
+        title: 说把东西落在某处
+        chunk: leave my keys at home
+        chunkMeaning: 把钥匙落在家里
+        direction: zh_to_en
+        items:
+          - zh: 我今天早上不小心把钱包落在家里了。
+            answer: I accidentally left my wallet at home this morning.
+            hint: accidentally；this morning
+          - zh: 我把钥匙落在办公室了。
+            answer: I left my keys at the office.
+            hint: my keys；the office
+          - zh: 我把眼镜落在厨房了。
+            answer: I left my glasses in the kitchen.
+            hint: my glasses；the kitchen
+      - key: leave-me-alone
+        kind: chunk
+        type: chunk_substitution
+        title: 让对方别打扰自己
+        chunk: Leave me alone.
+        chunkMeaning: 别打扰我
+        direction: zh_to_en
+        items:
+          - zh: 让我自己待一会儿。
+            answer: Just leave me alone for a while.
+            hint: for a while
+          - zh: 他现在心情不好，别去打扰他。
+            answer: He's in a bad mood, so leave him alone.
+            hint: in a bad mood；him
+          - zh: 我想一个人待一会儿。
+            answer: I want to be left alone for a while.
+            hint: be left alone；for a while
+      - key: leave-me-alone-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方让你别打扰
+        chunk: leave someone alone
+        chunkMeaning: 不打扰某人
+        direction: en_to_zh
+        items:
+          - en: Just leave me alone for a few minutes.
+            answer: 让我自己待几分钟。
+            hint: a few minutes
+          - en: Leave him alone; he's trying to work.
+            answer: 别打扰他，他正想工作呢。
+            hint: he's trying to work
+          - en: I just want to be left alone for a while.
+            answer: 我只想一个人待一会儿。
+            hint: for a while
+      - key: leave-window-open
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒别让东西一直开着
+        chunk: leave the window open
+        chunkMeaning: 让窗户一直开着
+        direction: zh_to_en
+        items:
+          - zh: 不要让窗户一直开着。
+            answer: Don't leave the window open.
+            hint: the window
+          - zh: 我出去的时候没关灯。
+            answer: I left the light on when I went out.
+            hint: the light on；went out
+          - zh: 别让门开着，猫会跑出去。
+            answer: Don't leave the door open, or the cat will run out.
+            hint: the cat；run out
+      - key: leave-water-running
+        kind: chunk
+        type: chunk_substitution
+        title: 提醒别让水一直流
+        chunk: leave the water running
+        chunkMeaning: 让水一直流着
+        direction: zh_to_en
+        items:
+          - zh: 别让水一直流着。
+            answer: Don't leave the water running.
+            hint: the water
+          - zh: 她让电脑整晚开着。
+            answer: She left her computer running all night.
+            hint: her computer；all night
+          - zh: 别让电视整晚开着。
+            answer: Don't leave the TV on all night.
+            hint: the TV；all night
+      - key: leave-behind
+        kind: chunk
+        type: chunk_substitution
+        title: 说落下了东西
+        chunk: leave my phone behind
+        chunkMeaning: 把手机落下
+        direction: zh_to_en
+        items:
+          - zh: 我好像把手机落下了。
+            answer: I think I left my phone behind.
+            hint: I think
+          - zh: 下车前别把东西落下。
+            answer: Don't leave anything behind when you get off.
+            hint: anything；get off
+          - zh: 他把钥匙落在办公室，只好等保安。
+            answer: He left his keys behind at the office and had to wait for the guard.
+            hint: had to wait；the guard
+      - key: leave-a-message
+        kind: chunk
+        type: chunk_substitution
+        title: 说留言
+        chunk: leave a message
+        chunkMeaning: 留言
+        direction: zh_to_en
+        items:
+          - zh: 我可以给她留个言吗？
+            answer: Can I leave a message for her?
+            hint: for her
+          - zh: 他给你留了言，说会晚点到。
+            answer: He left a message saying he'd be late.
+            hint: saying；be late
+          - zh: 请留言，我会尽快回复你。
+            answer: Please leave a message and I'll get back to you soon.
+            hint: get back to you；soon
+      - key: leave-place
+        type: pattern_drill
+        title: 说离开某个地方
+        pattern: leave [place]
+        patternMeaning: 离开某地
+        direction: zh_to_en
+        items:
+          - zh: 火车十分钟后离站。
+            answer: The train leaves the station in ten minutes.
+            hint: the station；in ten minutes
+          - zh: 我们得在中午前离开这里。
+            answer: We need to leave here before noon.
+            hint: before noon
+          - zh: 他一声不响地离开了房间。
+            answer: He left the room without a word.
+            hint: without a word
+      - key: leave-for-place
+        type: pattern_drill
+        title: 说动身去别的地方
+        pattern: leave for [place]
+        patternMeaning: 出发前往某地
+        direction: zh_to_en
+        items:
+          - zh: 我们下周出发去东京。
+            answer: We're leaving for Tokyo next week.
+            hint: next week
+          - zh: 她什么时候动身去机场？
+            answer: When is she leaving for the airport?
+            hint: When
+          - zh: 火车明早七点开往上海。
+            answer: The train leaves for Shanghai at seven tomorrow morning.
+            hint: at seven；tomorrow morning
+      - key: leave-something-somewhere
+        type: pattern_drill
+        title: 说把东西留在某处
+        pattern: leave [something] [somewhere]
+        patternMeaning: 把某物留在某处
+        direction: zh_to_en
+        items:
+          - zh: 我把伞落在公交车上了。
+            answer: I left my umbrella on the bus.
+            hint: my umbrella；on the bus
+          - zh: 你可以把包放在门口。
+            answer: You can leave your bag by the door.
+            hint: by the door
+          - zh: 别把杯子放在桌子边上。
+            answer: Don't leave the cup near the edge of the table.
+            hint: near the edge
+      - key: leave-alone-other
+        type: pattern_drill
+        title: 说别去打扰别人
+        pattern: leave [someone] alone
+        patternMeaning: 不打扰某人
+        direction: zh_to_en
+        items:
+          - zh: 让她自己决定吧。
+            answer: Leave her alone and let her decide.
+            hint: let her decide
+          - zh: 孩子们在睡觉，别吵他们。
+            answer: The kids are asleep, so leave them alone.
+            hint: asleep；them
+          - zh: 她需要时间，别追问她。
+            answer: She needs time, so leave her alone.
+            hint: needs time；her
+      - key: leave-state
+        type: pattern_drill
+        title: 说让某物保持某种状态
+        pattern: leave [something] [adjective]
+        patternMeaning: 使某物处于某状态
+        direction: zh_to_en
+        items:
+          - zh: 别把门锁着，我一会儿要出去。
+            answer: Don't leave the door locked; I need to go out later.
+            hint: locked；later
+          - zh: 请把桌子空出来。
+            answer: Please leave the table clear.
+            hint: clear
+          - zh: 我把窗户关着，因为外面很吵。
+            answer: I left the window closed because it was noisy outside.
+            hint: closed；noisy outside
+      - key: leave-doing
+        type: pattern_drill
+        title: 说让某件事继续进行
+        pattern: leave [something] [doing]
+        patternMeaning: 让某动作继续
+        direction: zh_to_en
+        items:
+          - zh: 别让机器一直转着。
+            answer: Don't leave the machine running.
+            hint: the machine
+          - zh: 我让汤在炉子上炖着。
+            answer: I left the soup cooking on the stove.
+            hint: cooking；the stove
+          - zh: 她让洗衣机一直转着就出门了。
+            answer: She left the washing machine running and went out.
+            hint: the washing machine；went out
+      - key: leave-behind-other
+        type: pattern_drill
+        title: 说留下或抛下东西
+        pattern: leave [something] behind
+        patternMeaning: 遗落或留下某物
+        direction: zh_to_en
+        items:
+          - zh: 他放下了一切，重新开始。
+            answer: He left everything behind and started again.
+            hint: started again
+          - zh: 走的时候别忘了把充电器带上。
+            answer: Don't leave your charger behind when you go.
+            hint: your charger；when you go
+          - zh: 她把旧衣服留在了老家。
+            answer: She left her old clothes behind at her parents' place.
+            hint: old clothes；her parents' place
+      - key: leave-impression
+        type: vocab_sentence_building
+        title: 说留下印象或感受
+        vocabWord: leave
+        vocabMeaning: 给人留下某种印象或感受
+        direction: zh_to_en
+        patterns:
+          - chunk: leave a good impression
+            items:
+              - zh: 她给所有人都留下了很好的印象。
+                answer: She left a good impression on everyone.
+                hint: on everyone
+              - zh: 第一份工作给我留下了很深的印象。
+                answer: My first job left a deep impression on me.
+                hint: a deep impression；on me
+          - chunk: leave me with questions
+            items:
+              - zh: 那次谈话让我产生了更多疑问。
+                answer: That conversation left me with more questions.
+                hint: more questions
+              - zh: 这次旅行让我对自己的决定更有信心了。
+                answer: The trip left me feeling more confident about my decision.
+                hint: feeling；more confident；my decision
+      - key: leave-window-open-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方提醒别让东西开着
+        chunk: leave the window open
+        chunkMeaning: 让窗户一直开着
+        direction: en_to_zh
+        items:
+          - en: Don't leave the window open when you go out.
+            answer: 出门的时候别让窗户开着。
+            hint: when you go out
+          - en: I left the window open all night.
+            answer: 我让窗户开了一整晚。
+            hint: all night
+          - en: She left the light on in the kitchen.
+            answer: 她让厨房的灯一直亮着。
+            hint: the light on；in the kitchen
+      - key: leave-behind-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说落下了东西
+        chunk: leave my phone behind
+        chunkMeaning: 把手机落下
+        direction: en_to_zh
+        items:
+          - en: I think I left my phone behind.
+            answer: 我好像把手机落下了。
+            hint: I think
+          - en: Don't leave your bag behind on the train.
+            answer: 别把包落在火车上。
+            hint: your bag；the train
+          - en: He left his keys behind and had to wait outside.
+            answer: 他把钥匙落下了，只好在外面等。
+            hint: had to wait；outside
+      - key: leave-alone-listen
+        type: pattern_drill
+        title: 听懂对方说别打扰谁
+        pattern: leave [someone] alone
+        patternMeaning: 不打扰某人
+        direction: en_to_zh
+        items:
+          - en: Just leave me alone for a while.
+            answer: 让我自己待一会儿吧。
+            hint: for a while
+          - en: Leave her alone; she needs some time.
+            answer: 别打扰她，她需要点时间。
+            hint: needs some time
+          - en: The kids are asleep, so leave them alone.
+            answer: 孩子们在睡觉，别吵他们。
+            hint: asleep；them
+      - key: leave-out
+        kind: chunk
+        type: chunk_substitution
+        title: 说漏掉或省略了什么
+        chunk: leave out an important detail
+        chunkMeaning: 漏掉一个重要细节
+        direction: zh_to_en
+        items:
+          - zh: 你漏掉了一个重要细节。
+            answer: You left out an important detail.
+            hint: an important detail
+          - zh: 别把她的名字漏掉。
+            answer: Don't leave her name out.
+            hint: her name
+          - zh: 这部分可以省略吗？
+            answer: Can we leave this part out?
+            hint: this part
+      - key: leave-keys-build
+        type: sentence_decomposition
+        title: 把钥匙落在家这件事说完整
+        sourceKind: chunk
+        sourceText: leave my keys at home
+        fullSentence: I left my keys at home, so I had to wait for my roommate.
+        fullSentenceZh: 我把钥匙落在家里了，只好等室友回来。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I left my keys at home.
+            zh: 我把钥匙落在家里了。
+            highlight: ''
+            hint: 先说钥匙落在家了
+          - level: 2
+            label: 加结果
+            en: I left my keys at home, so I had to wait.
+            zh: 我把钥匙落在家里了，只好等着。
+            highlight: so I had to wait
+            hint: 补上只好等着
+          - level: 3
+            label: 完整句
+            en: I left my keys at home, so I had to wait for my roommate.
+            zh: 我把钥匙落在家里了，只好等室友回来。
+            highlight: for my roommate
+            hint: 补上等室友回来
+      - key: leave-window-build
+        type: sentence_decomposition
+        title: 把别让窗户开着这件事说完整
+        sourceKind: pattern
+        sourceText: leave [something] [adjective]
+        fullSentence: Don't leave the window open when you go out, or the rain will come in.
+        fullSentenceZh: 出门的时候别让窗户开着，不然雨会飘进来。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Don't leave the window open.
+            zh: 别让窗户开着。
+            highlight: ''
+            hint: 先说别让窗户开着
+          - level: 2
+            label: 加时间
+            en: Don't leave the window open when you go out.
+            zh: 出门的时候别让窗户开着。
+            highlight: when you go out
+            hint: 补上出门的时候
+          - level: 3
+            label: 完整句
+            en: Don't leave the window open when you go out, or the rain will come in.
+            zh: 出门的时候别让窗户开着，不然雨会飘进来。
+            highlight: or the rain will come in
+            hint: 补上不然雨会飘进来

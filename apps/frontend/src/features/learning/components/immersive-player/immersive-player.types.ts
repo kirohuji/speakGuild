@@ -2,6 +2,12 @@ import type { LearningInsightItem } from '@/features/practice/components/learnin
 
 export type ImmersivePlayerItemKind = 'word' | 'chunk' | 'pattern'
 
+export type ImmersivePlayerExample = {
+  en: string
+  zh?: string | null
+  audioUrl?: string | null
+}
+
 export type ImmersivePlayerItem = {
   id: string
   kind: ImmersivePlayerItemKind
@@ -12,6 +18,7 @@ export type ImmersivePlayerItem = {
   exampleZh?: string | null
   mainAudioUrl?: string | null
   exampleAudioUrl?: string | null
+  examples?: ImmersivePlayerExample[]
   sceneName?: string | null
   source?: LearningInsightItem
 }

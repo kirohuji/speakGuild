@@ -143,13 +143,12 @@ export const immersivePlaybackService = {
       try {
         completeHandle = await NativeAudio.addListener('complete', (event) => {
           if (event.assetId !== assetId) return
-          void (async () => {
-            if (currentNativeAssetId === assetId) currentNativeAssetId = null
-            await NativeAudio.unload({ assetId }).catch(() => undefined)
-            publishVisualState({ state: 'idle', media: null })
-            await clearMediaSession()
-            settle()
-          })()
+          if (currentNativeAssetId === assetId) currentNativeAssetId = null
+          publishVisualState({ state: 'idle', media: null })
+          // Resolve before bridge cleanup. When iOS locks the WebView it may suspend JS as soon
+          // as the native player is unloaded, which previously stranded the auto-next chain.
+          settle()
+          void NativeAudio.unload({ assetId }).catch(() => undefined)
         })
         if (settled || requestId !== playbackRequestId || currentNativeAssetId !== assetId) return
         if (onNativeState) {
@@ -282,6 +281,10 @@ export const immersivePlaybackService = {
   async stopCurrent() {
     playbackRequestId += 1
     await stopActivePlayback()
+  },
+
+  async clearSession() {
+    await clearMediaSession()
   },
 
   subscribeVisualState(listener: (state: ImmersivePlaybackVisualState) => void) {

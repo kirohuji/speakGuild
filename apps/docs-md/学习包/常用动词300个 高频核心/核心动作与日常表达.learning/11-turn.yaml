@@ -1,0 +1,375 @@
+learning:
+  exercises:
+    pipeline:
+      - key: turn-left
+        kind: chunk
+        type: chunk_substitution
+        title: 说往哪个方向转
+        chunk: turn left
+        chunkMeaning: 左转
+        direction: zh_to_en
+        items:
+          - zh: 在下一个路口左转。
+            answer: Turn left at the next corner.
+            hint: at the next corner
+          - zh: 在第二个红绿灯右转。
+            answer: Turn right at the second traffic light.
+            hint: at the second traffic light
+          - zh: 一直走，然后左转。
+            answer: Go straight and then turn left.
+            hint: Go straight
+      - key: turn-left-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说怎么走
+        chunk: turn left
+        chunkMeaning: 左转
+        direction: en_to_zh
+        items:
+          - en: Turn left at the next corner.
+            answer: 在下一个路口左转。
+            hint: at the next corner
+          - en: Turn right at the second traffic light.
+            answer: 在第二个红绿灯右转。
+            hint: at the second traffic light
+          - en: Go straight and then turn left.
+            answer: 一直走，然后左转。
+            hint: Go straight
+      - key: turn-dark
+        kind: chunk
+        type: chunk_substitution
+        title: 说颜色或天色变了
+        chunk: turn dark
+        chunkMeaning: 变暗
+        direction: zh_to_en
+        items:
+          - zh: 天空变暗了。
+            answer: The sky turned dark.
+            hint: The sky
+          - zh: 天黑得很快。
+            answer: It turned dark very quickly.
+            hint: very quickly
+          - zh: 树叶变黄了。
+            answer: The leaves turned yellow.
+            hint: The leaves
+      - key: turn-argument
+        kind: chunk
+        type: chunk_substitution
+        title: 说事情变成了另一种样子
+        chunk: turn into an argument
+        chunkMeaning: 变成争吵
+        direction: zh_to_en
+        items:
+          - zh: 讨论变成了争吵。
+            answer: The discussion turned into an argument.
+            hint: an argument
+          - zh: 我还没来得及阻止，谈话就变成了争吵。
+            answer: The conversation turned into an argument before I could stop it.
+            hint: before I could stop it
+          - zh: 那个玩笑变成了一场争吵。
+            answer: The joke turned into a fight.
+            hint: a fight
+      - key: turn-room-office
+        kind: chunk
+        type: chunk_substitution
+        title: 说把空间改成别的用途
+        chunk: turn the room into an office
+        chunkMeaning: 把房间改成办公室
+        direction: zh_to_en
+        items:
+          - zh: 他们把房间改成了办公室。
+            answer: They turned the room into an office.
+            hint: an office
+          - zh: 我们把车库改成了健身房。
+            answer: We turned the garage into a gym.
+            hint: the garage；a gym
+          - zh: 这栋楼将被改造成酒店。
+            answer: The building will be turned into a hotel.
+            hint: be turned into
+      - key: turn-to-friends
+        kind: chunk
+        type: chunk_substitution
+        title: 说向谁求助
+        chunk: turn to my friends
+        chunkMeaning: 向我的朋友求助
+        direction: zh_to_en
+        items:
+          - zh: 我需要建议时会找朋友。
+            answer: I turn to my friends when I need advice.
+            hint: when I need advice
+          - zh: 你可以向同事求助。
+            answer: You can turn to your colleagues for help.
+            hint: for help
+          - zh: 她遇到麻烦时总是找姐姐。
+            answer: She always turns to her sister when she's in trouble.
+            hint: in trouble
+      - key: turn-out-simple
+        kind: chunk
+        type: chunk_substitution
+        title: 说结果其实是怎样
+        chunk: turn out to be simple
+        chunkMeaning: 结果其实很简单
+        direction: zh_to_en
+        items:
+          - zh: 结果这个问题其实很简单。
+            answer: The problem turned out to be quite simple.
+            hint: quite simple
+          - zh: 结果证明是我错了。
+            answer: It turned out that I was wrong.
+            hint: that I was wrong
+          - zh: 原来他是我同事的弟弟。
+            answer: He turned out to be my colleague's brother.
+            hint: my colleague's brother
+      - key: turn-on-light
+        kind: chunk
+        type: chunk_substitution
+        title: 说打开某个设备
+        chunk: turn on the light
+        chunkMeaning: 打开灯
+        direction: zh_to_en
+        items:
+          - zh: 你能开灯吗？
+            answer: Can you turn on the light?
+            hint: the light
+          - zh: 请把电视打开。
+            answer: Please turn on the TV.
+            hint: the TV
+          - zh: 天黑了，把灯打开吧。
+            answer: It's getting dark; turn on the light.
+            hint: getting dark
+      - key: turn-on-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方叫你开或关
+        chunk: turn on the light
+        chunkMeaning: 打开灯
+        direction: en_to_zh
+        items:
+          - en: Can you turn on the light?
+            answer: 你能开灯吗？
+            hint: the light
+          - en: Don't forget to turn off the computer.
+            answer: 别忘了关电脑。
+            hint: the computer
+          - en: Turn it off before you leave.
+            answer: 走之前把它关掉。
+            hint: before you leave
+      - key: turn-direction-pattern
+        type: pattern_drill
+        title: 说往哪边转
+        pattern: turn [direction]
+        patternMeaning: 转向指定方向
+        direction: zh_to_en
+        items:
+          - zh: 过了桥以后左转。
+            answer: Turn left after the bridge.
+            hint: after the bridge
+          - zh: 一直往前走，别转弯。
+            answer: Go straight ahead and don't turn.
+            hint: straight ahead
+          - zh: 在邮局右转。
+            answer: Turn right at the post office.
+            hint: at the post office
+      - key: turn-adjective-pattern
+        type: pattern_drill
+        title: 说天气或脸色变了
+        pattern: turn [adjective]
+        patternMeaning: 变为某种状态
+        direction: zh_to_en
+        items:
+          - zh: 天气突然变冷了。
+            answer: The weather suddenly turned cold.
+            hint: suddenly
+          - zh: 他的脸变红了。
+            answer: His face turned red.
+            hint: His face
+          - zh: 牛奶变酸了。
+            answer: The milk turned sour.
+            hint: The milk
+      - key: turn-into-pattern
+        type: pattern_drill
+        title: 说变成了另一种事物
+        pattern: turn into [something]
+        patternMeaning: 变成另一种事物
+        direction: zh_to_en
+        items:
+          - zh: 水变成了冰。
+            answer: The water turned into ice.
+            hint: ice
+          - zh: 小问题变成了大麻烦。
+            answer: A small problem turned into a big one.
+            hint: a big one
+          - zh: 我们的谈话变成了争吵。
+            answer: Our talk turned into an argument.
+            hint: an argument
+      - key: turn-object-into-pattern
+        type: pattern_drill
+        title: 说把某物改成另一物
+        pattern: turn [something] into [something]
+        patternMeaning: 将某物改变成另一物
+        direction: zh_to_en
+        items:
+          - zh: 他们把旧仓库改成了咖啡馆。
+            answer: They turned the old warehouse into a café.
+            hint: the old warehouse；a café
+          - zh: 她想把爱好变成工作。
+            answer: She wants to turn her hobby into a job.
+            hint: her hobby
+          - zh: 我们把这间屋子改成了书房。
+            answer: We turned this room into a study.
+            hint: a study
+      - key: turn-to-pattern
+        type: pattern_drill
+        title: 说向谁寻求帮助
+        pattern: turn to [someone]
+        patternMeaning: 向某人求助
+        direction: zh_to_en
+        items:
+          - zh: 遇到困难时，我会找父母。
+            answer: When I have problems, I turn to my parents.
+            hint: my parents
+          - zh: 你可以随时找我帮忙。
+            answer: You can always turn to me for help.
+            hint: for help
+          - zh: 他向律师寻求建议。
+            answer: He turned to a lawyer for advice.
+            hint: a lawyer
+      - key: turn-out-pattern
+        type: pattern_drill
+        title: 说结果证明是什么
+        pattern: turn out to be [adjective/noun]
+        patternMeaning: 结果是某种情况
+        direction: zh_to_en
+        items:
+          - zh: 结果这个任务比我们想的容易。
+            answer: The task turned out to be easier than we thought.
+            hint: easier than we thought
+          - zh: 原来他是个很幽默的人。
+            answer: He turned out to be a very funny person.
+            hint: a very funny person
+          - zh: 结果那是个误会。
+            answer: It turned out to be a misunderstanding.
+            hint: a misunderstanding
+      - key: turn-on-pattern
+        type: pattern_drill
+        title: 说把设备打开
+        pattern: turn on [something]
+        patternMeaning: 打开设备
+        direction: zh_to_en
+        items:
+          - zh: 把收音机打开。
+            answer: Turn on the radio.
+            hint: the radio
+          - zh: 能帮我开一下空调吗？
+            answer: Can you turn on the air conditioner?
+            hint: the air conditioner
+          - zh: 他打开电脑开始工作。
+            answer: He turned on the computer and started working.
+            hint: started working
+      - key: turn-out-listen
+        type: pattern_drill
+        title: 听懂对方说结果如何
+        pattern: turn out to be [adjective/noun]
+        patternMeaning: 结果是某种情况
+        direction: en_to_zh
+        items:
+          - en: The problem turned out to be quite simple.
+            answer: 结果这个问题其实很简单。
+            hint: quite simple
+          - en: He turned out to be my colleague's brother.
+            answer: 原来他是我同事的弟弟。
+            hint: my colleague's brother
+          - en: It turned out to be a misunderstanding.
+            answer: 结果那是个误会。
+            hint: a misunderstanding
+      - key: turn-off-up-down-around
+        type: vocab_sentence_building
+        title: 说关掉、出现、拒绝和转身
+        vocabWord: turn
+        vocabMeaning: 关闭；出现；调低；转身
+        direction: zh_to_en
+        patterns:
+          - chunk: turn off
+            items:
+              - zh: 别忘了关电脑。
+                answer: Don't forget to turn off the computer.
+                hint: Don't forget
+              - zh: 走之前把所有灯都关了。
+                answer: Turn off all the lights before you leave.
+                hint: all the lights；before you leave
+          - chunk: turn up
+            items:
+              - zh: 他晚了二十分钟才出现。
+                answer: He turned up twenty minutes late.
+                hint: twenty minutes late
+              - zh: 能把音乐调大一点吗？
+                answer: Can you turn the music up?
+                hint: the music
+          - chunk: turn down
+            items:
+              - zh: 她拒绝了这份工作。
+                answer: She turned down the job offer.
+                hint: the job offer
+              - zh: 请把电视声音调小。
+                answer: Please turn the TV down.
+                hint: the TV
+          - chunk: turn around
+            items:
+              - zh: 公司成功扭转了局面。
+                answer: The company managed to turn things around.
+                hint: managed to
+              - zh: 他转过身看我。
+                answer: He turned around and looked at me.
+                hint: looked at me
+      - key: turn-argument-build
+        type: sentence_decomposition
+        title: 把谈话变成争吵这件事说完整
+        sourceKind: chunk
+        sourceText: turn into an argument
+        fullSentence: The conversation turned into an argument before I could stop it.
+        fullSentenceZh: 我还没来得及阻止，谈话就变成了争吵。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The conversation turned into an argument.
+            zh: 谈话变成了争吵。
+            highlight: ''
+            hint: 先说谈话变成了争吵
+          - level: 2
+            label: 加程度
+            en: The conversation turned into an argument quickly.
+            zh: 谈话很快变成了争吵。
+            highlight: quickly
+            hint: 补上很快
+          - level: 3
+            label: 完整句
+            en: The conversation turned into an argument before I could stop it.
+            zh: 我还没来得及阻止，谈话就变成了争吵。
+            highlight: before I could stop it
+            hint: 补上我还没来得及阻止
+      - key: turn-out-build
+        type: sentence_decomposition
+        title: 把结果发现信息过时这件事说完整
+        sourceKind: chunk
+        sourceText: turn out to be simple
+        fullSentence: It turned out that the information I had was outdated.
+        fullSentenceZh: 结果发现我掌握的信息已经过时了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: It turned out to be wrong.
+            zh: 结果证明是错的。
+            highlight: ''
+            hint: 先说结果是错的
+          - level: 2
+            label: 换句式
+            en: It turned out that I was wrong.
+            zh: 结果证明是我错了。
+            highlight: that I was wrong
+            hint: 换成结果证明是我错了
+          - level: 3
+            label: 完整句
+            en: It turned out that the information I had was outdated.
+            zh: 结果发现我掌握的信息已经过时了。
+            highlight: the information I had was outdated
+            hint: 补上信息已经过时

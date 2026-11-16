@@ -1,0 +1,342 @@
+learning:
+  exercises:
+    pipeline:
+      - key: set-temperature
+        kind: chunk
+        type: chunk_substitution
+        title: 说把设备设到某个数值
+        chunk: set the temperature to 22 degrees
+        chunkMeaning: 把温度设到 22 度
+        direction: zh_to_en
+        items:
+          - zh: 把温度设置到 22 度。
+            answer: Set the temperature to 22 degrees.
+            hint: 22 degrees
+          - zh: 把暖气设到 20 度。
+            answer: Set the heating to 20 degrees.
+            hint: the heating；20 degrees
+          - zh: 空调设在 26 度。
+            answer: The air conditioner is set to 26 degrees.
+            hint: The air conditioner
+      - key: set-temperature-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说要设到多少度
+        chunk: set the temperature to 22 degrees
+        chunkMeaning: 把温度设到 22 度
+        direction: en_to_zh
+        items:
+          - en: Set the temperature to 22 degrees.
+            answer: 把温度设置到 22 度。
+            hint: 22 degrees
+          - en: The air conditioner is set to 26 degrees.
+            answer: 空调设在 26 度。
+            hint: The air conditioner
+          - en: Can you set the volume lower?
+            answer: 你能把音量调低一点吗？
+            hint: the volume；lower
+      - key: set-us-task
+        kind: chunk
+        type: chunk_substitution
+        title: 说给谁布置任务
+        chunk: set us a difficult task
+        chunkMeaning: 给我们布置了一项困难的任务
+        direction: zh_to_en
+        items:
+          - zh: 老师给我们布置了一项困难的任务。
+            answer: The teacher set us a difficult task.
+            hint: a difficult task
+          - zh: 经理给团队布置了新任务。
+            answer: The manager set the team a new task.
+            hint: the team；a new task
+          - zh: 老板给我们布置了太多任务。
+            answer: Our boss set us too many tasks.
+            hint: too many tasks
+      - key: set-him-free
+        kind: chunk
+        type: chunk_substitution
+        title: 说释放某人
+        chunk: set him free
+        chunkMeaning: 释放他
+        direction: zh_to_en
+        items:
+          - zh: 他们终于释放了他。
+            answer: They finally set him free.
+            hint: finally
+          - zh: 警察释放了那个司机。
+            answer: The police set the driver free.
+            hint: The police；the driver
+          - zh: 笼子里的鸟被放走了。
+            answer: The bird in the cage was set free.
+            hint: in the cage
+      - key: set-out-business
+        kind: chunk
+        type: chunk_substitution
+        title: 说开始着手做某件事
+        chunk: set out to build a business
+        chunkMeaning: 开始着手创办事业
+        direction: zh_to_en
+        items:
+          - zh: 她开始着手创办自己的事业。
+            answer: She set out to build her own business.
+            hint: her own business
+          - zh: 我们一开始就打算改变这个行业。
+            answer: We set out to change the industry.
+            hint: change the industry
+          - zh: 他一开始只是想帮忙。
+            answer: He set out to help, not to lead.
+            hint: not to lead
+      - key: set-up-server
+        kind: chunk
+        type: chunk_substitution
+        title: 说搭建或建立某物
+        chunk: set up a small server
+        chunkMeaning: 搭建一台小型服务器
+        direction: zh_to_en
+        items:
+          - zh: 我们搭建了一台小型测试服务器。
+            answer: We set up a small server for testing.
+            hint: for testing
+          - zh: 新电脑我已经装好了。
+            answer: I've set up my new computer.
+            hint: my new computer
+          - zh: 他们在一个月内成立了公司。
+            answer: They set up the company in a month.
+            hint: in a month
+      - key: set-aside-hour
+        kind: chunk
+        type: chunk_substitution
+        title: 说留出时间或资源
+        chunk: set aside an hour
+        chunkMeaning: 留出一个小时
+        direction: zh_to_en
+        items:
+          - zh: 我每天晚上留出一个小时学习。
+            answer: I set aside an hour every evening to study.
+            hint: every evening
+          - zh: 她每周留出一点时间陪家人。
+            answer: She sets aside some time for her family every week.
+            hint: for her family
+          - zh: 我们得留出一些钱应急。
+            answer: We need to set aside some money for emergencies.
+            hint: for emergencies
+      - key: set-aside-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说留出了什么
+        chunk: set aside an hour
+        chunkMeaning: 留出一个小时
+        direction: en_to_zh
+        items:
+          - en: I set aside an hour every evening to study.
+            answer: 我每天晚上留出一个小时学习。
+            hint: every evening
+          - en: We need to set aside some money for emergencies.
+            answer: 我们得留出一些钱应急。
+            hint: for emergencies
+          - en: She sets aside some time for her family every week.
+            answer: 她每周留出一点时间陪家人。
+            hint: for her family
+      - key: set-up-listen
+        type: pattern_drill
+        title: 听懂对方说搭建了什么
+        pattern: set up [something]
+        patternMeaning: 设置或建立某物
+        direction: en_to_zh
+        items:
+          - en: We set up a small server for testing.
+            answer: 我们搭建了一台小型测试服务器。
+            hint: for testing
+          - en: They set up the company in a month.
+            answer: 他们在一个月内成立了公司。
+            hint: in a month
+          - en: Can you help me set up the printer?
+            answer: 你能帮我装一下打印机吗？
+            hint: the printer
+      - key: set-value-pattern
+        type: pattern_drill
+        title: 说把什么设到某个值
+        pattern: set [something] to [value]
+        patternMeaning: 设置到某个数值
+        direction: zh_to_en
+        items:
+          - zh: 把闹钟设在六点半。
+            answer: Set the alarm for six thirty.
+            hint: for six thirty
+          - zh: 把烤箱设到 180 度。
+            answer: Set the oven to 180 degrees.
+            hint: the oven；180 degrees
+          - zh: 屏幕亮度被设得太高了。
+            answer: The screen brightness is set too high.
+            hint: The screen brightness
+      - key: set-task-pattern
+        type: pattern_drill
+        title: 说给某人布置任务
+        pattern: set [someone] a [task]
+        patternMeaning: 给某人布置任务
+        direction: zh_to_en
+        items:
+          - zh: 老师给学生布置了阅读任务。
+            answer: The teacher set the students a reading task.
+            hint: the students；a reading task
+          - zh: 老板给我们定了一个很难的目标。
+            answer: Our boss set us a difficult goal.
+            hint: a difficult goal
+          - zh: 他给自己定了一个新目标。
+            answer: He set himself a new goal.
+            hint: himself；a new goal
+      - key: set-free-pattern
+        type: pattern_drill
+        title: 说让某人获得自由
+        pattern: set [someone] free
+        patternMeaning: 使某人自由
+        direction: zh_to_en
+        items:
+          - zh: 他们把俘虏都放了。
+            answer: They set all the prisoners free.
+            hint: all the prisoners
+          - zh: 她打开笼子，把鸟放了。
+            answer: She opened the cage and set the bird free.
+            hint: opened the cage
+          - zh: 他终于被释放了。
+            answer: He was finally set free.
+            hint: finally
+      - key: set-out-pattern
+        type: pattern_drill
+        title: 说一开始打算做什么
+        pattern: set out to [do]
+        patternMeaning: 着手实现某目标
+        direction: zh_to_en
+        items:
+          - zh: 我们一开始就想做一款简单的应用。
+            answer: We set out to make a simple app.
+            hint: make a simple app
+          - zh: 她一开始想写一本书。
+            answer: She set out to write a book.
+            hint: write a book
+          - zh: 他们本来想省钱，结果花得更多。
+            answer: They set out to save money but ended up spending more.
+            hint: ended up spending more
+      - key: set-up-pattern
+        type: pattern_drill
+        title: 说设置或建立什么
+        pattern: set up [something]
+        patternMeaning: 设置或建立某物
+        direction: zh_to_en
+        items:
+          - zh: 我们把会议室的投影仪装好了。
+            answer: We set up the projector in the meeting room.
+            hint: the projector；the meeting room
+          - zh: 你能帮我装一下打印机吗？
+            answer: Can you help me set up the printer?
+            hint: the printer
+          - zh: 他们在客厅里搭了一张桌子。
+            answer: They set up a table in the living room.
+            hint: in the living room
+      - key: set-aside-pattern
+        type: pattern_drill
+        title: 说留出时间或钱
+        pattern: set aside [something]
+        patternMeaning: 留出资源
+        direction: zh_to_en
+        items:
+          - zh: 每周留出一天不工作。
+            answer: Set aside one day a week for no work.
+            hint: one day a week
+          - zh: 我留出了两千块买电脑。
+            answer: I set aside two thousand yuan for a computer.
+            hint: two thousand yuan
+          - zh: 她每天留出半小时读书。
+            answer: She sets aside half an hour a day to read.
+            hint: half an hour a day
+      - key: set-goal-deadline-alarm
+        type: vocab_sentence_building
+        title: 说定目标、定截止日期和定闹钟
+        vocabWord: set
+        vocabMeaning: 设定目标、期限或闹钟
+        direction: zh_to_en
+        patterns:
+          - chunk: set a goal
+            items:
+              - zh: 我给自己定了一个目标。
+                answer: I set myself a goal.
+                hint: myself
+              - zh: 我们首先需要设定明确的目标。
+                answer: We need to set a clear goal first.
+                hint: a clear goal
+          - chunk: set a deadline
+            items:
+              - zh: 我们需要设定现实可行的截止日期。
+                answer: We need to set a realistic deadline.
+                hint: a realistic deadline
+              - zh: 截止日期定在周五。
+                answer: The deadline is set for Friday.
+                hint: for Friday
+          - chunk: set an alarm
+            items:
+              - zh: 我把闹钟设在六点半。
+                answer: I set an alarm for six thirty.
+                hint: for six thirty
+              - zh: 睡前定个闹钟。
+                answer: Set an alarm before you go to bed.
+                hint: before you go to bed
+          - chunk: set clear expectations
+            items:
+              - zh: 明确预期很重要。
+                answer: It's important to set clear expectations.
+                hint: clear expectations
+              - zh: 提前把预期说清楚。
+                answer: Set expectations early.
+                hint: early
+      - key: set-goal-build
+        type: sentence_decomposition
+        title: 把给自己定目标这件事说完整
+        sourceKind: chunk
+        sourceText: set a goal
+        fullSentence: I set myself a goal of speaking English for ten minutes every day.
+        fullSentenceZh: 我给自己定了每天说十分钟英语的目标。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I set a goal.
+            zh: 我定了一个目标。
+            highlight: ''
+            hint: 先说定了一个目标
+          - level: 2
+            label: 加对象
+            en: I set myself a goal.
+            zh: 我给自己定了一个目标。
+            highlight: myself
+            hint: 补上给自己
+          - level: 3
+            label: 完整句
+            en: I set myself a goal of speaking English for ten minutes every day.
+            zh: 我给自己定了每天说十分钟英语的目标。
+            highlight: of speaking English for ten minutes every day
+            hint: 补上每天说十分钟英语
+      - key: set-aside-build
+        type: sentence_decomposition
+        title: 把留时间复习这件事说完整
+        sourceKind: chunk
+        sourceText: set aside an hour
+        fullSentence: I try to set aside some time every evening to review what I've learned.
+        fullSentenceZh: 我尽量每天晚上留出一些时间复习学过的内容。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I set aside some time.
+            zh: 我留出了一些时间。
+            highlight: ''
+            hint: 先说留出了一些时间
+          - level: 2
+            label: 加频率
+            en: I set aside some time every evening.
+            zh: 我每天晚上留出一些时间。
+            highlight: every evening
+            hint: 补上每天晚上
+          - level: 3
+            label: 完整句
+            en: I try to set aside some time every evening to review what I've learned.
+            zh: 我尽量每天晚上留出一些时间复习学过的内容。
+            highlight: to review what I've learned
+            hint: 补上复习学过的内容

@@ -8,7 +8,7 @@ try {
   if (error?.code !== 'ENOENT') throw error;
 }
 
-type SeedClient = Pick<PrismaClient, 'aiProvider'>;
+type SeedClient = Pick<PrismaClient, 'aiProvider' | 'ttsVoiceAsset'>;
 
 type ProviderSeed = {
   type: 'stt' | 'tts' | 'llm';
@@ -108,6 +108,19 @@ function providerSeeds(): ProviderSeed[] {
       sortOrder: 3,
     },
     {
+      type: 'tts',
+      provider: 'entts',
+      label: 'ENTTS',
+      model: 'standard',
+      apiKey: '',
+      baseUrl: env('ENTTS_BASE_URL', 'https://www.entts.com'),
+      config: {
+        voiceId: 'en-us-female',
+        voiceIds: ['en-us-female', 'en-us-male', 'en-gb-female', 'en-gb-male'],
+      },
+      sortOrder: 4,
+    },
+    {
       type: 'llm',
       provider: 'deepseek',
       label: 'DeepSeek',
@@ -155,6 +168,45 @@ export async function seedAiModels(prisma: SeedClient) {
         ...(apiKey ? { apiKey } : {}),
       },
     });
+  }
+
+  const enttsProvider = await prisma.aiProvider.findUnique({
+    where: { type_provider: { type: 'tts', provider: 'entts' } },
+  });
+  if (enttsProvider) {
+    const voices = [
+      { externalVoiceId: 'en-us-female', displayName: 'American English · Female', language: 'en-US', gender: 'female' },
+      { externalVoiceId: 'en-us-male', displayName: 'American English · Male', language: 'en-US', gender: 'male' },
+      { externalVoiceId: 'en-gb-female', displayName: 'British English · Female', language: 'en-GB', gender: 'female' },
+      { externalVoiceId: 'en-gb-male', displayName: 'British English · Male', language: 'en-GB', gender: 'male' },
+    ];
+    for (const voice of voices) {
+      await prisma.ttsVoiceAsset.upsert({
+        where: {
+          providerId_externalVoiceId: {
+            providerId: enttsProvider.id,
+            externalVoiceId: voice.externalVoiceId,
+          },
+        },
+        create: {
+          providerId: enttsProvider.id,
+          ...voice,
+          category: 'system',
+          description: 'Built-in ENTTS English voice',
+          visibility: 'system_shared',
+          isAvailable: true,
+          syncedAt: new Date(),
+        },
+        update: {
+          ...voice,
+          category: 'system',
+          description: 'Built-in ENTTS English voice',
+          visibility: 'system_shared',
+          isAvailable: true,
+          syncedAt: new Date(),
+        },
+      });
+    }
   }
 
   const preferred = {

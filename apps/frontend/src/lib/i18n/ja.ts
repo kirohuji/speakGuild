@@ -1949,7 +1949,7 @@ const ja = {
         continuousPlayback: '連続再生',
         playMainText: '英語を再生',
         playMeaning: '訳文を再生',
-        playExample: '例文を再生',
+        playExample: '例文をランダム再生',
         playExampleTranslation: '例文訳を再生',
         autoNext: '自動で次へ',
         loopQueue: 'リストをループ',

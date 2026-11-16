@@ -1256,7 +1256,7 @@ function ListeningFields({
   // Load TTS providers on mount
   useEffect(() => {
     listAiProviders().then((p) => {
-      const tts = (p.tts ?? []).filter((item) => ['minimax', 'cartesia'].includes(item.provider))
+      const tts = (p.tts ?? []).filter((item) => ['minimax', 'cartesia', 'hume', 'elevenlabs', 'entts'].includes(item.provider))
       setTtsProviders(tts)
       const active = tts.find((item) => item.isActive) ?? tts[0]
       if (active) {

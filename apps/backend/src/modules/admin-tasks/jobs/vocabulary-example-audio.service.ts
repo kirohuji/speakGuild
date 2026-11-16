@@ -1,12 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import {
-  DictionaryAudioService,
-  type DictionaryAccent,
-  type VoiceGender,
-} from '../../dictionary/dictionary-audio.service';
+import type { DictionaryAccent, VoiceGender } from '../../dictionary/dictionary-audio.service';
 import { FileAssetsService } from '../../file-assets/file-assets.service';
+import { TtsService } from '../../tts/tts.service';
 import { buildVocabularyWhere, queryVocabularyPage } from './library-list-scope';
 
 export type VocabularyExampleAudioItem = {
@@ -51,7 +48,7 @@ const VOICE_COMBOS: Array<{ type: DictionaryAccent; gender: VoiceGender }> = [
 export class VocabularyExampleAudioService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly dictionaryAudio: DictionaryAudioService,
+    private readonly tts: TtsService,
     private readonly fileAssets: FileAssetsService,
   ) {}
 
@@ -114,12 +111,22 @@ export class VocabularyExampleAudioService {
     const voice = input.type && input.gender
       ? { type: input.type, gender: input.gender }
       : this.pickVoice(input.bizId || text);
-    const url = await this.dictionaryAudio.generate(text, voice.type, voice.gender, {
+    const result = await this.tts.synthesizeActiveAsset({
+      text,
       bizType: 'library_vocab_example',
       bizId: input.bizId || `preview:${text.slice(0, 40)}`,
-      filenamePrefix: text,
+      accent: voice.type,
+      gender: voice.gender,
+      voiceSeed: input.bizId || text,
     });
-    return { url, type: voice.type, gender: voice.gender };
+    return {
+      assetId: result.assetId,
+      url: this.fileAssets.getAssetReference(result.assetId),
+      type: voice.type,
+      gender: voice.gender,
+      provider: result.provider,
+      model: result.model,
+    };
   }
 
   async generateAndPersist(
@@ -143,11 +150,15 @@ export class VocabularyExampleAudioService {
     }
 
     const text = current.en.trim();
-    const audioUrl = await this.dictionaryAudio.generate(text, item.type, item.gender, {
+    const result = await this.tts.synthesizeActiveAsset({
+      text,
       bizType: 'library_vocab_example',
       bizId: `${item.vocabularyId}:${item.exampleIndex}`,
-      filenamePrefix: `${item.word}-ex${item.exampleIndex + 1}`,
+      accent: item.type,
+      gender: item.gender,
+      voiceSeed: `${item.vocabularyId}:${item.exampleIndex}`,
     });
+    const audioUrl = this.fileAssets.getAssetReference(result.assetId);
 
     const latest = await this.prisma.vocabulary.findUnique({
       where: { id: item.vocabularyId },

@@ -1,0 +1,294 @@
+learning:
+  exercises:
+    pipeline:
+      - key: use-flashcards
+        kind: chunk
+        type: chunk_substitution
+        title: 说用某样东西来复习
+        chunk: use flashcards to review vocabulary
+        chunkMeaning: 用卡片复习词汇
+        direction: zh_to_en
+        items:
+          - zh: 我用卡片复习词汇。
+            answer: I use flashcards to review vocabulary.
+            hint: review vocabulary
+          - zh: 她用卡片记新单词。
+            answer: She uses flashcards to learn new words.
+            hint: learn new words
+          - zh: 用卡片复习比反复看书有效。
+            answer: Using flashcards to review is more effective than rereading.
+            hint: more effective
+      - key: use-flashcards-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说用什么复习
+        chunk: use flashcards to review vocabulary
+        chunkMeaning: 用卡片复习词汇
+        direction: en_to_zh
+        items:
+          - en: I use flashcards to review vocabulary.
+            answer: 我用卡片复习词汇。
+            hint: review vocabulary
+          - en: She uses flashcards to learn new words.
+            answer: 她用卡片记新单词。
+            hint: learn new words
+          - en: Do you use flashcards to review grammar?
+            answer: 你用卡片复习语法吗？
+            hint: review grammar
+      - key: use-this-room
+        kind: chunk
+        type: chunk_substitution
+        title: 说房间用来做什么
+        chunk: use this room for meetings
+        chunkMeaning: 用这个房间开会
+        direction: zh_to_en
+        items:
+          - zh: 我们用这个房间开会。
+            answer: We use this room for meetings.
+            hint: for meetings
+          - zh: 这个车库用来做什么？
+            answer: What do you use the garage for?
+            hint: the garage
+          - zh: 这间厨房用来上烹饪课。
+            answer: They use the kitchen for cooking classes.
+            hint: the kitchen；cooking classes
+      - key: use-this-room-as
+        kind: chunk
+        type: chunk_substitution
+        title: 说把空间当作什么用
+        chunk: use this room as a meeting space
+        chunkMeaning: 把这个房间用作会议室
+        direction: zh_to_en
+        items:
+          - zh: 我们把这个房间用作会议室。
+            answer: We use this room as a meeting space.
+            hint: a meeting space
+          - zh: 她把阳台当作小书房。
+            answer: She uses the balcony as a small study.
+            hint: the balcony；a small study
+          - zh: 我们把地下室当仓库用。
+            answer: We use the basement as a storage room.
+            hint: the basement；a storage room
+      - key: used-to-stay-up
+        kind: chunk
+        type: chunk_substitution
+        title: 说以前经常做什么
+        chunk: used to stay up late
+        chunkMeaning: 以前经常熬夜
+        direction: zh_to_en
+        items:
+          - zh: 我以前经常熬夜。
+            answer: I used to stay up late.
+            hint: stay up late
+          - zh: 我以前每天跑步。
+            answer: I used to run every day.
+            hint: run every day
+          - zh: 他以前不喝咖啡。
+            answer: He didn't use to drink coffee.
+            hint: didn't use to
+      - key: used-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说以前怎样
+        chunk: used to stay up late
+        chunkMeaning: 以前经常熬夜
+        direction: en_to_zh
+        items:
+          - en: I used to stay up late.
+            answer: 我以前经常熬夜。
+            hint: stay up late
+          - en: She used to live in Beijing.
+            answer: 她以前住在北京。
+            hint: live in Beijing
+          - en: Did you use to work here?
+            answer: 你以前在这里工作吗？
+            hint: work here
+      - key: be-used-to-alone
+        kind: chunk
+        type: chunk_substitution
+        title: 说已经习惯某件事
+        chunk: be used to working alone
+        chunkMeaning: 习惯独自工作
+        direction: zh_to_en
+        items:
+          - zh: 我已经习惯独自工作。
+            answer: I'm used to working alone.
+            hint: working alone
+          - zh: 她习惯早起。
+            answer: She's used to getting up early.
+            hint: getting up early
+          - zh: 你习惯这里的气候了吗？
+            answer: Are you used to the weather here?
+            hint: the weather here
+      - key: be-used-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说习惯了什么
+        chunk: be used to working alone
+        chunkMeaning: 习惯独自工作
+        direction: en_to_zh
+        items:
+          - en: I'm used to working alone.
+            answer: 我已经习惯独自工作。
+            hint: working alone
+          - en: He's used to speaking in public.
+            answer: 他习惯公开讲话。
+            hint: speaking in public
+          - en: Are you used to the weather here?
+            answer: 你习惯这里的气候了吗？
+            hint: the weather here
+      - key: use-to-do-pattern
+        type: pattern_drill
+        title: 说用什么来做什么
+        pattern: use [something] to [do]
+        patternMeaning: 使用某物以完成某事
+        direction: zh_to_en
+        items:
+          - zh: 我用这个工具记录工作进度。
+            answer: I use this tool to keep track of my work.
+            hint: keep track of my work
+          - zh: 我们用手机扫码付款。
+            answer: We use our phones to pay.
+            hint: pay
+          - zh: 她用这个方法记单词。
+            answer: She uses this method to memorize words.
+            hint: memorize words
+      - key: use-for-pattern
+        type: pattern_drill
+        title: 说某物用于什么用途
+        pattern: use [something] for [noun/doing]
+        patternMeaning: 将某物用于某用途
+        direction: zh_to_en
+        items:
+          - zh: 这个设备用于测量温度。
+            answer: This device is used for measuring temperature.
+            hint: measuring temperature
+          - zh: 我们把客厅用来招待客人。
+            answer: We use the living room for guests.
+            hint: guests
+          - zh: 我们把周末用来陪家人。
+            answer: We use the weekend for family time.
+            hint: family time
+      - key: use-as-pattern
+        type: pattern_drill
+        title: 说把某物当作什么用
+        pattern: use [something] as [noun]
+        patternMeaning: 把某物用作某种身份或用途
+        direction: zh_to_en
+        items:
+          - zh: 她把桌子当作书架用。
+            answer: She uses the table as a bookshelf.
+            hint: a bookshelf
+          - zh: 我们把旧手机当闹钟用。
+            answer: We use an old phone as an alarm clock.
+            hint: an alarm clock
+          - zh: 这个盒子可以当桌子用。
+            answer: This box can be used as a table.
+            hint: a table
+      - key: used-to-pattern
+        type: pattern_drill
+        title: 说过去常做的事
+        pattern: used to [do]
+        patternMeaning: 过去经常做某事
+        direction: zh_to_en
+        items:
+          - zh: 我们以前住在这条街。
+            answer: We used to live on this street.
+            hint: on this street
+          - zh: 你以前常来这里吗？
+            answer: Did you use to come here often?
+            hint: come here often
+          - zh: 这里以前是一家书店。
+            answer: This used to be a bookstore.
+            hint: a bookstore
+      - key: be-used-to-pattern
+        type: pattern_drill
+        title: 说已经习惯了某事
+        pattern: be used to [noun/doing]
+        patternMeaning: 习惯于某事
+        direction: zh_to_en
+        items:
+          - zh: 我已经习惯这种节奏了。
+            answer: I'm used to this pace.
+            hint: this pace
+          - zh: 他们还不太习惯用英语开会。
+            answer: They're not used to having meetings in English.
+            hint: having meetings in English
+          - zh: 你很快就会习惯的。
+            answer: You'll get used to it soon.
+            hint: soon
+      - key: use-make-use-of
+        type: vocab_sentence_building
+        title: 说充分利用和有效使用
+        vocabWord: use
+        vocabMeaning: 利用；有效使用
+        direction: zh_to_en
+        patterns:
+          - chunk: make better use of our time
+            items:
+              - zh: 我们应该更充分地利用时间。
+                answer: We should make better use of our time.
+                hint: better use
+              - zh: 她充分利用了这次机会。
+                answer: She made good use of the opportunity.
+                hint: the opportunity
+          - chunk: use the tool effectively
+            items:
+              - zh: 你需要有效使用这个工具。
+                answer: You need to use the tool effectively.
+                hint: effectively
+              - zh: 这个软件用起来很简单。
+                answer: This software is easy to use.
+                hint: easy to use
+      - key: use-tool-build
+        type: sentence_decomposition
+        title: 把用工具记录工作这件事说完整
+        sourceKind: pattern
+        sourceText: use [something] to [do]
+        fullSentence: I use this tool to keep track of my work.
+        fullSentenceZh: 我用这个工具记录自己的工作进度。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I use this tool.
+            zh: 我用这个工具。
+            highlight: ''
+            hint: 先说用这个工具
+          - level: 2
+            label: 加目的
+            en: I use this tool to track my work.
+            zh: 我用这个工具跟踪工作。
+            highlight: to track my work
+            hint: 补上跟踪工作
+          - level: 3
+            label: 完整句
+            en: I use this tool to keep track of my work.
+            zh: 我用这个工具记录自己的工作进度。
+            highlight: keep track of
+            hint: 换成记录工作进度
+      - key: used-to-build
+        type: sentence_decomposition
+        title: 把以前熬夜现在早睡说完整
+        sourceKind: chunk
+        sourceText: used to stay up late
+        fullSentence: I used to stay up late, but now I go to bed early.
+        fullSentenceZh: 我以前经常熬夜，但现在很早就睡了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I used to stay up late.
+            zh: 我以前经常熬夜。
+            highlight: ''
+            hint: 先说以前经常熬夜
+          - level: 2
+            label: 加频率
+            en: I used to stay up late every night.
+            zh: 我以前每天晚上都很晚睡。
+            highlight: every night
+            hint: 补上每天晚上
+          - level: 3
+            label: 完整句
+            en: I used to stay up late, but now I go to bed early.
+            zh: 我以前经常熬夜，但现在很早就睡了。
+            highlight: but now I go to bed early
+            hint: 补上现在很早就睡

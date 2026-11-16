@@ -1,0 +1,345 @@
+learning:
+  exercises:
+    pipeline:
+      - key: give-some-advice
+        kind: chunk
+        type: chunk_substitution
+        title: 说给人建议
+        chunk: give me some advice
+        chunkMeaning: 给我一些建议
+        direction: zh_to_en
+        items:
+          - zh: 我能给你一点建议吗？
+            answer: Can I give you some advice?
+            hint: Can I
+          - zh: 她给了我一些很有用的建议。
+            answer: She gave me some useful advice.
+            hint: useful
+          - zh: 我的老师给了我一些关于怎么学习的建议。
+            answer: My teacher gave me some advice on how to study.
+            hint: on how to study
+      - key: give-some-advice-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说要给建议
+        chunk: give me some advice
+        chunkMeaning: 给我一些建议
+        direction: en_to_zh
+        items:
+          - en: Can I give you some advice?
+            answer: 我能给你一点建议吗？
+            hint: Can I
+          - en: She gave me some useful advice about the interview.
+            answer: 她给了我一些关于面试的有用建议。
+            hint: about the interview
+          - en: My teacher gave me some advice on how to study.
+            answer: 老师给了我一些关于怎么学习的建议。
+            hint: on how to study
+      - key: give-key-neighbour
+        kind: chunk
+        type: chunk_substitution
+        title: 说把东西交给某人
+        chunk: give the key to my neighbour
+        chunkMeaning: 把钥匙给邻居
+        direction: zh_to_en
+        items:
+          - zh: 我把钥匙给了邻居。
+            answer: I gave the key to my neighbour.
+            hint: my neighbour
+          - zh: 请把这本书交给她。
+            answer: Please give this book to her.
+            hint: this book；to her
+          - zh: 你能把盐递给我吗？
+            answer: Can you give me the salt?
+            hint: the salt
+      - key: give-chance-explain
+        kind: chunk
+        type: chunk_substitution
+        title: 说给某人解释的机会
+        chunk: give him a chance to explain
+        chunkMeaning: 给他一个解释的机会
+        direction: zh_to_en
+        items:
+          - zh: 给他一个解释的机会。
+            answer: Give him a chance to explain.
+            hint: to explain
+          - zh: 你应该给她一次尝试的机会。
+            answer: You should give her a chance to try.
+            hint: a chance to try
+          - zh: 他们没给我机会说话。
+            answer: They didn't give me a chance to speak.
+            hint: didn't；to speak
+      - key: give-permission
+        kind: chunk
+        type: chunk_substitution
+        title: 说允许某人做某事
+        chunk: give us permission to use the data
+        chunkMeaning: 允许我们使用这些数据
+        direction: zh_to_en
+        items:
+          - zh: 他们允许我们使用这些数据。
+            answer: They gave us permission to use the data.
+            hint: to use the data
+          - zh: 我父母不允许我晚回家。
+            answer: My parents don't give me permission to stay out late.
+            hint: stay out late
+          - zh: 谁批准你进这个房间的？
+            answer: Who gave you permission to enter this room?
+            hint: enter this room
+      - key: give-a-hand
+        kind: chunk
+        type: chunk_substitution
+        title: 请人帮个忙
+        chunk: Give me a hand.
+        chunkMeaning: 帮我一下
+        direction: zh_to_en
+        items:
+          - zh: 你能帮我搬一下这个箱子吗？
+            answer: Can you give me a hand with this box?
+            hint: with this box
+          - zh: 他帮我修好了自行车。
+            answer: He gave me a hand with my bike.
+            hint: with my bike
+          - zh: 她帮我搬了家具。
+            answer: She gave me a hand with the furniture.
+            hint: with the furniture
+      - key: give-a-hand-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方请你搭把手
+        chunk: Give me a hand.
+        chunkMeaning: 帮我一下
+        direction: en_to_zh
+        items:
+          - en: Can you give me a hand with this box?
+            answer: 你能帮我搬一下这个箱子吗？
+            hint: with this box
+          - en: Thanks for giving me a hand.
+            answer: 谢谢你帮我。
+            hint: Thanks for
+          - en: Could someone give me a hand?
+            answer: 有人能帮我一下吗？
+            hint: Could someone
+      - key: give-a-call
+        kind: chunk
+        type: chunk_substitution
+        title: 说给某人打电话
+        chunk: give you a call
+        chunkMeaning: 给你打电话
+        direction: zh_to_en
+        items:
+          - zh: 我今晚给你打电话。
+            answer: I'll give you a call tonight.
+            hint: tonight
+          - zh: 你到了以后给我打个电话。
+            answer: Give me a call when you arrive.
+            hint: when you arrive
+          - zh: 他昨天给我打了个电话。
+            answer: He gave me a call yesterday.
+            hint: yesterday
+      - key: give-someone-something
+        type: pattern_drill
+        title: 说给某人某物
+        pattern: give [someone] [something]
+        patternMeaning: 给某人某物
+        direction: zh_to_en
+        items:
+          - zh: 她给了我一些建议。
+            answer: She gave me some advice.
+            hint: some advice
+          - zh: 他给了我们很多帮助。
+            answer: He gave us a lot of help.
+            hint: a lot of help
+          - zh: 你能给他一本吗？
+            answer: Can you give him one?
+            hint: him；one
+      - key: give-something-to-someone
+        type: pattern_drill
+        title: 说把某物交给某人
+        pattern: give [something] to [someone]
+        patternMeaning: 把某物交给某人
+        direction: zh_to_en
+        items:
+          - zh: 请把这份报告交给经理。
+            answer: Please give this report to the manager.
+            hint: this report；the manager
+          - zh: 我把伞给了她。
+            answer: I gave the umbrella to her.
+            hint: the umbrella；to her
+          - zh: 把书递给你姐姐。
+            answer: Give the book to your sister.
+            hint: your sister
+      - key: give-chance-to
+        type: pattern_drill
+        title: 说给某人做某事的机会
+        pattern: give [someone] a chance to [do]
+        patternMeaning: 给某人机会做某事
+        direction: zh_to_en
+        items:
+          - zh: 公司给了他一次培训的机会。
+            answer: The company gave him a chance to train.
+            hint: to train
+          - zh: 给她一次机会证明自己。
+            answer: Give her a chance to prove herself.
+            hint: prove herself
+          - zh: 他们没给我机会选。
+            answer: They didn't give me a chance to choose.
+            hint: to choose
+      - key: give-permission-to
+        type: pattern_drill
+        title: 说允许某人做某事
+        pattern: give [someone] permission to [do]
+        patternMeaning: 允许某人做某事
+        direction: zh_to_en
+        items:
+          - zh: 老师允许我们提前离开。
+            answer: The teacher gave us permission to leave early.
+            hint: to leave early
+          - zh: 他们允许我们使用这个房间。
+            answer: They gave us permission to use this room.
+            hint: to use this room
+          - zh: 谁允许你动我的东西？
+            answer: Who gave you permission to touch my things?
+            hint: touch my things
+      - key: give-hand-pattern
+        type: pattern_drill
+        title: 说帮某人一把
+        pattern: give [someone] a hand
+        patternMeaning: 帮助某人
+        direction: zh_to_en
+        items:
+          - zh: 你能帮我拿一下这些书吗？
+            answer: Can you give me a hand with these books?
+            hint: with these books
+          - zh: 邻居帮我搬了行李。
+            answer: My neighbour gave me a hand with my luggage.
+            hint: with my luggage
+          - zh: 谢谢你帮我。
+            answer: Thanks for giving me a hand.
+            hint: Thanks for
+      - key: give-call-pattern
+        type: pattern_drill
+        title: 说给某人打个电话
+        pattern: give [someone] a call
+        patternMeaning: 给某人打电话
+        direction: zh_to_en
+        items:
+          - zh: 我明天给你打电话。
+            answer: I'll give you a call tomorrow.
+            hint: tomorrow
+          - zh: 到了给我打电话。
+            answer: Give me a call when you get there.
+            hint: when you get there
+          - zh: 你能给他打个电话吗？
+            answer: Can you give him a call?
+            hint: him
+      - key: give-someone-something-listen
+        type: pattern_drill
+        title: 听懂对方说给了谁什么
+        pattern: give [someone] [something]
+        patternMeaning: 给某人某物
+        direction: en_to_zh
+        items:
+          - en: She gave me some advice.
+            answer: 她给了我一些建议。
+            hint: some advice
+          - en: He gave us a lot of help.
+            answer: 他给了我们很多帮助。
+            hint: a lot of help
+          - en: They gave the children some books.
+            answer: 他们给了孩子们一些书。
+            hint: the children；some books
+      - key: give-up-in-away-back
+        type: vocab_sentence_building
+        title: 说放弃、让步、送出和归还
+        vocabWord: give
+        vocabMeaning: 放弃；让步；送出；归还
+        direction: zh_to_en
+        patterns:
+          - chunk: give up
+            items:
+              - zh: 别因为困难就放弃。
+                answer: Don't give up just because it's difficult.
+                hint: just because
+              - zh: 他放弃了学吉他。
+                answer: He gave up learning the guitar.
+                hint: learning the guitar
+          - chunk: give in
+            items:
+              - zh: 他最终让步了。
+                answer: He finally gave in.
+                hint: finally
+              - zh: 我们不会向他们的要求让步。
+                answer: We won't give in to their demands.
+                hint: to their demands
+          - chunk: give away
+            items:
+              - zh: 他的表情暴露了他的紧张。
+                answer: His expression gave away how nervous he was.
+                hint: how nervous
+              - zh: 她把旧衣服都送人了。
+                answer: She gave away all her old clothes.
+                hint: all her old clothes
+          - chunk: give back
+            items:
+              - zh: 我明天把书还给你。
+                answer: I'll give the book back to you tomorrow.
+                hint: give the book back
+              - zh: 请把我的笔还给我。
+                answer: Please give me back my pen.
+                hint: my pen
+              - zh: 我明天把它还给你。
+                answer: I'll give it back to you tomorrow.
+                hint: it back
+      - key: give-chance-build
+        type: sentence_decomposition
+        title: 把给机会解释这件事说完整
+        sourceKind: chunk
+        sourceText: give him a chance to explain
+        fullSentence: They gave him a chance to explain, and he finally told us the truth.
+        fullSentenceZh: 他们给了他一个解释的机会，他终于说出了真相。
+        levels:
+          - level: 1
+            label: 核心句
+            en: They gave him a chance.
+            zh: 他们给了他一个机会。
+            highlight: ''
+            hint: 先说他得到了一个机会
+          - level: 2
+            label: 加目的
+            en: They gave him a chance to explain.
+            zh: 他们给了他一个解释的机会。
+            highlight: to explain
+            hint: 补上解释
+          - level: 3
+            label: 完整句
+            en: They gave him a chance to explain, and he finally told us the truth.
+            zh: 他们给了他一个解释的机会，他终于说出了真相。
+            highlight: and he finally told us the truth
+            hint: 补上他终于说出真相
+      - key: give-advice-build
+        type: sentence_decomposition
+        title: 把建议这件事说完整
+        sourceKind: pattern
+        sourceText: give [someone] [something]
+        fullSentence: My manager gave me some useful advice before the interview.
+        fullSentenceZh: 面试前经理给了我一些有用的建议。
+        levels:
+          - level: 1
+            label: 核心句
+            en: My manager gave me advice.
+            zh: 经理给了我建议。
+            highlight: ''
+            hint: 先说经理给了建议
+          - level: 2
+            label: 加修饰
+            en: My manager gave me some useful advice.
+            zh: 经理给了我一些有用的建议。
+            highlight: some useful
+            hint: 补上一些有用的
+          - level: 3
+            label: 完整句
+            en: My manager gave me some useful advice before the interview.
+            zh: 面试前经理给了我一些有用的建议。
+            highlight: before the interview
+            hint: 补上在面试前

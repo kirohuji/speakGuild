@@ -12,7 +12,7 @@ import { SynthesizeAssetDto, SynthesizeEnttsAssetDto, SynthesizeTextDto } from '
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AiModelService } from '../ai-model/ai-model.service';
 import { SttWordTimestamp } from './stt/stt.types';
-import { DictionaryAudioService } from '../dictionary/dictionary-audio.service';
+import type { TtsProviderKey } from './tts-provider.keys';
 
 // ─── Sentence Segmentation ───────────────────────────────────
 
@@ -161,7 +161,6 @@ export class TtsService {
     private readonly sttFactory: SttProviderFactory,
     private readonly fileAssetsService: FileAssetsService,
     private readonly aiModel: AiModelService,
-    private readonly dictionaryAudio: DictionaryAudioService,
   ) {}
 
   getParamsSchema() {
@@ -351,23 +350,87 @@ export class TtsService {
     };
   }
 
-  /**
-   * Free text-to-speech backed by ENTTS.  The implementation lives in the
-   * dictionary audio service because it owns the provider's accent/gender
-   * mapping and file validation; exposing it here makes it a first-class TTS
-   * choice for authored content rather than a vocabulary-only workaround.
-   */
+  /** Compatibility endpoint for authored content that explicitly selected ENTTS. */
   async synthesizeEnttsAsset(dto: SynthesizeEnttsAssetDto) {
     const text = dto.text.trim();
     if (!text) throw new BadRequestException('合成文本不能为空');
     const accent = dto.accent ?? 'us';
     const gender = dto.gender ?? 'female';
-    const url = await this.dictionaryAudio.generate(text, accent, gender, {
+    const result = await this.synthesizeAsset({
+      text,
+      provider: 'entts',
+      model: 'standard',
+      voiceId: `en-${accent === 'uk' ? 'gb' : 'us'}-${gender}`,
+      params: { accent, gender },
       bizType: dto.bizType?.trim() || 'tts_entts',
       bizId: dto.bizId?.trim() || createHash('sha256').update(`${accent}:${gender}:${text}`).digest('hex').slice(0, 24),
-      filenamePrefix: text,
     });
-    return { url, accent, gender, provider: 'entts' as const };
+    return {
+      ...result,
+      url: this.fileAssetsService.getAssetReference(result.assetId),
+      accent,
+      gender,
+      provider: 'entts' as const,
+    };
+  }
+
+  /** Generate an authored-content asset with the TTS provider activated in AI Models. */
+  async synthesizeActiveAsset(params: {
+    text: string;
+    bizType: string;
+    bizId: string;
+    accent?: 'uk' | 'us' | 'neutral';
+    gender?: 'female' | 'male';
+    voiceSeed?: string;
+  }) {
+    const active = await this.aiModel.getTtsConfig();
+    const config = active.config ?? {};
+    const accent = params.accent === 'uk' ? 'uk' : 'us';
+    const gender = params.gender ?? 'female';
+
+    const accentKeys = params.accent === 'us'
+      ? ['usVoiceIds', 'americanVoiceIds', 'voiceIdsUs', 'usVoiceId', 'americanVoiceId', 'voiceIdUs']
+      : params.accent === 'uk'
+        ? ['ukVoiceIds', 'britishVoiceIds', 'voiceIdsUk', 'ukVoiceId', 'britishVoiceId', 'voiceIdUk']
+        : ['randomVoiceIds', 'voiceIds', 'voices'];
+    const candidates: string[] = [];
+    for (const key of accentKeys) {
+      const value = config[key];
+      if (Array.isArray(value)) candidates.push(...value.map(String));
+      else if (typeof value === 'string') candidates.push(...value.split(/[\n,，]/));
+    }
+    const normalizedCandidates = candidates.map((voice) => voice.trim()).filter(Boolean);
+    const seed = params.voiceSeed || params.bizId || params.text;
+    const seedHash = [...seed].reduce((total, character) => ((total * 31) + character.codePointAt(0)!) >>> 0, 0);
+    const configuredFallback = typeof config.voiceId === 'string'
+      ? config.voiceId
+      : typeof config.voiceName === 'string'
+        ? config.voiceName
+        : undefined;
+    const voiceId = active.provider === 'entts'
+      ? `en-${accent === 'uk' ? 'gb' : 'us'}-${gender}`
+      : normalizedCandidates.length
+        ? normalizedCandidates[seedHash % normalizedCandidates.length]
+        : configuredFallback;
+    const configuredParams = config.params && typeof config.params === 'object'
+      ? { ...(config.params as Record<string, unknown>) }
+      : {};
+    if (active.provider === 'hume') {
+      if (typeof config.voiceProvider === 'string') configuredParams.voice_provider = config.voiceProvider;
+      if (typeof config.voiceKind === 'string') configuredParams.voice_kind = config.voiceKind;
+    }
+
+    return this.synthesizeAsset({
+      text: params.text,
+      provider: active.provider as TtsProviderKey,
+      model: active.model,
+      voiceId,
+      params: active.provider === 'entts'
+        ? { ...configuredParams, accent, gender }
+        : configuredParams,
+      bizType: params.bizType,
+      bizId: params.bizId,
+    });
   }
 
   // ─── Listening Pipeline ────────────────────────────────────

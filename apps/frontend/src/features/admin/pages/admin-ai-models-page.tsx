@@ -55,7 +55,7 @@ const TABS = [
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = { stt: 'STT', tts: 'TTS', llm: 'LLM' };
-const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai', 'bailian']);
+const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'entts', 'deepseek', 'openai', 'bailian']);
 
 const DEEPSEEK_MODELS = [
   { value: 'deepseek-flash', label: 'DeepSeek Flash', hint: '官方现用名。DeepSeek-V4.1-Flash，按 Flash 价格计费。' },
@@ -145,6 +145,13 @@ const ELEVENLABS_MODELS = [
   'eleven_turbo_v2_5',
   'eleven_flash_v2_5',
   'eleven_v3',
+];
+
+const ENTTS_VOICES = [
+  { value: 'en-us-female', label: 'American English · Female' },
+  { value: 'en-us-male', label: 'American English · Male' },
+  { value: 'en-gb-female', label: 'British English · Female' },
+  { value: 'en-gb-male', label: 'British English · Male' },
 ];
 
 const SAMPLE_TEXT = 'Please read this sentence clearly and naturally for a language-learning exercise.';
@@ -243,6 +250,9 @@ function canDeleteProvider(item: AiProviderItem) {
 }
 
 function getTtsFields(item: AiProviderItem): TtsTestField[] {
+  if (item.provider === 'entts') {
+    return [];
+  }
   if (item.provider === 'cartesia') {
     return [
       { key: 'speed', label: 'Speed', type: 'number', min: 0.6, max: 1.5, step: 0.1, value: '1' },
@@ -514,6 +524,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const [voiceName, setVoiceName] = useState('Ava Song');
   const [voiceProvider, setVoiceProvider] = useState('HUME_AI');
   const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('JBFqnCBsd6RMkjVDRZzb');
+  const [enttsVoiceId, setEnttsVoiceId] = useState('en-us-female');
   const [timeoutMs, setTimeoutMs] = useState('300000');
   const [region, setRegion] = useState('ap-guangzhou');
   const [temperature, setTemperature] = useState('0.2');
@@ -535,6 +546,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
               ? (item.model || '2')
               : item.provider === 'elevenlabs'
                 ? (item.model || 'eleven_multilingual_v2')
+                : item.provider === 'entts'
+                  ? (item.model || 'standard')
                 : (item.model ?? ''),
     );
     setApiKey(item.apiKey ?? '');
@@ -545,6 +558,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
           ? (item.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1')
           : item.provider === 'elevenlabs'
             ? (item.baseUrl || 'https://api.elevenlabs.io')
+            : item.provider === 'entts'
+              ? (item.baseUrl || 'https://www.entts.com')
             : item.provider === 'minimax'
               ? (item.baseUrl || 'https://api.minimax.io')
               : (item.baseUrl ?? ''),
@@ -555,6 +570,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
     setVoiceName(String((cfg as Record<string, unknown>).voiceName ?? 'Ava Song'));
     setVoiceProvider(String((cfg as Record<string, unknown>).voiceProvider ?? 'HUME_AI'));
     setElevenLabsVoiceId(String((cfg as Record<string, unknown>).voiceId ?? 'JBFqnCBsd6RMkjVDRZzb'));
+    setEnttsVoiceId(String((cfg as Record<string, unknown>).voiceId ?? 'en-us-female'));
     setTimeoutMs(String((cfg as Record<string, unknown>).timeoutMs ?? 300000));
     setRegion(String((cfg as Record<string, unknown>).region ?? 'ap-guangzhou'));
     setTemperature(String((cfg as Record<string, unknown>).temperature ?? 0.2));
@@ -572,6 +588,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const isMiniMax = item.type === 'tts' && item.provider === 'minimax';
   const isHume = item.type === 'tts' && item.provider === 'hume';
   const isElevenLabs = item.type === 'tts' && item.provider === 'elevenlabs';
+  const isEntts = item.type === 'tts' && item.provider === 'entts';
   const selectedRandomVoiceIds = randomVoiceIds.split(/[\n,，]/).map((voice) => voice.trim()).filter(Boolean);
 
   const setSelectedRandomVoiceIds = (voices: string[]) => {
@@ -608,6 +625,9 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
         config.voiceProvider = voiceProvider === 'CUSTOM_VOICE' ? 'CUSTOM_VOICE' : 'HUME_AI';
       } else if (isElevenLabs) {
         config.voiceId = elevenLabsVoiceId.trim() || 'JBFqnCBsd6RMkjVDRZzb';
+      } else if (isEntts) {
+        config.voiceId = ENTTS_VOICES.some((voice) => voice.value === enttsVoiceId) ? enttsVoiceId : 'en-us-female';
+        config.voiceIds = ENTTS_VOICES.map((voice) => voice.value);
       } else if (isDeepSeek) {
         const pricing = deepseekPricingConfig(model);
         if (pricing) config.pricing = pricing;
@@ -714,6 +734,18 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
               <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.elevenlabs.io" /></div>
               <div className="space-y-2"><Label>ELEVENLABS_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
               <div className="space-y-2"><Label>Default voice ID</Label><Input value={elevenLabsVoiceId} onChange={(event) => setElevenLabsVoiceId(event.target.value)} className="font-mono text-sm" placeholder="JBFqnCBsd6RMkjVDRZzb" /></div>
+            </>
+          ) : isEntts ? (
+            <>
+              <div className="flex flex-col gap-2"><Label>ENTTS model</Label><Input value={model} readOnly className="font-mono text-sm" /></div>
+              <div className="flex flex-col gap-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://www.entts.com" /></div>
+              <div className="flex flex-col gap-2">
+                <Label>Default English voice</Label>
+                <Select value={enttsVoiceId} onChange={(event) => setEnttsVoiceId(event.target.value)}>
+                  {ENTTS_VOICES.map((voice) => <SelectItem key={voice.value} value={voice.value}>{voice.label}</SelectItem>)}
+                </Select>
+                <p className="text-[11px] text-muted-foreground">ENTTS is keyless and provides four fixed American/British English voices. The base URL remains configurable for service changes.</p>
+              </div>
             </>
           ) : isDeepSeek ? (
             <>
@@ -886,6 +918,8 @@ function TestDialog({ item, open, onOpenChange }: { item: AiProviderItem | null;
         ? config.voiceName
         : item.provider === 'elevenlabs' && typeof config?.voiceId === 'string'
           ? config.voiceId
+          : item.provider === 'entts' && typeof config?.voiceId === 'string'
+            ? config.voiceId
           : '',
       params: {
         ...ttsDefaults,
@@ -990,7 +1024,11 @@ function TestDialog({ item, open, onOpenChange }: { item: AiProviderItem | null;
               {item.type === 'tts' && (
                 <div className="space-y-3">
                   <div className="space-y-2"><Label>Text</Label><Textarea value={state.text} onChange={(event) => setState((prev) => ({ ...prev, text: event.target.value }))} className="min-h-28" /></div>
-                  <div className="space-y-2"><Label>{item.provider === 'hume' ? 'Voice name / ID' : 'Voice ID'}</Label><Input value={state.voiceId} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))} placeholder={item.provider === 'cartesia' ? 'Required by Cartesia' : item.provider === 'hume' ? 'Ava Song' : item.provider === 'elevenlabs' ? 'JBFqnCBsd6RMkjVDRZzb' : 'Leave empty to use default voice'} /></div>
+                  {item.provider === 'entts' ? (
+                    <div className="flex flex-col gap-2"><Label>English voice</Label><Select value={state.voiceId || 'en-us-female'} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))}>{ENTTS_VOICES.map((voice) => <SelectItem key={voice.value} value={voice.value}>{voice.label}</SelectItem>)}</Select></div>
+                  ) : (
+                    <div className="space-y-2"><Label>{item.provider === 'hume' ? 'Voice name / ID' : 'Voice ID'}</Label><Input value={state.voiceId} onChange={(event) => setState((prev) => ({ ...prev, voiceId: event.target.value }))} placeholder={item.provider === 'cartesia' ? 'Required by Cartesia' : item.provider === 'hume' ? 'Ava Song' : item.provider === 'elevenlabs' ? 'JBFqnCBsd6RMkjVDRZzb' : 'Leave empty to use default voice'} /></div>
+                  )}
                   <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                     {getTtsFields(item).map((field) => (
                       <div key={field.key} className="space-y-2">

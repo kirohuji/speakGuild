@@ -1,0 +1,301 @@
+learning:
+  exercises:
+    pipeline:
+      - key: try-something-different
+        kind: chunk
+        type: chunk_substitution
+        title: 说想试试不一样的东西
+        chunk: try something different
+        chunkMeaning: 试试不一样的东西
+        direction: zh_to_en
+        items:
+          - zh: 我想试试不同的东西。
+            answer: I'd like to try something different.
+            hint: I'd like
+          - zh: 你试过这道菜吗？
+            answer: Have you tried this dish?
+            hint: this dish
+          - zh: 我们试试另一条路线。
+            answer: Let's try another route.
+            hint: another route
+      - key: try-something-different-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说想尝试什么
+        chunk: try something different
+        chunkMeaning: 试试不一样的东西
+        direction: en_to_zh
+        items:
+          - en: I'd like to try something different.
+            answer: 我想试试不同的东西。
+            hint: I'd like
+          - en: Have you tried this dish?
+            answer: 你试过这道菜吗？
+            hint: this dish
+          - en: Let's try another route.
+            answer: 我们试试另一条路线。
+            hint: another route
+      - key: try-open-door
+        kind: chunk
+        type: chunk_substitution
+        title: 说费力去做某件事
+        chunk: try to open the door
+        chunkMeaning: 试着打开门
+        direction: zh_to_en
+        items:
+          - zh: 我试着打开门，但门锁着。
+            answer: I tried to open the door, but it was locked.
+            hint: it was locked
+          - zh: 她试着给他打电话，但没人接。
+            answer: She tried to call him, but no one answered.
+            hint: no one answered
+          - zh: 我们试着赶最后一班车。
+            answer: We tried to catch the last bus.
+            hint: the last bus
+      - key: try-restart-computer
+        kind: chunk
+        type: chunk_substitution
+        title: 建议对方试一种做法
+        chunk: try restarting the computer
+        chunkMeaning: 试试重启电脑
+        direction: zh_to_en
+        items:
+          - zh: 试试重启电脑。
+            answer: Try restarting your computer.
+            hint: your computer
+          - zh: 试试换个说法。
+            answer: Try saying it another way.
+            hint: another way
+          - zh: 试试把窗口关掉再打开。
+            answer: Try closing the window and opening it again.
+            hint: opening it again
+      - key: try-on-jacket
+        kind: chunk
+        type: chunk_substitution
+        title: 说试穿衣服
+        chunk: try on this jacket
+        chunkMeaning: 试穿这件外套
+        direction: zh_to_en
+        items:
+          - zh: 我可以试穿这件外套吗？
+            answer: Can I try this jacket on?
+            hint: this jacket
+          - zh: 这双鞋能试一下吗？
+            answer: Can I try these shoes on?
+            hint: these shoes
+          - zh: 她试了三条裙子，最后买了蓝色的。
+            answer: She tried on three dresses and bought the blue one.
+            hint: three dresses；the blue one
+      - key: try-on-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说想试穿
+        chunk: try on this jacket
+        chunkMeaning: 试穿这件外套
+        direction: en_to_zh
+        items:
+          - en: Can I try this jacket on?
+            answer: 我可以试穿这件外套吗？
+            hint: this jacket
+          - en: Can I try these shoes on?
+            answer: 这双鞋能试一下吗？
+            hint: these shoes
+          - en: Try it on before you buy it.
+            answer: 买之前先试穿一下。
+            hint: before you buy it
+      - key: try-out-software
+        kind: chunk
+        type: chunk_substitution
+        title: 说试用某样东西
+        chunk: try out the new software
+        chunkMeaning: 试用新软件
+        direction: zh_to_en
+        items:
+          - zh: 我想试用一下新软件。
+            answer: I want to try out the new software.
+            hint: the new software
+          - zh: 我们下个月试运营这个功能。
+            answer: We'll try out the feature next month.
+            hint: the feature；next month
+          - zh: 她试用了三款相机才决定。
+            answer: She tried out three cameras before deciding.
+            hint: three cameras
+      - key: try-something-pattern
+        type: pattern_drill
+        title: 说试试某个东西
+        pattern: try [something]
+        patternMeaning: 试试某物
+        direction: zh_to_en
+        items:
+          - zh: 你试过那个方法吗？
+            answer: Have you tried that method?
+            hint: that method
+          - zh: 我想试试这个应用。
+            answer: I want to try this app.
+            hint: this app
+          - zh: 我们先试小份的。
+            answer: Let's try a small portion first.
+            hint: a small portion
+      - key: try-to-do-pattern
+        type: pattern_drill
+        title: 说努力去做某事
+        pattern: try to [do]
+        patternMeaning: 努力尝试做某事
+        direction: zh_to_en
+        items:
+          - zh: 我试着修打印机，但没修好。
+            answer: I tried to fix the printer, but I couldn't.
+            hint: the printer；couldn't
+          - zh: 她在努力不翻译就开口说英语。
+            answer: She's trying to speak English without translating.
+            hint: without translating
+          - zh: 我们试着早点到。
+            answer: We'll try to arrive early.
+            hint: arrive early
+      - key: try-doing-pattern
+        type: pattern_drill
+        title: 说试一种做法
+        pattern: try [doing]
+        patternMeaning: 试某种方法
+        direction: zh_to_en
+        items:
+          - zh: 试试重启应用。
+            answer: Try restarting the app.
+            hint: the app
+          - zh: 试试把水烧开再喝。
+            answer: Try boiling the water before drinking it.
+            hint: boiling the water
+          - zh: 如果不管用，就试试换个浏览器。
+            answer: If that doesn't work, try using a different browser.
+            hint: a different browser
+      - key: try-on-pattern
+        type: pattern_drill
+        title: 说试穿某件衣服
+        pattern: try on [something]
+        patternMeaning: 试穿
+        direction: zh_to_en
+        items:
+          - zh: 这条裤子我想试穿一下。
+            answer: I'd like to try these trousers on.
+            hint: these trousers
+          - zh: 试穿一下再做决定。
+            answer: Try it on before you decide.
+            hint: before you decide
+          - zh: 孩子们在试穿新校服。
+            answer: The kids are trying on their new uniforms.
+            hint: their new uniforms
+      - key: try-out-pattern
+        type: pattern_drill
+        title: 说试用或测试某物
+        pattern: try out [something]
+        patternMeaning: 试用或测试
+        direction: zh_to_en
+        items:
+          - zh: 我们想测试一下新的登录方式。
+            answer: We want to try out the new login.
+            hint: the new login
+          - zh: 她试用了这款应用一周。
+            answer: She tried out the app for a week.
+            hint: for a week
+          - zh: 你可以先试用再决定。
+            answer: You can try it out before you decide.
+            hint: before you decide
+      - key: try-out-listen
+        type: pattern_drill
+        title: 听懂对方说试用了什么
+        pattern: try out [something]
+        patternMeaning: 试用或测试
+        direction: en_to_zh
+        items:
+          - en: I want to try out the new software.
+            answer: 我想试用一下新软件。
+            hint: the new software
+          - en: She tried out the app for a week.
+            answer: 她试用了这款应用一周。
+            hint: for a week
+          - en: You can try it out before you decide.
+            answer: 你可以先试用再决定。
+            hint: before you decide
+      - key: try-best-again-for
+        type: vocab_sentence_building
+        title: 说尽力、再试一次和争取
+        vocabWord: try
+        vocabMeaning: 尽力；再试；争取
+        direction: zh_to_en
+        patterns:
+          - chunk: try one's best
+            items:
+              - zh: 我会尽力帮忙。
+                answer: I'll try my best to help.
+                hint: to help
+              - zh: 尽力就好。
+                answer: Just try your best.
+                hint: Just
+          - chunk: try again
+            items:
+              - zh: 第一次失败了，所以我又试了一次。
+                answer: The first attempt failed, so I tried again.
+                hint: The first attempt
+              - zh: 再试一次，别放弃。
+                answer: Try again; don't give up.
+                hint: don't give up
+          - chunk: try for the position
+            items:
+              - zh: 她准备争取这个职位。
+                answer: She's going to try for the position.
+                hint: the position
+              - zh: 他想争取奖学金。
+                answer: He wants to try for a scholarship.
+                hint: a scholarship
+      - key: try-restart-build
+        type: sentence_decomposition
+        title: 把试试重启说完整
+        sourceKind: chunk
+        sourceText: try restarting the computer
+        fullSentence: Try restarting the app and see if that fixes the problem.
+        fullSentenceZh: 试试重启应用，看看能不能解决问题。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Try restarting the app.
+            zh: 试试重启应用。
+            highlight: ''
+            hint: 先说试试重启应用
+          - level: 2
+            label: 加目的
+            en: Try restarting the app and see if it works.
+            zh: 试试重启应用，看看行不行。
+            highlight: see if it works
+            hint: 补上看看行不行
+          - level: 3
+            label: 完整句
+            en: Try restarting the app and see if that fixes the problem.
+            zh: 试试重启应用，看看能不能解决问题。
+            highlight: that fixes the problem
+            hint: 补上能不能解决问题
+      - key: try-explain-build
+        type: sentence_decomposition
+        title: 把试着解释这件事说完整
+        sourceKind: pattern
+        sourceText: try to [do]
+        fullSentence: I tried to explain what I meant, but he still didn't understand.
+        fullSentenceZh: 我试着解释我的意思，但他还是没明白。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I tried to explain.
+            zh: 我试着解释。
+            highlight: ''
+            hint: 先说试着解释
+          - level: 2
+            label: 加内容
+            en: I tried to explain what I meant.
+            zh: 我试着解释我的意思。
+            highlight: what I meant
+            hint: 补上解释我的意思
+          - level: 3
+            label: 完整句
+            en: I tried to explain what I meant, but he still didn't understand.
+            zh: 我试着解释我的意思，但他还是没明白。
+            highlight: but he still didn't understand
+            hint: 补上他还是没明白

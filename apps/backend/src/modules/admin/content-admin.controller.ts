@@ -50,7 +50,7 @@ import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import { generateText } from 'ai';
 import { TtsService } from '../tts/tts.service';
-import { Prisma, TtsProvider } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { AdminContentAiService } from './admin-content-ai.service';
 import { alignDescriptionLayout, descriptionHasCanonicalLayout, DESCRIPTION_LAYOUT_RULE } from './description-layout';
 import { AiModelService } from '../ai-model/ai-model.service';
@@ -61,6 +61,7 @@ import { ContentPrepareService } from '../admin-tasks/jobs/content-prepare.servi
 import { VocabularyExampleAudioService } from '../admin-tasks/jobs/vocabulary-example-audio.service';
 import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
 import { ListeningTranscriptSegment } from '../tts/tts.service';
+import type { TtsProviderKey } from '../tts/tts-provider.keys';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
 import { SuggestTopicSupportsDto, SuggestTopicVocabsDto } from './dto/scene-admin.dto';
 
@@ -2124,10 +2125,19 @@ ${candidateLines}
     await this.requireAdmin(req);
     const provider = await this.prisma.aiProvider.findUnique({ where: { id: providerId } });
     if (!provider || provider.type !== 'tts') throw new BadRequestException('TTS 厂商不存在');
-    if (!provider.apiKey) throw new BadRequestException('请先在 AI Models 配置厂商 API Key');
+    if (provider.provider !== 'entts' && !provider.apiKey) {
+      throw new BadRequestException('请先在 AI Models 配置厂商 API Key');
+    }
 
     let rows: Array<{ externalVoiceId: string; displayName: string; category: string; language?: string; gender?: string; description?: string; previewUrl?: string; metadata?: any }> = [];
-    if (provider.provider === 'minimax') {
+    if (provider.provider === 'entts') {
+      rows = [
+        { externalVoiceId: 'en-us-female', displayName: 'American English · Female', category: 'system', language: 'en-US', gender: 'female', description: 'Built-in ENTTS English voice' },
+        { externalVoiceId: 'en-us-male', displayName: 'American English · Male', category: 'system', language: 'en-US', gender: 'male', description: 'Built-in ENTTS English voice' },
+        { externalVoiceId: 'en-gb-female', displayName: 'British English · Female', category: 'system', language: 'en-GB', gender: 'female', description: 'Built-in ENTTS English voice' },
+        { externalVoiceId: 'en-gb-male', displayName: 'British English · Male', category: 'system', language: 'en-GB', gender: 'male', description: 'Built-in ENTTS English voice' },
+      ];
+    } else if (provider.provider === 'minimax') {
       const response = await fetch(`${provider.baseUrl || 'https://api.minimax.io'}/v1/get_voice`, {
         method: 'POST', headers: { Authorization: `Bearer ${provider.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ voice_type: 'all' }),
       });
@@ -2157,8 +2167,8 @@ ${candidateLines}
     const validRows = rows.filter((row) => row.externalVoiceId && row.displayName);
     await this.prisma.$transaction(validRows.map((row) => this.prisma.ttsVoiceAsset.upsert({
       where: { providerId_externalVoiceId: { providerId, externalVoiceId: row.externalVoiceId } },
-      create: { providerId, ...row, syncedAt: new Date(), isAvailable: true },
-      update: { ...row, syncedAt: new Date(), isAvailable: true },
+      create: { providerId, ...row, syncedAt: new Date(), isAvailable: true, ...(provider.provider === 'entts' ? { visibility: 'system_shared' as const } : {}) },
+      update: { ...row, syncedAt: new Date(), isAvailable: true, ...(provider.provider === 'entts' ? { visibility: 'system_shared' as const } : {}) },
     })));
     return { synced: validRows.length };
   }
@@ -3564,9 +3574,7 @@ ${dialogueTexts}
       if (!source) throw new Error('故事没有 Ink 源文件');
 
       const activeTtsConfig = await this.aiModelService.getTtsConfig();
-      const activeTtsProvider = Object.values(TtsProvider).includes(activeTtsConfig.provider as TtsProvider)
-        ? activeTtsConfig.provider as TtsProvider
-        : TtsProvider.minimax;
+      const activeTtsProvider = activeTtsConfig.provider as TtsProviderKey;
 
       // 只读取当前激活厂商的角色音色引用，不再从角色字段猜测厂商。
       const characters = await this.prisma.gameCharacter.findMany({
@@ -3581,7 +3589,7 @@ ${dialogueTexts}
       });
 
       // 构建角色名 -> TTS 配置映射。每个角色在当前厂商下优先使用默认绑定。
-      const charTtsMap = new Map<string, { voice: string; model: string | null; params: any; provider: TtsProvider }>();
+      const charTtsMap = new Map<string, { voice: string; model: string | null; params: any; provider: TtsProviderKey }>();
       for (const char of characters) {
         const binding = char.voiceBindings[0];
         if (!binding) continue;
@@ -4071,7 +4079,7 @@ ${contextBlock}
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
-  /** ENTTS 生成单条例句音频（返回 asset:// URL，由前端写入 examples 后保存） */
+  /** 使用大模型管理中当前激活的 TTS 生成单条例句音频。 */
   @Post('library/vocabularies/example-audio/generate')
   async generateLibraryVocabularyExampleAudio(
     @Req() req: Request,

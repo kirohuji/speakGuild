@@ -13,10 +13,10 @@ import { WhisperSttProvider } from './stt/whisper-stt.provider';
 import { TencentSttProvider } from './stt/tencent-stt.provider';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { AiModelModule } from '../ai-model/ai-model.module';
-import { DictionaryModule } from '../dictionary/dictionary.module';
+import { EnttsProviderModule } from './entts-provider.module';
 
 @Module({
-  imports: [PrismaModule, MulterModule.register(), FileAssetsModule, AiModelModule, DictionaryModule],
+  imports: [PrismaModule, MulterModule.register(), FileAssetsModule, AiModelModule, EnttsProviderModule],
   controllers: [TtsController],
   providers: [
     TtsService,

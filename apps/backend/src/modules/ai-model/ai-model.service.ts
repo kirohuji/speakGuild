@@ -100,7 +100,7 @@ export class AiModelService {
   async remove(id: string): Promise<{ success: true }> {
     const provider = await this.prisma.aiProvider.findUnique({ where: { id } });
     if (!provider) throw new NotFoundException('Provider not found');
-    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai', 'bailian'].includes(provider.provider)) {
+    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'entts', 'deepseek', 'openai', 'bailian'].includes(provider.provider)) {
       throw new BadRequestException('Built-in providers cannot be deleted');
     }
     if (provider.isActive) {
@@ -241,7 +241,9 @@ export class AiModelService {
               : '';
 
     const defaultModel =
-      selectedProvider === 'cartesia'
+      selectedProvider === 'entts'
+        ? 'standard'
+        : selectedProvider === 'cartesia'
         ? 'sonic-english'
         : selectedProvider === 'hume'
           ? '2'
@@ -268,6 +270,7 @@ export class AiModelService {
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'tts', provider: 'hume', label: 'Hume AI', model: '2', apiKey: process.env.HUME_API_KEY?.trim() || '', baseUrl: '', config: { voiceName: 'Ava Song', voiceProvider: 'HUME_AI' }, sortOrder: 2 },
       { type: 'tts', provider: 'elevenlabs', label: 'ElevenLabs', model: 'eleven_multilingual_v2', apiKey: process.env.ELEVENLABS_API_KEY?.trim() || '', baseUrl: 'https://api.elevenlabs.io', config: { voiceId: process.env.ELEVENLABS_VOICE_ID?.trim() || 'JBFqnCBsd6RMkjVDRZzb' }, sortOrder: 3 },
+      { type: 'tts', provider: 'entts', label: 'ENTTS', model: 'standard', apiKey: '', baseUrl: process.env.ENTTS_BASE_URL?.trim() || 'https://www.entts.com', config: { voiceId: 'en-us-female', voiceIds: ['en-us-female', 'en-us-male', 'en-gb-female', 'en-gb-male'] }, sortOrder: 4 },
       { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },
       {
@@ -287,6 +290,45 @@ export class AiModelService {
         create: def,
         update: {}, // don't overwrite user config
       });
+    }
+
+    const enttsProvider = await this.prisma.aiProvider.findUnique({
+      where: { type_provider: { type: 'tts', provider: 'entts' } },
+    });
+    if (enttsProvider) {
+      const voices = [
+        { externalVoiceId: 'en-us-female', displayName: 'American English · Female', language: 'en-US', gender: 'female' },
+        { externalVoiceId: 'en-us-male', displayName: 'American English · Male', language: 'en-US', gender: 'male' },
+        { externalVoiceId: 'en-gb-female', displayName: 'British English · Female', language: 'en-GB', gender: 'female' },
+        { externalVoiceId: 'en-gb-male', displayName: 'British English · Male', language: 'en-GB', gender: 'male' },
+      ];
+      for (const voice of voices) {
+        await this.prisma.ttsVoiceAsset.upsert({
+          where: {
+            providerId_externalVoiceId: {
+              providerId: enttsProvider.id,
+              externalVoiceId: voice.externalVoiceId,
+            },
+          },
+          create: {
+            providerId: enttsProvider.id,
+            ...voice,
+            category: 'system',
+            description: 'Built-in ENTTS English voice',
+            visibility: 'system_shared',
+            isAvailable: true,
+            syncedAt: new Date(),
+          },
+          update: {
+            ...voice,
+            category: 'system',
+            description: 'Built-in ENTTS English voice',
+            visibility: 'system_shared',
+            isAvailable: true,
+            syncedAt: new Date(),
+          },
+        });
+      }
     }
 
     // 确保每个 type 至少有一个激活

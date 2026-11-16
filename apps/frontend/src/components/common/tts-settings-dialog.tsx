@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal, Volume2, Loader2, CheckCircle2, AlertCircle, Play } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/cn'
 import {
@@ -34,6 +35,21 @@ const MINIMAX_VOICES: Array<{ id: string; label: string }> = [
   { id: 'male-qn-qingse',             label: '青涩男声 (ZH)' },
   { id: 'female-yujie',               label: '御姐 (ZH)' },
 ]
+
+const ENTTS_VOICES: Array<{ id: string; label: string }> = [
+  { id: 'en-us-female', label: 'American English · Female' },
+  { id: 'en-us-male', label: 'American English · Male' },
+  { id: 'en-gb-female', label: 'British English · Female' },
+  { id: 'en-gb-male', label: 'British English · Male' },
+]
+
+const PROVIDER_LABELS: Record<TtsProviderKey, string> = {
+  minimax: 'MiniMax',
+  cartesia: 'Cartesia',
+  hume: 'Hume AI',
+  elevenlabs: 'ElevenLabs',
+  entts: 'ENTTS',
+}
 
 const PREVIEW_TEXT = "The ancient city of Beijing is home to some of the world's most remarkable cultural treasures."
 
@@ -94,6 +110,9 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
       setModel(first)
       setParams({})
     }
+    if (provider === 'entts' && !ENTTS_VOICES.some((voice) => voice.id === voiceId)) {
+      setVoiceId('en-us-female')
+    }
   }, [provider, currentSchema])
 
   // When model changes, reset params to defaults
@@ -106,7 +125,7 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
     setParams((prev) => ({ ...defaults, ...prev }))
   }, [model])
 
-  const voiceOptions = provider === 'cartesia' ? CARTESIA_VOICES : MINIMAX_VOICES
+  const voiceOptions = provider === 'cartesia' ? CARTESIA_VOICES : provider === 'entts' ? ENTTS_VOICES : provider === 'minimax' ? MINIMAX_VOICES : []
 
   const handlePreview = async () => {
     if (previewing) return
@@ -175,8 +194,8 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
           <div className="space-y-5 py-2">
             {/* Provider */}
             <Section label={t('tts.provider', { defaultValue: '合成引擎' })}>
-              <div className="flex gap-2">
-                {(['minimax', 'cartesia'] as TtsProviderKey[]).map((p) => (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {schemas.map((schema) => schema.provider).map((p) => (
                   <button
                     key={p}
                     type="button"
@@ -188,7 +207,7 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
                         : 'border-border text-muted-foreground hover:border-primary/50',
                     )}
                   >
-                    {p === 'minimax' ? 'MiniMax' : 'Cartesia'}
+                    {PROVIDER_LABELS[p]}
                     {p === 'cartesia' && (
                       <span className="ml-1 rounded bg-primary/10 px-1 py-0.5 text-[10px] text-primary">
                         {t('tts.wordTimestamps', { defaultValue: '词时间戳' })}
@@ -198,9 +217,11 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
                 ))}
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
-                {provider === 'cartesia'
-                  ? t('tts.cartesiaDesc', { defaultValue: 'Cartesia 支持词级时间戳，可实现逐词高亮与句子导航。' })
-                  : t('tts.minimaxDesc', { defaultValue: 'MiniMax 中英文质量好，但不支持词级时间戳。' })}
+                {provider === 'entts'
+                  ? 'ENTTS 提供免密的英美式固定音色；服务配置由后台大模型管理统一维护。'
+                  : provider === 'cartesia'
+                    ? t('tts.cartesiaDesc', { defaultValue: 'Cartesia 支持词级时间戳，可实现逐词高亮与句子导航。' })
+                    : '密钥、服务地址和默认模型由后台大模型管理统一维护。'}
               </p>
             </Section>
 
@@ -229,23 +250,27 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
 
             {/* Voice */}
             <Section label={t('tts.voice', { defaultValue: '声音' })}>
-              <div className="grid grid-cols-2 gap-2">
-                {voiceOptions.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setVoiceId(v.id)}
-                    className={cn(
-                      'rounded-xl border px-3 py-2 text-left text-sm transition-all',
-                      voiceId === v.id
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/50',
-                    )}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
+              {provider === 'hume' || provider === 'elevenlabs' ? (
+                <Input value={voiceId} onChange={(event) => setVoiceId(event.target.value)} placeholder={provider === 'hume' ? 'Voice name or ID' : 'Voice ID'} />
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {voiceOptions.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setVoiceId(v.id)}
+                      className={cn(
+                        'rounded-xl border px-3 py-2 text-left text-sm transition-all',
+                        voiceId === v.id
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/50',
+                      )}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               {currentModelSchema?.requiresVoiceId && !voiceId && (
                 <p className="mt-1 text-xs text-destructive">{t('tts.voiceRequired', { defaultValue: '该模型需要选择声音' })}</p>
               )}

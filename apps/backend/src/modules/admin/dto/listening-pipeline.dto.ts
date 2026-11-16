@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsIn, IsNotEmpty, MaxLength, IsObject } from 'class-validator';
-import { TtsProvider } from '@prisma/client';
+import { TTS_PROVIDER_KEYS } from '../../tts/tts-provider.keys';
 
 /**
  * Flow A: 上传文本 → TTS 合成音频 → (无词时间戳时) Whisper 提取 → 句子分段
@@ -10,7 +10,7 @@ export class ListeningPipelineTextDto {
   @MaxLength(50000)
   text: string;
 
-  @IsIn(['minimax', 'cartesia', 'hume', 'elevenlabs'])
+  @IsIn(TTS_PROVIDER_KEYS)
   provider: string;
 
   @IsString()

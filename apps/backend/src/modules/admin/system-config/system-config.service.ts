@@ -43,7 +43,7 @@ const BUILTIN_CONFIGS = [
     group: 'ai',
     label: 'TTS 供应商',
     type: 'select',
-    description: '语音合成服务：minimax | cartesia',
+    description: '语音合成服务：minimax | cartesia | hume | elevenlabs | entts（以大模型管理中的激活项为准）',
   },
   // ── LLM 大语言模型 ──
   {

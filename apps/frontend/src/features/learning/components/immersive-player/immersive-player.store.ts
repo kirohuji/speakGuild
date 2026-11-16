@@ -9,7 +9,7 @@ export const DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS: ImmersivePlaybackSettings = {
   pauseGapSeconds: 2,
   playMainText: true,
   playMeaning: true,
-  playExample: true,
+  playExample: false,
   playExampleTranslation: false,
   autoNext: true,
   loopQueue: false,
@@ -41,6 +41,17 @@ export const useImmersivePlayerPreferences = create<ImmersivePlayerPreferencesSt
     }),
     {
       name: 'manyu-immersive-player',
+      version: 1,
+      migrate: (persistedState, version) => {
+        const persisted = persistedState as Partial<ImmersivePlayerPreferencesStore> | undefined
+        if (version === 0 && persisted?.settings) {
+          return {
+            ...persisted,
+            settings: { ...persisted.settings, playExample: false },
+          }
+        }
+        return persistedState as ImmersivePlayerPreferencesStore
+      },
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<ImmersivePlayerPreferencesStore> | undefined
         return {

@@ -1,13 +1,13 @@
-import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-import { TtsProvider } from '@prisma/client';
+import { IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { TTS_PROVIDER_KEYS, type TtsProviderKey } from '../tts-provider.keys';
 
 export class SynthesizeQuestionDto {
   @IsString()
   @IsNotEmpty()
   questionId: string;
 
-  @IsEnum(TtsProvider)
-  provider: TtsProvider;
+  @IsIn(TTS_PROVIDER_KEYS)
+  provider: TtsProviderKey;
 
   @IsString()
   @IsNotEmpty()
@@ -32,8 +32,8 @@ export class SynthesizeTextDto {
   @MaxLength(800)
   text: string;
 
-  @IsEnum(TtsProvider)
-  provider: TtsProvider;
+  @IsIn(TTS_PROVIDER_KEYS)
+  provider: TtsProviderKey;
 
   @IsString()
   @IsNotEmpty()

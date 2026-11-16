@@ -1,0 +1,342 @@
+learning:
+  exercises:
+    pipeline:
+      - key: work-for-company
+        kind: chunk
+        type: chunk_substitution
+        title: 说在什么公司工作
+        chunk: work for a software company
+        chunkMeaning: 在一家软件公司工作
+        direction: zh_to_en
+        items:
+          - zh: 我在一家软件公司工作。
+            answer: I work for a software company.
+            hint: a software company
+          - zh: 她在一家医院工作。
+            answer: She works for a hospital.
+            hint: a hospital
+          - zh: 你为哪家公司工作？
+            answer: Who do you work for?
+            hint: Who
+      - key: work-for-company-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说在哪工作
+        chunk: work for a software company
+        chunkMeaning: 在一家软件公司工作
+        direction: en_to_zh
+        items:
+          - en: I work for a software company.
+            answer: 我在一家软件公司工作。
+            hint: a software company
+          - en: Who do you work for?
+            answer: 你为哪家公司工作？
+            hint: Who
+          - en: She works for a small design studio.
+            answer: 她在一家小型设计工作室工作。
+            hint: a small design studio
+      - key: work-with-designers
+        kind: chunk
+        type: chunk_substitution
+        title: 说和谁合作
+        chunk: work with designers
+        chunkMeaning: 和设计师合作
+        direction: zh_to_en
+        items:
+          - zh: 我每天都和设计师合作。
+            answer: I work with designers every day.
+            hint: every day
+          - zh: 我喜欢和细心的人一起工作。
+            answer: I like working with careful people.
+            hint: careful people
+          - zh: 你和谁一起做这个项目？
+            answer: Who are you working with on this project?
+            hint: on this project
+      - key: work-on-pronunciation
+        kind: chunk
+        type: chunk_substitution
+        title: 说正在改进某件事
+        chunk: work on my pronunciation
+        chunkMeaning: 改进自己的发音
+        direction: zh_to_en
+        items:
+          - zh: 我正在改善自己的发音。
+            answer: I'm working on my pronunciation.
+            hint: my pronunciation
+          - zh: 这周我在改应用的几个地方。
+            answer: I'm working on a few changes to the app this week.
+            hint: a few changes；the app
+          - zh: 我们正在解决这个问题。
+            answer: We're working on the problem.
+            hint: the problem
+      - key: work-as-designer
+        kind: chunk
+        type: chunk_substitution
+        title: 说从事什么职业
+        chunk: work as a designer
+        chunkMeaning: 当设计师
+        direction: zh_to_en
+        items:
+          - zh: 她是一名设计师。
+            answer: She works as a designer.
+            hint: a designer
+          - zh: 他当老师已经五年了。
+            answer: He's worked as a teacher for five years.
+            hint: for five years
+          - zh: 我想当翻译。
+            answer: I want to work as a translator.
+            hint: a translator
+      - key: work-for-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说某个方案对自己合适
+        chunk: work for me
+        chunkMeaning: 对我有效；对我合适
+        direction: zh_to_en
+        items:
+          - zh: 这个方法对我有效。
+            answer: This method works for me.
+            hint: This method
+          - zh: 这个安排对我可以。
+            answer: This arrangement works for me.
+            hint: This arrangement
+          - zh: 周五对我可以吗？
+            answer: Does Friday work for you?
+            hint: Friday
+      - key: work-out-solution
+        kind: chunk
+        type: chunk_substitution
+        title: 说想出或解决某事
+        chunk: work out a solution
+        chunkMeaning: 想出一个解决办法
+        direction: zh_to_en
+        items:
+          - zh: 我们需要想出一个解决办法。
+            answer: We need to work out a solution.
+            hint: a solution
+          - zh: 我们会想出办法的。
+            answer: We'll work something out.
+            hint: something
+          - zh: 他们一起想出了计划。
+            answer: They worked out a plan together.
+            hint: a plan；together
+      - key: work-out-solution-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说想出了办法
+        chunk: work out a solution
+        chunkMeaning: 想出一个解决办法
+        direction: en_to_zh
+        items:
+          - en: We need to work out a solution.
+            answer: 我们需要想出一个解决办法。
+            hint: a solution
+          - en: We'll work something out.
+            answer: 我们会想出办法的。
+            hint: something
+          - en: They worked out a plan together.
+            answer: 他们一起想出了计划。
+            hint: a plan；together
+      - key: work-for-pattern
+        type: pattern_drill
+        title: 说为谁或哪家机构工作
+        pattern: work for [someone/company]
+        patternMeaning: 为某人或机构工作
+        direction: zh_to_en
+        items:
+          - zh: 他在一家银行工作。
+            answer: He works for a bank.
+            hint: a bank
+          - zh: 你以前为谁工作？
+            answer: Who did you work for before?
+            hint: before
+          - zh: 我为一家小公司工作。
+            answer: I work for a small company.
+            hint: a small company
+      - key: work-with-pattern
+        type: pattern_drill
+        title: 说和谁一起工作
+        pattern: work with [someone]
+        patternMeaning: 和某人合作
+        direction: zh_to_en
+        items:
+          - zh: 我和一个很棒的团队合作。
+            answer: I work with a great team.
+            hint: a great team
+          - zh: 她不喜欢和陌生人合作。
+            answer: She doesn't like working with strangers.
+            hint: strangers
+          - zh: 你一直在和谁合作？
+            answer: Who have you been working with?
+            hint: Who
+      - key: work-on-pattern
+        type: pattern_drill
+        title: 说正在处理或改进什么
+        pattern: work on [something]
+        patternMeaning: 处理或改进某事
+        direction: zh_to_en
+        items:
+          - zh: 我需要改进我的写作。
+            answer: I need to work on my writing.
+            hint: my writing
+          - zh: 他们正在开发一款新应用。
+            answer: They're working on a new app.
+            hint: a new app
+          - zh: 她每天练发音。
+            answer: She works on her pronunciation every day.
+            hint: every day
+      - key: work-as-pattern
+        type: pattern_drill
+        title: 说从事某种职业
+        pattern: work as [job]
+        patternMeaning: 从事某职业
+        direction: zh_to_en
+        items:
+          - zh: 他当司机。
+            answer: He works as a driver.
+            hint: a driver
+          - zh: 她以前当护士。
+            answer: She used to work as a nurse.
+            hint: a nurse
+          - zh: 她当作家为生。
+            answer: She works as a writer.
+            hint: a writer
+      - key: work-for-suit-pattern
+        type: pattern_drill
+        title: 说安排对谁合适
+        pattern: work for [someone]
+        patternMeaning: 某方案适合某人
+        direction: zh_to_en
+        items:
+          - zh: 这个时间对我可以。
+            answer: This time works for me.
+            hint: This time
+          - zh: 这个计划对我们不合适。
+            answer: This plan doesn't work for us.
+            hint: doesn't
+          - zh: 明天对你方便吗？
+            answer: Does tomorrow work for you?
+            hint: tomorrow
+      - key: work-out-pattern
+        type: pattern_drill
+        title: 说想出或解决什么
+        pattern: work out [something]
+        patternMeaning: 想出或解决某事
+        direction: zh_to_en
+        items:
+          - zh: 我们需要想出下一步。
+            answer: We need to work out the next step.
+            hint: the next step
+          - zh: 他们解决了所有细节。
+            answer: They worked out all the details.
+            hint: all the details
+          - zh: 别担心，我们会解决的。
+            answer: Don't worry; we'll work it out.
+            hint: work it out
+      - key: work-on-listen
+        type: pattern_drill
+        title: 听懂对方说在忙什么
+        pattern: work on [something]
+        patternMeaning: 处理或改进某事
+        direction: en_to_zh
+        items:
+          - en: I'm working on my pronunciation.
+            answer: 我正在改善自己的发音。
+            hint: my pronunciation
+          - en: They're working on a new app.
+            answer: 他们正在开发一款新应用。
+            hint: a new app
+          - en: She works on her pronunciation every day.
+            answer: 她每天练发音。
+            hint: every day
+      - key: work-out-hard-together-around
+        type: vocab_sentence_building
+        title: 说锻炼、努力、合作和绕开问题
+        vocabWord: work
+        vocabMeaning: 锻炼；努力；合作；绕开
+        direction: zh_to_en
+        patterns:
+          - chunk: work out
+            items:
+              - zh: 我每周锻炼三次。
+                answer: I work out three times a week.
+                hint: three times a week
+              - zh: 她每天早上锻炼。
+                answer: She works out every morning.
+                hint: every morning
+          - chunk: work hard
+            items:
+              - zh: 她努力提高自己的英语。
+                answer: She works hard to improve her English.
+                hint: to improve her English
+              - zh: 他为这次考试很努力。
+                answer: He worked hard for this exam.
+                hint: for this exam
+          - chunk: work together
+            items:
+              - zh: 我们应该一起处理这件事。
+                answer: We should work together on this.
+                hint: on this
+              - zh: 两个团队合作完成了项目。
+                answer: The two teams worked together to finish the project.
+                hint: to finish the project
+          - chunk: work around the limitation
+            items:
+              - zh: 我们需要绕开这个限制。
+                answer: We need to work around the limitation.
+                hint: the limitation
+              - zh: 他们找到了绕开问题的办法。
+                answer: They found a way to work around the problem.
+                hint: a way to
+      - key: work-on-build
+        type: sentence_decomposition
+        title: 把改进发音说完整
+        sourceKind: chunk
+        sourceText: work on my pronunciation
+        fullSentence: I'm working on my pronunciation so I can speak more clearly.
+        fullSentenceZh: 我正在改进发音，这样能说得更清楚。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I'm working on my pronunciation.
+            zh: 我正在改进发音。
+            highlight: ''
+            hint: 先说在改进发音
+          - level: 2
+            label: 加频率
+            en: I work on my pronunciation every day.
+            zh: 我每天练发音。
+            highlight: every day
+            hint: 补上每天
+          - level: 3
+            label: 完整句
+            en: I'm working on my pronunciation so I can speak more clearly.
+            zh: 我正在改进发音，这样能说得更清楚。
+            highlight: so I can speak more clearly
+            hint: 补上这样能说得更清楚
+      - key: work-out-build
+        type: sentence_decomposition
+        title: 把计划行不通就另想办法说完整
+        sourceKind: chunk
+        sourceText: work out a solution
+        fullSentence: We'll work something out if the original plan doesn't work.
+        fullSentenceZh: 如果原来的计划行不通，我们会想办法解决。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We'll work something out.
+            zh: 我们会想出办法。
+            highlight: ''
+            hint: 先说会想出办法
+          - level: 2
+            label: 加时间
+            en: We'll work something out soon.
+            zh: 我们很快会想出办法。
+            highlight: soon
+            hint: 补上很快
+          - level: 3
+            label: 完整句
+            en: We'll work something out if the original plan doesn't work.
+            zh: 如果原来的计划行不通，我们会想办法解决。
+            highlight: if the original plan doesn't work
+            hint: 补上如果计划行不通

@@ -1949,7 +1949,7 @@ const zhCN = {
         continuousPlayback: '连续播放',
         playMainText: '播放英文',
         playMeaning: '播放译文',
-        playExample: '播放例句',
+        playExample: '随机播放一条例句',
         playExampleTranslation: '播放例句译文',
         autoNext: '自动下一条',
         loopQueue: '循环队列',

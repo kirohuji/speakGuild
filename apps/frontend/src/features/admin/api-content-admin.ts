@@ -976,7 +976,7 @@ export function enqueueLibraryFieldBatch(
   return post(`/admin/content/library/${path}/field-batch`, body);
 }
 
-/** 为本页缺失音频的词汇例句创建 ENTTS 批量补全任务 */
+/** 使用大模型管理中当前激活的 TTS，为本页缺失音频的词汇例句创建批量补全任务 */
 export function enqueueLibraryVocabularyExampleAudioCurrentPage(params: {
   page: number;
   pageSize?: number;
@@ -992,13 +992,13 @@ export function enqueueLibraryVocabularyExampleAudioCurrentPage(params: {
   return post('/admin/tasks/library-vocabularies/generate-current-page-example-audio', undefined, { params });
 }
 
-/** 单条例句 ENTTS 音频（返回 asset://，需保存词汇后生效） */
+/** 使用当前激活的 TTS 生成单条例句音频（返回 asset://，需保存词汇后生效） */
 export function generateLibraryVocabularyExampleAudio(data: {
   text: string;
   type?: 'uk' | 'us';
   gender?: 'female' | 'male';
   bizId?: string;
-}): Promise<{ url: string; type: 'uk' | 'us'; gender: 'female' | 'male' }> {
+}): Promise<{ assetId: string; url: string; type: 'uk' | 'us'; gender: 'female' | 'male'; provider: string; model: string }> {
   return post('/admin/content/library/vocabularies/example-audio/generate', data);
 }
 

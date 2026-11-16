@@ -1,0 +1,391 @@
+learning:
+  exercises:
+    pipeline:
+      - key: bring-some-water
+        kind: chunk
+        type: chunk_substitution
+        title: 请人带点水过来
+        chunk: bring some water
+        chunkMeaning: 带点水过来
+        direction: zh_to_en
+        items:
+          - zh: 你能带点水过来吗？
+            answer: Can you bring some water?
+            hint: some water
+          - zh: 你能带些零食过来吗？
+            answer: Can you bring some snacks?
+            hint: some snacks
+          - zh: 孩子们带了果汁。
+            answer: The kids brought some juice.
+            hint: The kids
+      - key: bring-some-water-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方让你带东西
+        chunk: bring some water
+        chunkMeaning: 带点水过来
+        direction: en_to_zh
+        items:
+          - en: Can you bring some water?
+            answer: 你能带点水过来吗？
+            hint: some water
+          - en: I asked him to bring some water to the meeting.
+            answer: 我让他带点水到会上来。
+            hint: asked him；to the meeting
+          - en: She brought some water for the kids.
+            answer: 她给孩子们带了点水。
+            hint: for the kids
+      - key: bring-you-coffee
+        kind: chunk
+        type: chunk_substitution
+        title: 说给对方带杯咖啡
+        chunk: bring you some coffee
+        chunkMeaning: 给你带杯咖啡
+        direction: zh_to_en
+        items:
+          - zh: 我给你带杯咖啡。
+            answer: I'll bring you some coffee.
+            hint: some coffee
+          - zh: 你回来的时候能给我带杯茶吗？
+            answer: Can you bring me a tea when you come back?
+            hint: when you come back
+          - zh: 他给每个人带了个三明治。
+            answer: He brought everyone a sandwich.
+            hint: everyone；a sandwich
+      - key: bring-this-to-sarah
+        kind: chunk
+        type: chunk_substitution
+        title: 请人把东西带给别人
+        chunk: bring this to Sarah
+        chunkMeaning: 把这个带给 Sarah
+        direction: zh_to_en
+        items:
+          - zh: 你能把这个带给 Sarah 吗？
+            answer: Could you bring this to Sarah?
+            hint: Could you
+          - zh: 我把文件带给她了。
+            answer: I brought the file to her.
+            hint: the file；to her
+          - zh: 请把这些书带给你的老师。
+            answer: Please bring these books to your teacher.
+            hint: these books；your teacher
+      - key: bring-her-friend
+        kind: chunk
+        type: chunk_substitution
+        title: 说带某人来参加活动
+        chunk: bring her friend to the party
+        chunkMeaning: 带她的朋友来参加聚会
+        direction: zh_to_en
+        items:
+          - zh: 她带朋友来参加聚会。
+            answer: She brought her friend to the party.
+            hint: her friend；the party
+          - zh: 我可以带我妹妹一起来吗？
+            answer: Can I bring my sister with me?
+            hint: my sister；with me
+          - zh: 他带了两个孩子来开会。
+            answer: He brought two kids to the meeting.
+            hint: two kids；the meeting
+      - key: bring-anything
+        kind: chunk
+        type: chunk_substitution
+        title: 问需不需要带东西
+        chunk: Shall I bring anything?
+        chunkMeaning: 我需要带点什么吗？
+        direction: zh_to_en
+        items:
+          - zh: 我需要带点什么吗？
+            answer: Shall I bring anything?
+            hint: Shall I
+          - zh: 你不用带东西，人来就好。
+            answer: You don't need to bring anything; just come.
+            hint: just come
+          - zh: 需要我带点吃的吗？
+            answer: Should I bring something to eat?
+            hint: something to eat
+      - key: bring-closer
+        kind: chunk
+        type: chunk_substitution
+        title: 说什么让关系更亲近
+        chunk: bring us closer together
+        chunkMeaning: 让我们更亲近
+        direction: zh_to_en
+        items:
+          - zh: 这段经历让我们的关系更亲近了。
+            answer: The experience brought us closer together.
+            hint: The experience
+          - zh: 一起工作让大家更亲近了。
+            answer: Working together brought everyone closer together.
+            hint: Working together
+          - zh: 那次旅行让一家人更亲近了。
+            answer: That trip brought the family closer together.
+            hint: the family
+      - key: bring-back-memories
+        kind: chunk
+        type: chunk_substitution
+        title: 说什么勾起回忆
+        chunk: bring back memories
+        chunkMeaning: 勾起回忆
+        direction: zh_to_en
+        items:
+          - zh: 那首歌勾起了回忆。
+            answer: That song brings back memories.
+            hint: That song
+          - zh: 那个味道总会让我想起童年的回忆。
+            answer: That smell always brings back memories of my childhood.
+            hint: always；my childhood
+          - zh: 这张照片让我想起大学的日子。
+            answer: This photo brings back my college days.
+            hint: my college days
+      - key: bring-back-memories-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说起回忆
+        chunk: bring back memories
+        chunkMeaning: 勾起回忆
+        direction: en_to_zh
+        items:
+          - en: This photo brings back memories of our first trip.
+            answer: 这张照片让我想起我们第一次旅行。
+            hint: our first trip
+          - en: That song always brings back memories.
+            answer: 那首歌总会勾起回忆。
+            hint: always
+          - en: These photos bring back memories of my childhood.
+            answer: 这些照片让我想起童年。
+            hint: These photos；my childhood
+      - key: bring-something
+        type: pattern_drill
+        title: 说带个东西过来
+        pattern: bring [something]
+        patternMeaning: 带来某物
+        direction: zh_to_en
+        items:
+          - zh: 明天的会带上你的笔记。
+            answer: Bring your notes to the meeting tomorrow.
+            hint: your notes；tomorrow
+          - zh: 别忘了带伞。
+            answer: Don't forget to bring an umbrella.
+            hint: an umbrella
+          - zh: 我把书带来了。
+            answer: I brought the book with me.
+            hint: with me
+      - key: bring-someone-something
+        type: pattern_drill
+        title: 说给某人带某物
+        pattern: bring [someone] [something]
+        patternMeaning: 给某人带来某物
+        direction: zh_to_en
+        items:
+          - zh: 我给你带了点吃的。
+            answer: I brought you something to eat.
+            hint: something to eat
+          - zh: 他给我们带了些水果。
+            answer: He brought us some fruit.
+            hint: us；some fruit
+          - zh: 她给我带了份礼物。
+            answer: She brought me a present.
+            hint: a present
+      - key: bring-something-to-someone
+        type: pattern_drill
+        title: 说把东西带给某人
+        pattern: bring [something] to [someone]
+        patternMeaning: 把某物带给某人
+        direction: zh_to_en
+        items:
+          - zh: 你能把这份文件带给她吗？
+            answer: Can you bring this document to her?
+            hint: this document；to her
+          - zh: 我把钥匙带给他了。
+            answer: I brought the keys to him.
+            hint: the keys；to him
+          - zh: 请把这份报告带给经理。
+            answer: Please bring this report to the manager.
+            hint: this report；the manager
+      - key: bring-someone-to-place
+        type: pattern_drill
+        title: 说带某人去某地
+        pattern: bring [someone] to [place]
+        patternMeaning: 把某人带到某地
+        direction: zh_to_en
+        items:
+          - zh: 他带了女朋友来参加聚会。
+            answer: He brought his girlfriend to the party.
+            hint: his girlfriend；the party
+          - zh: 你能带孩子一起来吗？
+            answer: Can you bring the kids with you?
+            hint: the kids；with you
+          - zh: 他带了一位朋友来吃晚饭。
+            answer: He brought a friend to dinner.
+            hint: a friend；dinner
+      - key: bring-someone-closer
+        type: pattern_drill
+        title: 说什么让人更亲近
+        pattern: bring [someone] closer together
+        patternMeaning: 使人们关系更近
+        direction: zh_to_en
+        items:
+          - zh: 这次旅行让我们更亲近了。
+            answer: The trip brought us closer together.
+            hint: The trip
+          - zh: 共同的困难让大家更团结了。
+            answer: The shared difficulties brought the team closer together.
+            hint: shared difficulties；the team
+          - zh: 一起训练让队员们更亲近了。
+            answer: Training together brought the players closer together.
+            hint: Training together；the players
+      - key: bring-back-something
+        type: pattern_drill
+        title: 说带回来或想起什么
+        pattern: bring back [something]
+        patternMeaning: 带回来；使想起
+        direction: zh_to_en
+        items:
+          - zh: 这首歌让我想起高中。
+            answer: This song brings back my high school days.
+            hint: my high school days
+          - zh: 看到老照片，我就想起了那次旅行。
+            answer: Seeing the old photos brought back memories of that trip.
+            hint: Seeing；old photos；that trip
+          - zh: 这首歌把我带回了那个夏天。
+            answer: This song brings back that summer.
+            hint: that summer
+      - key: bring-up-about-out
+        type: vocab_sentence_building
+        title: 说提起问题、带来变化或凸显特点
+        vocabWord: bring
+        vocabMeaning: 提出；导致；使显现
+        direction: zh_to_en
+        patterns:
+          - chunk: bring this issue up
+            items:
+              - zh: 我们需要在作出最终决定之前把这个问题提出来。
+                answer: We need to bring this issue up before we make a final decision.
+                hint: this issue；before；final decision
+              - zh: 你为什么突然提起那件事？
+                answer: Why did you bring that up?
+                hint: Why；that up
+          - chunk: bring about major changes
+            items:
+              - zh: 这项政策带来了重大变化。
+                answer: The policy brought about major changes.
+                hint: major changes
+              - zh: 新技术让我们的工作方式发生了变化。
+                answer: New technology brought about changes in the way we work.
+                hint: changes；the way we work
+          - chunk: bring out your eyes
+            items:
+              - zh: 这个颜色很衬你的眼睛。
+                answer: This colour really brings out your eyes.
+                hint: really；your eyes
+              - zh: 这个设计把房间最好的一面展现出来了。
+                answer: The design really brings out the best in the room.
+                hint: the best in；the room
+      - key: bring-this-to-sarah-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方让你把东西带给别人
+        chunk: bring this to Sarah
+        chunkMeaning: 把这个带给 Sarah
+        direction: en_to_zh
+        items:
+          - en: Could you bring this to Sarah?
+            answer: 你能把这个带给 Sarah 吗？
+            hint: Could you
+          - en: I brought the file to her this morning.
+            answer: 我今天早上把文件带给她了。
+            hint: this morning
+          - en: Please bring these books to your teacher.
+            answer: 请把这些书带给你的老师。
+            hint: these books；your teacher
+      - key: bring-someone-closer-listen
+        type: pattern_drill
+        title: 听懂对方说什么让人更亲近
+        pattern: bring [someone] closer together
+        patternMeaning: 使人们关系更近
+        direction: en_to_zh
+        items:
+          - en: The experience brought us closer together.
+            answer: 这段经历让我们的关系更亲近了。
+            hint: The experience
+          - en: Working together brought everyone closer together.
+            answer: 一起工作让大家更亲近了。
+            hint: Working together
+          - en: The trip brought the family closer together.
+            answer: 那次旅行让一家人更亲近了。
+            hint: the family
+      - key: bring-together-bring-in
+        type: vocab_sentence_building
+        title: 说把人和资源聚到一起
+        vocabWord: bring
+        vocabMeaning: 使聚在一起；引入
+        direction: zh_to_en
+        patterns:
+          - chunk: bring different teams together
+            items:
+              - zh: 这个项目让不同团队聚到了一起。
+                answer: The project brought different teams together.
+                hint: different teams
+              - zh: 这个活动把附近的人聚到了一起。
+                answer: The event brought people in the neighbourhood together.
+                hint: people；the neighbourhood
+          - chunk: bring in more customers
+            items:
+              - zh: 新产品可能带来更多客户。
+                answer: The new product could bring in more customers.
+                hint: more customers
+              - zh: 他们请了一位专家来帮我们。
+                answer: They brought in an expert to help us.
+                hint: an expert；to help us
+      - key: bring-memories-build
+        type: sentence_decomposition
+        title: 把勾起回忆这件事说完整
+        sourceKind: chunk
+        sourceText: bring back memories
+        fullSentence: That song always brings back memories of my first year at college.
+        fullSentenceZh: 那首歌总会让我想起大学第一年的日子。
+        levels:
+          - level: 1
+            label: 核心句
+            en: That song brings back memories.
+            zh: 那首歌勾起了回忆。
+            highlight: ''
+            hint: 先说那首歌勾起回忆
+          - level: 2
+            label: 加频率
+            en: That song always brings back memories.
+            zh: 那首歌总会勾起回忆。
+            highlight: always
+            hint: 补上总会
+          - level: 3
+            label: 完整句
+            en: That song always brings back memories of my first year at college.
+            zh: 那首歌总会让我想起大学第一年的日子。
+            highlight: of my first year at college
+            hint: 补上想起大学第一年
+      - key: bring-water-build
+        type: sentence_decomposition
+        title: 把请人带水这件事说完整
+        sourceKind: chunk
+        sourceText: bring some water
+        fullSentence: Could you bring some water to the meeting for everyone?
+        fullSentenceZh: 你能给大家带点水到会上来吗？
+        levels:
+          - level: 1
+            label: 核心句
+            en: Bring some water.
+            zh: 带点水过来。
+            highlight: ''
+            hint: 先说要带点水
+          - level: 2
+            label: 加地点
+            en: Bring some water to the meeting.
+            zh: 带点水到会上来。
+            highlight: to the meeting
+            hint: 补上到会上来
+          - level: 3
+            label: 完整句
+            en: Could you bring some water to the meeting for everyone?
+            zh: 你能给大家带点水到会上来吗？
+            highlight: for everyone
+            hint: 补上给大家，并改成请求的说法
