@@ -1,0 +1,179 @@
+﻿别名,类型,存放路径,规格,用在,优先级,状态,备注
+map_manyu_day,地图,02-地图/全域地图/map_manyu_day.webp,1920x1080,探索模式默认地图,P0,todo,17 个地点需可辨识；不带文字标签
+map_manyu_night,地图,02-地图/全域地图/map_manyu_night.webp,1920x1080,夜间与庆典前,P1,todo,构图必须与 day 完全一致
+map_manyu_festival,地图,02-地图/全域地图/map_manyu_festival.webp,1920x1080,庆典日,P1,todo,装饰灯串覆盖全图
+icon_gate,图标,02-地图/地点图标/icon_gate.png,256x256,地图 - 町口,P0,todo,剪影+单色描边
+icon_plaza,图标,02-地图/地点图标/icon_plaza.png,256x256,地图 - 中央广场,P0,todo,
+icon_street,图标,02-地图/地点图标/icon_street.png,256x256,地图 - 主街,P0,todo,
+icon_post,图标,02-地图/地点图标/icon_post.png,256x256,地图 - 邮局,P0,todo,
+icon_library,图标,02-地图/地点图标/icon_library.png,256x256,地图 - 图书馆,P0,todo,
+icon_cafe,图标,02-地图/地点图标/icon_cafe.png,256x256,地图 - 橡果咖啡,P0,todo,
+icon_tower,图标,02-地图/地点图标/icon_tower.png,256x256,地图 - 钟楼,P1,todo,
+icon_riverside,图标,02-地图/地点图标/icon_riverside.png,256x256,地图 - 河岸,P1,todo,
+icon_bookstore,图标,02-地图/地点图标/icon_bookstore.png,256x256,地图 - 猫尾堂,P1,todo,
+icon_bakery,图标,02-地图/地点图标/icon_bakery.png,256x256,地图 - 面包店,P1,todo,
+icon_flower,图标,02-地图/地点图标/icon_flower.png,256x256,地图 - 花店,P1,todo,
+icon_workshop,图标,02-地图/地点图标/icon_workshop.png,256x256,地图 - 铁哥工房,P1,todo,
+icon_gym,图标,02-地图/地点图标/icon_gym.png,256x256,地图 - 白熊铁馆,P1,todo,
+icon_boutique,图标,02-地图/地点图标/icon_boutique.png,256x256,地图 - 服装店,P1,todo,
+icon_bath,图标,02-地图/地点图标/icon_bath.png,256x256,地图 - 水音汤,P1,todo,
+icon_warehouse,图标,02-地图/地点图标/icon_warehouse.png,256x256,地图 - 二手仓库,P2,todo,
+icon_market,图标,02-地图/地点图标/icon_market.png,256x256,地图 - 市集,P2,todo,
+bg_gate_street,背景,03-背景/室外-地点/bg_gate_street.webp,1920x1080,E01/E02/D01,P0,todo,E01 暂用旧别名 bg_msb08lrn 过渡
+bg_plaza_fountain,背景,03-背景/室外-地点/bg_plaza_fountain.webp,1920x1080,E02/D03/D04,P0,todo,广场主视觉
+bg_library_reading,背景,03-背景/室内-房间/bg_library_reading.webp,1920x1080,E03/D11,P0,todo,
+bg_post_counter,背景,03-背景/室内-房间/bg_post_counter.webp,1920x1080,E04/D09,P0,todo,
+bg_post_wall,背景,03-背景/室内-房间/bg_post_wall.webp,1920x1080,E04/D10,P0,todo,信件墙是本剧核心意象
+bg_cafe_counter,背景,03-背景/室内-房间/bg_cafe_counter.webp,1920x1080,E05/D15/D16,P0,todo,
+bg_gate_buswindow_dusk,背景,03-背景/室外-地点/bg_gate_buswindow_dusk.webp,1920x1080,序章,P0,todo,带轻微反光与玻璃反射
+bg_gate_path,背景,03-背景/室外-地点/bg_gate_path.webp,1920x1080,D02/E17,P1,todo,
+bg_plaza_stage,背景,03-背景/室外-地点/bg_plaza_stage.webp,1920x1080,E14/E15,P1,todo,
+bg_plaza_lantern,背景,03-背景/庆典夜/bg_plaza_lantern.webp,1920x1080,E16/D06,P1,todo,点灯台特写
+bg_street_shops,背景,03-背景/室外-地点/bg_street_shops.webp,1920x1080,D07/E02,P1,todo,
+bg_street_alley,背景,03-背景/室外-地点/bg_street_alley.webp,1920x1080,猫尾堂入口过渡,P1,todo,
+bg_library_archive,背景,03-背景/室内-房间/bg_library_archive.webp,1920x1080,D12,P1,todo,
+bg_book_front,背景,03-背景/室内-房间/bg_book_front.webp,1920x1080,E07/D13,P1,todo,
+bg_cafe_window,背景,03-背景/室内-房间/bg_cafe_window.webp,1920x1080,D17,P1,todo,
+bg_bakery_shop,背景,03-背景/室内-房间/bg_bakery_shop.webp,1920x1080,E06/D18/D19,P1,todo,
+bg_flower_front,背景,03-背景/室外-地点/bg_flower_front.webp,1920x1080,E06/D20/D21,P1,todo,
+bg_workshop_bench,背景,03-背景/室内-房间/bg_workshop_bench.webp,1920x1080,E08/D22,P1,todo,
+bg_warehouse_shelves,背景,03-背景/室内-房间/bg_warehouse_shelves.webp,1920x1080,E08/D24,P1,todo,
+bg_gym_practice,背景,03-背景/室内-房间/bg_gym_practice.webp,1920x1080,E09/D25,P1,todo,留出鼓与训练垫
+bg_boutique_mirror,背景,03-背景/室内-房间/bg_boutique_mirror.webp,1920x1080,E10/D27,P1,todo,
+bg_market_stalls,背景,03-背景/室外-地点/bg_market_stalls.webp,1920x1080,E10/D29/D30,P1,todo,
+bg_bath_front,背景,03-背景/室外-地点/bg_bath_front.webp,1920x1080,E11/D32,P1,todo,
+bg_tower_base,背景,03-背景/室内-房间/bg_tower_base.webp,1920x1080,E12,P1,todo,石阶与木门
+bg_tower_clock,背景,03-背景/室内-房间/bg_tower_clock.webp,1920x1080,E13/D34,P1,todo,齿轮与绳梯
+bg_tower_top,背景,03-背景/室外-地点/bg_tower_top.webp,1920x1080,E13/D35,P1,todo,俯瞰全镇
+bg_riverside_walk,背景,03-背景/室外-地点/bg_riverside_walk.webp,1920x1080,D36,P1,todo,
+bg_book_back,背景,03-背景/室内-房间/bg_book_back.webp,1920x1080,D14,P2,todo,
+bg_bakery_kitchen,背景,03-背景/室内-房间/bg_bakery_kitchen.webp,1920x1080,D18 备用,P2,todo,
+bg_flower_greenhouse,背景,03-背景/室内-房间/bg_flower_greenhouse.webp,1920x1080,D21 备用,P2,todo,
+bg_workshop_yard,背景,03-背景/室外-地点/bg_workshop_yard.webp,1920x1080,D23,P2,todo,
+bg_gym_locker,背景,03-背景/室内-房间/bg_gym_locker.webp,1920x1080,闲聊备用,P2,todo,
+bg_boutique_back,背景,03-背景/室内-房间/bg_boutique_back.webp,1920x1080,D28,P2,todo,
+bg_market_awning,背景,03-背景/室外-地点/bg_market_awning.webp,1920x1080,D31,P2,todo,雨天棚下
+bg_bath_lounge,背景,03-背景/室内-房间/bg_bath_lounge.webp,1920x1080,D33,P2,todo,
+bg_riverside_bridge,背景,03-背景/室外-地点/bg_riverside_bridge.webp,1920x1080,闲聊备用,P2,todo,
+bg_gate_street_dusk,背景,03-背景/时段与天气/bg_gate_street_dusk.webp,1920x1080,E01/E02,P0,todo,E01 的默认时段图
+bg_plaza_fountain_dusk,背景,03-背景/时段与天气/bg_plaza_fountain_dusk.webp,1920x1080,E02,P0,todo,
+bg_plaza_fountain_festival,背景,03-背景/庆典夜/bg_plaza_fountain_festival.webp,1920x1080,E16,P0,todo,全篇最重要一张 全场星灯亮起
+bg_gate_street_dawn,背景,03-背景/时段与天气/bg_gate_street_dawn.webp,1920x1080,E17,P1,todo,
+bg_plaza_festival_dawn,背景,03-背景/庆典夜/bg_plaza_festival_dawn.webp,1920x1080,E17,P1,todo,收摊后的清晨
+bg_plaza_fountain_rain,背景,03-背景/时段与天气/bg_plaza_fountain_rain.webp,1920x1080,E15,P1,todo,小雨 不是暴雨
+bg_plaza_stage_dusk,背景,03-背景/时段与天气/bg_plaza_stage_dusk.webp,1920x1080,E15,P1,todo,
+bg_street_shops_dusk,背景,03-背景/时段与天气/bg_street_shops_dusk.webp,1920x1080,E02,P1,todo,
+bg_street_shops_night,背景,03-背景/时段与天气/bg_street_shops_night.webp,1920x1080,E12,P1,todo,
+bg_riverside_walk_dusk,背景,03-背景/时段与天气/bg_riverside_walk_dusk.webp,1920x1080,D36,P1,todo,
+bg_tower_clock_night,背景,03-背景/时段与天气/bg_tower_clock_night.webp,1920x1080,D35,P1,todo,
+bg_tower_top_night,背景,03-背景/时段与天气/bg_tower_top_night.webp,1920x1080,E13,P1,todo,
+bg_bath_front_night,背景,03-背景/时段与天气/bg_bath_front_night.webp,1920x1080,E11/D32,P1,todo,
+bg_gym_practice_dusk,背景,03-背景/时段与天气/bg_gym_practice_dusk.webp,1920x1080,E09/D26,P1,todo,
+bg_cafe_window_rain,背景,03-背景/时段与天气/bg_cafe_window_rain.webp,1920x1080,E05/D17,P1,todo,
+bg_plaza_fountain_dawn,背景,03-背景/时段与天气/bg_plaza_fountain_dawn.webp,1920x1080,E17 备用,P2,todo,
+bg_street_shops_rain,背景,03-背景/时段与天气/bg_street_shops_rain.webp,1920x1080,D08,P2,todo,
+bg_street_alley_night,背景,03-背景/时段与天气/bg_street_alley_night.webp,1920x1080,E12,P2,todo,
+bg_market_stalls_dusk,背景,03-背景/时段与天气/bg_market_stalls_dusk.webp,1920x1080,D30,P2,todo,
+chr_fox_set,立绘,04-立绘/fox-lilia/,512x768 x1 已有 待补4表情,Lilia 主线全部,P0,got,已归档 chr_fox_default.png 待补 happy/thinking/surprised/sad
+chr_iris_set,立绘,04-立绘/iris/,512x768 x1 已有 待补2表情,Iris E02/E14/D03/D31,P0,got,已归档 chr_iris_default.png 但与 sari 同一文件 必须替换形象
+chr_maya_set,立绘,04-立绘/maya/,512x768 x1 已有 待补2表情,Maya E03/E13/D11/D12,P0,got,已归档 chr_maya_default.png 优先补 happy/thinking
+chr_ash_set,立绘,04-立绘/ash/,512x768 x1 已有 待补2表情,Ash E04/D09/D35,P0,got,已归档 chr_ash_default.png 优先补 happy/thinking
+chr_lux_set,立绘,04-立绘/lux/,512x768 x1 已有 待补2表情,Lux E04/E12/D01/D02/D10,P0,got,已归档 chr_lux_default.png 优先补 happy/thinking
+chr_sari_set,立绘,04-立绘/sari/,512x768 x1 已有 待补4表情,Sari E05/D15/D16/D17,P1,got,已归档 chr_sari_default.png 与 iris 共用同一 fileAssetId
+chr_yoyo_set,立绘,04-立绘/yoyo/,512x768 x1 已有 待补4表情,Yoyo E11/D32/D33,P1,got,加 tired 可选
+chr_vivi_set,立绘,04-立绘/vivi/,512x768 x1 已有 待补4表情,Vivi E10/D27/D28,P1,got,
+chr_nora_set,立绘,04-立绘/nora/,512x768 x1 已有 待补4表情,Nora E06/D18/D19,P1,got,
+chr_eira_set,立绘,04-立绘/eira/,512x768 x1 已有 待补4表情,Eira E06/D20/D21,P1,got,
+chr_sian_set,立绘,04-立绘/sian/,512x768 x1 已有 待补4表情,Sian E07/D13,P1,got,
+chr_riggs_set,立绘,04-立绘/riggs/,512x768 x1 已有 待补4表情,Riggs E08/D24,P1,got,
+chr_wooly_set,立绘,04-立绘/wooly/,512x768 x1 已有 待补4表情,Wooly E09/E14/D05/D26,P1,got,
+chr_noel_set,立绘,04-立绘/noel/,512x768 x1 已有 待补4表情,Noel E09/E14/D25,P1,got,
+chr_basil_set,立绘,04-立绘/basil/,512x768 x1 已有 待补4表情,Basil E07/D14,P1,got,
+chr_tank_set,立绘,04-立绘/tank/,512x768 x1 已有 待补4表情,Tank E08/D22/D23,P1,got,
+chr_rico_set,立绘,04-立绘/rico/,512x768 x1 已有 待补4表情,Rico E10/D07/D29/D30,P1,got,
+chr_polar_set,立绘,04-立绘/polar/,512x768 x1 已有 待补4表情,Polar E12/D04/D34,P1,got,加 serious 可选
+avatar_fox,头像,04-立绘/fox-lilia/avatar_fox.png,复用 default,对白头像与角色卡,P0,got,
+avatar_iris,头像,04-立绘/iris/avatar_iris.png,复用 default,对白头像,P0,got,与 sari 同图 替换形象后重导
+avatar_maya,头像,04-立绘/maya/avatar_maya.png,复用 default,对白头像,P0,got,
+avatar_ash,头像,04-立绘/ash/avatar_ash.png,复用 default,对白头像,P0,got,
+avatar_lux,头像,04-立绘/lux/avatar_lux.png,复用 default,对白头像,P0,got,
+avatar_sari,头像,04-立绘/sari/avatar_sari.png,复用 default,对白头像,P1,got,
+avatar_yoyo,头像,04-立绘/yoyo/avatar_yoyo.png,复用 default,对白头像,P1,got,
+avatar_vivi,头像,04-立绘/vivi/avatar_vivi.png,复用 default,对白头像,P1,got,
+avatar_nora,头像,04-立绘/nora/avatar_nora.png,复用 default,对白头像,P1,got,
+avatar_eira,头像,04-立绘/eira/avatar_eira.png,复用 default,对白头像,P1,got,
+avatar_sian,头像,04-立绘/sian/avatar_sian.png,复用 default,对白头像,P1,got,
+avatar_riggs,头像,04-立绘/riggs/avatar_riggs.png,复用 default,对白头像,P1,got,
+avatar_wooly,头像,04-立绘/wooly/avatar_wooly.png,复用 default,对白头像,P1,got,
+avatar_noel,头像,04-立绘/noel/avatar_noel.png,复用 default,对白头像,P1,got,
+avatar_basil,头像,04-立绘/basil/avatar_basil.png,复用 default,对白头像,P1,got,
+avatar_tank,头像,04-立绘/tank/avatar_tank.png,复用 default,对白头像,P1,got,
+avatar_rico,头像,04-立绘/rico/avatar_rico.png,复用 default,对白头像,P1,got,
+avatar_polar,头像,04-立绘/polar/avatar_polar.png,复用 default,对白头像,P1,got,
+chr_festival_set,立绘,04-立绘/*/chr_*_festival.png,512x768 x2 表情（default/happy）,E14-E16 庆典,P2,todo,18 人围巾+胸针差分 可先只做 3 人
+prop_invitation_card,道具,05-道具与UI/信件与明信片/prop_invitation_card.png,1200x900,序章与 E01,P0,todo,玩家收到的邀请卡
+prop_map_wet,道具,05-道具与UI/信件与明信片/prop_map_wet.png,1200x900,E02,P0,todo,被雨打湿的庆典地图
+prop_photo_old,道具,05-道具与UI/信件与明信片/prop_photo_old.png,1200x900,E03,P0,todo,无署名的旧照片
+prop_postcard,道具,05-道具与UI/信件与明信片/prop_postcard.png,1200x900,E04,P0,todo,背面手写 Find the people who keep the town warm
+prop_book_star,道具,05-道具与UI/信件与明信片/prop_book_star.png,1200x900,E07,P1,todo,星灯书签
+prop_letter_piece_01,道具,05-道具与UI/信件与明信片/prop_letter_piece_01.png,1200x900,E07,P1,todo,信的第一段
+prop_letter_piece_02,道具,05-道具与UI/信件与明信片/prop_letter_piece_02.png,1200x900,E08,P1,todo,灯座里的便笺
+prop_letter_piece_03,道具,05-道具与UI/信件与明信片/prop_letter_piece_03.png,1200x900,E11,P1,todo,第三段
+prop_letter_piece_04,道具,05-道具与UI/信件与明信片/prop_letter_piece_04.png,1200x900,E13,P1,todo,最后一页 拼合后与四段一致
+prop_wind_note,道具,05-道具与UI/信件与明信片/prop_wind_note.png,1200x900,E12,P1,todo,被风吹走的便条
+prop_lamp_parts,道具,05-道具与UI/信件与明信片/prop_lamp_parts.png,1200x900,E08,P1,todo,旧灯零件
+prop_rehearsal_sheet,道具,05-道具与UI/信件与明信片/prop_rehearsal_sheet.png,1200x900,E09,P1,todo,排练表
+prop_flower_card,道具,05-道具与UI/信件与明信片/prop_flower_card.png,1200x900,E06,P1,todo,花语小卡
+prop_cocoa_tray,道具,05-道具与UI/信件与明信片/prop_cocoa_tray.png,1200x900,E05,P2,todo,
+prop_bread_basket,道具,05-道具与UI/信件与明信片/prop_bread_basket.png,1200x900,E06,P2,todo,
+prop_stage_cloth,道具,05-道具与UI/信件与明信片/prop_stage_cloth.png,1200x900,E10,P2,todo,舞台布样
+prop_reply_set,道具,05-道具与UI/信件与明信片/prop_reply_<角色键>.png,1200x900,角色回信 x18,P2,todo,同一角色完成 3 段日常后解锁
+stamp_ch01,收集品,05-道具与UI/印章与收集品/stamp_ch01.png,512x512,E04 章末,P0,todo,第一盏欢迎灯
+stamp_ch02,收集品,05-道具与UI/印章与收集品/stamp_ch02.png,512x512,E09 章末,P1,todo,
+stamp_ch03,收集品,05-道具与UI/印章与收集品/stamp_ch03.png,512x512,E13 章末,P1,todo,
+stamp_ch04,收集品,05-道具与UI/印章与收集品/stamp_ch04.png,512x512,E16 章末,P1,todo,星灯全亮
+stamp_location_set,收集品,05-道具与UI/印章与收集品/stamp_loc_<地点键>.png,512x512,地点纪念 x17,P2,todo,可先用同一底板换图标
+stamp_daily_set,收集品,05-道具与UI/印章与收集品/stamp_daily_<编号>.png,512x512,今日一句 x36,P2,todo,可用统一卡面+文字
+ui_choice_frame,UI,05-道具与UI/UI/ui_choice_frame.png,九宫格可拉伸,选项框,P1,todo,
+ui_letter_bg,UI,05-道具与UI/UI/ui_letter_bg.png,1920x1080,读信全屏,P1,todo,信纸质感底板
+cg_prologue,CG,06-CG/cg_prologue.webp,1920x1080,序章,P2,todo,车窗外的町
+cg_ch01_postcard,CG,06-CG/cg_ch01_postcard.webp,1920x1080,E04 章末,P0,todo,明信片特写 + 第一枚印章
+cg_ch02_lantern,CG,06-CG/cg_ch02_lantern.webp,1920x1080,E09 章末,P1,todo,修好的灯亮起
+cg_ch03_tower,CG,06-CG/cg_ch03_tower.webp,1920x1080,E13 章末,P1,todo,三人拼信
+cg_ch04_rain,CG,06-CG/cg_ch04_rain.webp,1920x1080,E15,P1,todo,雨中搬桌椅
+cg_ch04_starlight,CG,06-CG/cg_ch04_starlight.webp,1920x1080,E16 章末,P1,todo,全篇主视觉
+bgm_town_day,BGM,07-音频/BGM/bgm_town_day.mp3,30-90s 无缝循环,町口 广场 主街 花店,P0,todo,轻快木吉他
+bgm_town_dusk,BGM,07-音频/BGM/bgm_town_dusk.mp3,30-90s 无缝循环,河岸 小巷 黄昏,P1,todo,
+bgm_town_night,BGM,07-音频/BGM/bgm_town_night.mp3,30-90s 无缝循环,广场夜景 观景台,P1,todo,
+bgm_cafe,BGM,07-音频/BGM/bgm_cafe.mp3,30-90s 无缝循环,橡果咖啡,P0,todo,爵士轻乐
+bgm_bakery,BGM,07-音频/BGM/bgm_bakery.mp3,30-90s 无缝循环,面包店,P1,todo,可复用 bgm_cafe
+bgm_library,BGM,07-音频/BGM/bgm_library.mp3,30-90s 无缝循环,图书馆 旧书店,P1,todo,低音钢琴
+bgm_workshop,BGM,07-音频/BGM/bgm_workshop.mp3,30-90s 无缝循环,工房 仓库,P1,todo,
+bgm_gym,BGM,07-音频/BGM/bgm_gym.mp3,30-90s 无缝循环,白熊铁馆,P1,todo,节拍感
+bgm_market,BGM,07-音频/BGM/bgm_market.mp3,30-90s 无缝循环,市集,P1,todo,
+bgm_bath,BGM,07-音频/BGM/bgm_bath.mp3,30-90s 无缝循环,水音汤,P1,todo,
+bgm_festival,BGM,07-音频/BGM/bgm_festival.mp3,60-120s 无缝循环,E14-E16,P0,todo,全篇最高点
+bgm_letter,BGM,07-音频/BGM/bgm_letter.mp3,30-90s 无缝循环,邮局 读信,P1,todo,温情钢琴
+bgm_tension,BGM,07-音频/BGM/bgm_tension.mp3,30-90s 无缝循环,钟楼 寻信,P1,todo,克制不要惊悚
+amb_wind,环境音,07-音频/环境音/amb_wind.mp3,20-40s 无缝循环,町口 钟楼,P1,todo,风铃
+amb_street,环境音,07-音频/环境音/amb_street.mp3,20-40s 无缝循环,主街,P1,todo,
+amb_plaza,环境音,07-音频/环境音/amb_plaza.mp3,20-40s 无缝循环,广场,P1,todo,
+amb_river,环境音,07-音频/环境音/amb_river.mp3,20-40s 无缝循环,河岸,P1,todo,
+amb_post,环境音,07-音频/环境音/amb_post.mp3,20-40s 无缝循环,邮局,P1,todo,纸张与邮戳
+amb_library,环境音,07-音频/环境音/amb_library.mp3,20-40s 无缝循环,图书馆,P1,todo,翻页
+amb_cafe,环境音,07-音频/环境音/amb_cafe.mp3,20-40s 无缝循环,咖啡,P1,todo,咖啡机
+amb_bakery,环境音,07-音频/环境音/amb_bakery.mp3,20-40s 无缝循环,面包店,P1,todo,烤箱
+amb_market,环境音,07-音频/环境音/amb_market.mp3,20-40s 无缝循环,市集,P1,todo,热闹人声
+amb_workshop,环境音,07-音频/环境音/amb_workshop.mp3,20-40s 无缝循环,工房 仓库,P2,todo,工具声
+amb_gym,环境音,07-音频/环境音/amb_gym.mp3,20-40s 无缝循环,铁馆,P2,todo,
+amb_bath,环境音,07-音频/环境音/amb_bath.mp3,20-40s 无缝循环,水音汤,P2,todo,水声
+amb_rain,环境音,07-音频/环境音/amb_rain.mp3,20-40s 无缝循环,雨天场景,P1,todo,小雨不是暴雨
+amb_birds,环境音,07-音频/环境音/amb_birds.mp3,20-40s 无缝循环,花店,P2,todo,鸟鸣
+sfx_postmark,音效,07-音频/SFX/sfx_postmark.mp3,<2s,E04 盖章,P0,todo,
+sfx_lantern_light,音效,07-音频/SFX/sfx_lantern_light.mp3,<2s,章末点灯,P0,todo,温暖的气声与轻铃
+sfx_doorbell,音效,07-音频/SFX/sfx_doorbell.mp3,<2s,进店,P1,todo,
+sfx_bell,音效,07-音频/SFX/sfx_bell.mp3,<3s,钟楼钟声,P1,todo,
+sfx_page,音效,07-音频/SFX/sfx_page.mp3,<1s,翻书翻信,P1,todo,
+sfx_cup,音效,07-音频/SFX/sfx_cup.mp3,<1s,放杯子,P2,todo,
+sfx_camera,音效,07-音频/SFX/sfx_camera.mp3,<1s,E03 旧照片,P2,todo,
+sfx_stamp,音效,07-音频/SFX/sfx_stamp.mp3,<1s,收集品解锁,P1,todo,
