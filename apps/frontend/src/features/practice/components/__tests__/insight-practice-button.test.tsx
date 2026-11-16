@@ -39,9 +39,16 @@ it('does no practice loading on mount and loads only the selected package when c
   expect(screen.getByText('原来的讲解')).toBeTruthy()
 })
 it('never starts an empty session', async () => {
-  state.find.mockResolvedValue([])
+  let finishLookup: (rows: any[]) => void = () => {}
+  state.find.mockImplementation(() => new Promise<any[]>(resolve => { finishLookup = resolve }))
   render(<InsightPracticeButton item={point} unitId="empty-pack" />)
-  fireEvent.click(screen.getByRole('button', { name: '知识点练习' }))
+  const button = screen.getByRole('button', { name: '知识点练习' })
+  fireEvent.click(button)
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(button.querySelector('.animate-spin')).toBeTruthy()
   await waitFor(() => expect(state.find).toHaveBeenCalled())
+  finishLookup([])
+  await waitFor(() => expect(button.querySelector('.animate-spin')).toBeNull())
+  expect(screen.queryByRole('dialog')).toBeNull()
   expect(state.guided).not.toHaveBeenCalled()
 })

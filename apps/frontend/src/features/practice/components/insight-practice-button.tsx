@@ -21,7 +21,7 @@ export function InsightPracticeButton({ item, unitId }: { item: Point; unitId?: 
   const label = item.word ?? item.text ?? item.pattern ?? ''
 
   const load = async (selectedUnit: string, point: Point) => {
-    setOpen(true); setLoading(true); setChoices([])
+    setLoading(true); setChoices([])
     try {
       const rows = await localDb.findByIndex<any>('downloaded_unit_details', 'unit_id', selectedUnit)
       const legacy = await localDb.get<any>('downloaded_unit_details', selectedUnit)
@@ -47,13 +47,14 @@ export function InsightPracticeButton({ item, unitId }: { item: Point; unitId?: 
       }
       if (!items.length) { setOpen(false); toast.info('这个学习包中暂无关联的知识点练习'); return }
       setPractice({ unitId: selectedUnit, topicId: items[0].__practiceContext.topicId, items, point })
+      setOpen(true)
     } catch { setOpen(false); toast.error('无法读取本地练习，请重试') }
     finally { setLoading(false) }
   }
 
   const start = async () => {
     if (loading) return
-    setLoading(true); setPractice(null); setOpen(true)
+    setLoading(true); setPractice(null)
     try {
       const id = await resolveInsightContentId(item.kind, item.id, label)
       const point = { ...item, id }
