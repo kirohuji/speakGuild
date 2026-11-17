@@ -2,6 +2,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Capacitor } from '@capacitor/core'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
+import { audioDiag } from './audio-playback-diag'
 import { isCollapsedOpaqueStableUrl, stableRemoteUrl } from './asset-url-identity'
 import { localDb } from './unified-storage'
 import write_blob from 'capacitor-blob-writer'
@@ -357,6 +358,22 @@ export const assetCacheService = {
           }
           return this.download({ ...ref, url })
         }
+        // Relative localPath is the source of truth. Absolute localUri can retain
+        // a previous iOS container UUID after reinstall/live-reload and break HTMLAudio.
+        const fresh = await Filesystem.getUri({ path: cached.localPath, directory: Directory.Data })
+        const now = new Date().toISOString()
+        const next = {
+          ...cached,
+          localUri: fresh.uri,
+          lastAccessedAt: now,
+        }
+        if (cached.localUri !== fresh.uri) {
+          await localDb.put('local_assets', next)
+        } else {
+          await localDb.put('local_assets', { ...cached, lastAccessedAt: now })
+        }
+        if (ref.asFileUri) return fresh.uri
+        return toLoadableUrl(fresh.uri)
       }
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
       if (ref.asFileUri) return cached.localUri
@@ -395,6 +412,13 @@ export const assetCacheService = {
     // callers (or download()) decide whether to materialize a local copy.
     // Avoid noisy "downloading" logs on web — download() is a no-op there.
     if (isNative()) {
+      audioDiag('cache.miss_remote', {
+        key,
+        requestedUrl: url,
+        fileAssetId: inferredFileAssetId || undefined,
+        assetId: ref.assetId || null,
+        role: ref.role || null,
+      })
       console.warn('[offline-assets] native cache miss; using remote URL', {
         key,
         requestedUrl: url,

@@ -3,6 +3,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { BlobReader, BlobWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
+import { audioDiag } from './audio-playback-diag'
 import { assetCacheService, type AssetRef } from './asset-cache.service'
 import { stableRemoteUrl } from './asset-url-identity'
 import { digestBuffer } from './sha256-worker.service'
@@ -187,18 +188,50 @@ const thisService = {
   },
   async resolve(input: { url: string; assetId?: string | null; role?: string; asFileUri?: boolean }): Promise<string | null> {
     if (!isNative() || !input.url) return null
+    const lookupKeys = deferredLookupKeys(input.url, input.assetId)
     const candidates = await localDb.findByIndexIn<DeferredPackAsset>(
       'deferred_pack_assets',
       'lookup_key',
-      deferredLookupKeys(input.url, input.assetId),
+      lookupKeys,
     )
     const asset = candidates.find((candidate) => candidate.status === 'deferred')
-    if (!asset) return null
+    if (!asset) {
+      const invalid = candidates.find((candidate) => candidate.status === 'invalid')
+      audioDiag('deferred.miss', {
+        url: input.url,
+        assetId: input.assetId ?? null,
+        role: input.role ?? null,
+        lookupKeys,
+        candidateCount: candidates.length,
+        invalidLookupKey: invalid?.lookupKey ?? null,
+        invalidError: invalid?.lastError ?? null,
+      })
+      return null
+    }
+    audioDiag('deferred.hit', {
+      url: input.url,
+      assetId: input.assetId ?? null,
+      role: input.role ?? null,
+      lookupKeys,
+      matchedLookupKey: asset.lookupKey,
+      packId: asset.packId,
+      zipPath: asset.zipPath,
+      contentUrl: asset.contentUrl,
+      fileAssetId: asset.fileAssetId ?? null,
+      sha256: asset.sha256.slice(0, 12),
+    })
     const existing = materializations.get(asset.id)
     const work = existing ?? materialize(asset)
     materializations.set(asset.id, work)
     try {
       const resolved = await work
+      audioDiag('deferred.materialize_done', {
+        url: input.url,
+        matchedLookupKey: asset.lookupKey,
+        zipPath: asset.zipPath,
+        resolved: resolved,
+        ok: Boolean(resolved),
+      })
       if (!resolved) return null
       if (!input.asFileUri) return resolved
       return assetCacheService.resolve({

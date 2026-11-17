@@ -32,6 +32,7 @@ import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { learningContentRepository } from '@/lib/offline'
+import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { deferredPackAssetService } from '@/lib/offline/deferred-pack-asset.service'
 import { useAttemptedRequest } from '@/hooks/use-attempted-request'
 import { useCachedAudio } from '@/hooks/use-cached-audio'
@@ -396,8 +397,16 @@ export function LearningInsightDialog({
   // same in-flight work without delaying the dialog itself.
   useEffect(() => {
     if (!open || current?.kind !== 'word') return
+    const surface = hideSaveActions ? 'library' : 'pack'
+    audioDiag('insight.preload', {
+      surface,
+      word: current.word,
+      audioUsUrl: current.audioUsUrl ?? null,
+      audioUkUrl: current.audioUkUrl ?? null,
+      exampleCount: Array.isArray(current.examples) ? current.examples.length : 0,
+    })
     void deferredPackAssetService.preload([current.audioUsUrl, current.audioUkUrl])
-  }, [open, current])
+  }, [open, current, hideSaveActions])
 
   const emitIndexChange = useCallback((nextAbsolute: number) => {
     onIndexChange(usesAbsoluteIndex ? nextAbsolute : nextAbsolute - windowOffset)
@@ -483,7 +492,7 @@ export function LearningInsightDialog({
           </DialogDescription>
           <div className="flex min-h-0 flex-1 flex-col">
             {/* Header - 固定在顶部，关闭按钮在右侧 */}
-            <InsightHeader item={current} onClose={() => onOpenChange(false)} />
+            <InsightHeader item={current} surface={hideSaveActions ? 'library' : 'pack'} onClose={() => onOpenChange(false)} />
 
             {/* Content - 中间弹性区域，可滚动 */}
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -579,7 +588,15 @@ export function LearningInsightDialog({
   )
 }
 
-function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: () => void }) {
+function InsightHeader({
+  item,
+  surface,
+  onClose,
+}: {
+  item: LearningInsightItem
+  surface: 'pack' | 'library'
+  onClose: () => void
+}) {
   const { t } = useTranslation()
   const Icon = item.kind === 'word' ? BookText : item.kind === 'chunk' ? MessageSquareText : TextQuote
   const iconTone = item.kind === 'word'
@@ -594,7 +611,20 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const hasBothPhonetics = isWord && item.phoneticUs && item.phoneticUk
   const [showUk, setShowUk] = useState(false)
 
-  const { play: playAudio, stop: stopAudio, isPlaying } = useCachedAudio()
+  const { play: playCachedAudio, stop: stopAudio, isPlaying } = useCachedAudio()
+  const playAudio = useCallback(async (url?: string | null, assetId?: string | null, role = 'voice') => {
+    if (!url && !assetId) return
+    audioDiag('insight.play_phonetic', {
+      surface,
+      word: isWord ? item.word : title,
+      accent: showUk ? 'uk' : 'us',
+      url: url || null,
+      assetId: assetId || null,
+      audioUsUrl: isWord ? item.audioUsUrl ?? null : null,
+      audioUkUrl: isWord ? item.audioUkUrl ?? null : null,
+    })
+    await playCachedAudio(url, assetId, role)
+  }, [isWord, item, playCachedAudio, showUk, surface, title])
 
   return (
     <div className="shrink-0 px-5 pb-4 pt-9 md:px-6">
@@ -667,11 +697,18 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const { play: playCachedAudio, isPlaying } = useCachedAudio()
   const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const surface = hideSave ? 'library' : 'pack'
   const playAudio = useCallback(async (url?: string | null) => {
     if (!url) return
     setPlayingExampleUrl(url)
+    audioDiag('insight.play_example', {
+      surface,
+      kind: 'word',
+      word: item.word,
+      url,
+    })
     await playCachedAudio(url)
-  }, [playCachedAudio])
+  }, [item.word, playCachedAudio, surface])
   const { hasAttempted, resetAttempted, runOnce } = useAttemptedRequest()
 
   useEffect(() => {
@@ -734,6 +771,14 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
   const saveWordToNotebooks = async (notebookIds: string[]) => {
     setSaving(true)
     try {
+      audioDiag('library.save_word', {
+        word: item.word,
+        id: item.id,
+        audioUsUrl: item.audioUsUrl ?? null,
+        audioUkUrl: item.audioUkUrl ?? null,
+        exampleAudioUrls: normalizeVocabExamples(item.examples).map((ex) => ex.audioUrl ?? null).filter(Boolean).slice(0, 6),
+        notebookCount: notebookIds.length,
+      })
       await learningContentRepository.saveExpressionEntryAndSync({
         kind: 'word',
         text: item.word,
@@ -1094,11 +1139,18 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
   const [activeTab, setActiveTab] = useState('description')
   const { play: playCachedAudio, isPlaying } = useCachedAudio()
   const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const surface = hideSave ? 'library' : 'pack'
   const playAudio = useCallback(async (url?: string | null) => {
     if (!url) return
     setPlayingExampleUrl(url)
+    audioDiag('insight.play_example', {
+      surface,
+      kind: 'chunk',
+      text: item.text,
+      url,
+    })
     await playCachedAudio(url)
-  }, [playCachedAudio])
+  }, [item.text, playCachedAudio, surface])
 
   useEffect(() => {
     setPlayingExampleUrl(null)
@@ -1197,11 +1249,18 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
   const [activeTab, setActiveTab] = useState('description')
   const { play: playCachedAudio, isPlaying } = useCachedAudio()
   const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const surface = hideSave ? 'library' : 'pack'
   const playAudio = useCallback(async (url?: string | null) => {
     if (!url) return
     setPlayingExampleUrl(url)
+    audioDiag('insight.play_example', {
+      surface,
+      kind: 'pattern',
+      pattern: item.pattern,
+      url,
+    })
     await playCachedAudio(url)
-  }, [playCachedAudio])
+  }, [item.pattern, playCachedAudio, surface])
 
   useEffect(() => {
     setPlayingExampleUrl(null)

@@ -1,6 +1,7 @@
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { NativeAudio, type PlaybackStateEvent } from '@capgo/capacitor-native-audio'
 import { MediaSession, type MediaSessionAction } from '@capgo/capacitor-media-session'
+import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 import { isNative } from '@/lib/native'
 import { synthesizeAsset } from '@/lib/tts-api'
@@ -40,6 +41,11 @@ async function resolveAudioUrl(segment: PlaybackSegment): Promise<string | null>
   // NativeAudio crashes on the WebView capacitor:// URL. It can only open file://.
   const asFileUri = isNative()
   if (segment.audioUrl) {
+    audioDiag('immersive.resolve', {
+      segmentId: segment.id,
+      url: segment.audioUrl,
+      asFileUri,
+    })
     return resolvePlaybackAudio({ url: segment.audioUrl, role: 'immersive_audio', asFileUri })
   }
 
@@ -52,6 +58,12 @@ async function resolveAudioUrl(segment: PlaybackSegment): Promise<string | null>
     params: ttsBackend.params,
     bizType: 'immersive_player',
     bizId: segment.id,
+  })
+  audioDiag('immersive.resolve_tts', {
+    segmentId: segment.id,
+    url: result.url,
+    assetId: result.assetId,
+    asFileUri,
   })
   return resolvePlaybackAudio({
     url: result.url,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 
 /**
@@ -46,6 +47,8 @@ export function useCachedAudio() {
   const play = useCallback(async (url?: string | null, assetId?: string | null, role = 'voice') => {
     if (!url && !assetId) return
 
+    audioDiag('ui.play_click', { url: url || null, assetId: assetId || null, role })
+
     // Stop any currently playing audio
     stopCurrent()
     const generation = playGenerationRef.current
@@ -60,17 +63,34 @@ export function useCachedAudio() {
     }
     audio.onpause = clearPlayingState
     audio.onended = clearPlayingState
-    audio.onerror = clearPlayingState
+    audio.onerror = () => {
+      clearPlayingState()
+      audioDiag('ui.audio_element_error', {
+        url: url || null,
+        src: audio.src || null,
+        code: audio.error?.code ?? null,
+        message: audio.error?.message ?? null,
+      })
+    }
 
     const resolvedUrl = await resolvePlaybackAudio({ url, assetId, role })
     if (playGenerationRef.current !== generation || audioRef.current !== audio) return
-    if (!resolvedUrl) return
+    if (!resolvedUrl) {
+      audioDiag('ui.play_aborted_null_resolve', { url: url || null, assetId: assetId || null, role })
+      return
+    }
     try {
       audio.src = resolvedUrl
       audio.load()
       await audio.play()
+      audioDiag('ui.play_started', { url: url || null, resolved: resolvedUrl, role })
     } catch (error) {
       if (playGenerationRef.current === generation) {
+        audioDiag('ui.play_failed', {
+          url: url || null,
+          resolved: resolvedUrl,
+          error: error instanceof Error ? error.message : String(error),
+        })
         console.warn('[useCachedAudio] playback failed', error)
       }
     }

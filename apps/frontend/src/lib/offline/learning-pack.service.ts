@@ -15,6 +15,7 @@ import { Network } from '@capacitor/network'
 import { getBearerToken } from '@/features/auth/client'
 import { createFileAssetReference, fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import write_blob from 'capacitor-blob-writer'
+import { canonicalContentUrl } from './asset-url-identity'
 import { createLogger } from './logger'
 import { PackInstallPerfSession } from './learning-pack-install-perf'
 
@@ -1307,9 +1308,13 @@ export const learningPackService = {
           for (const asset of manifestAssets) {
             throwIfAborted(signal)
             const sha256 = asset.sha256!
-            const contentUrl = asset.fileAssetId
-              ? (contentUrlsByFileAssetId.get(asset.fileAssetId) ?? createFileAssetReference(asset.fileAssetId))
-              : asset.url
+            const fromContent = asset.fileAssetId
+              ? contentUrlsByFileAssetId.get(asset.fileAssetId)
+              : null
+            const contentUrl = canonicalContentUrl(asset.fileAssetId, fromContent || asset.url)
+              || fromContent
+              || asset.url
+              || ''
             let ready = readyShaCache.get(sha256)
             if (ready === undefined) {
               ready = Boolean(refsBySha256.get(sha256)) && await assetCacheService.isReady(sha256)
@@ -1334,11 +1339,16 @@ export const learningPackService = {
               continue
             }
 
-            const lookupKey = deferredLookupKeys(contentUrl || asset.url || '', asset.fileAssetId)[0]
-            if (!lookupKey) {
+            const lookupKeys = [...new Set([
+              ...deferredLookupKeys(contentUrl, asset.fileAssetId),
+              ...deferredLookupKeys(asset.url || '', asset.fileAssetId),
+            ].filter(Boolean))]
+            if (lookupKeys.length === 0) {
               throw new Error(`Pack asset is missing lookup identity: ${asset.path}`)
             }
-            if (!seenLookup.has(lookupKey)) {
+            let wroteAny = false
+            for (const lookupKey of lookupKeys) {
+              if (seenLookup.has(lookupKey)) continue
               seenLookup.add(lookupKey)
               deferredRows.push({
                 id: `${manifest.packId}:${manifest.version}:${lookupKey}`,
@@ -1346,7 +1356,7 @@ export const learningPackService = {
                 lookupKey,
                 fileAssetId: asset.fileAssetId ?? null,
                 sourceZipVersion: manifest.version,
-                contentUrl: contentUrl || asset.url,
+                contentUrl,
                 signedUrl: asset.url,
                 zipPath: asset.path!,
                 sha256,
@@ -1357,8 +1367,9 @@ export const learningPackService = {
                 createdAt: nowIso,
                 updatedAt: nowIso,
               })
-              assetDeferred++
+              wroteAny = true
             }
+            if (wroteAny) assetDeferred++
             assetOk++
           }
 

@@ -1,7 +1,12 @@
-import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
+import { createFileAssetReference, fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
+import { audioDiag } from './audio-playback-diag'
 import { assetCacheService, type LocalAsset } from './asset-cache.service'
-import { stableRemoteUrl } from './asset-url-identity'
+import {
+  canonicalContentUrl,
+  isExternalAudioUrl,
+  stableRemoteUrl,
+} from './asset-url-identity'
 import { localDb } from './unified-storage'
 
 type ExpressionAudioEntry = {
@@ -68,56 +73,107 @@ function sha256FromAsset(asset: LocalAsset): string | null {
   return null
 }
 
-async function materializeAndResolveSha(url: string): Promise<{ sha256: string; url: string } | null> {
+async function materializeAndResolveSha(url: string): Promise<{ sha256: string; url: string; fileAssetId: string | null } | null> {
+  const fileAssetId = fileAssetIdFromUrl(url)
   const { resolvePlaybackAudio } = await import('./playback-audio')
-  const resolved = await resolvePlaybackAudio({ url, role: 'voice' })
+  const resolved = await resolvePlaybackAudio({ url, assetId: fileAssetId, role: 'voice' })
   if (!resolved) return null
-  const asset = await assetCacheService.findReadyAssetForUrl(url, fileAssetIdFromUrl(url))
+  const asset = await assetCacheService.findReadyAssetForUrl(url, fileAssetId)
   const sha256 = asset ? sha256FromAsset(asset) : null
-  if (!sha256) return null
-  return { sha256, url }
+  if (!sha256) {
+    audioDiag('library.pin_no_sha', {
+      url,
+      fileAssetId,
+      assetId: asset?.id ?? null,
+      hasLocalUri: Boolean(asset?.localUri),
+    })
+    return null
+  }
+  return {
+    sha256,
+    url: canonicalContentUrl(fileAssetId, url) || url,
+    fileAssetId,
+  }
 }
 
 export const favoriteAudioPinService = {
   async pinExpressionAudio(entry: ExpressionAudioEntry): Promise<void> {
     if (!isNative() || !entry?.id) return
     const urls = collectPlaybackUrls(entry.contentSnapshot ?? entry.sourceSnapshot)
+    audioDiag('library.pin_start', {
+      entryId: entry.id,
+      urlCount: urls.length,
+      urls: urls.slice(0, 8),
+    })
     if (urls.length === 0) return
 
     const packId = favoriteAudioPackId(entry.id)
     const now = new Date().toISOString()
+    let pinned = 0
+    let skipped = 0
     for (const url of urls) {
       try {
+        if (isExternalAudioUrl(url)) {
+          skipped += 1
+          audioDiag('library.pin_url_external_skip', { entryId: entry.id, url })
+          continue
+        }
         const materialized = await materializeAndResolveSha(url)
-        if (!materialized) continue
-        const { sha256 } = materialized
+        if (!materialized) {
+          skipped += 1
+          audioDiag('library.pin_url_miss', { entryId: entry.id, url })
+          continue
+        }
+        const { sha256, url: contentUrl, fileAssetId } = materialized
         const id = `${packId}:${sha256}`
         const existing = await localDb.get<any>('asset_refs', id)
-        if (existing) continue
+        if (existing) {
+          skipped += 1
+          audioDiag('library.pin_url_already', { entryId: entry.id, url: contentUrl, sha256: sha256.slice(0, 12) })
+          continue
+        }
         await localDb.put('asset_refs', {
           id,
           sha256,
           packId,
-          logicalPath: `favorite/${entry.id}/${sha256}.${extensionFrom(url)}`,
-          ext: extensionFrom(url),
+          logicalPath: `favorite/${entry.id}/${sha256}.${extensionFrom(contentUrl)}`,
+          ext: extensionFrom(contentUrl),
           updatedAt: now,
           data: JSON.stringify({
             role: 'favorite_audio',
             expressionEntryId: entry.id,
-            contentUrl: url,
+            contentUrl,
             pinnedAt: now,
           }),
         })
         await assetCacheService.addAliases(sha256, {
-          url,
-          fileAssetId: fileAssetIdFromUrl(url) ?? undefined,
+          url: contentUrl,
+          fileAssetId: fileAssetId ?? undefined,
           sha256,
           role: 'favorite_audio',
         })
+        // Also alias the managed asset:// form when the snapshot still used a content URL.
+        if (fileAssetId) {
+          await assetCacheService.addAliases(sha256, {
+            url: createFileAssetReference(fileAssetId),
+            fileAssetId,
+            sha256,
+            role: 'favorite_audio',
+          })
+        }
+        pinned += 1
+        audioDiag('library.pin_url_ok', { entryId: entry.id, url: contentUrl, sha256: sha256.slice(0, 12) })
       } catch (error) {
+        skipped += 1
+        audioDiag('library.pin_url_error', {
+          entryId: entry.id,
+          url,
+          error: error instanceof Error ? error.message : String(error),
+        })
         console.warn('[favorite-audio-pin] pin failed', { entryId: entry.id, url, error })
       }
     }
+    audioDiag('library.pin_done', { entryId: entry.id, pinned, skipped, urlCount: urls.length })
   },
 
   async unpinExpressionAudio(expressionEntryId: string): Promise<void> {

@@ -1,4 +1,28 @@
+import { canonicalContentUrl, preferAudioUrl } from './asset-url-identity'
 import { localDb } from './unified-storage'
+
+/** Upgrade parseable managed URLs to asset:// before persisting pack vocab rows. */
+function canonicalizeSnapshotAudioUrls<T>(item: T): T {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return item
+  const record = { ...(item as Record<string, unknown>) }
+  for (const field of AUDIO_URL_FIELDS) {
+    const value = record[field]
+    if (typeof value === 'string' && value.trim()) {
+      record[field] = canonicalContentUrl(null, value) || value
+    }
+  }
+  if (Array.isArray(record.examples)) {
+    record.examples = record.examples.map((example) => {
+      if (!example || typeof example !== 'object' || Array.isArray(example)) return example
+      const next = { ...(example as Record<string, unknown>) }
+      if (typeof next.audioUrl === 'string' && next.audioUrl.trim()) {
+        next.audioUrl = canonicalContentUrl(null, next.audioUrl) || next.audioUrl
+      }
+      return next
+    })
+  }
+  return record as T
+}
 
 function includesText(value: unknown, query: string) {
   return typeof value === 'string' && value.toLowerCase().includes(query.toLowerCase())
@@ -64,10 +88,56 @@ function contentScore(snapshot: unknown) {
 
 const SNAPSHOT_FIELDS = [
   'word', 'text', 'pattern', 'meaning', 'description', 'definitionEn', 'partOfSpeech',
-  'phoneticUs', 'phoneticUk', 'audioUsUrl', 'audioUkUrl', 'difficulty', 'example', 'slots',
+  'phoneticUs', 'phoneticUk', 'difficulty', 'example', 'slots',
 ] as const
 
-/** 以更完整的一份为底，只用另一份补上仍为空的释义、例句和发音。 */
+const AUDIO_URL_FIELDS = ['audioUsUrl', 'audioUkUrl'] as const
+
+function exampleEnKey(example: unknown): string {
+  if (!example || typeof example !== 'object' || Array.isArray(example)) return ''
+  return String((example as Record<string, unknown>).en ?? '').trim().toLowerCase()
+}
+
+/** Prefer managed pack audio over legacy external links; keep copy otherwise. */
+function mergeExampleAudio(baseExamples: unknown, extraExamples: unknown) {
+  const baseList = Array.isArray(baseExamples) ? [...baseExamples] : []
+  const extraList = Array.isArray(extraExamples) ? extraExamples : []
+  if (baseList.length === 0 && extraList.length === 0) return baseExamples
+  if (baseList.length === 0) return extraList
+  if (extraList.length === 0) return baseList
+
+  const extraByEn = new Map<string, any>()
+  for (const example of extraList) {
+    const key = exampleEnKey(example)
+    if (key && !extraByEn.has(key)) extraByEn.set(key, example)
+  }
+
+  const merged = baseList.map((example) => {
+    if (!example || typeof example !== 'object' || Array.isArray(example)) return example
+    const record = { ...(example as Record<string, unknown>) }
+    const key = exampleEnKey(record)
+    const other = key ? extraByEn.get(key) : null
+    if (other && typeof other === 'object') {
+      record.audioUrl = preferAudioUrl(
+        typeof record.audioUrl === 'string' ? record.audioUrl : null,
+        typeof other.audioUrl === 'string' ? other.audioUrl : null,
+      )
+      extraByEn.delete(key)
+    }
+    return record
+  })
+
+  for (const leftover of extraByEn.values()) {
+    if (leftover && typeof leftover === 'object' && !Array.isArray(leftover)) merged.push(leftover)
+  }
+  return merged
+}
+
+/**
+ * Prefer the richer snapshot for copy fields, but always upgrade audio URLs to
+ * managed offline identities (asset:// / file-assets) when the other side has them.
+ * Favorites may still store legacy Wikimedia links; hydrate must correct them.
+ */
 function mergeContentSnapshot(current: any, incoming: any) {
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return current ?? null
   if (!current || typeof current !== 'object' || Array.isArray(current)) return { ...incoming }
@@ -76,7 +146,15 @@ function mergeContentSnapshot(current: any, incoming: any) {
   for (const field of SNAPSHOT_FIELDS) {
     if (!hasText(merged[field]) && hasText(extra[field])) merged[field] = extra[field]
   }
-  if (!hasExamples(merged.examples) && hasExamples(extra.examples)) merged.examples = extra.examples
+  for (const field of AUDIO_URL_FIELDS) {
+    merged[field] = preferAudioUrl(
+      typeof merged[field] === 'string' ? merged[field] : null,
+      typeof extra[field] === 'string' ? extra[field] : null,
+    )
+  }
+  if (hasExamples(merged.examples) || hasExamples(extra.examples)) {
+    merged.examples = mergeExampleAudio(merged.examples, extra.examples)
+  }
   if ((!Array.isArray(merged.synonyms) || merged.synonyms.length === 0) && Array.isArray(extra.synonyms) && extra.synonyms.length > 0) {
     merged.synonyms = extra.synonyms
   }
@@ -417,27 +495,36 @@ export const learningContentRepository = {
 
     // 并行写入三个内容表，refs 量最大放在最后
     await Promise.all([
-      localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => ({
-        id: item.id,
-        word: item.word ?? item.text ?? '',
-        normalizedText: normalizeIndexText(item.word ?? item.text ?? item.id),
-        data: item,
-        updatedAt: now,
-      }))),
-      localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => ({
-        id: item.id,
-        text: item.text ?? '',
-        normalizedText: normalizeIndexText(item.text ?? item.id),
-        data: item,
-        updatedAt: now,
-      }))),
-      localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => ({
-        id: item.id,
-        pattern: item.pattern ?? item.text ?? '',
-        normalizedText: normalizeIndexText(item.pattern ?? item.text ?? item.id),
-        data: item,
-        updatedAt: now,
-      }))),
+      localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => {
+        const data = canonicalizeSnapshotAudioUrls(item)
+        return {
+          id: data.id,
+          word: data.word ?? data.text ?? '',
+          normalizedText: normalizeIndexText(data.word ?? data.text ?? data.id),
+          data,
+          updatedAt: now,
+        }
+      })),
+      localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => {
+        const data = canonicalizeSnapshotAudioUrls(item)
+        return {
+          id: data.id,
+          text: data.text ?? '',
+          normalizedText: normalizeIndexText(data.text ?? data.id),
+          data,
+          updatedAt: now,
+        }
+      })),
+      localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => {
+        const data = canonicalizeSnapshotAudioUrls(item)
+        return {
+          id: data.id,
+          pattern: data.pattern ?? data.text ?? '',
+          normalizedText: normalizeIndexText(data.pattern ?? data.text ?? data.id),
+          data,
+          updatedAt: now,
+        }
+      })),
     ])
     console.log(`[content-index] ✅ offline_vocabularies: ${vocabById.size} 条, offline_chunks: ${chunkById.size} 条, offline_patterns: ${patternById.size} 条`)
 
@@ -547,8 +634,8 @@ export const learningContentRepository = {
   },
 
   /**
-   * 学习库只保存收藏关系。展示时从已下载学习包补齐释义、例句和发音，
-   * 和播放时从学习包取出音频是同一条路，不改写收藏记录。
+   * 学习库只保存收藏关系。展示时从已下载学习包补齐释义、例句，
+   * 并用统一身份规则把 Wikimedia 等外链发音纠正为 asset://（不强制写回收藏行）。
    */
   async hydrateExpressionSnapshots<T extends ExpressionEntry>(entries: T[]): Promise<T[]> {
     if (entries.length === 0) return entries
