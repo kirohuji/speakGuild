@@ -98,45 +98,42 @@ function exampleEnKey(example: unknown): string {
   return String((example as Record<string, unknown>).en ?? '').trim().toLowerCase()
 }
 
-/** Prefer managed pack audio over legacy external links; keep copy otherwise. */
-function mergeExampleAudio(baseExamples: unknown, extraExamples: unknown) {
-  const baseList = Array.isArray(baseExamples) ? [...baseExamples] : []
-  const extraList = Array.isArray(extraExamples) ? extraExamples : []
-  if (baseList.length === 0 && extraList.length === 0) return baseExamples
-  if (baseList.length === 0) return extraList
-  if (extraList.length === 0) return baseList
+/**
+ * Keep `primary` example copy (pack teaching sentences). Only borrow better
+ * audioUrl from `secondary` when the English line matches — never append
+ * dictionary/global Vocabulary leftovers.
+ */
+function mergeExampleAudio(primaryExamples: unknown, secondaryExamples: unknown) {
+  const primaryList = Array.isArray(primaryExamples) ? [...primaryExamples] : []
+  const secondaryList = Array.isArray(secondaryExamples) ? secondaryExamples : []
+  if (primaryList.length === 0) return secondaryList.length > 0 ? secondaryList : primaryExamples
+  if (secondaryList.length === 0) return primaryList
 
-  const extraByEn = new Map<string, any>()
-  for (const example of extraList) {
+  const secondaryByEn = new Map<string, any>()
+  for (const example of secondaryList) {
     const key = exampleEnKey(example)
-    if (key && !extraByEn.has(key)) extraByEn.set(key, example)
+    if (key && !secondaryByEn.has(key)) secondaryByEn.set(key, example)
   }
 
-  const merged = baseList.map((example) => {
+  return primaryList.map((example) => {
     if (!example || typeof example !== 'object' || Array.isArray(example)) return example
     const record = { ...(example as Record<string, unknown>) }
     const key = exampleEnKey(record)
-    const other = key ? extraByEn.get(key) : null
+    const other = key ? secondaryByEn.get(key) : null
     if (other && typeof other === 'object') {
       record.audioUrl = preferAudioUrl(
         typeof record.audioUrl === 'string' ? record.audioUrl : null,
         typeof other.audioUrl === 'string' ? other.audioUrl : null,
       )
-      extraByEn.delete(key)
     }
     return record
   })
-
-  for (const leftover of extraByEn.values()) {
-    if (leftover && typeof leftover === 'object' && !Array.isArray(leftover)) merged.push(leftover)
-  }
-  return merged
 }
 
 /**
- * Prefer the richer snapshot for copy fields, but always upgrade audio URLs to
- * managed offline identities (asset:// / file-assets) when the other side has them.
- * Favorites may still store legacy Wikimedia links; hydrate must correct them.
+ * Copy fields still pick the richer snapshot; examples do NOT use score.
+ * Callers that hydrate from an installed pack pass pack as `incoming` so pack
+ * sentences win over dictionary / stale favorite snapshots.
  */
 function mergeContentSnapshot(current: any, incoming: any) {
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return current ?? null
@@ -152,8 +149,11 @@ function mergeContentSnapshot(current: any, incoming: any) {
       typeof extra[field] === 'string' ? extra[field] : null,
     )
   }
-  if (hasExamples(merged.examples) || hasExamples(extra.examples)) {
-    merged.examples = mergeExampleAudio(merged.examples, extra.examples)
+  // Pack / teaching snapshot is passed as `incoming` on hydrate & pack index refresh.
+  if (hasExamples(incoming.examples)) {
+    merged.examples = mergeExampleAudio(incoming.examples, current.examples)
+  } else if (hasExamples(current.examples)) {
+    merged.examples = current.examples
   }
   if ((!Array.isArray(merged.synonyms) || merged.synonyms.length === 0) && Array.isArray(extra.synonyms) && extra.synonyms.length > 0) {
     merged.synonyms = extra.synonyms
@@ -319,8 +319,8 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
   if (!text) return null
 
-  // 词库行、内容详情和收藏时保存的 sourceSnapshot 各自可能缺字段，合并后保留更完整的一份。
-  const vocabSnapshot = [item.sourceSnapshot, item.contentData, item.vocabulary]
+  // sourceSnapshot（学习包收藏）最后合并：例句以包内为准，不被全局 Vocabulary/词典盖掉。
+  const vocabSnapshot = [item.vocabulary, item.contentData, item.sourceSnapshot]
     .reduce((snapshot, candidate) => mergeContentSnapshot(snapshot, candidate), null)
 
   const entry = makeEntry({
@@ -679,6 +679,27 @@ export const learningContentRepository = {
       const pack = richerContent(id ? packs.byId.get(id) : null, text ? packs.byText.get(text) : null)
       if (!pack) return entry
       const contentSnapshot = mergeContentSnapshot(entry.contentSnapshot, pack)
+      if (import.meta.env.DEV && entry.kind === 'word') {
+        const savedEns = Array.isArray(entry.contentSnapshot?.examples)
+          ? entry.contentSnapshot.examples.map((ex: any) => ex?.en).filter(Boolean).slice(0, 3)
+          : []
+        const packEns = Array.isArray(pack.examples)
+          ? pack.examples.map((ex: any) => ex?.en).filter(Boolean).slice(0, 3)
+          : []
+        const mergedEns = Array.isArray(contentSnapshot?.examples)
+          ? contentSnapshot.examples.map((ex: any) => ex?.en).filter(Boolean).slice(0, 3)
+          : []
+        console.log('[MANYU_AUDIO_DIAG] library.hydrate_examples', {
+          word: expressionText(entry),
+          savedExampleCount: Array.isArray(entry.contentSnapshot?.examples) ? entry.contentSnapshot.examples.length : 0,
+          packExampleCount: Array.isArray(pack.examples) ? pack.examples.length : 0,
+          mergedExampleCount: Array.isArray(contentSnapshot?.examples) ? contentSnapshot.examples.length : 0,
+          savedEns,
+          packEns,
+          mergedEns,
+          usedPackExamples: hasExamples(pack.examples),
+        })
+      }
       return {
         ...entry,
         contentSnapshot,

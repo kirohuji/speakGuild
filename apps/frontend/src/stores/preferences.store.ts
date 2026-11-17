@@ -197,7 +197,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
     }),
     {
       name: 'manyu-preferences',
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<PreferencesStore>
         const base = version >= 2
@@ -221,6 +221,8 @@ export const usePreferencesStore = create<PreferencesStore>()(
         )
         return {
           ...base,
+          // v4: BGM UI is hidden — force ambient off for previously-enabled installs.
+          bgmEnabled: false,
           dailyGoal: dailyPracticeGoal,
           dailyPracticeGoal,
           reviewBatchSize: normalizePracticeBatchSize(base.reviewBatchSize, DEFAULT_PREFERENCES.reviewBatchSize),

@@ -695,12 +695,10 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
-  const { play: playCachedAudio, isPlaying } = useCachedAudio()
-  const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const { play: playCachedAudio, activeUrl: playingExampleUrl, stop: stopExampleAudio } = useCachedAudio()
   const surface = hideSave ? 'library' : 'pack'
   const playAudio = useCallback(async (url?: string | null) => {
     if (!url) return
-    setPlayingExampleUrl(url)
     audioDiag('insight.play_example', {
       surface,
       kind: 'word',
@@ -718,12 +716,8 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
     setDictionaryRequested(false)
     resetAttempted()
     setShowUncommon(false)
-    setPlayingExampleUrl(null)
-  }, [item.word, resetAttempted])
-
-  useEffect(() => {
-    if (!isPlaying) setPlayingExampleUrl(null)
-  }, [isPlaying])
+    stopExampleAudio()
+  }, [item.word, resetAttempted, stopExampleAudio])
 
   useEffect(() => {
     if (hideSave) return
@@ -870,7 +864,7 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
                 </div>
               ) : examples.length ? (
                 examples.slice(0, 6).map((example, index) => (
-                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} audioUrl={example.audioUrl} onPlayAudio={playAudio} playing={Boolean(example.audioUrl && playingExampleUrl === example.audioUrl && isPlaying)} />
+                  <ExampleBlock key={index} en={example.en} zh={example.zh} note={example.note ?? undefined} level={example.level} audioUrl={example.audioUrl} onPlayAudio={playAudio} playing={Boolean(example.audioUrl && playingExampleUrl === example.audioUrl)} />
                 ))
               ) : (
                 <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">{t('insight.noExamples')}</p>
@@ -1137,12 +1131,10 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
   const [saved, setSaved] = useState(item.saved ?? false)
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
-  const { play: playCachedAudio, isPlaying } = useCachedAudio()
-  const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const { play: playCachedAudio, activeUrl: playingExampleUrl, stop: stopExampleAudio } = useCachedAudio()
   const surface = hideSave ? 'library' : 'pack'
   const playAudio = useCallback(async (url?: string | null) => {
     if (!url) return
-    setPlayingExampleUrl(url)
     audioDiag('insight.play_example', {
       surface,
       kind: 'chunk',
@@ -1153,12 +1145,8 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
   }, [item.text, playCachedAudio, surface])
 
   useEffect(() => {
-    setPlayingExampleUrl(null)
-  }, [item.text])
-
-  useEffect(() => {
-    if (!isPlaying) setPlayingExampleUrl(null)
-  }, [isPlaying])
+    stopExampleAudio()
+  }, [item.text, stopExampleAudio])
 
   useEffect(() => {
     if (hideSave) return
@@ -1216,7 +1204,7 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
               {item.examples?.length ? (
-                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={(ex as any).audioUrl} onPlayAudio={playAudio} playing={Boolean((ex as any).audioUrl && playingExampleUrl === (ex as any).audioUrl && isPlaying)} />)
+                item.examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={(ex as any).audioUrl} onPlayAudio={playAudio} playing={Boolean((ex as any).audioUrl && playingExampleUrl === (ex as any).audioUrl)} />)
               ) : (
                 <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
               )}
@@ -1247,12 +1235,10 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
   const primaryExample = item.example || examples[0]?.en
   const primaryExampleZh = examples[0]?.zh ?? item.meaning ?? ''
   const [activeTab, setActiveTab] = useState('description')
-  const { play: playCachedAudio, isPlaying } = useCachedAudio()
-  const [playingExampleUrl, setPlayingExampleUrl] = useState<string | null>(null)
+  const { play: playCachedAudio, activeUrl: playingExampleUrl, stop: stopExampleAudio } = useCachedAudio()
   const surface = hideSave ? 'library' : 'pack'
   const playAudio = useCallback(async (url?: string | null) => {
     if (!url) return
-    setPlayingExampleUrl(url)
     audioDiag('insight.play_example', {
       surface,
       kind: 'pattern',
@@ -1263,12 +1249,8 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
   }, [item.pattern, playCachedAudio, surface])
 
   useEffect(() => {
-    setPlayingExampleUrl(null)
-  }, [item.pattern])
-
-  useEffect(() => {
-    if (!isPlaying) setPlayingExampleUrl(null)
-  }, [isPlaying])
+    stopExampleAudio()
+  }, [item.pattern, stopExampleAudio])
 
   useEffect(() => {
     if (hideSave) return
@@ -1339,7 +1321,7 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
           <ScrollArea className="h-full">
             <div className="space-y-3 py-4">
               {examples.length > 0 ? (
-                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={ex.audioUrl} onPlayAudio={playAudio} playing={Boolean(ex.audioUrl && playingExampleUrl === ex.audioUrl && isPlaying)} />)
+                examples.map((ex, i) => <ExampleBlock key={i} en={ex.en} zh={ex.zh} note={ex.note ?? undefined} level={ex.level} audioUrl={ex.audioUrl} onPlayAudio={playAudio} playing={Boolean(ex.audioUrl && playingExampleUrl === ex.audioUrl)} />)
               ) : (
                 <p className="text-sm text-muted-foreground">{t('insight.noExamplesConfig')}</p>
               )}

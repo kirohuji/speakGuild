@@ -36,7 +36,11 @@ export function looksLikeContentSnapshot(snapshot: unknown): boolean {
     || (Array.isArray(record.examples) && record.examples.length > 0)
 }
 
-/** 以更完整的一份为底，只用另一份填上仍然为空的释义、例句和发音。 */
+/**
+ * 释义等字段仍取更完整的一份；例句不按完整度打分。
+ * 有 `incoming.examples` 时一律用它（学习包 sourceSnapshot / 包内容作 incoming），
+ * 避免全局 Vocabulary/词典例句盖过教学例句。
+ */
 export function mergeContentSnapshots<T>(current: T, incoming: unknown): T {
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return current
   if (!current || typeof current !== 'object' || Array.isArray(current)) return incoming as T
@@ -49,11 +53,16 @@ export function mergeContentSnapshots<T>(current: T, incoming: unknown): T {
   for (const field of CONTENT_FIELDS) {
     if (!hasContentText(merged[field]) && hasContentText(extra[field])) merged[field] = extra[field]
   }
-  const baseExamples = merged.examples
-  const extraExamples = extra.examples
-  const baseHasExamples = Array.isArray(baseExamples) ? baseExamples.length > 0 : hasContentText(baseExamples)
-  const extraHasExamples = Array.isArray(extraExamples) ? extraExamples.length > 0 : hasContentText(extraExamples)
-  if (!baseHasExamples && extraHasExamples) merged.examples = extraExamples
+  const incomingExamples = incomingRecord.examples
+  const currentExamples = currentRecord.examples
+  const incomingHasExamples = Array.isArray(incomingExamples)
+    ? incomingExamples.length > 0
+    : hasContentText(incomingExamples)
+  const currentHasExamples = Array.isArray(currentExamples)
+    ? currentExamples.length > 0
+    : hasContentText(currentExamples)
+  if (incomingHasExamples) merged.examples = incomingExamples
+  else if (currentHasExamples) merged.examples = currentExamples
   if ((!Array.isArray(merged.synonyms) || merged.synonyms.length === 0) && Array.isArray(extra.synonyms) && extra.synonyms.length > 0) {
     merged.synonyms = extra.synonyms
   }

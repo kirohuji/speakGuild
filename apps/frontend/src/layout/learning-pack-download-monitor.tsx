@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Ban, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, Pause, Play, RotateCcw, Trash2, X } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
+import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
 import { useLearningStore, type DownloadTask } from '@/stores/learning.store'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { refreshRunningScriptVideoTasks } from '@/features/scripts/lib/refresh-script-video-task'
@@ -39,6 +40,55 @@ function compactPath(value?: string | null) {
   const clean = value.split('?')[0] ?? value
   const parts = clean.split('/').filter(Boolean)
   return parts.slice(-3).join('/') || clean
+}
+
+function PackTaskCover({ task }: { task: DownloadTask }) {
+  const coverUrl = usePackDisplayUrl(task.coverImage, task.packId)
+  const [imgFailed, setImgFailed] = useState(false)
+  const showCover = Boolean(coverUrl) && !imgFailed
+
+  return (
+    <div className="relative flex aspect-square size-[44px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
+      {showCover ? (
+        <img
+          src={coverUrl!}
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+          loading="lazy"
+          decoding="async"
+          onError={() => setImgFailed(true)}
+        />
+      ) : null}
+      {!showCover && (
+        task.status === 'error' ? (
+          <AlertCircle className="size-4 text-destructive" />
+        ) : task.status === 'paused' ? (
+          <DownloadCloud className="size-4 text-muted-foreground" />
+        ) : task.kind === 'uninstall' ? (
+          <Trash2 className="size-4 text-destructive/80" />
+        ) : isRunning(task) ? (
+          <Loader2 className="size-4 animate-spin text-primary" />
+        ) : (
+          <DownloadCloud className="size-4" />
+        )
+      )}
+      {showCover && (
+        <span className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-background/90 shadow-sm">
+          {task.status === 'error' ? (
+            <AlertCircle className="size-2.5 text-destructive" />
+          ) : task.kind === 'uninstall' ? (
+            <Trash2 className="size-2.5 text-destructive/80" />
+          ) : isRunning(task) ? (
+            <Loader2 className="size-2.5 animate-spin text-primary" />
+          ) : task.status === 'paused' ? (
+            <Pause className="size-2.5 text-muted-foreground" />
+          ) : (
+            <DownloadCloud className="size-2.5 text-primary" />
+          )}
+        </span>
+      )}
+    </div>
+  )
 }
 
 export function LearningPackDownloadStatusButton({
@@ -181,19 +231,7 @@ export function LearningPackDownloadDrawer({
                   className="group overflow-hidden rounded-lg bg-muted/30"
                 >
                   <summary className="flex cursor-pointer list-none items-center gap-3 p-3.5">
-                    <div className="flex aspect-square size-[44px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
-                      {task.status === 'error' ? (
-                        <AlertCircle className="size-4 text-destructive" />
-                      ) : task.status === 'paused' ? (
-                        <DownloadCloud className="size-4 text-muted-foreground" />
-                      ) : task.kind === 'uninstall' ? (
-                        <Trash2 className="size-4 text-destructive/80" />
-                      ) : isRunning(task) ? (
-                        <Loader2 className="size-4 animate-spin text-primary" />
-                      ) : (
-                        <DownloadCloud className="size-4" />
-                      )}
-                    </div>
+                    <PackTaskCover task={task} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-medium text-foreground">{task.title}</p>

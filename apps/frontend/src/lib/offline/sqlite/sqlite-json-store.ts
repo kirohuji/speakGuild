@@ -16,6 +16,8 @@ export interface NotebookExpressionPageQuery {
   kind: 'word' | 'chunk' | 'pattern'
   reviewState?: string
   search?: string
+  /** Notebook-item add time (JSON createdAt), not entry content update time. */
+  sort?: 'newest' | 'oldest'
   limit: number
   offset?: number
 }
@@ -680,13 +682,17 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
           SELECT ni.*, ee.id AS entry_id, ee.remote_id AS entry_remote_id,
             ee.kind AS entry_kind, ee.expression_type AS entry_type,
             ee.sync_status AS entry_sync_status, ee.data AS entry_data,
-            ee.updated_at AS entry_updated_at
+            ee.updated_at AS entry_updated_at,
+            COALESCE(json_extract(ni.data, '$.createdAt'), ni.updated_at) AS item_created_at
           FROM valid_items ni
           INNER JOIN expression_entries ee ON ee.id = ni.expression_entry_id
           WHERE ni.notebook_id = ? ${statusSql} AND ee.kind = ? ${searchSql}
         )`
+      const orderSql = query.sort === 'oldest'
+        ? 'ORDER BY item_created_at ASC, id ASC'
+        : 'ORDER BY item_created_at DESC, id DESC'
       const rows = await executor.queryRows<Record<string, any>>(
-        `${baseSql} SELECT * FROM filtered ORDER BY entry_updated_at DESC, entry_id ASC LIMIT ? OFFSET ?`,
+        `${baseSql} SELECT * FROM filtered ${orderSql} LIMIT ? OFFSET ?`,
         [...values, query.limit, offset],
       )
       const totals = await executor.queryRows<{ cnt: number }>(`${baseSql} SELECT COUNT(*) AS cnt FROM filtered`, values)

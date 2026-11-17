@@ -157,7 +157,7 @@ export const learningNotebookRepository = {
       rows.push(...page.items)
       if (rows.length >= page.total || page.items.length === 0) break
     }
-    return request.sort === 'oldest' ? rows.reverse() : rows
+    return rows
   },
 
   async listCachedExpressionPage(
@@ -168,6 +168,7 @@ export const learningNotebookRepository = {
       kind: request.type === 'scene_phrase' ? 'pattern' : request.type,
       reviewState: request.reviewState,
       search: request.search,
+      sort: request.sort ?? 'newest',
       limit: request.limit,
       offset: request.offset,
     })

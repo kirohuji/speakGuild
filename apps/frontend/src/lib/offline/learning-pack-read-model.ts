@@ -424,15 +424,20 @@ export async function listContentPage(params: {
   kind: ContentKind
   page: number
   pageSize: number
+  /** When set, overrides page-based offset (for insight/immersive window loads). */
+  offset?: number
 }) {
   const page = Math.max(1, params.page)
   const pageSize = Math.min(PAGE_LIMIT, Math.max(1, params.pageSize))
+  const offset = params.offset != null
+    ? Math.max(0, params.offset)
+    : (page - 1) * pageSize
   const refPage = await localDb.listContentRefPage({
     packId: params.topicId ? undefined : params.unitId,
     topicId: params.topicId,
     kind: params.kind,
     limit: pageSize,
-    offset: (page - 1) * pageSize,
+    offset,
   })
   const rows = refPage.contentIds.length === 0
     ? []
@@ -443,6 +448,7 @@ export async function listContentPage(params: {
     total: refPage.total,
     page,
     pageSize,
+    offset,
   }
 }
 

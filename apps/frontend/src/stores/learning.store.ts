@@ -37,6 +37,7 @@ import { recordLearningPackDownloadFailure } from '@/lib/offline/learning-pack-d
 export interface DownloadTask {
   packId: string
   title: string
+  coverImage?: string | null
   kind?: 'download' | 'uninstall'
   progress: number        // 0-100
   step?: string           // 当前步骤标识（如 'downloading', 'extracting_assets'）
@@ -409,7 +410,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
 
     // 加入下载队列
-    enqueueDownloadTask(unitId, packTitle)
+    enqueueDownloadTask(unitId, packTitle, sourceUnit?.coverImage ?? resolvePackCoverImage(unitId))
 
     // 触发队列处理（异步，不 await）
     processDownloadQueue()
@@ -423,6 +424,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       state.myUnits.find((unit) => unit.id === unitId)?.title ??
       state.downloadedPacks.find((pack) => pack.packId === unitId)?.title ??
       unitId
+    const coverImage =
+      state.myUnits.find((unit) => unit.id === unitId)?.coverImage
+      ?? state.downloadedPacks.find((pack) => pack.packId === unitId)?.coverImage
+      ?? null
     activePackTaskIds.add(unitId)
     set((s) => ({
       downloadTasks: [
@@ -430,6 +435,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
         {
           packId: unitId,
           title: unitTitle,
+          coverImage,
           kind: 'uninstall' as const,
           status: 'uninstalling' as const,
           progress: 5,
@@ -572,7 +578,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       existing?.title ??
       unitId
 
-    enqueueDownloadTask(unitId, unitTitle)
+    enqueueDownloadTask(unitId, unitTitle, existing?.coverImage ?? resolvePackCoverImage(unitId))
     processDownloadQueue()
   },
 
@@ -653,7 +659,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       return
     }
 
-    enqueueDownloadTask(packId, task.title)
+    enqueueDownloadTask(packId, task.title, task.coverImage)
     processDownloadQueue()
   },
 
@@ -700,11 +706,29 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
 // ─── 下载队列调度器（模块级函数，避免 store action 循环引用） ───
 
-function enqueueDownloadTask(packId: string, title: string) {
+function resolvePackCoverImage(packId: string): string | null {
+  const state = useLearningStore.getState()
+  return (
+    state.myUnits.find((unit) => unit.id === packId)?.coverImage
+    ?? state.shopUnits.find((unit) => unit.id === packId)?.coverImage
+    ?? state.downloadedPacks.find((pack) => pack.packId === packId)?.coverImage
+    ?? null
+  )
+}
+
+function enqueueDownloadTask(packId: string, title: string, coverImage?: string | null) {
+  const resolvedCover = coverImage ?? resolvePackCoverImage(packId)
   useLearningStore.setState((s) => ({
     downloadTasks: [
       ...s.downloadTasks.filter((task) => task.packId !== packId),
-      { packId, title, kind: 'download' as const, progress: 0, status: 'queued' as const },
+      {
+        packId,
+        title,
+        coverImage: resolvedCover,
+        kind: 'download' as const,
+        progress: 0,
+        status: 'queued' as const,
+      },
     ],
     packInstallingIds: s.packInstallingIds.includes(packId)
       ? s.packInstallingIds

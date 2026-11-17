@@ -8,6 +8,8 @@ export type ImmersivePlayerExample = {
   audioUrl?: string | null
 }
 
+export type ImmersiveAccent = 'us' | 'uk'
+
 export type ImmersivePlayerItem = {
   id: string
   kind: ImmersivePlayerItemKind
@@ -17,6 +19,8 @@ export type ImmersivePlayerItem = {
   exampleEn?: string | null
   exampleZh?: string | null
   mainAudioUrl?: string | null
+  audioUsUrl?: string | null
+  audioUkUrl?: string | null
   exampleAudioUrl?: string | null
   examples?: ImmersivePlayerExample[]
   sceneName?: string | null
@@ -46,6 +50,7 @@ export type ImmersivePlaybackSettings = {
   playbackRate: 0.75 | 1 | 1.25 | 1.5
   /** 每播完一遍后的真实等待，不随倍速缩短。重复同一条、进入下一条都会停。 */
   pauseGapSeconds: ImmersivePauseGapSeconds
+  accent: ImmersiveAccent
   playMainText: boolean
   playMeaning: boolean
   playExample: boolean

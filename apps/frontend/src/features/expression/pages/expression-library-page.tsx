@@ -8,7 +8,7 @@ import {
   BookMarked, Search, Trash2, BookOpen, BookText,
   Headphones, MessageSquareText, TextQuote,
   RotateCcw, CheckCheck, ArrowRightFromLine,
-  ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, Loader2, Minimize2, Plus, RefreshCw, X,
+  ArrowDownWideNarrow, ArrowLeft, ArrowUpWideNarrow, CalendarDays, Check, CheckSquare, Download, Expand, Loader2, Minimize2, Plus, RefreshCw, X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -101,6 +101,28 @@ export function ExpressionLibraryPage() {
   const [reviewState, setReviewState] = useState<LibraryReviewState>('all')
   const [search, setSearch] = useState('')
   const [groupByDate, setGroupByDate] = useState(false)
+  const [listSort, setListSort] = useState<'newest' | 'oldest'>(() => {
+    if (!notebookId || typeof window === 'undefined') return 'newest'
+    try {
+      const stored = window.localStorage.getItem(`manyu.notebook-sort:${notebookId}`)
+      return stored === 'oldest' ? 'oldest' : 'newest'
+    } catch {
+      return 'newest'
+    }
+  })
+
+  useEffect(() => {
+    if (!notebookId || typeof window === 'undefined') {
+      setListSort('newest')
+      return
+    }
+    try {
+      const stored = window.localStorage.getItem(`manyu.notebook-sort:${notebookId}`)
+      setListSort(stored === 'oldest' ? 'oldest' : 'newest')
+    } catch {
+      setListSort('newest')
+    }
+  }, [notebookId])
 
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
@@ -176,8 +198,8 @@ export function ExpressionLibraryPage() {
     reviewState: reviewState === 'all' ? undefined : reviewState,
     notebookId: notebookId ?? '',
     search: search.trim() || undefined,
-    sort: 'newest' as const,
-  }), [libraryTab, notebookId, reviewState, search])
+    sort: listSort,
+  }), [libraryTab, listSort, notebookId, reviewState, search])
 
   const localListKeyRef = useRef('')
   localListKeyRef.current = JSON.stringify(localListRequest)
@@ -1064,6 +1086,25 @@ export function ExpressionLibraryPage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-0 bg-muted/45 pl-9 text-sm shadow-none focus-visible:bg-background" placeholder={t('expressionLib.searchPlaceholder')} />
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = listSort === 'newest' ? 'oldest' : 'newest'
+              setListSort(next)
+              if (notebookId) {
+                try {
+                  window.localStorage.setItem(`manyu.notebook-sort:${notebookId}`, next)
+                } catch {
+                  // ignore quota / private mode
+                }
+              }
+            }}
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20"
+            aria-label={listSort === 'newest' ? t('expressionLib.sortNewest') : t('expressionLib.sortOldest')}
+            title={listSort === 'newest' ? t('expressionLib.sortNewest') : t('expressionLib.sortOldest')}
+          >
+            {listSort === 'newest' ? <ArrowDownWideNarrow className="size-4" /> : <ArrowUpWideNarrow className="size-4" />}
+          </button>
           <button type="button" onClick={() => setGroupByDate((value) => !value)} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20', groupByDate && 'bg-primary/20')} aria-label={t('expressionLib.groupByDate')} aria-pressed={groupByDate}>
             <CalendarDays className="size-4" />
           </button>
