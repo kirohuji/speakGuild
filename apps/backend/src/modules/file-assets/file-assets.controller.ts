@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,9 +8,13 @@ import {
   Query,
   Req,
   Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { Readable } from 'node:stream';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { CreateCosPolicyDto } from './dto/create-cos-policy.dto';
 import { CreateReferenceDto } from './dto/create-reference.dto';
@@ -32,6 +37,25 @@ export class FileAssetsController {
   async completeUpload(@Req() req: Request, @Body() dto: CompleteUploadDto) {
     await requireAuthSession(req);
     return this.fileAssetsService.completeUpload(dto);
+  }
+
+  /** Offline sync: one zip of recordings → per-entry asset map. */
+  @Post('batch-recordings')
+  @UseInterceptors(FileInterceptor('zip', {
+    storage: memoryStorage(),
+    limits: { fileSize: 45 * 1024 * 1024 },
+  }))
+  async batchRecordings(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const session = await requireAuthSession(req);
+    if (!file?.buffer?.length) throw new BadRequestException('请上传录音压缩包');
+    const mime = file.mimetype || '';
+    if (mime && mime !== 'application/zip' && mime !== 'application/x-zip-compressed' && mime !== 'application/octet-stream') {
+      throw new BadRequestException('仅支持 zip 压缩包');
+    }
+    return this.fileAssetsService.batchIngestRecordingsZip(session.user.id, file.buffer);
   }
 
   @Post('references')

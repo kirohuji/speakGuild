@@ -98,7 +98,7 @@ function emptyForm(): CreateThemePresetInput & { name: string } {
     darkBackground: '',
     darkDecorations: [],
     bgmUrl: '',
-    bgmVolume: 0.3,
+    bgmVolume: 0.15,
   };
 }
 
@@ -854,7 +854,7 @@ function BgmTab({
         <Label>音量</Label>
         <div className="flex items-center gap-3">
           <Slider
-            value={[form.bgmVolume ?? 0.3]}
+            value={[form.bgmVolume ?? 0.15]}
             onValueChange={([v]) => updateField('bgmVolume', v)}
             min={0}
             max={1}
@@ -862,7 +862,7 @@ function BgmTab({
             className="flex-1"
           />
           <span className="w-10 text-right text-sm tabular-nums text-muted-foreground">
-            {Math.round((form.bgmVolume ?? 0.3) * 100)}%
+            {Math.round((form.bgmVolume ?? 0.15) * 100)}%
           </span>
         </div>
       </div>

@@ -1,7 +1,7 @@
 const zhCN = {
   translation: {
     network: {"offline": "当前离线。已下载内容可继续使用，需要联网的操作请连接后重试。", "unavailable": "暂时连接不上服务，请稍后重试。"},
-    recording: {"submitFailed": "提交未完成，内容仍保留在当前输入框，请稍后重试。", "transcriptionFailedSaved": "识别暂时失败，录音已保存在本机。可以输入文字继续。", "modelIncomplete": "下载尚未完成，点击下载可重新校验并修复。", "saveFailed": "录音保存失败，请检查可用存储空间后重试。", "saving": "正在保存录音…"},
+    recording: {"submitFailed": "提交未完成，请稍后重试。", "transcriptionFailedSaved": "识别失败，请重试", "modelIncomplete": "下载尚未完成，点击下载可重新校验并修复。", "saveFailed": "录音保存失败，请检查可用存储空间后重试。", "saving": "正在保存录音…"},
     app: {
       name: '漫语町',
       tagline: '多语种口语练习平台',

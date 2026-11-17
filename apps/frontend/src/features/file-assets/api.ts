@@ -127,3 +127,35 @@ export function setCurrentAvatar(assetId: string): Promise<{ url: string; assetI
 export function createFileReference(assetId: string, bizType: string, bizId: string): Promise<void> {
   return post('/file-assets/references', { assetId, bizType, bizId })
 }
+
+export type BatchRecordingResult = {
+  localId: string
+  status: 'synced' | 'failed'
+  assetId?: string
+  error?: string
+}
+
+/** Offline sync: upload a zip of recordings; returns per-entry asset map. */
+export async function uploadBatchRecordingsZip(zip: Blob): Promise<{ results: BatchRecordingResult[] }> {
+  const base = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '')
+  const { getBearerToken } = await import('@/features/auth/client')
+  const token = getBearerToken()
+  const form = new FormData()
+  form.append('zip', zip, 'recordings.zip')
+  const response = await fetch(`${base}/file-assets/batch-recordings`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: 'application/json',
+    },
+    body: form,
+  })
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(text || `录音批量上传失败 (${response.status})`)
+  }
+  const json = await response.json()
+  // TransformInterceptor wraps as { code, message, data }
+  const data = json?.data ?? json
+  return { results: Array.isArray(data?.results) ? data.results : [] }
+}

@@ -174,6 +174,9 @@ export const learningNotebookRepository = {
     const hydrated = await learningContentRepository.hydrateExpressionSnapshots(
       page.items.map(({ entry }) => entry as ExpressionEntry),
     )
+    void import('./favorite-audio-pin.service')
+      .then((mod) => mod.favoriteAudioPinService?.pinMany(hydrated))
+      .catch(() => undefined)
     return {
       total: page.total,
       items: page.items.map(({ item }, index) => toLibraryExpression(
@@ -208,15 +211,25 @@ export const learningNotebookRepository = {
   },
 
   async removeCachedNotebookItem(id: string): Promise<void> {
+    let expressionEntryId: string | null = null
     await serializeNotebookWrite(async () => {
       const item = await localDb.get<any>('learning_notebook_items', id)
       if (!item || item.deletedAt) return
+      expressionEntryId = item.expressionEntryId ?? null
       await this.writeItem({ ...item, deletedAt: new Date().toISOString() })
     })
+    if (!expressionEntryId) return
+    const stillActive = (await localDb.activeNotebookItems())
+      .some((row) => row.expressionEntryId === expressionEntryId)
+    if (!stillActive) {
+      void import('./favorite-audio-pin.service')
+        .then((mod) => mod.favoriteAudioPinService?.unpinExpressionAudio(expressionEntryId))
+        .catch(() => undefined)
+    }
   },
 
   async addEntry(entry: ExpressionEntry, notebookIds: string[]) {
-    return serializeNotebookWrite(async () => {
+    await serializeNotebookWrite(async () => {
       if (!notebookIds.length) {
         const notebooks = await this.listStored()
         let uncategorized = notebooks.items.find(n => n.kind === 'uncategorized')
@@ -242,6 +255,9 @@ export const learningNotebookRepository = {
       }
       await commitNotebookMutation(writes)
     })
+    void import('./favorite-audio-pin.service')
+      .then((mod) => mod.favoriteAudioPinService?.pinExpressionAudio(entry))
+      .catch(() => undefined)
   },
 
   async addItemsToNotebook(ids: string[], notebookId: string) {

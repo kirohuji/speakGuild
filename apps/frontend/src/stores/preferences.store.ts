@@ -97,7 +97,7 @@ function normalizePracticeBatchSize(value: number | undefined, fallback: number)
 const DEFAULT_PREFERENCES: Preferences = {
   autoPlay: false,
   bgmEnabled: false,
-  bgmVolume: null,
+  bgmVolume: 0.15,
   theme: 'system',
   language: 'zh-CN',
   tts: DEFAULT_TTS,

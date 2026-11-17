@@ -5,6 +5,8 @@ import { useThemePresetStore } from '@/stores/theme-preset.store';
 import { usePreferencesStore } from '@/stores/preferences.store';
 import { applyPresetColors, clearPresetColors } from '@/lib/theme-preset-utils';
 import { isBgmSuppressed, subscribeBgmSuppress } from '@/lib/bgm-suppress';
+import { resolveBgmDisplayVolume, toBgmGain } from '@/lib/bgm-volume';
+import { isNative } from '@/lib/native';
 
 interface ThemePresetContextValue {
   /** 可用主题列表 */
@@ -25,12 +27,18 @@ export function useThemePreset() {
   return ctx;
 }
 
+type BgmGraph = {
+  context: AudioContext;
+  gain: GainNode;
+};
+
 export function ThemePresetProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const { resolvedTheme } = useTheme();
   const store = useThemePresetStore();
   const { bgmEnabled, bgmVolume } = usePreferencesStore();
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bgmGraphRef = useRef<BgmGraph | null>(null);
   const bgmSuppressed = useSyncExternalStore(subscribeBgmSuppress, isBgmSuppressed, () => false);
 
   const userId = session?.user?.id ?? null;
@@ -63,18 +71,58 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
     }
   }, [store.activePreset, resolvedTheme]);
 
-  // 清理：组件卸载时恢复默认
+  // 清理：组件卸载时恢复默认并释放 AudioContext
   useEffect(() => {
     return () => {
       clearPresetColors();
+      const graph = bgmGraphRef.current;
+      bgmGraphRef.current = null;
+      if (graph) void graph.context.close().catch(() => undefined);
     };
   }, []);
+
+  /**
+   * Web 跨域 file-assets 一旦 createMediaElementSource，CORS 会输出静音。
+   * 仅 Capacitor（尤其是 iOS）需要 GainNode 绕过 element.volume 无效；
+   * Web 直接用 element.volume + 50% 上限即可。
+   */
+  const ensureBgmGraph = (audio: HTMLAudioElement): BgmGraph | null => {
+    if (!isNative()) return null;
+    if (bgmGraphRef.current) return bgmGraphRef.current;
+    if (typeof window === 'undefined') return null;
+    const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return null;
+    try {
+      const context = new AudioCtx();
+      const gain = context.createGain();
+      const source = context.createMediaElementSource(audio);
+      audio.volume = 1;
+      source.connect(gain);
+      gain.connect(context.destination);
+      const graph = { context, gain };
+      bgmGraphRef.current = graph;
+      return graph;
+    } catch {
+      return null;
+    }
+  };
+
+  const applyBgmGain = (audio: HTMLAudioElement) => {
+    const display = resolveBgmDisplayVolume(bgmVolume, store.activePreset?.bgmVolume);
+    const gainValue = toBgmGain(display);
+    const graph = ensureBgmGraph(audio);
+    if (graph) {
+      graph.gain.gain.value = gainValue;
+      audio.volume = 1;
+      return;
+    }
+    audio.volume = gainValue;
+  };
 
   useEffect(() => {
     const audio = bgmAudioRef.current;
     if (!audio) return;
-    const volume = bgmVolume ?? store.activePreset?.bgmVolume ?? 0.3;
-    audio.volume = Math.min(1, Math.max(0, volume));
+    applyBgmGain(audio);
   }, [bgmVolume, store.activePreset?.bgmVolume]);
 
   useEffect(() => {
@@ -86,10 +134,21 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    applyBgmGain(audio);
+
     const resumePlayback = () => {
+      const graph = bgmGraphRef.current ?? ensureBgmGraph(audio);
+      if (graph && graph.context.state === 'suspended') {
+        void graph.context.resume().catch(() => undefined);
+      }
       void audio.play().catch(() => {});
     };
     let cancelled = false;
+
+    const graph = ensureBgmGraph(audio);
+    if (graph && graph.context.state === 'suspended') {
+      void graph.context.resume().catch(() => undefined);
+    }
 
     void audio.play().catch(() => {
       // Browsers may block restoring persisted BGM until the user interacts.

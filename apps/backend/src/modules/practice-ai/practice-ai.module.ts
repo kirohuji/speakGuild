@@ -15,6 +15,6 @@ import { DailyPracticeService } from './daily-practice.service';
   imports: [FileAssetsModule, PrismaModule, PracticeModule, AiModelModule, ContentExperienceModule],
   controllers: [EnglishPracticeAiController, WarmupRecordController, DailyPracticeController],
   providers: [EnglishPracticeAiService, WarmupRecordService, DailyPracticeService],
-  exports: [EnglishPracticeAiService],
+  exports: [EnglishPracticeAiService, DailyPracticeService],
 })
 export class PracticeAiModule {}

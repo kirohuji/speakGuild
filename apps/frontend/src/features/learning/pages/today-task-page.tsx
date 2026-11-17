@@ -1271,29 +1271,7 @@ export function TodayTaskPage() {
     <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
       {/* ── Header ── */}
       <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-1">
-          {isMobile && (
-            <button
-              type="button"
-              onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
-              disabled={manualSyncing || !isOnline}
-              className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-background/36 text-muted-foreground backdrop-blur-2xl transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
-              aria-label={isOnline ? '同步今日任务' : t('common.offline')}
-              title={isOnline ? '同步今日任务' : t('common.offline')}
-            >
-              <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
-              {!isOnline && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
-                  <WifiOff className="size-2.5" />
-                </span>
-              )}
-              {isOnline && hasPendingSync && !manualSyncing && (
-                <span className="absolute -right-0.5 -top-0.5">
-                  <AlertCircle className="size-3.5 text-amber-500" />
-                </span>
-              )}
-            </button>
-          )}
+        <div className="min-w-0 flex-1">
           {targetPackId && plan.units[0] && (
             <Link
               to="/learning"
@@ -1305,15 +1283,37 @@ export function TodayTaskPage() {
           )}
         </div>
         {isMobile && (
-          <button
-            type="button"
-            onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-            data-spotlight="today-records"
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background/36 text-muted-foreground backdrop-blur-2xl transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label={t('todayTask.practiceRecords')}
-          >
-            <ClipboardList className="size-[18px]" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
+            <button
+              type="button"
+              onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+              data-spotlight="today-records"
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+              aria-label={t('todayTask.practiceRecords')}
+            >
+              <ClipboardList className="size-[18px]" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
+              disabled={manualSyncing || !isOnline}
+              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
+              aria-label={isOnline ? '同步今日任务' : t('common.offline')}
+              title={isOnline ? '同步今日任务' : t('common.offline')}
+            >
+              <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
+              {!isOnline && (
+                <span className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
+                  <WifiOff className="size-2.5" />
+                </span>
+              )}
+              {isOnline && hasPendingSync && !manualSyncing && (
+                <span className="absolute -right-0.5 -top-0.5">
+                  <AlertCircle className="size-3.5 text-amber-500" />
+                </span>
+              )}
+            </button>
+          </div>
         )}
       </div>
 

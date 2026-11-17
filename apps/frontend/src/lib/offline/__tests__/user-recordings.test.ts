@@ -1,11 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { BlobReader, ZipReader } from '@zip.js/zip.js'
 import { statisticsDb } from './statistics-sqlite.fixture'
-const state = vi.hoisted(() => ({ db: null as any, owner: 'a', native: false, disk: new Map<string, string>(), upload: vi.fn(), reference: vi.fn() }))
+const state = vi.hoisted(() => ({
+  db: null as any,
+  owner: 'a',
+  native: false,
+  disk: new Map<string, string>(),
+  upload: vi.fn(),
+  reference: vi.fn(),
+  batchZip: vi.fn(),
+}))
 vi.mock('../unified-storage', () => ({ localDb: new Proxy({}, { get: (_, key) => state.db[key] }) }))
 vi.mock('@/providers/auth-session', () => ({ getCurrentSessionSnapshot: () => ({ user: { id: state.owner } }) }))
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => state.native, convertFileSrc: (url: string) => 'capacitor://localhost/' + url } }))
 vi.mock('@/lib/native', () => ({ isNative: () => false }))
-vi.mock('@/features/file-assets/api', () => ({ uploadFileToCosAndComplete: state.upload, createFileReference: state.reference }))
+vi.mock('@/features/file-assets/api', () => ({
+  uploadFileToCosAndComplete: state.upload,
+  createFileReference: state.reference,
+  createFileAssetReference: (id: string) => `asset://${id}`,
+  uploadBatchRecordingsZip: state.batchZip,
+}))
 vi.mock('@capacitor/filesystem', () => ({ Directory: { Data: 'DATA' }, Filesystem: {
   writeFile: vi.fn(async ({ path, data }: any) => { state.disk.set(path, data) }),
   readFile: vi.fn(async ({ path }: any) => ({ data: state.disk.get(path) })),
@@ -13,8 +27,25 @@ vi.mock('@capacitor/filesystem', () => ({ Directory: { Data: 'DATA' }, Filesyste
   getUri: vi.fn(async ({ path }: any) => ({ uri: 'file:///' + path })),
   deleteFile: vi.fn(async ({ path }: any) => { state.disk.delete(path) }),
 } }))
-import { saveUserRecording, resolveLocalRecording, uploadUserRecording, prepareRecordingPayload } from '../user-recordings'
-beforeEach(async () => { state.db = (await statisticsDb()).store; state.owner = 'a'; state.native = false; state.disk.clear(); state.upload.mockReset(); state.reference.mockReset(); state.reference.mockResolvedValue(undefined) })
+import {
+  saveUserRecording,
+  discardUserRecording,
+  resolveLocalRecording,
+  uploadUserRecording,
+  prepareRecordingPayload,
+  uploadPendingRecordingsZip,
+  collectLocalRecordingIds,
+} from '../user-recordings'
+beforeEach(async () => {
+  state.db = (await statisticsDb()).store
+  state.owner = 'a'
+  state.native = false
+  state.disk.clear()
+  state.upload.mockReset()
+  state.reference.mockReset()
+  state.reference.mockResolvedValue(undefined)
+  state.batchZip.mockReset()
+})
 
 it('persists audio bytes and an upload operation before returning, without network', async () => {
   const reference = await saveUserRecording(new Blob(['voice'], { type: 'audio/webm' }), 'answer.webm')
@@ -70,4 +101,83 @@ it('stores iOS recordings in persistent app data and uploads from those bytes', 
   expect(await uploadUserRecording(reference)).toBe('asset://asset-ios')
   expect(await state.upload.mock.calls[0][0].file.text()).toBe('voice')
   expect(state.disk.size).toBe(1)
+})
+
+it('packs pending recordings into one zip upload and remaps without per-file COS', async () => {
+  const first = await saveUserRecording(new Blob(['one']), 'a.webm')
+  const second = await saveUserRecording(new Blob(['two']), 'b.webm')
+  const firstId = first.slice('user-recording://'.length)
+  const secondId = second.slice('user-recording://'.length)
+  state.batchZip.mockImplementation(async (zip: Blob) => {
+    const reader = new ZipReader(new BlobReader(zip))
+    const entries = await reader.getEntries()
+    const names = entries.map((entry) => entry.filename).sort()
+    expect(names).toContain('manifest.json')
+    expect(names.some((name) => name.startsWith('files/'))).toBe(true)
+    await reader.close()
+    return {
+      results: [
+        { localId: firstId, status: 'synced', assetId: 'asset-a' },
+        { localId: secondId, status: 'synced', assetId: 'asset-b' },
+      ],
+    }
+  })
+  const summary = await uploadPendingRecordingsZip()
+  expect(summary).toEqual({ attempted: 2, synced: 2 })
+  expect(state.batchZip).toHaveBeenCalledTimes(1)
+  expect(state.upload).not.toHaveBeenCalled()
+  expect(await uploadUserRecording(first)).toBe('asset://asset-a')
+  expect(state.upload).not.toHaveBeenCalled()
+  const payload = await prepareRecordingPayload({ audioUrl: second })
+  expect(payload).toEqual({ audioUrl: 'asset://asset-b' })
+  expect(state.upload).not.toHaveBeenCalled()
+})
+
+it('keeps failed zip entries pending for single-file fallback', async () => {
+  const reference = await saveUserRecording(new Blob(['voice']))
+  const localId = reference.slice('user-recording://'.length)
+  state.batchZip.mockResolvedValueOnce({
+    results: [{ localId, status: 'failed', error: 'bad audio' }],
+  })
+  const summary = await uploadPendingRecordingsZip()
+  expect(summary.synced).toBe(0)
+  expect((await state.db.list('outbox'))[0].status).toBe('pending')
+  state.upload.mockResolvedValueOnce({ id: 'asset-fallback' })
+  expect(await uploadUserRecording(reference)).toBe('asset://asset-fallback')
+})
+
+it('collects nested local recording ids from practice payloads', () => {
+  const ids = collectLocalRecordingIds({
+    audioUrl: 'user-recording://a',
+    userAnswer: JSON.stringify({ 0: 'user-recording://b' }),
+    nested: [{ levelAudios: ['user-recording://c'] }],
+  })
+  expect([...ids].sort()).toEqual(['a', 'b', 'c'])
+})
+
+it('discardUserRecording removes kv, outbox, and native file bytes', async () => {
+  state.native = true
+  const reference = await saveUserRecording(new Blob(['voice'], { type: 'audio/mp4' }), 'answer.m4a')
+  expect(state.disk.size).toBe(1)
+  expect((await state.db.list('outbox')).some((row: any) => row.status === 'pending')).toBe(true)
+  await discardUserRecording(reference)
+  expect((await state.db.list('kv')).filter((row: any) => row.id.startsWith('user-recording:'))).toEqual([])
+  expect((await state.db.list('outbox')).filter((row: any) => row.id.startsWith('recording-upload:'))).toEqual([])
+  expect(state.disk.size).toBe(0)
+})
+
+it('discardUserRecording is a no-op for blob and missing references', async () => {
+  await expect(discardUserRecording('blob:temp')).resolves.toBeUndefined()
+  await expect(discardUserRecording(null)).resolves.toBeUndefined()
+  await expect(discardUserRecording('user-recording://missing')).resolves.toBeUndefined()
+})
+
+it('re-recording discard clears the previous durable upload queue entry', async () => {
+  const first = await saveUserRecording(new Blob(['one']))
+  const second = await saveUserRecording(new Blob(['two']))
+  await discardUserRecording(first)
+  const pending = (await state.db.list('outbox')).filter((row: any) => row.status === 'pending')
+  expect(pending).toHaveLength(1)
+  expect(pending[0].payload.reference).toBe(second)
+  expect(await resolveLocalRecording(second)).toContain('base64,')
 })

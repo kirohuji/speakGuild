@@ -4,6 +4,7 @@ import { BlobReader, BlobWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
 import { assetCacheService, type AssetRef } from './asset-cache.service'
+import { stableRemoteUrl } from './asset-url-identity'
 import { digestBuffer } from './sha256-worker.service'
 import { localDb } from './unified-storage'
 
@@ -32,20 +33,12 @@ const fileWrites = new Map<string, Promise<void>>()
 const materializations = new Map<string, Promise<string | null>>()
 const packLocks = new Map<string, Promise<void>>()
 
-function stableContentUrl(url: string) {
-  try {
-    const parsed = new URL(url, window.location.origin)
-    return `${parsed.origin}${parsed.pathname}`
-  } catch {
-    return url
-  }
-}
-
 export function deferredLookupKeys(url: string, assetId?: string | null): string[] {
   const fileAssetId = assetId || fileAssetIdFromUrl(url)
   return [...new Set([
     fileAssetId ? `asset:${fileAssetId}` : '',
-    `url:${stableContentUrl(url)}`,
+    // Must stay unique per asset:// id — opaque URL origins collapse to "null".
+    `url:${stableRemoteUrl(url)}`,
   ].filter(Boolean))]
 }
 

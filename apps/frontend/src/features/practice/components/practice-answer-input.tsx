@@ -1,12 +1,12 @@
-import { saveUserRecording } from '@/lib/offline/user-recordings'
+import { discardUserRecording, LOCAL_RECORDING_SCHEME } from '@/lib/offline/user-recordings'
 import { useRecordingPlaybackUrl } from '@/hooks/use-recording-playback-url'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Mic, Square, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { persistPracticeVoiceAfterTranscription } from '@/features/practice/lib/practice-voice-persist'
 import {
   getVoiceInputFeedbackText,
   getVoiceMicErrorMessage,
@@ -104,7 +104,7 @@ export function PracticeAnswerInput({
 
   const setRecordedAudioUrl = useCallback((nextUrl: string | null) => {
     const previousUrl = audioUrlRef.current
-    if (!onAudioChange && previousUrl?.startsWith('blob:') && previousUrl !== nextUrl) URL.revokeObjectURL(previousUrl)
+    if (previousUrl?.startsWith('blob:') && previousUrl !== nextUrl) URL.revokeObjectURL(previousUrl)
     audioUrlRef.current = nextUrl
     setAudioUrl(nextUrl)
     onAudioChange?.(nextUrl)
@@ -131,28 +131,32 @@ export function PracticeAnswerInput({
   const processAudioBlob = useCallback(async (blob: Blob, filename: string, generation: number) => {
     if (!isCaptureCurrent(generation)) return
     setVoiceStatus('processing')
-    try {
-      const savedRecording = await saveUserRecording(blob, filename)
-      if (!isCaptureCurrent(generation)) return
-      setRecordedAudioUrl(savedRecording)
-      const result = await transcribeVoiceInput(blob, filename, lang)
-      if (!isCaptureCurrent(generation)) return
-      const text = normalizeVoiceInputText(result.text ?? '')
+    // Playback-only until STT succeeds — never enqueue upload on recognition failure.
+    const playbackUrl = URL.createObjectURL(blob)
+    setRecordedAudioUrl(playbackUrl)
+    const result = await persistPracticeVoiceAfterTranscription({
+      blob,
+      filename,
+      lang,
+      isCurrent: () => isCaptureCurrent(generation),
+    })
+    if (!isCaptureCurrent(generation) || result.status === 'stale') return
 
-      if (!text) {
-        setVoiceError(t('profile.placement.voiceNoContent'))
-        setVoiceStatus('idle')
-        return
-      }
-      onChange(text)
+    if (result.status === 'persisted') {
+      setRecordedAudioUrl(result.reference)
+      onChange(result.text)
       setVoiceError('')
       setVoiceStatus('idle')
-    } catch {
-      if (!isCaptureCurrent(generation)) return
-      setVoiceError(t(audioUrlRef.current?.startsWith('user-recording://') ? 'recording.transcriptionFailedSaved' : 'recording.saveFailed'))
-      setVoiceStatus('idle')
+      return
     }
-  }, [isCaptureCurrent, lang, onChange, setRecordedAudioUrl, t])
+
+    // Keep blob for optional replay; parent must not hold a durable ref.
+    onAudioChange?.(null)
+    if (result.status === 'empty') setVoiceError(t('profile.placement.voiceNoContent'))
+    else if (result.status === 'save_failed') setVoiceError(t('recording.saveFailed'))
+    else setVoiceError(t('recording.transcriptionFailedSaved'))
+    setVoiceStatus('idle')
+  }, [isCaptureCurrent, lang, onAudioChange, onChange, setRecordedAudioUrl, t])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
@@ -160,8 +164,12 @@ export function PracticeAnswerInput({
     const generation = voiceGenerationRef.current
     setVoiceError('')
     setElapsed(0)
-    // Revoke old audio when starting new recording
-    if (audioUrlRef.current) setRecordedAudioUrl(null)
+    // Replacing a durable recording that was never submitted would orphan the upload queue.
+    const previous = audioUrlRef.current
+    if (previous?.startsWith(LOCAL_RECORDING_SCHEME)) {
+      void discardUserRecording(previous)
+    }
+    if (previous) setRecordedAudioUrl(null)
     if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
 
     try {

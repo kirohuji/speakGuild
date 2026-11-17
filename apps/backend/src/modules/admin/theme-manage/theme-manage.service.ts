@@ -169,7 +169,7 @@ export class ThemeManageService {
         darkBackground: bg.darkBackground,
         darkDecorations: (dto.darkDecorations ?? undefined) as Prisma.InputJsonValue,
         bgmUrl: dto.bgmUrl,
-        bgmVolume: dto.bgmVolume ?? 0.3,
+        bgmVolume: dto.bgmVolume ?? 0.15,
       },
     });
   }

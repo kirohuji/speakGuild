@@ -113,9 +113,9 @@ function formatDuration(seconds: number, t: any) {
 }
 
 /** The day and year views share the same bounded plot, header and footer layout. */
-export function ExpandedActivityChart({ title, hint, period, onPrevious, onNext, canGoNext, previousLabel, nextLabel, busy = false, items, selectedKey, onSelect, footer, notice, barSize = 10, minimumMinutes = 120, minimumQuestions = 240 }: {
-  title: string
-  hint: string
+export function ExpandedActivityChart({ title, hint, period, onPrevious, onNext, canGoNext, previousLabel, nextLabel, busy = false, periodHeader = false, items, selectedKey, onSelect, footer, notice, barSize = 10, minimumMinutes = 120, minimumQuestions = 240 }: {
+  title?: string
+  hint?: string
   period: string
   onPrevious: () => void
   onNext: () => void
@@ -123,6 +123,8 @@ export function ExpandedActivityChart({ title, hint, period, onPrevious, onNext,
   previousLabel: string
   nextLabel: string
   busy?: boolean
+  /** 与月视图一致：上方 [←] 周期 [→]，标题/副标题另起一行左右排布 */
+  periodHeader?: boolean
   items: ActivityChartItem[]
   selectedKey?: string
   onSelect: (index: number) => void
@@ -138,19 +140,42 @@ export function ExpandedActivityChart({ title, hint, period, onPrevious, onNext,
   const minutesMax = getRestrainedChartDomainMax(items.map(item => item.minutes ?? 0), minimumMinutes)
   const questionsMax = getChartDomainMax(items.map(item => item.questions ?? 0), minimumQuestions)
   const ratio = selected ? Math.max((selected.minutes ?? 0) / minutesMax, (selected.questions ?? 0) / questionsMax) : 0
-  return <section className="flex h-[440px] min-w-0 flex-none flex-col overflow-hidden rounded-2xl bg-background" aria-label={title}>
-    <div className="flex items-center justify-between gap-3 px-3 pt-3">
-      <div className="min-w-0">
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
+  return <section className="flex h-[440px] min-w-0 flex-none flex-col overflow-hidden rounded-2xl bg-background" aria-label={title || period}>
+    {periodHeader ? (
+      <>
+        <div className="flex items-center justify-between px-3 pt-3">
+          <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100" onClick={onPrevious} aria-label={previousLabel}>
+            <ChevronLeft />
+          </Button>
+          <div className="flex items-center gap-2 text-sm font-semibold tabular-nums">
+            {period}
+            {busy && <Spinner className="size-3.5 text-muted-foreground" />}
+          </div>
+          <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100" disabled={!canGoNext} onClick={onNext} aria-label={nextLabel}>
+            <ChevronRight />
+          </Button>
+        </div>
+        {(title || hint) && (
+          <div className="mb-1 mt-2 flex items-center justify-between px-3">
+            {title ? <p className="text-xs font-medium text-foreground">{title}</p> : <span />}
+            {hint ? <p className="text-[10px] text-muted-foreground">{hint}</p> : null}
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="flex items-center justify-between gap-3 px-3 pt-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{title}</p>
+          {hint && <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>}
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onPrevious} aria-label={previousLabel}><ChevronLeft /></Button>
+          <span className="flex min-w-10 items-center justify-center gap-1 text-xs font-medium tabular-nums">{period}{busy && <Spinner className="size-3" />}</span>
+          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onNext} disabled={!canGoNext} aria-label={nextLabel}><ChevronRight /></Button>
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onPrevious} aria-label={previousLabel}><ChevronLeft /></Button>
-        <span className="flex min-w-10 items-center justify-center gap-1 text-xs font-medium tabular-nums">{period}{busy && <Spinner className="size-3" />}</span>
-        <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onNext} disabled={!canGoNext} aria-label={nextLabel}><ChevronRight /></Button>
-      </div>
-    </div>
-    <div className="relative mt-2 min-h-0 min-w-0 flex-1 px-3">
+    )}
+    <div className={periodHeader ? 'relative min-h-0 min-w-0 flex-1 px-3' : 'relative mt-2 min-h-0 min-w-0 flex-1 px-3'}>
       <div className="absolute inset-x-3 top-0" style={{ bottom: notice ? '5.5rem' : '3.75rem' }}>
         <ChartContainer config={config} className="size-full min-w-0 aspect-auto overflow-hidden">
           <ComposedChart accessibilityLayer data={items} margin={{ top: 18, right: 4, left: 4, bottom: 8 }} onClick={state => {

@@ -17,6 +17,7 @@ import { useOnboardingStore } from '@/stores/onboarding.store';
 import { useAuth } from '@/providers/auth-provider';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
 import { MembershipPurchaseDrawer } from '@/features/membership/components/membership-purchase-drawer';
+import { resolveBgmDisplayVolume } from '@/lib/bgm-volume';
 
 /** 普通用户可用：默认主题、深海梦境。其余主题走会员解锁。 */
 const FREE_THEME_IDS = new Set(['theme-default', 'theme-deepsea']);
@@ -79,7 +80,7 @@ export function AppearanceContent() {
     ensurePresets();
   }, [ensurePresets]);
 
-  const effectiveBgmVolume = bgmVolume ?? activePreset?.bgmVolume ?? 0.3;
+  const effectiveBgmVolume = resolveBgmDisplayVolume(bgmVolume, activePreset?.bgmVolume);
 
   const modeLabel: Record<string, string> = {
     light: t('profile.themeLight'),

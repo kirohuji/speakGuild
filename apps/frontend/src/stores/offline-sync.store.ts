@@ -28,7 +28,7 @@ interface OfflineSyncState {
    * Memory-only; not persisted.
    */
   loginRestorePending: boolean
-  /** Memory-only progress for cold-start / login restore UI. */
+  /** Memory-only: cold-start zip snapshot UI (large first pull only). */
   restoreProgress: OfflineRestoreProgress | null
   currentLogId: string | null
   lastSyncedAt: string | null

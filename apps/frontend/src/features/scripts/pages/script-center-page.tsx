@@ -35,6 +35,7 @@ import {
   Sparkles,
   Trash2,
   Users,
+  WifiOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Virtuoso } from 'react-virtuoso'
@@ -683,18 +684,7 @@ export function ScriptCenterPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-3">
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
-          <button
-            type="button"
-            onClick={() => void syncScripts()}
-            disabled={scriptSyncing || !online || !userId}
-            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:opacity-50"
-            aria-label={t('scripts.sync', { defaultValue: '同步剧本' })}
-            title={t('scripts.sync', { defaultValue: '同步剧本' })}
-          >
-            <RefreshCw className={cn('size-[18px]', scriptSyncing && 'animate-spin')} />
-          </button>
-        </div>
+        <div />
         <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
           <LearningPackDownloadStatusButton onClick={() => setDownloadOpen(true)} embedded />
           <button
@@ -722,6 +712,21 @@ export function ScriptCenterPage() {
             aria-label={t('scripts.shop')}
           >
             <ShoppingBag className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => void syncScripts()}
+            disabled={scriptSyncing || !online || !userId}
+            className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:opacity-50"
+            aria-label={online ? t('scripts.sync', { defaultValue: '同步剧本' }) : t('common.offline')}
+            title={online ? t('scripts.sync', { defaultValue: '同步剧本' }) : t('common.offline')}
+          >
+            <RefreshCw className={cn('size-[18px]', scriptSyncing && 'animate-spin')} />
+            {!online && (
+              <span className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
+                <WifiOff className="size-2.5" />
+              </span>
+            )}
           </button>
         </div>
       </div>

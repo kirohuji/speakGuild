@@ -48,7 +48,6 @@ export function RootLayout() {
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
   const bottomNavVisible = useLayoutStore((s) => s.bottomNavVisible)
-  const loginRestorePending = useOfflineSyncStore((s) => s.loginRestorePending)
   const restoreProgress = useOfflineSyncStore((s) => s.restoreProgress)
   const isMobile = useIsMobile()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
@@ -174,13 +173,13 @@ export function RootLayout() {
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
       )}
-      {!isAuthPage && loginRestorePending && (
+      {/* 仅冷启动 zip 快照（大数据量）时展示；普通登录增量同步不打扰 */}
+      {!isAuthPage && restoreProgress?.phase === 'snapshot' && (
         <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-40 flex justify-center px-4">
-          <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-foreground shadow-sm ring-1 ring-border/60 backdrop-blur-xl">
+          <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-xl">
             <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
             <span className="min-w-0 truncate">
-              {restoreProgress?.message
-                || t('todayTask.restoringProgress', { defaultValue: '正在同步学习进度' })}
+              {restoreProgress.message || '正在同步数据'}
             </span>
           </div>
         </div>
@@ -317,18 +316,16 @@ function MobileTopBar({
         )}
         {isDevHost && (
           <span
-            className="absolute  flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
+            className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
             title={t('common.devHostMode')}
-            style={{ bottom: 0 }}
           >
             <Wrench className="size-2.5" />
           </span>
         )}
         {!isOnline && (
           <span
-            className="absolute flex size-4 items-center justify-center rounded-full bg-muted-foreground/70 text-background shadow-sm ring-1 ring-border"
+            className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/70 text-background shadow-sm ring-1 ring-border"
             title={t('common.offline')}
-            style={{ bottom: 0 }}
           >
             <WifiOff className="size-2.5" />
           </span>

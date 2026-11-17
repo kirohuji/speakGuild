@@ -9,8 +9,26 @@ vi.mock('../learning-content.repository', () => ({
   notifyLearningLibraryChanged: vi.fn(), createPayload: (e: any) => ({ word: e.original }),
   learningContentRepository: { hydrateExpressionSnapshots: async (entries: any[]) => entries, saveRemoteExpressionEntry: vi.fn() },
 }))
-import { replayNotebookMutation, findPulledNotebook } from '../notebook-sync'
+vi.mock('../favorite-audio-pin.service', () => ({
+  favoriteAudioPinService: {
+    pinExpressionAudio: vi.fn(async () => undefined),
+    unpinExpressionAudio: vi.fn(async () => undefined),
+    ensurePinned: vi.fn(async () => undefined),
+    pinMany: vi.fn(async () => undefined),
+  },
+  favoriteAudioPackId: (id: string) => `favorite:${id}`,
+  isFavoriteAudioPackId: (id?: string | null) => String(id ?? '').startsWith('favorite:'),
+  collectPlaybackUrls: () => [],
+}))
+import {
+  replayNotebookMutation,
+  findPulledNotebook,
+  selectNotebookPushBatch,
+  ackNotebookPushResults,
+  prepareNotebookPushItem,
+} from '../notebook-sync'
 import { learningNotebookRepository as notebooks } from '../learning-notebook.repository'
+import { syncOutbox } from '../sync-outbox'
 
 const entry = { id: 'word:hello', kind: 'word', type: 'word', original: 'hello', createdAt: '2026-11-01', updatedAt: '2026-11-01' } as any
 beforeEach(async () => { dependencies.db = (await statisticsDb()).store })
@@ -143,5 +161,82 @@ describe('notebook replay', () => {
     dependencies.push.mockResolvedValueOnce({ results: [{ status: 'failed', error: '其他设备已修改' }] })
     await expect(replayNotebookMutation(operation)).rejects.toThrow('其他设备已修改')
     expect((await dependencies.db.get('outbox', operation.id)).status).toBe('pending')
+  })
+})
+
+describe('notebook batch push', () => {
+  it('packs create + join into one prepared push batch', async () => {
+    const book = await notebooks.create('Offline')
+    await notebooks.addEntry(entry, [book.id])
+    const pending = await dependencies.db.list('outbox')
+    const { batch, prepared } = await selectNotebookPushBatch(pending)
+    expect(batch.map((item: any) => item.entityType)).toEqual(['notebook', 'notebook_item'])
+    expect(prepared).toHaveLength(2)
+    expect(prepared[0].entityType).toBe('notebook')
+    expect(prepared[1].payload.notebookId).toBe(book.id)
+  })
+
+  it('packs many status updates into a single push call', async () => {
+    const book = await notebooks.create('Offline')
+    await dependencies.db.put('learning_notebooks', {
+      ...(await dependencies.db.get('learning_notebooks', book.id)),
+      remoteId: book.id,
+      syncStatus: 'synced',
+    })
+    for (const op of await dependencies.db.list('outbox')) {
+      await dependencies.db.put('outbox', { ...op, status: 'synced' })
+    }
+
+    const itemIds: string[] = []
+    for (const word of ['alpha', 'beta', 'gamma', 'delta']) {
+      const wordEntry = { ...entry, id: `word:${word}`, original: word }
+      await dependencies.db.put('expression_entries', wordEntry)
+      await notebooks.addEntry(wordEntry as any, [book.id])
+      const links = await dependencies.db.findByIndex('learning_notebook_items', 'notebook_id', book.id)
+      const link = links.find((row: any) => row.expressionEntryId === wordEntry.id && !row.deletedAt)
+      itemIds.push(link.id)
+    }
+    for (const id of itemIds) {
+      await notebooks.updateCachedNotebookItemStatus(id, 'reviewing')
+    }
+
+    const pending = (await dependencies.db.list('outbox')).filter((op: any) => op.status === 'pending')
+    const { batch, prepared } = await selectNotebookPushBatch(pending)
+    expect(prepared.length).toBe(batch.length)
+    expect(prepared.filter((item) => item.payload?.intent === 'status')).toHaveLength(4)
+
+    dependencies.push.mockClear()
+    dependencies.push.mockResolvedValueOnce({
+      results: batch.map((item: any) => ({
+        status: 'synced',
+        clientMutationId: item.clientMutationId,
+        remoteItem: {
+          id: `remote-${item.entityId}`,
+          updatedAt: '2026-11-17T01:00:00Z',
+          version: 1,
+          masteryStatus: item.payload?.masteryStatus ?? 'learning',
+        },
+      })),
+    })
+    const { results } = await dependencies.push(prepared)
+    expect(dependencies.push).toHaveBeenCalledTimes(1)
+    expect(dependencies.push.mock.calls[0][0]).toHaveLength(prepared.length)
+    await ackNotebookPushResults(batch.map((item: any, i: number) => ({ item, result: results[i] })))
+    for (const item of batch) {
+      await syncOutbox.markSynced(item.id, item)
+    }
+    expect((await dependencies.db.list('outbox')).filter((op: any) => op.status === 'pending')).toHaveLength(0)
+  })
+
+  it('allows an in-batch predecessor without a prior synced row', async () => {
+    const book = await notebooks.create('Offline')
+    await notebooks.addEntry(entry, [book.id])
+    const pending = await dependencies.db.list('outbox')
+    const child = pending.find((op: any) => op.entityType === 'notebook_item')!
+    // Alone, child still cannot prepare.
+    await expect(prepareNotebookPushItem(child)).rejects.toThrow('学习本尚未同步')
+    // Inside a batch that already includes the notebook create, it can.
+    const { prepared } = await selectNotebookPushBatch(pending)
+    expect(prepared.some((item) => item.entityType === 'notebook_item')).toBe(true)
   })
 })

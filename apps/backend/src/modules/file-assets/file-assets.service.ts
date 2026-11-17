@@ -10,6 +10,7 @@ import {
 import { createHash, randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
 import COS = require('cos-nodejs-sdk-v5');
+import AdmZip = require('adm-zip');
 import { FileAsset, FileAssetGroup, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
@@ -667,6 +668,113 @@ export class FileAssetsService {
       if (asset.cosKey !== key) await this.deleteOrQueueOrphan(key, sha256);
       return asset;
     } catch (error) { await this.deleteOrQueueOrphan(key, sha256); throw error; }
+  }
+
+  /**
+   * Accept a client-built zip of offline recordings:
+   * - manifest.json: { entries: [{ localId, path, filename, mimeType, sha256?, bizId }] }
+   * - audio files at the paths listed in the manifest
+   * Returns per-entry results so one bad file does not fail the whole batch.
+   */
+  async batchIngestRecordingsZip(userId: string, zipBuffer: Buffer): Promise<{
+    results: Array<{
+      localId: string;
+      status: 'synced' | 'failed';
+      assetId?: string;
+      error?: string;
+    }>;
+  }> {
+    const MAX_ENTRIES = 20;
+    const MAX_ENTRY_BYTES = 25 * 1024 * 1024;
+    let zip: AdmZip;
+    try {
+      zip = new AdmZip(zipBuffer);
+    } catch {
+      throw new BadRequestException('录音压缩包无法读取');
+    }
+
+    const manifestEntry = zip.getEntry('manifest.json');
+    if (!manifestEntry) throw new BadRequestException('录音压缩包缺少 manifest.json');
+    let manifest: { entries?: Array<{
+      localId?: string;
+      path?: string;
+      filename?: string;
+      mimeType?: string;
+      sha256?: string;
+      bizId?: string;
+    }> };
+    try {
+      manifest = JSON.parse(manifestEntry.getData().toString('utf8'));
+    } catch {
+      throw new BadRequestException('manifest.json 无效');
+    }
+    const entries = Array.isArray(manifest?.entries) ? manifest.entries : [];
+    if (entries.length === 0) throw new BadRequestException('录音压缩包没有条目');
+    if (entries.length > MAX_ENTRIES) {
+      throw new BadRequestException(`单次最多上传 ${MAX_ENTRIES} 条录音`);
+    }
+
+    const results: Array<{
+      localId: string;
+      status: 'synced' | 'failed';
+      assetId?: string;
+      error?: string;
+    }> = [];
+
+    for (const entry of entries) {
+      const localId = String(entry?.localId ?? '').trim();
+      if (!localId) {
+        results.push({ localId: '', status: 'failed', error: 'localId 缺失' });
+        continue;
+      }
+      try {
+        const pathInZip = String(entry.path ?? '').trim();
+        if (!pathInZip || pathInZip.includes('..') || pathInZip.startsWith('/')) {
+          throw new Error('录音路径无效');
+        }
+        const fileEntry = zip.getEntry(pathInZip);
+        if (!fileEntry || fileEntry.isDirectory) throw new Error('录音文件缺失');
+        const buffer = fileEntry.getData();
+        if (!buffer?.length) throw new Error('录音内容为空');
+        if (buffer.length > MAX_ENTRY_BYTES) throw new Error('单条录音过大');
+
+        const actualSha = createHash('sha256').update(buffer).digest('hex');
+        const expectedSha = entry.sha256?.trim().toLowerCase();
+        if (expectedSha && expectedSha !== actualSha) {
+          throw new Error('录音校验和不匹配');
+        }
+
+        const filename = this.sanitizeFilename(entry.filename || `${localId}.webm`);
+        const mimeType = entry.mimeType?.trim() || 'audio/webm';
+        if (!mimeType.startsWith('audio/') && mimeType !== 'application/octet-stream') {
+          throw new Error('仅支持音频录音');
+        }
+
+        const asset = await this.createAssetFromBuffer({
+          buffer,
+          filename,
+          mimeType,
+          group: FileAssetGroup.user_recording,
+        });
+        const bizId = String(entry.bizId ?? `user-recording:${localId}`).trim();
+        if (!bizId) throw new Error('bizId 缺失');
+        await this.createReference(userId, {
+          assetId: asset.id,
+          bizType: 'practice_recording',
+          bizId,
+        });
+        results.push({ localId, status: 'synced', assetId: asset.id });
+      } catch (error: any) {
+        this.logger.warn(`batch recording ${localId} failed: ${error?.message ?? error}`);
+        results.push({
+          localId,
+          status: 'failed',
+          error: error?.message ?? '上传失败',
+        });
+      }
+    }
+
+    return { results };
   }
 
   async createAssetFromBuffer(input: IngestBufferInput): Promise<FileAsset> {

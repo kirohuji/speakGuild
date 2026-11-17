@@ -207,4 +207,15 @@ describe('learning pack uninstall GC', () => {
     expect(installSpy).toHaveBeenCalled()
     installSpy.mockRestore()
   })
+
+  it('keeps files still pinned by favorite:{entryId} asset_refs after pack uninstall GC', async () => {
+    assetRefs.push({ id: 'favorite:word:hello:sha-unique', packId: 'favorite:word:hello', sha256: 'sha-unique' })
+
+    await learningPackService.uninstallMetadata('pack-a')
+    await learningPackService.drainPackGcQueue()
+
+    expect(removedAssets).toEqual([])
+    expect(rmdirCalls).toContain('learning-packs/pack-a')
+  })
 })
+

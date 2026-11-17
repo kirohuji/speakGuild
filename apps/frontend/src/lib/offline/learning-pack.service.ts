@@ -332,8 +332,7 @@ async function cleanupObsoletePackAssetRefs(packId: string, manifest: LearningPa
   for (const ref of refs) {
     if (declared.has(ref.sha256)) continue
     await localDb.delete('asset_refs', ref.id)
-    const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', ref.sha256)
-    if (remaining.length === 0) await assetCacheService.remove(ref.sha256).catch(() => undefined)
+    await assetCacheService.releaseIfUnreferenced(ref.sha256)
   }
 }
 

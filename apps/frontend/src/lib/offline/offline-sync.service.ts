@@ -1,8 +1,13 @@
 import { checkInRepository, type CheckInPayload } from './check-in.repository'
 import { pointsApi } from '@/features/points/api'
 import { useUserStore } from '@/stores/user.store'
-import { prepareRecordingPayload, uploadUserRecording, RecordingDependencyError } from './user-recordings'
-import { replayNotebookMutation, findPulledNotebook } from './notebook-sync'
+import { prepareRecordingPayload, uploadUserRecording, uploadPendingRecordingsZip, RecordingDependencyError } from './user-recordings'
+import {
+  replayNotebookMutation,
+  findPulledNotebook,
+  selectNotebookPushBatch,
+  ackNotebookPushResults,
+} from './notebook-sync'
 import { serializeNotebookWrite } from './notebook-mutations'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { learningStatisticsRepository } from './learning-statistics.repository'
@@ -342,11 +347,15 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
     }
   }
 
+  const expressionsToUnpin: string[] = []
   for (const id of deleted?.expressionItems ?? []) {
     const entries = await localDb.findByIndex<any>('expression_entries', 'remote_id', id)
     for (const entry of entries) {
       const related = await localDb.findByIndex<any>('learning_notebook_items', 'expression_entry_id', entry.id)
-      if (!related.some(hasPending)) notebookWrites.push({ table: 'expression_entries', deleteId: entry.id })
+      if (!related.some(hasPending)) {
+        notebookWrites.push({ table: 'expression_entries', deleteId: entry.id })
+        expressionsToUnpin.push(entry.id)
+      }
     }
   }
 
@@ -386,6 +395,35 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
   }
   if (checkpoint) notebookWrites.push({ table: 'kv', value: { ...checkpoint, updatedAt: new Date().toISOString() } })
   await localDb.commitLocalWrites(notebookWrites)
+
+  const favoriteAudioPin = await import('./favorite-audio-pin.service')
+    .then((mod) => mod.favoriteAudioPinService)
+    .catch(() => null)
+  for (const entryId of expressionsToUnpin) {
+    void favoriteAudioPin?.unpinExpressionAudio(entryId).catch(() => undefined)
+  }
+  const pinEntryIds = new Set<string>()
+  const maybeOrphanEntryIds = new Set<string>()
+  for (const write of notebookWrites) {
+    if (write.table !== 'learning_notebook_items' || write.deleteId || !write.value) continue
+    const expressionEntryId = write.value.expressionEntryId ? String(write.value.expressionEntryId) : ''
+    if (!expressionEntryId) continue
+    if (write.value.deletedAt) maybeOrphanEntryIds.add(expressionEntryId)
+    else pinEntryIds.add(expressionEntryId)
+  }
+  for (const entryId of pinEntryIds) {
+    const entry = await localDb.get<any>('expression_entries', entryId)
+    if (entry) void favoriteAudioPin?.pinExpressionAudio(entry).catch(() => undefined)
+  }
+  if (maybeOrphanEntryIds.size > 0) {
+    const activeIds = new Set((await localDb.activeNotebookItems()).map((row) => row.expressionEntryId))
+    for (const entryId of maybeOrphanEntryIds) {
+      if (!activeIds.has(entryId)) {
+        void favoriteAudioPin?.unpinExpressionAudio(entryId).catch(() => undefined)
+      }
+    }
+  }
+
   notifyLearningLibraryChanged()
 }
 
@@ -695,10 +733,9 @@ export const offlineSyncService = {
     let dailyHistoryComplete = false
     let finalCursors: Record<string, string | null> = { ...cursors }
     const syncStore = useOfflineSyncStore.getState()
-    const reportProgress = (phase: 'snapshot' | 'pull', pages: number, message: string) => {
-      if (syncStore.loginRestorePending || syncStore.isSyncing) {
-        syncStore.setRestoreProgress({ phase, pages, message })
-      }
+    // 顶栏进度只在冷启动 zip 快照阶段展示；增量分页 pull 不刷 UI。
+    const reportSnapshotProgress = (pages: number, message: string) => {
+      syncStore.setRestoreProgress({ phase: 'snapshot', pages, message })
     }
 
     const countChanged = (changed: PullResult['changed']) =>
@@ -725,11 +762,19 @@ export const offlineSyncService = {
     const isColdStart = !types && Object.keys(cursors).length === 0 && !notebooksComplete
     if (isColdStart) {
       try {
-        reportProgress('snapshot', 0, '正在下载同步快照')
+        reportSnapshotProgress(0, '正在同步数据')
         const snapshot = await syncApi.pullSnapshot()
+        const zipBytes = snapshot.buffer.byteLength
+        const zipKb = (zipBytes / 1024).toFixed(1)
+        const zipMb = (zipBytes / (1024 * 1024)).toFixed(2)
+        logger.info(`cold-start sync zip: ${zipBytes} bytes (${zipKb} KB / ${zipMb} MB), complete=${snapshot.complete}`)
+        console.info(`[offline-sync] cold-start zip size: ${zipBytes} bytes (${zipKb} KB / ${zipMb} MB), complete=${snapshot.complete}`)
         const payload = await readSyncSnapshotZip(snapshot.buffer)
         if (userId && payload.userId !== userId) throw new Error('Account changed')
-        reportProgress('snapshot', 1, '正在写入同步快照')
+        const changedCount = countChanged(payload.changed)
+        const deletedCount = countDeleted(payload.deleted)
+        console.info(`[offline-sync] cold-start zip payload: changed=${changedCount}, deleted=${deletedCount}, complete=${payload.complete}`)
+        reportSnapshotProgress(1, '正在同步数据')
         await serializeNotebookWrite(() => batchStatisticsNotifications(() => applyUserPullChanges(
           payload.changed,
           payload.deleted,
@@ -738,8 +783,8 @@ export const offlineSyncService = {
         for (const run of payload.changed.dailyPracticeRuns ?? []) {
           if (typeof run?.clientRunId === 'string' && run.clientRunId) dailyPracticeRunIds.add(run.clientRunId)
         }
-        totalChanged += countChanged(payload.changed)
-        totalDeleted += countDeleted(payload.deleted)
+        totalChanged += changedCount
+        totalDeleted += deletedCount
         finalCursors = payload.cursors
         cursors = Object.fromEntries(
           Object.entries(payload.cursors).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].length > 0),
@@ -748,7 +793,9 @@ export const offlineSyncService = {
         if (payload.complete || snapshot.complete || !Object.values(payload.hasMore ?? {}).some(Boolean)) {
           complete = true
         }
+        syncStore.setRestoreProgress(null)
       } catch (error) {
+        syncStore.setRestoreProgress(null)
         logger.warn('cold-start snapshot failed, falling back to paged pull', error)
       }
     }
@@ -761,7 +808,6 @@ export const offlineSyncService = {
     let pendingTypes = types
     while (!complete) {
       pullPages += 1
-      reportProgress('pull', pullPages, `正在同步数据（第 ${pullPages} 页）`)
       const result = await syncApi.pull(cursors, pendingTypes)
       if (accountResetInProgress || (userId && (getCurrentSessionSnapshot()?.user?.id !== userId || result.userId !== userId))) throw new Error('Account changed')
       await serializeNotebookWrite(() => batchStatisticsNotifications(() => applyUserPullChanges(result.changed, result.deleted, { id: cursorKey, value: JSON.stringify(result.cursors) })))
@@ -810,9 +856,6 @@ export const offlineSyncService = {
     if (complete && (!types || types.includes('learningNotebookItems'))) {
       await localDb.put('kv', { id: 'sync:user:notebooks-complete', value: true })
       notifyLearningLibraryChanged()
-    }
-    if (syncStore.restoreProgress) {
-      syncStore.setRestoreProgress({ phase: 'done', pages: 0, message: '同步完成' })
     }
     return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted, dailyPracticeRunIds: [...dailyPracticeRunIds], complete }
   },
@@ -931,6 +974,18 @@ export const offlineSyncService = {
       return { synced, failed, skipped, remaining: await countRemaining(), operations }
     }
 
+    // Pre-upload local recordings as zip chunks so later prepareRecordingPayload is a remap.
+    const needsRecordingUpload = !outboxTypes || [...outboxTypes].some((type) =>
+      type === 'user_recording' || type === 'daily_practice' || type === 'practice_turn' || type === 'topic_submission')
+    if (needsRecordingUpload) {
+      try {
+        const zipUpload = await uploadPendingRecordingsZip()
+        if (zipUpload.synced > 0) synced += zipUpload.synced
+      } catch (error) {
+        logger.warn('recording zip pre-upload failed; falling back to per-file upload', error)
+      }
+    }
+
     // 预取 expression 全量列表，供 replayItem 中 delete 操作复用（避免逐条 list()）
     let exprCtx: { items: any[] } | undefined
     try {
@@ -941,9 +996,31 @@ export const offlineSyncService = {
 
     // 分离可批量推送的类型和需要单独处理的复杂类型。
     // practice_session / practice_turn 需要按创建顺序 replay，才能把 local_session 映射到远端 session。
-    const bulkEntityTypes = new Set(['my_unit', 'word_entry', 'chunk_entry', 'pattern_entry'])
+    // notebook / notebook_item 走专用批量路径（predecessor + remoteId remap）。
+    const bulkEntityTypes = new Set([
+      'my_unit',
+      'word_entry',
+      'chunk_entry',
+      'pattern_entry',
+      'check_in',
+      'novel_progress',
+      'learning_activity',
+    ])
+    const notebookEntityTypes = new Set(['notebook', 'notebook_item'])
     const bulkItems = items.filter((item) => bulkEntityTypes.has(item.entityType))
-    const individualItems = items.filter((item) => !bulkItems.includes(item))
+
+    const applyBulkSideEffects = async (item: SyncOutboxItem, result: { remoteItem?: any }) => {
+      if (result.remoteItem && ['word_entry', 'chunk_entry', 'pattern_entry'].includes(item.entityType)) {
+        await cacheExpressionItem(exprCtx, result.remoteItem)
+      }
+      if (item.entityType === 'check_in' && result.remoteItem) {
+        const payload = item.payload as CheckInPayload
+        await checkInRepository.acknowledge(payload, result.remoteItem)
+        if (getCurrentSessionSnapshot()?.user?.id === payload.ownerId && useUserStore.getState().currentUserId === payload.ownerId) {
+          useUserStore.getState().setPointsBalance(result.remoteItem.points)
+        }
+      }
+    }
 
     // 批量推送（每批最多 100 条，防止单次请求体过大）
     const BATCH_SIZE = 100
@@ -963,9 +1040,7 @@ export const offlineSyncService = {
         for (let i = 0; i < batch.length; i++) {
           const result = results[i]
           if (result?.status === 'synced') {
-            if (result.remoteItem) {
-              await cacheExpressionItem(exprCtx, result.remoteItem)
-            }
+            await applyBulkSideEffects(batch[i], result)
             if (await syncOutbox.markSynced(batch[i].id, batch[i])) synced += 1
           } else if (result?.status === 'skipped') {
             if (await syncOutbox.markSynced(batch[i].id, batch[i])) skipped += 1
@@ -1004,6 +1079,65 @@ export const offlineSyncService = {
       }
     }
 
+    // 学习库：依赖安全切片后一次（或按 100 条分批）push
+    {
+      let notebookPending = (await syncOutbox.listPending(outboxTypes))
+        .filter((item) => notebookEntityTypes.has(item.entityType))
+      if (outboxTypes) notebookPending = notebookPending.filter((item) => outboxTypes.has(item.entityType))
+
+      while (notebookPending.length > 0) {
+        const { batch, prepared } = await selectNotebookPushBatch(notebookPending, BATCH_SIZE)
+        if (batch.length === 0) break
+        try {
+          const { results } = await syncApi.push(prepared)
+          const acks: Array<{ item: SyncOutboxItem; result: import('./sync-api').PushResult }> = []
+          let stopChain = false
+          for (let i = 0; i < batch.length; i++) {
+            const result = results[i]
+            if (stopChain) break
+            if (result?.status === 'synced') {
+              acks.push({ item: batch[i], result })
+            } else if (result?.status === 'skipped') {
+              if (await syncOutbox.markSynced(batch[i].id, batch[i])) skipped += 1
+            } else if (isPermanentSyncError(result?.error)) {
+              await syncOutbox.markDiscarded(batch[i].id)
+              skipped += 1
+              stopChain = true
+            } else {
+              await syncOutbox.markFailed(batch[i].id, result?.error, batch[i])
+              failed += 1
+              stopChain = true
+            }
+          }
+          if (acks.length > 0) {
+            await ackNotebookPushResults(acks)
+            for (const { item } of acks) {
+              if (await syncOutbox.markSynced(item.id, item)) synced += 1
+            }
+          }
+        } catch {
+          for (const item of batch) {
+            try {
+              await replayNotebookMutation(item)
+              if (await syncOutbox.markSynced(item.id, item)) synced += 1
+            } catch (error) {
+              await syncOutbox.markFailed(item.id, error, item)
+              failed += 1
+            }
+          }
+        }
+
+        notebookPending = (await syncOutbox.listPending(outboxTypes))
+          .filter((item) => notebookEntityTypes.has(item.entityType))
+        if (outboxTypes) notebookPending = notebookPending.filter((item) => outboxTypes.has(item.entityType))
+        // Avoid infinite loop when remaining rows cannot enter a batch (blocked deps).
+        if (batch.length > 0) {
+          const remainingIds = new Set(notebookPending.map((item) => item.id))
+          if (batch.every((item) => remainingIds.has(item.id))) break
+        }
+      }
+    }
+
     // 逐条处理需要顺序 replay 的类型。
     let madeProgress = true
     let replayPasses = 0
@@ -1012,7 +1146,7 @@ export const offlineSyncService = {
       const pending = (await syncOutbox.listPending(outboxTypes)).sort((a, b) => Number(b.entityType === 'notebook') - Number(a.entityType === 'notebook') || Number(b.entityType === 'check_in') - Number(a.entityType === 'check_in') || (a.entityType === 'check_in' && b.entityType === 'check_in' ? a.entityId.localeCompare(b.entityId) : a.createdAt.localeCompare(b.createdAt)))
 
       for (const item of pending) {
-        if (bulkEntityTypes.has(item.entityType)) {
+        if (bulkEntityTypes.has(item.entityType) || notebookEntityTypes.has(item.entityType)) {
           continue // 已批量处理，跳过
         }
         try {

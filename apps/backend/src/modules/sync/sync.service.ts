@@ -1,9 +1,12 @@
 import { applyNotebookMutation } from './notebook-sync';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import AdmZip = require('adm-zip');
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { hasContentText, keepRicher, looksLikeContentSnapshot, mergeContentSnapshots } from '../../common/content-snapshot';
+import { PointsService } from '../points/points.service';
+import { ContentExperienceService } from '../content-experiences/content-experience.service';
+import { DailyPracticeService } from '../practice-ai/daily-practice.service';
 
 interface OutboxItem {
   id?: string;
@@ -16,7 +19,12 @@ interface OutboxItem {
 
 @Injectable()
 export class SyncService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly pointsService?: PointsService,
+    @Optional() private readonly contentExperiences?: ContentExperienceService,
+    @Optional() private readonly dailyPractice?: DailyPracticeService,
+  ) {}
 
   private expressionSourceFields(payload: any, existingSnapshot?: unknown) {
     const incoming = payload?.sourceSnapshot;
@@ -112,6 +120,14 @@ export class SyncService {
       if (operation === 'delete') {
         await this.prisma.userSceneProgress.deleteMany({
           where: { userId, sceneId: entityId },
+        });
+        return { handled: true };
+      }
+      if (operation === 'complete') {
+        await this.prisma.userSceneProgress.upsert({
+          where: { userId_sceneId: { userId, sceneId: entityId } },
+          create: { userId, sceneId: entityId, readiness: 100, mastery: 100 },
+          update: { readiness: 100, mastery: 100 },
         });
         return { handled: true };
       }
@@ -391,6 +407,40 @@ export class SyncService {
         });
         return { handled: true };
       }
+    }
+
+    // ---- 签到 ----
+    if (entityType === 'check_in') {
+      if (!this.pointsService) return { handled: false };
+      const timeZone = payload?.timeZone || 'UTC';
+      const result = await this.pointsService.checkIn(userId, timeZone, {
+        ownerId: payload?.ownerId,
+        date: payload?.date,
+        occurredAt: payload?.occurredAt,
+        timeZone: payload?.timeZone,
+        clientMutationId: item.clientMutationId,
+      });
+      return { handled: true, remoteItem: result };
+    }
+
+    // ---- 小说阅读进度 ----
+    if (entityType === 'novel_progress' && operation === 'update') {
+      if (!this.contentExperiences) return { handled: false };
+      const progress = await this.contentExperiences.saveNovelProgress(userId, entityId, {
+        locator: payload?.locator ?? {},
+        percentage: Number(payload?.percentage ?? 0),
+      });
+      return { handled: true, remoteId: progress.id, remoteItem: progress };
+    }
+
+    // ---- 学习时长活动 ----
+    if (entityType === 'learning_activity') {
+      if (!this.dailyPractice) return { handled: false };
+      const result = await this.dailyPractice.recordActivity(userId, payload ?? {});
+      if ((result as any)?.accepted === false) {
+        throw new Error('学习时长未被接受');
+      }
+      return { handled: true, remoteItem: result };
     }
 
     // recording 暂不处理（走客户端单个上传 API）

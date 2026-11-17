@@ -264,6 +264,12 @@ export const offlineStorageService = {
    * and local AI/STT model files.
    */
   async clearUserData(): Promise<void> {
+    const { isFavoriteAudioPackId } = await import('./favorite-audio-pin.service')
+    const { assetCacheService } = await import('./asset-cache.service')
+    const favoriteRefs = (await localDb.list<any>('asset_refs')).filter((ref) => isFavoriteAudioPackId(ref.packId))
+    const favoriteShas = [...new Set(favoriteRefs.map((ref) => String(ref.sha256 ?? '')).filter(Boolean))]
+    await localDb.deleteWhere<any>('asset_refs', (ref) => isFavoriteAudioPackId(ref.packId))
+
     await clearTables(USER_SCOPED_TABLES)
     await localDb.deleteWhere<any>('kv', (item) => {
       const id = String(item.id ?? '')
@@ -272,6 +278,8 @@ export const offlineStorageService = {
     })
     clearUserScopedLocalStorageKeys()
     if (isNative()) await Filesystem.rmdir({ path: 'user-recordings', directory: Directory.Data, recursive: true }).catch(() => undefined)
+
+    await Promise.all(favoriteShas.map((sha256) => assetCacheService.releaseIfUnreferenced(sha256)))
   },
 
   async getStats(): Promise<OfflineStorageStats> {
@@ -472,7 +480,9 @@ export const offlineStorageService = {
       // are not racing native rmdir.
       await learningPackService.drainPackGcQueue()
       // Repair interrupted/legacy installs that left no downloaded_packs row.
-      await localDb.clear('asset_refs')
+      // Keep favorite:{expressionEntryId} refs so collected audio stays offline.
+      const { isFavoriteAudioPackId } = await import('./favorite-audio-pin.service')
+      await localDb.deleteWhere<any>('asset_refs', (ref) => !isFavoriteAudioPackId(ref.packId))
       await localDb.clear('deferred_pack_assets')
       await clearTables(['downloaded_packs', 'downloaded_unit_details', 'ink_scripts'])
       await clearTables(['offline_vocabularies', 'offline_chunks', 'offline_patterns', 'offline_content_refs'])

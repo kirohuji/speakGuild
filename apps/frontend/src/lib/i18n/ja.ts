@@ -1,7 +1,7 @@
 const ja = {
   translation: {
     network: {"offline": "オフラインです。ダウンロード済みの内容は利用できます。接続後に再試行してください。", "unavailable": "現在接続できません。しばらくしてから再試行してください。"},
-    recording: {"submitFailed": "送信が完了しませんでした。入力内容はそのまま残っています。再試行してください。", "transcriptionFailedSaved": "文字起こしに失敗しましたが、録音は端末に保存されています。文字を入力して続けられます。", "modelIncomplete": "ダウンロードが未完了です。再ダウンロードしてモデルを修復してください。", "saveFailed": "録音を保存できませんでした。空き容量を確認して再試行してください。", "saving": "録音を保存中…"},
+    recording: {"submitFailed": "送信が完了しませんでした。再試行してください。", "transcriptionFailedSaved": "認識に失敗しました。もう一度お試しください。", "modelIncomplete": "ダウンロードが未完了です。再ダウンロードしてモデルを修復してください。", "saveFailed": "録音を保存できませんでした。空き容量を確認して再試行してください。", "saving": "録音を保存中…"},
     app: {
       name: 'ManYuDing',
       tagline: '専門ガイド外国語試験対策プラットフォーム',

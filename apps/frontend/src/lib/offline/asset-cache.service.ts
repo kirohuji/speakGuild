@@ -2,9 +2,12 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Capacitor } from '@capacitor/core'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
+import { isCollapsedOpaqueStableUrl, stableRemoteUrl } from './asset-url-identity'
 import { localDb } from './unified-storage'
 import write_blob from 'capacitor-blob-writer'
 import { digestBuffer } from './sha256-worker.service'
+
+export { isCollapsedOpaqueStableUrl, stableRemoteUrl } from './asset-url-identity'
 
 export interface AssetRef {
   assetId?: string
@@ -45,16 +48,6 @@ export interface LocalAsset {
 function normalizeUrl(url: string) {
   if (url.startsWith('//')) return `https:${url}`
   return url
-}
-
-/** A COS signature changes, but the object pathname is the stable resource identity. */
-export function stableRemoteUrl(url: string) {
-  try {
-    const parsed = new URL(url)
-    return `${parsed.origin}${parsed.pathname}`
-  } catch {
-    return url
-  }
 }
 
 export const OFFLINE_RESOURCE_MISSING = '__offline_resource_missing__'
@@ -244,10 +237,11 @@ async function putAliases(record: LocalAsset, ref: AssetRef, url: string): Promi
   // One physical file may have multiple ways to be addressed. Keep aliases in
   // SQLite, never as extra files. In particular fileAssetId makes an installed
   // pack work after the server generates a new signed URL for the same asset.
-  const aliases = new Set<string>([
-    await digest(url),
-    await digest(stableRemoteUrl(url)),
-  ])
+  const aliases = new Set<string>([await digest(url)])
+  const stable = stableRemoteUrl(url)
+  if (stable && !isCollapsedOpaqueStableUrl(stable)) {
+    aliases.add(await digest(stable))
+  }
   if (ref.assetId) aliases.add(ref.assetId)
   if (ref.fileAssetId) aliases.add(ref.fileAssetId)
   if (ref.alias) aliases.add(ref.alias)
@@ -326,10 +320,13 @@ export const assetCacheService = {
     // package installer has already saved the exact same resource under its
     // URL/SHA alias. Probe every stable identity and only treat a *ready* row
     // as authoritative; failed metadata must never shadow a real local file.
+    const stable = stableRemoteUrl(url)
     const candidateIds = [...new Set([
       key,
       await digest(url),
-      await digest(stableRemoteUrl(url)),
+      // Never probe digest("null") — legacy installs may still have that poisoned
+      // shared alias from the opaque-origin bug; ignore it on read.
+      ...(stable && !isCollapsedOpaqueStableUrl(stable) ? [await digest(stable)] : []),
       ref.sha256 ?? '',
       inferredFileAssetId,
       ref.alias ?? '',
@@ -571,5 +568,30 @@ export const assetCacheService = {
   async removeRef(ref: AssetRef): Promise<void> {
     const key = await assetKey(ref)
     await this.remove(key)
+  },
+
+  /** Locate a ready local_assets row for a content / asset:// URL after playback resolve. */
+  async findReadyAssetForUrl(url: string, assetId?: string | null): Promise<LocalAsset | null> {
+    const normalized = normalizeUrl(url)
+    if (!normalized) return null
+    const inferredFileAssetId = assetId || fileAssetIdFromUrl(normalized) || ''
+    const stable = stableRemoteUrl(normalized)
+    const candidateIds = [...new Set([
+      inferredFileAssetId,
+      await digest(normalized),
+      ...(stable && !isCollapsedOpaqueStableUrl(stable) ? [await digest(stable)] : []),
+    ].filter(Boolean))]
+    for (const candidateId of candidateIds) {
+      const candidate = await readyAsset(candidateId)
+      if (candidate?.localUri) return candidate
+    }
+    return null
+  },
+
+  /** Drop the physical file once no asset_refs row still points at this sha256. */
+  async releaseIfUnreferenced(sha256: string): Promise<void> {
+    if (!sha256) return
+    const remaining = await localDb.findByIndex<{ id: string }>('asset_refs', 'sha256', sha256)
+    if (remaining.length === 0) await this.remove(sha256).catch(() => undefined)
   },
 }

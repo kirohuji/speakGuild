@@ -79,9 +79,76 @@ describe('server notebook acknowledgements', () => {
   })
 })
 
-it('paginates more than 500 notebooks sharing one timestamp without skipping', async () => {
+describe('server batch push ordering', () => {
+  it('applies notebook create then item status in one push via predecessor receipts', async () => {
+    const { tx } = transaction()
+    tx.expressionItem = {
+      findFirst: vi.fn(async () => null),
+      create: vi.fn(async ({ data }: any) => ({ id: 'expression-1', ...data, deletedAt: null })),
+      update: vi.fn(async ({ data }: any) => ({ id: 'expression-1', ...data })),
+    }
+    tx.learningNotebookItem.findUnique = vi.fn(async () => null)
+    tx.learningNotebookItem.upsert = vi.fn(async ({ create }: any) => ({
+      id: 'association-1',
+      updatedAt: new Date('2026-11-17T01:00:00Z'),
+      version: 0,
+      ...create,
+      expressionItem: { id: 'expression-1', type: 'word', original: 'hello' },
+    }))
+
+    const createResult = await applyNotebookMutation(tx, 'a', create)
+    expect(createResult.remoteItem.id).toBe('local-book')
+
+    const status = await applyNotebookMutation(tx, 'a', {
+      entityType: 'notebook_item',
+      entityId: 'local-item',
+      clientMutationId: 'status-1',
+      payload: {
+        notebookId: 'local-book',
+        deleted: false,
+        intent: 'status',
+        masteryStatus: 'reviewing',
+        predecessor: 'create',
+        entry: { kind: 'word', text: 'hello' },
+      },
+    })
+    expect(status.remoteItem.masteryStatus).toBe('reviewing')
+    expect(tx.notebookSyncReceipt.create).toHaveBeenCalledTimes(2)
+  })
+
+  it('handles my_unit complete and check_in through SyncService.push', async () => {
+    const upsert = vi.fn(async () => ({ id: 'progress' }))
+    const checkIn = vi.fn(async () => ({
+      date: '2026-11-17',
+      earned: 10,
+      points: 100,
+      isMakeup: false,
+      status: { today: '2026-11-17', checkedIn: true },
+    }))
+    const service = new SyncService(
+      { userSceneProgress: { upsert } } as any,
+      { checkIn } as any,
+    )
+    const result = await service.push('user-1', [
+      { entityType: 'my_unit', entityId: 'scene-1', operation: 'complete', payload: {}, clientMutationId: 'c1' },
+      {
+        entityType: 'check_in',
+        entityId: '2026-11-17',
+        operation: 'create',
+        payload: { ownerId: 'user-1', date: '2026-11-17', occurredAt: '2026-11-17T01:00:00Z', timeZone: 'Asia/Shanghai' },
+        clientMutationId: 'c2',
+      },
+    ])
+    expect(result.results.map((row) => row.status)).toEqual(['synced', 'synced'])
+    expect(upsert).toHaveBeenCalled()
+    expect(checkIn).toHaveBeenCalled()
+    expect(result.results[1].remoteItem.earned).toBe(10)
+  })
+})
+
+it('paginates more notebooks than one pull page without skipping', async () => {
   const updatedAt = new Date('2026-11-14T01:00:00Z')
-  const data = Array.from({ length: 501 }, (_, index) => ({ id: String(index).padStart(4, '0'), updatedAt }))
+  const data = Array.from({ length: 101 }, (_, index) => ({ id: String(index).padStart(4, '0'), updatedAt }))
   const findMany = vi.fn(async ({ where, take }: any) => {
     if (where.OR?.[0]?.deletedAt) return []
     return data.filter(row => row.updatedAt > where.OR[0].updatedAt.gt ||
@@ -89,11 +156,11 @@ it('paginates more than 500 notebooks sharing one timestamp without skipping', a
   })
   const service = new SyncService({ learningNotebook: { findMany } } as any)
   const first = await service.pull('a', {}, ['learningNotebooks'])
-  expect(first.changed.learningNotebooks).toHaveLength(500)
+  expect(first.changed.learningNotebooks).toHaveLength(100)
   expect(first.hasMore.learningNotebooks).toBe(true)
   const next = await service.pull('a', first.cursors as any, ['learningNotebooks'])
   expect(next.changed.learningNotebooks).toHaveLength(1)
-  expect(next.changed.learningNotebooks[0].id).toBe('0500')
+  expect(next.changed.learningNotebooks[0].id).toBe('0100')
   expect(next.hasMore.learningNotebooks).toBe(false)
   expect(findMany.mock.calls.every(([args]: any) => args.where.userId === 'a')).toBe(true)
 })

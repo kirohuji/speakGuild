@@ -749,13 +749,13 @@ export const learningContentRepository = {
       updatedAt: next.updatedAt,
       syncStatus: 'synced',
     }
-    // console.log(
-    //   '[saveRemoteExpressionEntry]',
-    //   `id=${entry.id}`,
-    //   `hasContentSnapshot=${!!entry.contentSnapshot}`,
-    //   `snapshotKeys=${entry.contentSnapshot ? Object.keys(entry.contentSnapshot).join(',') : 'none'}`,
-    // )
     await localDb.put('expression_entries', entry)
+    const active = await localDb.activeNotebookItems()
+    if (active.some((row) => row.expressionEntryId === entry.id)) {
+      void import('./favorite-audio-pin.service')
+        .then((mod) => mod.favoriteAudioPinService?.pinExpressionAudio(entry))
+        .catch(() => undefined)
+    }
     return entry
   },
 
@@ -812,13 +812,21 @@ export const learningContentRepository = {
   },
 
   async deleteExpressionByText(kind: ExpressionEntryKind, text: string): Promise<void> {
-    await localDb.delete('expression_entries', entryId(kind, text))
+    const id = entryId(kind, text)
+    await import('./favorite-audio-pin.service')
+      .then((mod) => mod.favoriteAudioPinService?.unpinExpressionAudio(id))
+      .catch(() => undefined)
+    await localDb.delete('expression_entries', id)
   },
 
   async deleteExpressionByRemoteId(remoteId: string): Promise<void> {
     const matches = await localDb.findByIndex<ExpressionEntry>('expression_entries', 'remote_id', remoteId)
     const match = matches[0]
-    if (match) await localDb.delete('expression_entries', match.id)
+    if (!match) return
+    await import('./favorite-audio-pin.service')
+      .then((mod) => mod.favoriteAudioPinService?.unpinExpressionAudio(match.id))
+      .catch(() => undefined)
+    await localDb.delete('expression_entries', match.id)
   },
 
   expressionText,

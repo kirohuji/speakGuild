@@ -1,7 +1,7 @@
 const en = {
   translation: {
     network: {"offline": "You are offline. Downloaded content is available; reconnect to retry online actions.", "unavailable": "Cannot connect right now. Please try again shortly."},
-    recording: {"submitFailed": "Submission did not complete. Your input is still here; please retry.", "transcriptionFailedSaved": "Transcription failed. Your recording is saved on this device; you can type your answer.", "modelIncomplete": "Download is incomplete. Download again to verify and repair the model.", "saveFailed": "Could not save the recording. Check available storage and retry.", "saving": "Saving recording…"},
+    recording: {"submitFailed": "Submission did not complete. Please retry.", "transcriptionFailedSaved": "Recognition failed. Please try again.", "modelIncomplete": "Download is incomplete. Download again to verify and repair the model.", "saveFailed": "Could not save the recording. Check available storage and retry.", "saving": "Saving recording…"},
     app: {
       name: 'ManYuDing',
       tagline: 'Multilingual speaking practice platform',

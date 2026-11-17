@@ -37,7 +37,10 @@ export function DailyActivityChart({ hours, complete, hasActivity, today, pendin
   }))
   const notice = pending ? t('learning.dayDetails.historyPending') : !complete && hasActivity ? t('learning.dayChart.partial') : undefined
   return <ExpandedActivityChart
-    title={t('learning.dayChart.title')} hint={t('learning.chartLegend')} period={period}
+    title={t('learning.dayChart.title')}
+    hint={t('learning.chartLegend')}
+    period={period}
+    periodHeader
     onPrevious={onPrevious} onNext={onNext} canGoNext={canGoNext}
     previousLabel={t('learning.dayChart.previousDay')} nextLabel={t('learning.dayChart.nextDay')} busy={busy}
     items={items} selectedKey={selected === null ? undefined : String(selected)} onSelect={setSelected}
