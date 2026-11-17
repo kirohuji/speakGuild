@@ -426,7 +426,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       unitId
     const coverImage =
       state.myUnits.find((unit) => unit.id === unitId)?.coverImage
-      ?? state.downloadedPacks.find((pack) => pack.packId === unitId)?.coverImage
+      ?? state.shopUnits.find((unit) => unit.id === unitId)?.coverImage
       ?? null
     activePackTaskIds.add(unitId)
     set((s) => ({
@@ -711,7 +711,6 @@ function resolvePackCoverImage(packId: string): string | null {
   return (
     state.myUnits.find((unit) => unit.id === packId)?.coverImage
     ?? state.shopUnits.find((unit) => unit.id === packId)?.coverImage
-    ?? state.downloadedPacks.find((pack) => pack.packId === packId)?.coverImage
     ?? null
   )
 }
