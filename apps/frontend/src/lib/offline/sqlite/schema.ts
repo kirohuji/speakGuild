@@ -20,8 +20,15 @@ import { STATISTICS_TABLES, STATISTICS_DDL, STATISTICS_TRIGGERS } from './statis
  */
 export const DB_NAME = 'speakguild_offline'
 
-/** Increment this when schema changes; triggers onUpgrade. */
+/**
+ * Increment this when schema changes (DDL, indexes, triggers, column migrations).
+ * `initializeOfflineSchema` stores the applied value in kv and skips the heavy
+ * recreate path on later cold starts when it already matches.
+ */
 export const DB_VERSION = 17
+
+/** kv id that records the last successfully applied `DB_VERSION`. */
+export const SCHEMA_VERSION_KEY = 'schema:version'
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -431,7 +438,8 @@ export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
 
 /**
  * Columns added after the original CREATE TABLE. CREATE TABLE IF NOT EXISTS
- * does not alter an existing table, so these statements run on every open.
+ * does not alter an existing table, so these run when `DB_VERSION` advances
+ * (or on first open before `schema:version` is written).
  */
 export const COLUMN_MIGRATIONS = [
   { table: 'daily_practice_attempts', column: 'run_id', sql: `ALTER TABLE daily_practice_attempts ADD COLUMN run_id TEXT` },
@@ -441,6 +449,9 @@ export const COLUMN_MIGRATIONS = [
   { table: 'offline_content_refs', column: 'sort_order', sql: `ALTER TABLE offline_content_refs ADD COLUMN sort_order INTEGER` },
   { table: 'practice_records', column: 'practiced_at', sql: `ALTER TABLE practice_records ADD COLUMN practiced_at TEXT` },
 ]
+
+/** Batched statistics trigger / index DDL. */
+export const ALL_STATISTICS_TRIGGERS_SQL = STATISTICS_TRIGGERS.join(';\n') + ';'
 
 export function isDuplicateColumnError(error: unknown) {
   // Capacitor SQLite native throws Error, while jeep-sqlite/web often throws
@@ -459,10 +470,63 @@ export function isDuplicateColumnError(error: unknown) {
   return message.includes('duplicate column') || message.includes('already exists')
 }
 
+type SchemaQueryRow = { name?: string; id?: string; data?: string }
+
+function parseAppliedSchemaVersion(data: unknown): number | null {
+  if (typeof data !== 'string') return null
+  try {
+    const parsed = JSON.parse(data) as { value?: unknown }
+    return typeof parsed.value === 'number' ? parsed.value : null
+  } catch {
+    return null
+  }
+}
+
+async function readAppliedSchemaVersion(
+  queryRows: (sql: string) => Promise<SchemaQueryRow[]>,
+): Promise<number | null> {
+  try {
+    const rows = await queryRows(`SELECT data FROM kv WHERE id='${SCHEMA_VERSION_KEY}'`)
+    return parseAppliedSchemaVersion(rows[0]?.data)
+  } catch {
+    // kv (or the DB) does not exist yet on first install.
+    return null
+  }
+}
+
+async function writeAppliedSchemaVersion(
+  execute: (sql: string) => Promise<unknown>,
+): Promise<void> {
+  const payload = JSON.stringify({ value: DB_VERSION }).replace(/'/g, "''")
+  await execute(
+    `INSERT INTO kv(id, data, updated_at) VALUES ('${SCHEMA_VERSION_KEY}', '${payload}', datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at`,
+  )
+}
+
+async function ensureHourlyStatisticsBackfill(
+  execute: (sql: string) => Promise<unknown>,
+  queryRows: (sql: string) => Promise<SchemaQueryRow[]>,
+): Promise<void> {
+  if ((await queryRows("SELECT id FROM kv WHERE id='schema:hourly-statistics:v1'")).length) return
+  for (const sql of HOURLY_BACKFILL) await execute(sql)
+  await execute(`INSERT INTO kv(id,data) VALUES ('schema:hourly-statistics:v1','{"value":true}') ON CONFLICT(id) DO NOTHING`)
+}
+
 export async function initializeOfflineSchema(
   execute: (sql: string) => Promise<unknown>,
-  queryRows?: (sql: string) => Promise<Array<{ name?: string }>>,
+  queryRows?: (sql: string) => Promise<SchemaQueryRow[]>,
 ) {
+  if (queryRows) {
+    const applied = await readAppliedSchemaVersion(queryRows)
+    if (applied === DB_VERSION) {
+      // Schema is current: skip DDL/index/trigger storm. Still honor the
+      // independent hourly one-shot marker (interrupted or wiped).
+      await ensureHourlyStatisticsBackfill(execute, queryRows)
+      return
+    }
+  }
+
   await execute(ALL_DDL)
   for (const migration of COLUMN_MIGRATIONS) {
     // jeep-sqlite logs failed execute() calls as uncaught browser errors even
@@ -478,17 +542,28 @@ export async function initializeOfflineSchema(
       if (!isDuplicateColumnError(error)) throw error
     }
   }
-  for (const sql of STATISTICS_TRIGGERS) await execute(sql)
-  for (const idx of INDEXES) {
-    try { await execute(idx) } catch { /* index may already exist */ }
+  try {
+    await execute(ALL_STATISTICS_TRIGGERS_SQL)
+  } catch {
+    // Triggers may already exist on partial upgrades; fall back per-statement.
+    for (const sql of STATISTICS_TRIGGERS) {
+      try { await execute(sql) } catch { /* already exists */ }
+    }
   }
-  if (queryRows && !(await queryRows("SELECT id FROM kv WHERE id='schema:hourly-statistics:v1'")).length) {
-    for (const sql of HOURLY_BACKFILL) await execute(sql)
-    await execute(`INSERT INTO kv(id,data) VALUES ('schema:hourly-statistics:v1','{"value":true}') ON CONFLICT(id) DO NOTHING`)
+  try {
+    await execute(INDEXES.join(';\n') + ';')
+  } catch {
+    for (const idx of INDEXES) {
+      try { await execute(idx) } catch { /* index may already exist */ }
+    }
+  }
+  if (queryRows) {
+    await ensureHourlyStatisticsBackfill(execute, queryRows)
   }
   try {
     await execute(`UPDATE practice_records SET practiced_at = updated_at WHERE practiced_at IS NULL`)
   } catch { /* practiced_at is absent only if the alter failed */ }
+  await writeAppliedSchemaVersion(execute)
 }
 
 /** Indexes for commonly queried fields. */

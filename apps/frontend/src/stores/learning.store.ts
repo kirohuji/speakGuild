@@ -817,11 +817,9 @@ async function processDownloadQueue() {
         await learningPackService.installUnit(next.packId, onProgress, controller.signal)
       }
     } else {
-      // Native install returns after content+deferred index (installed); asset
-      // files continue in drainPackAssetMaterializeQueue inside installUnit.
+      // Native install awaits content + foreground asset materialize (with progress).
       await learningPackService.installUnit(next.packId, onProgress, controller.signal)
     }
-    void learningPackService.drainPackAssetMaterializeQueue(next.packId)
 
     // 先跳到 100% 进度，短暂停留让用户感知完成
     useLearningStore.setState((s) => ({
@@ -950,7 +948,7 @@ export async function startupPackSync() {
   const store = useLearningStore.getState()
   await learningPackService.recoverInterruptedOperations()
   void learningPackService.drainPackGcQueue()
-  void learningPackService.drainPackAssetMaterializeQueue()
+  // Do not bulk-materialize deferred pack assets on startup — extract on demand.
   await store.fetchDownloadedPacks()
   await store.checkPackUpdates(true)
 }

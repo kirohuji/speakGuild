@@ -63,7 +63,7 @@ export function AppearanceContent() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { session } = useAuth();
-  const { presets, activePreset, setActivePreset } = useThemePreset();
+  const { presets, activePreset, setActivePreset, primeBgmPlayback } = useThemePreset();
   const ensurePresets = useThemePresetStore((s) => s.ensurePresets);
   const membership = useUserStore((s) => s.membership);
   const [memberOpen, setMemberOpen] = useState(false);
@@ -180,7 +180,11 @@ export function AppearanceContent() {
             </div>
             <Switch
               checked={bgmEnabled}
-              onCheckedChange={setBgmEnabled}
+              onCheckedChange={(enabled) => {
+                setBgmEnabled(enabled);
+                // Unlock HTMLAudio / AudioContext inside the same user gesture (Capacitor iOS).
+                if (enabled) primeBgmPlayback();
+              }}
               disabled={!activePreset?.bgmUrl}
             />
           </div>

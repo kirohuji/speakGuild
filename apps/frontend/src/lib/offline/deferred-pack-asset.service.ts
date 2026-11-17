@@ -137,7 +137,14 @@ async function materialize(asset: DeferredPackAsset): Promise<string | null> {
       localDb.get<{ status?: string }>('downloaded_packs', asset.packId),
       localDb.get<DeferredPackAsset>('deferred_pack_assets', asset.id),
     ])
-    if (pack?.status !== 'installed' || current?.status !== 'deferred' || current.sha256 !== asset.sha256) return null
+    // Allow `installing` so foreground install can materialize before commit.
+    if (
+      (pack?.status !== 'installed' && pack?.status !== 'installing')
+      || current?.status !== 'deferred'
+      || current.sha256 !== asset.sha256
+    ) {
+      return null
+    }
 
     const ref: AssetRef = {
       url: asset.contentUrl,
@@ -221,18 +228,41 @@ const thisService = {
   },
 
   /**
-   * Background drain: materialize deferred pack assets from retained zips.
+   * Materialize deferred pack assets from retained zips.
    * Processes one pack at a time so a single ZipReader stays hot in memory.
+   * Used both during foreground install (with progress) and recover drains.
    */
-  async materializePending(packId?: string): Promise<void> {
+  async materializePending(
+    packId?: string,
+    options?: {
+      onProgress?: (done: number, total: number) => void
+      signal?: AbortSignal
+      /** When true, also process packs still in `installing` (foreground install). */
+      allowInstalling?: boolean
+    },
+  ): Promise<void> {
     if (!isNative()) return
     const concurrency = 2
+    const allowInstalling = options?.allowInstalling === true
+    const onProgress = options?.onProgress
+    const signal = options?.signal
+    let reportedTotal = 0
+    let reportedDone = 0
+
     for (;;) {
+      if (signal?.aborted) throw new DOMException('Learning pack materialize cancelled', 'AbortError')
       const pending = packId
         ? (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId))
           .filter((row) => row.status === 'deferred')
         : (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'status', 'deferred'))
-      if (pending.length === 0) return
+      if (pending.length === 0) {
+        if (onProgress && reportedTotal > 0) onProgress(reportedTotal, reportedTotal)
+        return
+      }
+      if (reportedTotal === 0) {
+        reportedTotal = pending.length
+        onProgress?.(0, reportedTotal)
+      }
 
       const byPack = new Map<string, DeferredPackAsset[]>()
       for (const row of pending) {
@@ -244,8 +274,11 @@ const thisService = {
       let progressed = false
       for (const [currentPackId, rows] of byPack) {
         const pack = await localDb.get<{ status?: string }>('downloaded_packs', currentPackId)
-        if (pack?.status !== 'installed') continue
+        const statusOk = pack?.status === 'installed'
+          || (allowInstalling && pack?.status === 'installing')
+        if (!statusOk) continue
         for (let i = 0; i < rows.length; i += concurrency) {
+          if (signal?.aborted) throw new DOMException('Learning pack materialize cancelled', 'AbortError')
           const batch = rows.slice(i, i + concurrency)
           const results = await Promise.all(batch.map(async (asset) => {
             const existing = materializations.get(asset.id)
@@ -257,11 +290,20 @@ const thisService = {
               materializations.delete(asset.id)
             }
           }))
+          reportedDone = Math.min(reportedTotal, reportedDone + batch.length)
+          onProgress?.(reportedDone, reportedTotal)
           if (results.some((value) => value != null)) progressed = true
         }
       }
-      // Avoid a tight loop when every row is invalid / pack uninstalled.
-      if (!progressed) return
+      // Avoid a tight loop when every row stays deferred (true stall) or the
+      // pack is gone. If rows were marked invalid, pending shrinks — continue.
+      if (!progressed) {
+        const remaining = packId
+          ? (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId))
+            .filter((row) => row.status === 'deferred').length
+          : (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'status', 'deferred')).length
+        if (remaining >= pending.length) return
+      }
     }
   },
 

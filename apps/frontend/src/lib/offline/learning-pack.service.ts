@@ -6,7 +6,7 @@ import { learningApi } from '@/features/learning/api/learning-api'
 import { readStoredTopicDetail, readStoredUnitDetail, writePackProjection } from './learning-pack-read-model'
 import { localDb } from './unified-storage'
 import { packAuditService, type PackAuditAction } from './pack-audit.service'
-import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
+import { BlobReader, BlobWriter, TextWriter, Uint8ArrayWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
 import { Capacitor } from '@capacitor/core'
 import { FileTransfer } from '@capacitor/file-transfer'
@@ -16,6 +16,7 @@ import { getBearerToken } from '@/features/auth/client'
 import { createFileAssetReference, fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import write_blob from 'capacitor-blob-writer'
 import { createLogger } from './logger'
+import { PackInstallPerfSession } from './learning-pack-install-perf'
 
 const logger = createLogger('learning-pack')
 
@@ -177,7 +178,7 @@ function isVocabularyPronunciationPath(path: string) {
 
 /**
  * Web skips word-audio install/uninstall (playback already falls back to
- * signed URLs). Native keeps deferred indexing / materialization unchanged.
+ * signed URLs). Native indexes deferred rows; materialize on demand (resolve/preload).
  */
 function shouldSkipWebVocabularyPronunciation(asset?: Pick<AssetRef, 'role' | 'path'> | null, path?: string) {
   if (Capacitor.isNativePlatform()) return false
@@ -354,16 +355,25 @@ async function readEntryText(entry: Entry) {
 }
 
 async function readEntryBuffer(entry: Entry) {
-  const readable = entry as Entry & { getData?: (writer: BlobWriter) => Promise<Blob> }
+  const readable = entry as Entry & {
+    getData?: (writer: BlobWriter | Uint8ArrayWriter) => Promise<Blob | Uint8Array>
+  }
   if (!readable.getData) throw new Error(`Zip entry is not readable: ${entry.filename}`)
-  const blob = await readable.getData(new BlobWriter())
-  return blob.arrayBuffer()
+  // Prefer Uint8ArrayWriter to avoid Blob → ArrayBuffer extra copy on large JSON entries.
+  try {
+    const bytes = await readable.getData(new Uint8ArrayWriter()) as Uint8Array
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  } catch {
+    const blob = await readable.getData(new BlobWriter()) as Blob
+    return blob.arrayBuffer()
+  }
 }
 
 async function readJsonEntry<T = any>(entries: Map<string, Entry>, path: string): Promise<T> {
   const entry = entries.get(path)
   if (!entry) throw new Error(`Pack is missing ${path}`)
-  return JSON.parse(await readEntryText(entry)) as T
+  const buffer = await readEntryBuffer(entry)
+  return JSON.parse(new TextDecoder().decode(buffer)) as T
 }
 
 async function verifyEntry(path: string, buffer: ArrayBuffer, checksums?: Record<string, string>) {
@@ -376,6 +386,17 @@ async function verifyEntry(path: string, buffer: ArrayBuffer, checksums?: Record
   }
 }
 
+/** Inflate once → checksum → JSON.parse (no TextEncoder round-trip). */
+async function readVerifiedJsonEntry<T = any>(
+  entry: Entry,
+  path: string,
+  checksums?: Record<string, string>,
+): Promise<T> {
+  const buffer = await readEntryBuffer(entry)
+  await verifyEntry(path, buffer, checksums)
+  return JSON.parse(new TextDecoder().decode(buffer)) as T
+}
+
 async function readPackContentFromEntries(
   entries: Map<string, Entry>,
   manifest: LearningPackManifest,
@@ -384,9 +405,7 @@ async function readPackContentFromEntries(
   const sceneEntry = entries.get('content/scene.json')
   let unitDetail: any
   if (sceneEntry) {
-    const sceneText = await readEntryText(sceneEntry)
-    await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
-    unitDetail = JSON.parse(sceneText)
+    unitDetail = await readVerifiedJsonEntry(sceneEntry, 'content/scene.json', checksums)
   } else {
     unitDetail = await readStoredUnitDetail(manifest.packId)
   }
@@ -397,9 +416,7 @@ async function readPackContentFromEntries(
     const path = `content/topics/${safeFilePart(topicId)}.json`
     const topicEntry = entries.get(path)
     if (topicEntry) {
-      const text = await readEntryText(topicEntry)
-      await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
-      topicDetails.push(JSON.parse(text))
+      topicDetails.push(await readVerifiedJsonEntry(topicEntry, path, checksums))
       continue
     }
 
@@ -709,20 +726,52 @@ async function drainPackAssetMaterializeQueueInternal(packId?: string): Promise<
   if (!(await hasDeferredPackAssets(packId))) return
   if (packAssetMaterializePromise) return drainPackAssetMaterializeQueueInternal(packId)
 
+  const perf = await PackInstallPerfSession.begin('materialize', packId ?? 'all')
+  const deferredBefore = packId
+    ? (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId)
+      .then((rows) => rows.filter((row) => row.status === 'deferred').length)
+      .catch(() => -1))
+    : (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'status', 'deferred')
+      .then((rows) => rows.length)
+      .catch(() => -1))
+  perf.setExtra('deferredBefore', deferredBefore)
+
+  let materializeFailed: unknown = null
   packAssetMaterializePromise = (async () => {
     try {
       // Never extract into a pack directory that GC still owns.
-      await drainPackGcQueueInternal()
-      if (!Capacitor.isNativePlatform()) return
+      await perf.measure('gc_before_materialize', () => drainPackGcQueueInternal())
+      if (!Capacitor.isNativePlatform()) {
+        perf.mark('skip_non_native')
+        return
+      }
       logger.info('[materialize] draining deferred pack assets', { packId: packId ?? 'all' })
-      await deferredPackAssetService.materializePending(packId)
+      await perf.measure('materialize_pending', () => deferredPackAssetService.materializePending(packId), {
+        packId: packId ?? 'all',
+        deferredBefore,
+      })
     } catch (error) {
+      materializeFailed = error
       logger.warn('[materialize] drain failed; will retry later', debugError(error))
     } finally {
       packAssetMaterializePromise = null
     }
   })()
   await packAssetMaterializePromise
+
+  const deferredAfter = packId
+    ? (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId)
+      .then((rows) => rows.filter((row) => row.status === 'deferred').length)
+      .catch(() => -1))
+    : (await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'status', 'deferred')
+      .then((rows) => rows.length)
+      .catch(() => -1))
+  perf.mergeExtras({
+    deferredAfter,
+    materializedApprox: deferredBefore >= 0 && deferredAfter >= 0 ? deferredBefore - deferredAfter : undefined,
+  })
+  await perf.finish(!materializeFailed, materializeFailed ?? undefined)
+
   if (await hasDeferredPackAssets(packId)) {
     await drainPackAssetMaterializeQueueInternal(packId)
   }
@@ -862,7 +911,7 @@ export const learningPackService = {
       await pruneUnreferencedPackZips(pack.packId)
     }
     await drainPackGcQueueInternal()
-    void drainPackAssetMaterializeQueueInternal()
+    // Deferred assets stay on-demand; do not bulk-materialize after recovery.
   },
 
   /** Drain persisted pack file GC jobs (safe to call repeatedly). */
@@ -945,17 +994,19 @@ export const learningPackService = {
       platform: Capacitor.getPlatform(),
       isNative: Capacitor.isNativePlatform(),
     })
+    const perf = await PackInstallPerfSession.begin('install', unitId)
     // Emit progress before GC/journal work so the task UI does not sit at 0%
     // with "等待开始" while SQLite cleanup runs.
     onProgress?.('preparing', 2, { label: '准备安装' })
-    await awaitPackGcBeforeInstall(unitId)
+    await perf.measure('await_pack_gc', () => awaitPackGcBeforeInstall(unitId))
     throwIfAborted(signal)
     onProgress?.('preparing', 4, { label: '准备安装' })
     const previous = await localDb.get<InstalledLearningPack>('downloaded_packs', unitId)
-    await beginPackOperation(unitId, previous ? 'update' : 'install')
+    perf.setExtra('previousVersion', previous?.version ?? null)
+    await perf.measure('begin_pack_operation', () => beginPackOperation(unitId, previous ? 'update' : 'install'))
     try {
-      const installed = await this.installUnitFromZip(unitId, onProgress, signal)
-      await finishPackOperation(unitId)
+      const installed = await this.installUnitFromZip(unitId, onProgress, signal, perf)
+      await perf.measure('finish_pack_operation', () => finishPackOperation(unitId))
       if (Capacitor.isNativePlatform() && previous && previous.version !== installed.version) {
         // Full replacement removes every prior deferred row before inserting
         // the new generation, so the old complete archive is no longer a
@@ -965,6 +1016,7 @@ export const learningPackService = {
           path: learningPackZipPath(unitId, previous.version),
           directory: Directory.Data,
         }).catch(() => undefined)
+        perf.mark('discard_previous_zip', { previousVersion: previous.version, nextVersion: installed.version })
       }
       await recordPackAudit({
         packId: unitId,
@@ -974,12 +1026,13 @@ export const learningPackService = {
         title: installed.title,
         updateMode: previous ? 'full' : undefined,
       })
-      // Native packs are installed with deferred asset rows; materialize off the UI path.
+      // Native assets stay deferred until playback/resolve — do not bulk-materialize here.
       invalidateInstalledPackMediaCache(unitId)
-      void drainPackAssetMaterializeQueueInternal(unitId)
+      await perf.finish(true)
       return installed
     } catch (error) {
       logger.error('install failed, rolling back partial data', { unitId, error: debugError(error) })
+      await perf.finish(false, error)
       await this.rollbackInstall(unitId)
       throw error
     }
@@ -1010,34 +1063,43 @@ export const learningPackService = {
   /**
    * 从已解析的 zip entries 读取并校验 pack-manifest / checksums / scene / topics。
    * 纯读取，无副作用；供全量安装复用，独立可测。
+   * Uses a single inflate buffer for checksum + JSON.parse (no TextEncoder round-trip).
    */
   async parsePackContent(
     entries: Map<string, Entry>,
     checksums: Record<string, string>,
     signal?: AbortSignal,
+    onTopicProgress?: (done: number, total: number, path: string) => void,
   ): Promise<{ unitDetail: any; topicDetails: any[] }> {
     // ④ 场景数据
     const sceneEntry = entries.get('content/scene.json')
     if (!sceneEntry) {
       throw new Error('Pack is missing content/scene.json')
     }
-    const sceneText = await readEntryText(sceneEntry)
-    await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
-    const unitDetail = JSON.parse(sceneText)
+    const unitDetail = await readVerifiedJsonEntry(sceneEntry, 'content/scene.json', checksums)
 
     // ⑤ 话题数据
+    const topicPaths = [...entries.keys()].filter(
+      (path) => path.startsWith('content/topics/') && path.endsWith('.json'),
+    )
     const topicDetails: any[] = []
-    for (const [path, entry] of entries) {
+    for (let index = 0; index < topicPaths.length; index++) {
       throwIfAborted(signal)
-      if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
-      const text = await readEntryText(entry)
-      await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
-      topicDetails.push(JSON.parse(text))
+      const path = topicPaths[index]
+      const entry = entries.get(path)
+      if (!entry) continue
+      topicDetails.push(await readVerifiedJsonEntry(entry, path, checksums))
+      onTopicProgress?.(index + 1, topicPaths.length, path)
     }
     return { unitDetail, topicDetails }
   },
 
-  async installUnitFromZip(unitId: string, onProgress?: LearningPackInstallProgressHandler, signal?: AbortSignal): Promise<InstalledLearningPack> {
+  async installUnitFromZip(
+    unitId: string,
+    onProgress?: LearningPackInstallProgressHandler,
+    signal?: AbortSignal,
+    perf?: PackInstallPerfSession,
+  ): Promise<InstalledLearningPack> {
     const report = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
       throwIfAborted(signal)
       onProgress?.(step, Math.min(99, Math.round(progress)), detail)
@@ -1045,16 +1107,21 @@ export const learningPackService = {
     const startTime = performance.now()
     logger.info('⏳ ① 下载 zip...')
     report('downloading', 5, { label: '下载学习包' })
-    const downloadedZip = await this.downloadUnitZip(unitId, onProgress, signal)
+    const downloadedZip = await (perf
+      ? perf.measure('download_zip', () => this.downloadUnitZip(unitId, onProgress, signal))
+      : this.downloadUnitZip(unitId, onProgress, signal))
     throwIfAborted(signal)
     const zipSizeMB = (downloadedZip.blob.size / 1024 / 1024).toFixed(1)
     logger.info(`✅ ① zip 下载完成: ${zipSizeMB} MB (${downloadedZip.blob.size} bytes)`)
+    perf?.mergeExtras({ zipBytes: downloadedZip.blob.size, zipMB: Number(zipSizeMB), downloadPath: downloadedZip.temporaryPath ? 'file-transfer' : 'xhr-blob' })
     report('parsing', 15, { label: '解析压缩包' })
 
     logger.info('⏳ ② 解析 zip 条目...')
     const reader = new ZipReader(new BlobReader(downloadedZip.blob))
     try {
-      const entryList = await reader.getEntries()
+      const entryList = await (perf
+        ? perf.measure('zip_get_entries', () => reader.getEntries())
+        : reader.getEntries())
       throwIfAborted(signal)
       const entries = new Map<string, Entry>()
       let fileCount = 0
@@ -1066,6 +1133,7 @@ export const learningPackService = {
       }
       logger.info(`✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
       logger.info('zip entries summary', summarizeZipEntries(entries))
+      perf?.mark('zip_index_built', { fileCount, dirCount })
       report('reading_manifest', 20, { label: '读取清单' })
 
       logger.info('⏳ ③ 读取 manifest + checksums...')
@@ -1083,19 +1151,46 @@ export const learningPackService = {
         assetCount: manifest.assets?.length,
         checksumCount: Object.keys(checksums).length,
       })
+      perf?.mergeExtras({
+        packVersion: manifest.version,
+        packTitle: manifest.title,
+        manifestAssetCount: manifest.assets?.length ?? 0,
+        topicCount: manifest.topics?.length ?? 0,
+        vocabCount: manifest.vocabularies?.length ?? 0,
+        chunkCount: manifest.chunks?.length ?? 0,
+        patternCount: manifest.sentencePatterns?.length ?? 0,
+      })
+      perf?.mark('read_manifest', {
+        assetCount: manifest.assets?.length ?? 0,
+        topicCount: manifest.topics?.length ?? 0,
+      })
 
       // Native packs retain their original archive as the source for deferred
       // vocabulary pronunciations. The archive is versioned so an interrupted
       // update can still restore the previous generation.
       if (Capacitor.isNativePlatform()) {
-        await retainPackZip(manifest.packId, manifest.version, downloadedZip)
+        await (perf
+          ? perf.measure('retain_pack_zip', () => retainPackZip(manifest.packId, manifest.version, downloadedZip))
+          : retainPackZip(manifest.packId, manifest.version, downloadedZip))
       }
 
       // ④⑤ 读取并校验 scene + topics（独立 helper，便于测试）
-      report('reading_topics', 25, { label: '读取话题内容' })
-      const { unitDetail, topicDetails } = await this.parsePackContent(entries, checksums, signal)
+      report('reading_topics', 20, { label: '读取话题内容', current: 0, total: 0 })
+      const onTopicProgress = (done: number, total: number, path: string) => {
+        const pct = 20 + (done / Math.max(total, 1)) * 10
+        report('reading_topics', pct, {
+          label: '读取话题内容',
+          current: done,
+          total,
+          currentItem: path,
+        })
+      }
+      const { unitDetail, topicDetails } = await (perf
+        ? perf.measure('parse_pack_content', () => this.parsePackContent(entries, checksums, signal, onTopicProgress))
+        : this.parsePackContent(entries, checksums, signal, onTopicProgress))
       const contentUrlsByFileAssetId = collectContentAssetUrls([unitDetail, ...topicDetails])
       logger.info(`✅ ④⑤ scene + ${topicDetails.length} 个话题读取完成`)
+      perf?.mergeExtras({ topicDetails: topicDetails.length })
       report('persisting_content', 30, { label: '写入学习内容' })
 
       const now = new Date().toISOString()
@@ -1118,7 +1213,9 @@ export const learningPackService = {
         status: installingRecord.status,
         installedAt: installingRecord.installedAt,
       })
-      await localDb.put<InstalledLearningPack>('downloaded_packs', installingRecord)
+      await (perf
+        ? perf.measure('sqlite_put_installing_record', () => localDb.put<InstalledLearningPack>('downloaded_packs', installingRecord))
+        : localDb.put<InstalledLearningPack>('downloaded_packs', installingRecord))
       const savedInstalling = await localDb.get<InstalledLearningPack>('downloaded_packs', manifest.packId)
       logger.info('persist installing downloaded_packs saved', {
         packId: savedInstalling?.packId,
@@ -1132,7 +1229,11 @@ export const learningPackService = {
 
       logger.info('⏳ ⑦ 持久化单元内容到 SQLite...')
       try {
-        await persistUnitContent(unitDetail, topicDetails)
+        await (perf
+          ? perf.measure('sqlite_persist_unit_content', () => persistUnitContent(unitDetail, topicDetails), {
+            topics: topicDetails.length,
+          })
+          : persistUnitContent(unitDetail, topicDetails))
       } catch (error) {
         logger.error('persist unit content failed', {
           unitId: unitDetail?.id,
@@ -1146,7 +1247,11 @@ export const learningPackService = {
 
       logger.info('⏳ ⑧ 写入内容索引表...')
       try {
-        await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails)
+        await (perf
+          ? perf.measure('sqlite_save_pack_content_index', () => learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails), {
+            topics: topicDetails.length,
+          })
+          : learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails))
       } catch (error) {
         logger.error('save content index failed', {
           packId: manifest.packId,
@@ -1164,8 +1269,8 @@ export const learningPackService = {
       let assetDeferred = 0
 
       if (Capacitor.isNativePlatform()) {
-        // Native: index every asset as deferred (or reuse a ready shared file),
-        // mark installed immediately, and materialize from the retained zip later.
+        // Native: index every asset as deferred (or reuse a ready shared file).
+        // Physical extract happens on demand via resolve/preload when used.
         report('extracting_assets', 55, {
           label: '索引离线资源',
           current: 0,
@@ -1173,102 +1278,130 @@ export const learningPackService = {
         })
         logger.info(`⏳ ⑨ Native 延迟物化索引 (${manifestAssets.length} 个资源)...`)
 
-        for (let i = 0; i < manifestAssets.length; i++) {
-          const asset = manifestAssets[i]
-          if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
-          if (!asset.sha256) throw new Error(`Pack asset is missing sha256: ${asset.path}`)
-          if (!entries.get(normalizeZipPath(asset.path))) {
-            throw new Error(`Pack asset file is missing: ${asset.path}`)
-          }
-        }
-
-        const declaredAssetShas = manifestAssets
-          .map((asset) => asset.sha256)
-          .filter((sha256): sha256 is string => Boolean(sha256))
-        const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
-        const refsBySha256 = new Map<string, any>()
-        for (const ref of allRefsList) {
-          if (ref.sha256) refsBySha256.set(ref.sha256, ref)
-        }
-
-        const assetRefsToWrite: any[] = []
-        const aliasJobs: Array<{ sha256: string; asset: AssetRef }> = []
-        const deferredRows: DeferredPackAsset[] = []
-        const seenLookup = new Set<string>()
-        const readyShaCache = new Map<string, boolean>()
-        const nowIso = new Date().toISOString()
-
-        for (const asset of manifestAssets) {
-          throwIfAborted(signal)
-          const sha256 = asset.sha256!
-          const contentUrl = asset.fileAssetId
-            ? (contentUrlsByFileAssetId.get(asset.fileAssetId) ?? createFileAssetReference(asset.fileAssetId))
-            : asset.url
-          let ready = readyShaCache.get(sha256)
-          if (ready === undefined) {
-            ready = Boolean(refsBySha256.get(sha256)) && await assetCacheService.isReady(sha256)
-            readyShaCache.set(sha256, ready)
+        const buildNativeAssetIndex = async () => {
+          for (let i = 0; i < manifestAssets.length; i++) {
+            const asset = manifestAssets[i]
+            if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
+            if (!asset.sha256) throw new Error(`Pack asset is missing sha256: ${asset.path}`)
+            if (!entries.get(normalizeZipPath(asset.path))) {
+              throw new Error(`Pack asset file is missing: ${asset.path}`)
+            }
           }
 
-          if (ready) {
-            const existingRef = refsBySha256.get(sha256)
-            const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
-            assetRefsToWrite.push({
-              id: `${manifest.packId}:${sha256}`,
-              sha256,
-              packId: manifest.packId,
-              logicalPath: asset.path ?? asset.url ?? '',
-              ext,
-              updatedAt: nowIso,
-              data: JSON.stringify({ role: asset.role }),
-            })
-            aliasJobs.push({ sha256, asset: { ...asset, sha256, url: contentUrl || asset.url } })
-            assetDeduped++
+          const declaredAssetShas = manifestAssets
+            .map((asset) => asset.sha256)
+            .filter((sha256): sha256 is string => Boolean(sha256))
+          const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
+          const refsBySha256 = new Map<string, any>()
+          for (const ref of allRefsList) {
+            if (ref.sha256) refsBySha256.set(ref.sha256, ref)
+          }
+
+          const assetRefsToWrite: any[] = []
+          const aliasJobs: Array<{ sha256: string; asset: AssetRef }> = []
+          const deferredRows: DeferredPackAsset[] = []
+          const seenLookup = new Set<string>()
+          const readyShaCache = new Map<string, boolean>()
+          const nowIso = new Date().toISOString()
+
+          for (const asset of manifestAssets) {
+            throwIfAborted(signal)
+            const sha256 = asset.sha256!
+            const contentUrl = asset.fileAssetId
+              ? (contentUrlsByFileAssetId.get(asset.fileAssetId) ?? createFileAssetReference(asset.fileAssetId))
+              : asset.url
+            let ready = readyShaCache.get(sha256)
+            if (ready === undefined) {
+              ready = Boolean(refsBySha256.get(sha256)) && await assetCacheService.isReady(sha256)
+              readyShaCache.set(sha256, ready)
+            }
+
+            if (ready) {
+              const existingRef = refsBySha256.get(sha256)
+              const ext = existingRef?.ext ?? extensionFrom(asset.path ?? asset.url, asset.mimeType)
+              assetRefsToWrite.push({
+                id: `${manifest.packId}:${sha256}`,
+                sha256,
+                packId: manifest.packId,
+                logicalPath: asset.path ?? asset.url ?? '',
+                ext,
+                updatedAt: nowIso,
+                data: JSON.stringify({ role: asset.role }),
+              })
+              aliasJobs.push({ sha256, asset: { ...asset, sha256, url: contentUrl || asset.url } })
+              assetDeduped++
+              assetOk++
+              continue
+            }
+
+            const lookupKey = deferredLookupKeys(contentUrl || asset.url || '', asset.fileAssetId)[0]
+            if (!lookupKey) {
+              throw new Error(`Pack asset is missing lookup identity: ${asset.path}`)
+            }
+            if (!seenLookup.has(lookupKey)) {
+              seenLookup.add(lookupKey)
+              deferredRows.push({
+                id: `${manifest.packId}:${manifest.version}:${lookupKey}`,
+                packId: manifest.packId,
+                lookupKey,
+                fileAssetId: asset.fileAssetId ?? null,
+                sourceZipVersion: manifest.version,
+                contentUrl: contentUrl || asset.url,
+                signedUrl: asset.url,
+                zipPath: asset.path!,
+                sha256,
+                mimeType: asset.mimeType,
+                size: asset.size,
+                role: asset.role ?? 'asset',
+                status: 'deferred',
+                createdAt: nowIso,
+                updatedAt: nowIso,
+              })
+              assetDeferred++
+            }
             assetOk++
-            continue
           }
 
-          const lookupKey = deferredLookupKeys(contentUrl || asset.url || '', asset.fileAssetId)[0]
-          if (!lookupKey) {
-            throw new Error(`Pack asset is missing lookup identity: ${asset.path}`)
-          }
-          if (!seenLookup.has(lookupKey)) {
-            seenLookup.add(lookupKey)
-            deferredRows.push({
-              id: `${manifest.packId}:${manifest.version}:${lookupKey}`,
-              packId: manifest.packId,
-              lookupKey,
-              fileAssetId: asset.fileAssetId ?? null,
-              sourceZipVersion: manifest.version,
-              contentUrl: contentUrl || asset.url,
-              signedUrl: asset.url,
-              zipPath: asset.path!,
-              sha256,
-              mimeType: asset.mimeType,
-              size: asset.size,
-              role: asset.role ?? 'asset',
-              status: 'deferred',
-              createdAt: nowIso,
-              updatedAt: nowIso,
-            })
-            assetDeferred++
-          }
-          assetOk++
+          return { assetRefsToWrite, aliasJobs, deferredRows }
         }
 
-        await deferredPackAssetService.withPackLock(manifest.packId, async () => {
-          await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', manifest.packId)
-          if (deferredRows.length > 0) await localDb.putMany('deferred_pack_assets', deferredRows)
-        })
-        if (assetRefsToWrite.length > 0) await localDb.putMany('asset_refs', assetRefsToWrite)
-        await Promise.all(aliasJobs.map(({ sha256, asset }) => assetCacheService.addAliases(sha256, asset)))
+        const nativeIndex = await (perf
+          ? perf.measure('sqlite_scan_ready_and_build_deferred', buildNativeAssetIndex, {
+            manifestAssets: manifestAssets.length,
+          })
+          : buildNativeAssetIndex())
 
+        await (perf
+          ? perf.measure('sqlite_write_deferred_and_refs', async () => {
+            await deferredPackAssetService.withPackLock(manifest.packId, async () => {
+              await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', manifest.packId)
+              if (nativeIndex.deferredRows.length > 0) await localDb.putMany('deferred_pack_assets', nativeIndex.deferredRows)
+            })
+            if (nativeIndex.assetRefsToWrite.length > 0) await localDb.putMany('asset_refs', nativeIndex.assetRefsToWrite)
+            await Promise.all(nativeIndex.aliasJobs.map(({ sha256, asset }) => assetCacheService.addAliases(sha256, asset)))
+          }, {
+            deferredRows: nativeIndex.deferredRows.length,
+            assetRefs: nativeIndex.assetRefsToWrite.length,
+            aliases: nativeIndex.aliasJobs.length,
+          })
+          : (async () => {
+            await deferredPackAssetService.withPackLock(manifest.packId, async () => {
+              await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', manifest.packId)
+              if (nativeIndex.deferredRows.length > 0) await localDb.putMany('deferred_pack_assets', nativeIndex.deferredRows)
+            })
+            if (nativeIndex.assetRefsToWrite.length > 0) await localDb.putMany('asset_refs', nativeIndex.assetRefsToWrite)
+            await Promise.all(nativeIndex.aliasJobs.map(({ sha256, asset }) => assetCacheService.addAliases(sha256, asset)))
+          })())
+
+        // Native: only index deferred rows here. Physical extract happens on demand
+        // via deferredPackAssetService.resolve / preload when playback needs the file.
         report('extracting_assets', 90, {
           label: '索引离线资源',
           current: manifestAssets.length,
           total: manifestAssets.length,
         })
-        logger.info(`✅ ⑨ Native 资源索引完成: ${assetOk} 项 (${assetDeduped} 复用, ${assetDeferred} 延迟物化)`)
+        logger.info(`✅ ⑨ Native 资源索引完成: ${assetOk} 项 (${assetDeduped} 复用, ${assetDeferred} 按需物化)`)
+        perf?.mergeExtras({ assetOk, assetDeduped, assetDeferred, manifestAssets: manifestAssets.length })
       } else {
         // Web: keep eager extract — there is no retained zip for deferred materialize.
         // Skip vocabulary pronunciations: web playback already uses signed URLs,
@@ -1454,9 +1587,21 @@ export const learningPackService = {
 
       report('finishing', 99, { label: '完成安装' })
 
-      await markPackOperationCommitting(unitId)
-      const result = await persistInstalledRecord(manifest)
-      await cleanupObsoletePackAssetRefs(manifest.packId, manifest)
+      const commitInstalled = async () => {
+        await markPackOperationCommitting(unitId)
+        const installed = await persistInstalledRecord(manifest)
+        await cleanupObsoletePackAssetRefs(manifest.packId, manifest)
+        return installed
+      }
+      const result = await (perf
+        ? perf.measure('sqlite_commit_installed_record', commitInstalled)
+        : commitInstalled())
+      perf?.mergeExtras({
+        assetOk,
+        assetDeduped,
+        assetDeferred,
+        installPathElapsedSec: Number(((performance.now() - startTime) / 1000).toFixed(1)),
+      })
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
       logger.info(`🎉 安装完成! 耗时 ${elapsed}s`, {
         packId: manifest.packId,
