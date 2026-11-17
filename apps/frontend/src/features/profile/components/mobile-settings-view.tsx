@@ -72,7 +72,8 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
   const [deleteMessage, setDeleteMessage] = useState('')
   const [testingLearningReminder, setTestingLearningReminder] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
-  const [logoutOfflineConfirm, setLogoutOfflineConfirm] = useState(false)
+  const [logoutForceConfirm, setLogoutForceConfirm] = useState(false)
+  const [logoutForceReason, setLogoutForceReason] = useState<'offline' | 'sync'>('offline')
   const [logoutLoading, setLogoutLoading] = useState(false)
 
   // ─── 版本更新 ──────────────────────────────────────
@@ -302,11 +303,22 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
     if (logoutLoading) return
     setLogoutLoading(true)
     try {
-      await signOut(logoutOfflineConfirm ? { forceOffline: true } : undefined)
+      await signOut(logoutForceConfirm ? { forceOffline: true } : undefined)
       setShowLogoutDialog(false)
-      setLogoutOfflineConfirm(false)
+      setLogoutForceConfirm(false)
       navigate('/auth/login')
     } catch (error: any) {
+      const message = String(error?.message ?? '')
+      if (!logoutForceConfirm && (
+        message.includes('练习数据尚未同步')
+        || message.includes('未能同步')
+        || message.includes('could not sync')
+        || message.includes('同期できない')
+      )) {
+        setLogoutForceReason('sync')
+        setLogoutForceConfirm(true)
+        return
+      }
       showRequestError(error, t('profile.logoutFailed', { defaultValue: '退出登录失败，请重试' }))
     } finally {
       setLogoutLoading(false)
@@ -554,7 +566,9 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           <button
             type="button"
             onClick={() => {
-              setLogoutOfflineConfirm(!navigator.onLine)
+              const offline = !navigator.onLine
+              setLogoutForceReason(offline ? 'offline' : 'sync')
+              setLogoutForceConfirm(offline)
               setShowLogoutDialog(true)
             }}
             className="w-full text-center text-sm font-medium text-red-500"
@@ -657,7 +671,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
       <Dialog open={showLogoutDialog} onOpenChange={(open) => {
         if (logoutLoading) return
         setShowLogoutDialog(open)
-        if (!open) setLogoutOfflineConfirm(false)
+        if (!open) setLogoutForceConfirm(false)
       }}>
         <DialogContent
           className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
@@ -666,8 +680,10 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           <DialogHeader>
             <DialogTitle>{t('profile.logout')}</DialogTitle>
             <DialogDescription className="text-sm leading-6 text-muted-foreground">
-              {logoutOfflineConfirm
-                ? t('learningNotebooks.offlineLogoutConfirm')
+              {logoutForceConfirm
+                ? (logoutForceReason === 'sync'
+                  ? t('learningNotebooks.syncLogoutConfirm')
+                  : t('learningNotebooks.offlineLogoutConfirm'))
                 : t('profile.logoutConfirmHint')}
             </DialogDescription>
           </DialogHeader>
@@ -675,7 +691,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
             <Button
               variant="secondary"
               className="flex-1 border-0 shadow-none sm:flex-none"
-              onClick={() => { setShowLogoutDialog(false); setLogoutOfflineConfirm(false) }}
+              onClick={() => { setShowLogoutDialog(false); setLogoutForceConfirm(false) }}
               disabled={logoutLoading}
             >
               {t('common.cancel')}

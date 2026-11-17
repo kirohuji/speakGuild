@@ -7,6 +7,8 @@ import {
   findPulledNotebook,
   selectNotebookPushBatch,
   ackNotebookPushResults,
+  rebaseConflictedNotebookMutations,
+  isNotebookVersionConflict,
 } from './notebook-sync'
 import { serializeNotebookWrite } from './notebook-mutations'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
@@ -71,6 +73,37 @@ function isPermanentSyncError(error: unknown): boolean {
     'Session not found',
     'Not Found',
   ].some((marker) => message.includes(marker))
+}
+
+/** Pending rows used to skip pull application while the cursor still advanced — rewind so conflict bases can refresh. */
+async function rewindNotebookPullCursors(userId?: string | null): Promise<void> {
+  const cursorKey = userSyncCursorKey(userId)
+  const raw = await localDb.get<{ id: string; value: string }>('kv', cursorKey).catch(() => null)
+  if (!raw?.value) return
+  try {
+    const cursors = JSON.parse(raw.value) as Record<string, string | null>
+    let changed = false
+    for (const key of [
+      'learningNotebooks',
+      'learningNotebookItems',
+      'deletedLearningNotebooks',
+      'deletedLearningNotebookItems',
+    ]) {
+      if (cursors[key]) {
+        cursors[key] = null
+        changed = true
+      }
+    }
+    if (!changed) return
+    await localDb.put('kv', {
+      id: cursorKey,
+      value: JSON.stringify(cursors),
+      updatedAt: new Date().toISOString(),
+    })
+    await localDb.put('kv', { id: 'sync:user:notebooks-complete', value: false }).catch(() => undefined)
+  } catch {
+    // Corrupt cursor JSON — leave as-is; next full sync path still runs.
+  }
 }
 
 async function discardSessionDependents(sessionId: string): Promise<void> {
@@ -238,9 +271,15 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
       const existing = await findPulledNotebook(notebook)
       notebookAliases.set(notebook.id, existing?.id ?? notebook.id)
       if (hasPending(existing)) {
-        // Bind the server identity without overwriting queued local edits.
-        if (notebook.kind === 'uncategorized' && !existing.remoteId) notebookWrites.push({
-          table: 'learning_notebooks', value: { ...existing, remoteId: notebook.id },
+        // Keep local field edits queued, but refresh concurrency metadata so conflicts can rebase.
+        notebookWrites.push({
+          table: 'learning_notebooks',
+          value: {
+            ...existing,
+            remoteId: notebook.id,
+            remoteUpdatedAt: notebook.updatedAt,
+            remoteVersion: notebook.version,
+          },
         })
         continue
       }
@@ -257,8 +296,23 @@ async function applyUserPullChanges(changed: any, deleted: any, checkpoint?: { i
       const notebookId = notebookAliases.get(item.notebookId) ?? aliases[0]?.id ?? item.notebookId
       const rows = (await localDb.findByIndex<any>('learning_notebook_items', 'notebook_id', notebookId))
         .filter(row => row.expressionEntryId === expression.id)
-      if (rows.some(hasPending)) continue
       const existing = rows.find(row => row.remoteId === item.id) ?? rows[0]
+      if (rows.some(hasPending)) {
+        if (existing) {
+          notebookWrites.push({
+            table: 'learning_notebook_items',
+            value: {
+              ...existing,
+              remoteId: item.id,
+              notebookId,
+              expressionEntryId: expression.id,
+              remoteUpdatedAt: item.updatedAt,
+              remoteVersion: item.version,
+            },
+          })
+        }
+        continue
+      }
       notebookWrites.push({ table: 'learning_notebook_items', value: { ...item, id: existing?.id ?? item.id,
         remoteId: item.id, notebookId, expressionEntryId: expression.id,
         remoteUpdatedAt: item.updatedAt, remoteVersion: item.version, syncStatus: 'synced', expressionItem: undefined } })
@@ -890,9 +944,39 @@ export const offlineSyncService = {
     const running = (async (): Promise<OfflineSyncResult> => {
       try {
         if (!outboxTypes || outboxTypes.has('learning_activity')) await flushPracticeActivityRecords()
-        const push = await this.flush(outboxTypes)
-        if (push.remaining > 0 && !options?.quiet && navigator.onLine) toast.error(`还有 ${push.remaining} 条数据待同步，将在后续同步时继续处理`)
-        const pull = await this.pull(userId, pullTypes)
+        let push = await this.flush(outboxTypes)
+        const conflicted = (await localDb.list<SyncOutboxItem>('outbox')).filter(
+          (item) =>
+            (item.entityType === 'notebook' || item.entityType === 'notebook_item')
+            && (item.status === 'pending' || item.status === 'failed')
+            && isNotebookVersionConflict(item.lastError)
+            && (!outboxTypes || outboxTypes.has(item.entityType)),
+        )
+        if (conflicted.length > 0) await rewindNotebookPullCursors(userId)
+
+        let pull = await this.pull(userId, pullTypes)
+
+        // Rebase version conflicts onto the refreshed remote base, then push once more in this pass.
+        if (!outboxTypes || outboxTypes.has('notebook') || outboxTypes.has('notebook_item')) {
+          const rebased = await rebaseConflictedNotebookMutations()
+          if (rebased > 0) {
+            const retry = await this.flush(outboxTypes)
+            push = {
+              synced: push.synced + retry.synced,
+              failed: retry.failed,
+              skipped: push.skipped + retry.skipped,
+              remaining: retry.remaining,
+              operations: {
+                ...(push.operations ?? {}),
+                ...(retry.operations ?? {}),
+              },
+            }
+          }
+        }
+
+        if (push.remaining > 0 && !options?.quiet && navigator.onLine) {
+          toast.error(`还有 ${push.remaining} 条数据待同步，将在后续同步时继续处理`)
+        }
 
         // 今日任务 item 进度：全量或今日范围同步时拉取
         if (!options?.scope || options.scope === 'all' || options.scope === 'today') {

@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { offlineStorageService, type OfflineCacheCategory, type OfflineStorageDetails, type OfflineStorageStats } from '@/lib/offline/offline-storage.service'
 import { offlineSyncService } from '@/lib/offline/offline-sync.service'
+import { syncOutbox } from '@/lib/offline/sync-outbox'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { isNative } from '@/lib/native'
@@ -72,6 +73,7 @@ export function MobileStorageView() {
   const [expanded, setExpanded] = useState<{ packs: boolean; assets: boolean; sync: boolean; models: boolean; sttModels: boolean }>({ packs: false, assets: false, sync: false, models: false, sttModels: false })
   const [packVisibleCount, setPackVisibleCount] = useState(10)
   const [outboxVisibleCount, setOutboxVisibleCount] = useState(10)
+  const [discardingOutboxId, setDiscardingOutboxId] = useState<string | null>(null)
   const STORAGE_PAGE_SIZE = 10
   const {
     localAiWarmupJudgeEnabled,
@@ -164,6 +166,20 @@ export function MobileStorageView() {
       setClearing(null)
     }
   }, [refresh, session?.user.id, syncPackStateAfterLocalChange, t])
+
+  const handleDiscardOutbox = useCallback(async (id: string) => {
+    if (discardingOutboxId) return
+    setDiscardingOutboxId(id)
+    try {
+      await syncOutbox.discardPending(id)
+      toast.success(t('settings.storage.discardPendingOpDone'))
+      refresh()
+    } catch (error: any) {
+      showRequestError(error, t('profile.cleanupFailed', { defaultValue: '清理失败' }))
+    } finally {
+      setDiscardingOutboxId(null)
+    }
+  }, [discardingOutboxId, refresh, t])
 
   const handleClearPack = useCallback(async (packId: string) => {
     setDeletingPackId(packId)
@@ -952,7 +968,21 @@ export function MobileStorageView() {
                     </div>
                     <p className="mt-0.5 truncate text-[11px] leading-5 text-muted-foreground">{item.entityId}</p>
                     {item.lastError && <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-red-500">{item.lastError}</p>}
-                    <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{t('settings.storage.retryCount', { count: item.retryCount })} · {new Date(item.updatedAt).toLocaleString()}</p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <p className="text-[10px] leading-4 text-muted-foreground">{t('settings.storage.retryCount', { count: item.retryCount })} · {new Date(item.updatedAt).toLocaleString()}</p>
+                      {(item.status === 'failed' || item.status === 'pending') && (
+                        <button
+                          type="button"
+                          className="flex-shrink-0 text-[11px] font-medium text-destructive"
+                          disabled={discardingOutboxId === item.id}
+                          onClick={() => void handleDiscardOutbox(item.id)}
+                        >
+                          {discardingOutboxId === item.id
+                            ? t('common.clearing', { defaultValue: '清除中...' })
+                            : t('settings.storage.discardPendingOp')}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {details.outbox.length > outboxVisibleCount && (

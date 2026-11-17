@@ -26,6 +26,8 @@ import {
   selectNotebookPushBatch,
   ackNotebookPushResults,
   prepareNotebookPushItem,
+  rebaseConflictedNotebookMutations,
+  isNotebookVersionConflict,
 } from '../notebook-sync'
 import { learningNotebookRepository as notebooks } from '../learning-notebook.repository'
 import { syncOutbox } from '../sync-outbox'
@@ -161,6 +163,30 @@ describe('notebook replay', () => {
     dependencies.push.mockResolvedValueOnce({ results: [{ status: 'failed', error: '其他设备已修改' }] })
     await expect(replayNotebookMutation(operation)).rejects.toThrow('其他设备已修改')
     expect((await dependencies.db.get('outbox', operation.id)).status).toBe('pending')
+  })
+
+  it('rebases a conflicted mutation onto a fresher remote base', async () => {
+    const book = await notebooks.create('First')
+    const operation = (await dependencies.db.list('outbox'))[0]
+    expect(isNotebookVersionConflict('其他设备已修改此数据，本地修改已保留')).toBe(true)
+    await dependencies.db.put('outbox', {
+      ...operation,
+      status: 'failed',
+      lastError: '其他设备已修改此数据，本地修改已保留',
+      payload: { ...operation.payload, baseVersion: 1, baseUpdatedAt: '2026-11-01T00:00:00.000Z', predecessor: 'prev' },
+    })
+    await dependencies.db.put('learning_notebooks', {
+      ...(await dependencies.db.get('learning_notebooks', book.id)),
+      remoteVersion: 3,
+      remoteUpdatedAt: '2026-11-17T00:00:00.000Z',
+    })
+    expect(await rebaseConflictedNotebookMutations()).toBe(1)
+    const rebased = await dependencies.db.get('outbox', operation.id)
+    expect(rebased.status).toBe('pending')
+    expect(rebased.lastError).toBeUndefined()
+    expect(rebased.payload.predecessor).toBeNull()
+    expect(rebased.payload.baseVersion).toBe(3)
+    expect(rebased.payload.baseUpdatedAt).toBe('2026-11-17T00:00:00.000Z')
   })
 })
 

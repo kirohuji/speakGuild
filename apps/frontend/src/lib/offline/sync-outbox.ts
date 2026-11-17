@@ -133,6 +133,32 @@ export const syncOutbox = {
     catch (error) { console.warn('[sync-outbox] markDiscarded failed:', error) }
   },
 
+  /**
+   * Drop a stuck outbox row (e.g. unresolvable notebook conflict) and clear the
+   * local row's pending marker so a later pull can overwrite with server state.
+   */
+  async discardPending(id: string): Promise<void> {
+    const item = await localDb.get<SyncOutboxItem>('outbox', id)
+    if (!item) return
+    await this.markDiscarded(id)
+    if (item.entityType !== 'notebook' && item.entityType !== 'notebook_item') return
+    const table = item.entityType === 'notebook' ? 'learning_notebooks' : 'learning_notebook_items'
+    const local = await localDb.get<any>(table, item.entityId)
+    if (!local) return
+    if (local.lastMutationId && local.lastMutationId !== item.id) return
+    await localDb.put(table, {
+      ...local,
+      syncStatus: 'synced',
+      lastMutationId: undefined,
+    })
+    try {
+      const { notifyLearningLibraryChanged } = await import('./learning-content.repository')
+      notifyLearningLibraryChanged()
+    } catch {
+      // optional UI refresh
+    }
+  },
+
   /** 清理已同步记录和永久失败记录；普通失败记录不按时间过期。 */
   async cleanup(): Promise<number> {
     try {

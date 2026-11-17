@@ -178,3 +178,64 @@ export async function replayNotebookMutation(item: SyncOutboxItem) {
   await ackNotebookPushResult(item, results[0])
   return true
 }
+
+/** Version / concurrent-edit conflicts that can be recovered by rebasing onto the latest remote base. */
+export function isNotebookVersionConflict(error: unknown): boolean {
+  const message = typeof error === 'string'
+    ? error
+    : error instanceof Error
+      ? error.message
+      : String((error as any)?.response?.data?.message ?? (error as any)?.message ?? error ?? '')
+  return message.includes('其他设备已修改')
+}
+
+/**
+ * After a pull refreshes remoteVersion/remoteUpdatedAt on a pending row, rewrite the
+ * outbox payload so the next push uses that base instead of a stale predecessor receipt.
+ * Returns how many mutations were rewritten.
+ */
+export async function rebaseConflictedNotebookMutations(
+  items?: SyncOutboxItem[],
+): Promise<number> {
+  const pending = items ?? (await localDb.list<SyncOutboxItem>('outbox')).filter(
+    (item) =>
+      (item.entityType === 'notebook' || item.entityType === 'notebook_item')
+      && (item.status === 'pending' || item.status === 'failed')
+      && isNotebookVersionConflict(item.lastError),
+  )
+  let rebased = 0
+  for (const item of pending) {
+    if (item.entityType !== 'notebook' && item.entityType !== 'notebook_item') continue
+    const table = item.entityType === 'notebook' ? 'learning_notebooks' : 'learning_notebook_items'
+    const local = await localDb.get<any>(table, item.entityId)
+    if (!local) {
+      await localDb.delete('outbox', item.id)
+      rebased += 1
+      continue
+    }
+    const payload = { ...(item.payload as any) }
+    const remoteVersion = local.remoteVersion ?? null
+    const remoteUpdatedAt = local.remoteUpdatedAt ?? null
+    const baseChanged =
+      remoteVersion !== payload.baseVersion || remoteUpdatedAt !== payload.baseUpdatedAt
+    // Pull must refresh remote* first; otherwise clearing predecessor still targets a stale base.
+    if (!baseChanged) continue
+    const now = new Date().toISOString()
+    await localDb.put('outbox', {
+      ...item,
+      payload: {
+        ...payload,
+        predecessor: null,
+        baseVersion: remoteVersion,
+        baseUpdatedAt: remoteUpdatedAt,
+      },
+      status: 'pending' as const,
+      lastError: undefined,
+      nextRetryAt: now,
+      updatedAt: now,
+      revision: (item.revision ?? 0) + 1,
+    })
+    rebased += 1
+  }
+  return rebased
+}

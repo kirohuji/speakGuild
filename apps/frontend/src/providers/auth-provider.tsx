@@ -472,20 +472,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async (options?: { forceOffline?: boolean }) => {
-    const forceOffline = Boolean(options?.forceOffline)
-    if (!managementRoute && !navigator.onLine && !forceOffline) {
+    const force = Boolean(options?.forceOffline)
+    if (!managementRoute && !navigator.onLine && !force) {
       throw new Error(t('learningNotebooks.offlineLogoutBlocked'))
     }
     // User-scoped local storage is removed on logout. Do not make logout a
     // destructive path for an interrupted Today run or any queued practice data.
-    if (session?.user.id && !managementRoute && !forceOffline) {
+    if (session?.user.id && !managementRoute && !force) {
       // 答题入队是异步的。先等这条链路写完本地事实，再把未交付的历史补进队列并上传。
       const { useDailyPracticeStore } = await import('@/stores/daily-practice.store')
       await useDailyPracticeStore.getState().waitForPendingWrites()
       await flushPracticeActivityRecords()
       const syncResult = await offlineSyncService.sync(session.user.id)
       if (syncResult.offline || syncResult.push.failed > 0 || (syncResult.push.remaining ?? 0) > 0) {
-        throw new Error('练习数据尚未同步，请联网后再退出登录')
+        throw new Error(t('learningNotebooks.syncLogoutBlocked', {
+          defaultValue: '仍有数据未能同步（例如其他设备已修改导致冲突），请处理后再退出，或确认放弃未同步修改后强制退出',
+        }))
       }
     }
     await authClient.signOut().catch((error) => {
