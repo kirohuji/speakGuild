@@ -62,6 +62,57 @@ describe('immersive player example playback', () => {
     expect(segments.map((segment) => segment.role)).toEqual(['main'])
   })
 
+  it('expands finite repeatPerItem into repeated segment ids', () => {
+    const segments = buildPlaybackSegments({
+      id: 'word-1',
+      kind: 'word',
+      title: 'repeat',
+      mainAudioUrl: 'https://audio.test/repeat.mp3',
+    }, {
+      ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS,
+      repeatPerItem: 3,
+      playExample: false,
+    })
+    expect(segments).toHaveLength(3)
+    expect(segments.map((segment) => segment.id)).toEqual([
+      'word-1:main:0',
+      'word-1:main:1',
+      'word-1:main:2',
+    ])
+  })
+
+  it('omits main text when playMainText is false', () => {
+    const segments = buildPlaybackSegments({
+      id: 'word-1',
+      kind: 'word',
+      title: 'silent',
+      mainAudioUrl: 'https://audio.test/silent.mp3',
+    }, {
+      ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS,
+      playMainText: false,
+      playExample: false,
+    })
+    expect(segments).toEqual([])
+  })
+
+  it('maps chunk and pattern insight titles', () => {
+    const chunk = mapInsightItemToImmersiveItem({
+      kind: 'chunk',
+      id: 'chunk-1',
+      text: 'take part in',
+      meaning: '参加',
+    })
+    expect(chunk).toMatchObject({ kind: 'chunk', title: 'take part in', meaning: '参加' })
+
+    const pattern = mapInsightItemToImmersiveItem({
+      kind: 'pattern',
+      id: 'pattern-1',
+      pattern: 'as adj as',
+      example: 'as good as gold',
+    })
+    expect(pattern).toMatchObject({ kind: 'pattern', title: 'as adj as', exampleEn: 'as good as gold' })
+  })
+
   it('picks UK audio when accent is uk and falls back to US', () => {
     const uk = buildPlaybackSegments({
       id: 'word-1',

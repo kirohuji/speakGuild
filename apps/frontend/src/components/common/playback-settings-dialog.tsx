@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react'
 import { Infinity } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/cn'
 
 /** 逐句播放的循环次数：1 次 / 2 次 / 无限循环 */
@@ -64,96 +65,133 @@ export function MixedPlaybackSettingsDialog({
   onShowCurrentTranslationChange?: (checked: boolean) => void
 }) {
   const { t } = useTranslation()
+  const showDisplaySection = displayMode !== undefined && onDisplayModeChange
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         // Above fullscreen practice-record replay (z-70/71) and similar shells.
         overlayClassName="z-[80]"
-        className="z-[81] w-[90vw] max-w-sm rounded-2xl"
+        className="z-[81] w-[90vw] max-w-sm gap-0 overflow-hidden rounded-2xl border-0 p-0"
       >
-        <DialogHeader>
-          <DialogTitle>{t('audio.playbackSettings')}</DialogTitle>
-          <DialogDescription>{t('audio.playbackSettingsDesc')}</DialogDescription>
+        <DialogHeader className="px-4 pb-2 pt-4 text-left">
+          <DialogTitle className="text-sm font-semibold">{t('audio.playbackSettings')}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">{t('audio.gapBetween')}</Label>
-              <span className="text-xs tabular-nums text-muted-foreground">{t('audio.secondsValue', { seconds: gapSeconds.toFixed(1) })}</span>
-            </div>
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-0.5">
+        <div className="flex flex-col gap-3.5 px-4 pb-4">
+          <SettingsSection
+            title={t('audio.gapBetween')}
+            meta={t('audio.secondsValue', { seconds: gapSeconds.toFixed(1) })}
+          >
+            <ToggleGroup
+              type="single"
+              value={String(gapSeconds)}
+              onValueChange={(value) => {
+                if (!value) return
+                onGapSecondsChange(Number(value))
+              }}
+              className="grid w-full grid-cols-4 gap-0.5 rounded-md bg-muted/70 p-0.5"
+            >
               {gapOptions.map((option) => (
-                <button
+                <ToggleGroupItem
                   key={option.value}
-                  type="button"
-                  onClick={() => onGapSecondsChange(option.value)}
-                  className={cn(
-                    'rounded-md py-2 text-xs font-medium transition-colors',
-                    gapSeconds === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                  )}
+                  value={String(option.value)}
+                  aria-label={t('audio.secondsValue', { seconds: option.value.toFixed(1) })}
+                  className={segmentItemClassName}
                 >
                   {option.label}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
-          </div>
+            </ToggleGroup>
+          </SettingsSection>
 
-          <Separator />
-
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">{t('audio.loopCount')}</Label>
-            <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-0.5">
+          <SettingsSection title={t('audio.loopCount')}>
+            <ToggleGroup
+              type="single"
+              value={loopMode}
+              onValueChange={(value) => {
+                if (!value) return
+                onLoopModeChange(value as LoopMode)
+              }}
+              className="grid w-full grid-cols-3 gap-0.5 rounded-md bg-muted/70 p-0.5"
+            >
               {loopOptions.map((option) => (
-                <button
+                <ToggleGroupItem
                   key={option.value}
-                  type="button"
-                  onClick={() => onLoopModeChange(option.value)}
-                  className={cn(
-                    'flex items-center justify-center gap-1 rounded-md py-2 text-xs font-medium transition-colors',
-                    loopMode === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                  )}
+                  value={option.value}
+                  className={segmentItemClassName}
                 >
-                  {option.value === 'infinite' && <Infinity className="size-3" />}
+                  {option.value === 'infinite' ? <Infinity /> : null}
                   {t(option.labelKey)}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
-          </div>
+            </ToggleGroup>
+          </SettingsSection>
 
-          {displayMode !== undefined && onDisplayModeChange && (
-            <>
-              <Separator />
+          {showDisplaySection && (
+            <SettingsSection title={t('audio.displayMode')}>
+              <ToggleGroup
+                type="single"
+                value={displayMode}
+                onValueChange={(value) => {
+                  if (!value) return
+                  onDisplayModeChange(value as DisplayMode)
+                }}
+                className="grid w-full grid-cols-4 gap-0.5 rounded-md bg-muted/70 p-0.5"
+              >
+                {displayModeOptions.map((option) => (
+                  <ToggleGroupItem
+                    key={option.value}
+                    value={option.value}
+                    className={segmentItemClassName}
+                  >
+                    {t(option.labelKey)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
 
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">{t('audio.displayMode')}</Label>
-                <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-0.5">
-                  {displayModeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => onDisplayModeChange(option.value)}
-                      className={cn(
-                        'rounded-md py-2 text-xs font-medium transition-colors',
-                        displayMode === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      {t(option.labelKey)}
-                    </button>
-                  ))}
+              {displayMode === 'original' && showCurrentTranslation !== undefined && onShowCurrentTranslationChange ? (
+                <div className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2">
+                  <Label htmlFor="show-current-translation" className="cursor-pointer text-xs font-medium text-foreground">
+                    {t('audio.showCurrentTranslation')}
+                  </Label>
+                  <Switch
+                    id="show-current-translation"
+                    checked={showCurrentTranslation}
+                    onCheckedChange={onShowCurrentTranslationChange}
+                  />
                 </div>
-
-                {displayMode === 'original' && showCurrentTranslation !== undefined && onShowCurrentTranslationChange && (
-                  <div className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2.5 transition-colors hover:bg-muted/60">
-                    <Label className="cursor-pointer text-sm font-normal">{t('audio.showCurrentTranslation')}</Label>
-                    <Switch checked={showCurrentTranslation} onCheckedChange={onShowCurrentTranslationChange} />
-                  </div>
-                )}
-              </div>
-            </>
+              ) : null}
+            </SettingsSection>
           )}
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+const segmentItemClassName = cn(
+  'h-9 min-w-0 flex-1 touch-manipulation rounded-md border-0 bg-transparent px-1 text-[11px] font-medium text-muted-foreground shadow-none',
+  'hover:bg-transparent hover:text-foreground',
+  'data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm',
+)
+
+function SettingsSection({
+  title,
+  meta,
+  children,
+}: {
+  title: string
+  meta?: string
+  children: ReactNode
+}) {
+  return (
+    <section className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="truncate text-[11px] font-medium text-muted-foreground">{title}</p>
+        {meta ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{meta}</span> : null}
+      </div>
+      {children}
+    </section>
   )
 }

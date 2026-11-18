@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
@@ -37,6 +38,10 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       exclude: ['@capgo/capacitor-wechat'],
+    },
+    test: {
+      environment: 'node',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
     },
   }
 })

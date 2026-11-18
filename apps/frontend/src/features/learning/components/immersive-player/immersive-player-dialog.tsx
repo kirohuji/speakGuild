@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/cn'
 import { useBgmSuppress } from '@/lib/bgm-suppress'
@@ -34,10 +35,10 @@ import { useCachedAudio } from '@/hooks/use-cached-audio'
 import { isIOS, isNative } from '@/lib/native'
 import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
-import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
+import { createTimerScheduler, ListeningQueueEngine, type ListeningQueueEngineState } from './listening-queue.engine'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
-import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerExample, type ImmersivePlayerItem, type ImmersivePlayerStatus, type PlaybackSegment } from './immersive-player.types'
+import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerExample, type ImmersivePlayerItem, type ImmersivePlayerStatus } from './immersive-player.types'
 import { InsightListLoadMoreSentinel, insightLoadMoreAfterIndex } from '@/features/practice/components/insight-list-load-more'
 
 type ImmersivePlayerDialogProps = {
@@ -65,14 +66,6 @@ const KIND_LABEL_KEY = {
   chunk: 'immersivePlayer.kind.chunk',
   pattern: 'immersivePlayer.kind.pattern',
 } satisfies Record<ImmersivePlayerItem['kind'], string>
-
-type GapWait = {
-  remainingMs: number
-  startedAt: number
-  timer: number
-  resolve: (continued: boolean) => void
-  runId: number
-}
 
 const EQUALIZER_BARS = [
   [0.2, 0.58, 0.88, 0], [0.3, 0.78, 1.05, 0.12], [0.18, 0.5, 0.96, 0.24],
@@ -167,23 +160,16 @@ export function ImmersivePlayerDialog({
   const [insightExpanded, setInsightExpanded] = useState(false)
   const [visualPlayback, setVisualPlayback] = useState<ImmersivePlaybackVisualState>({ state: 'idle', media: null })
   const { play: playExampleAudio, activeUrl: playingExampleUrl, stop: stopExampleAudio } = useCachedAudio()
-  const runRef = useRef(0)
   const statusRef = useRef<ImmersivePlayerStatus>('idle')
-  const sleepTimerRef = useRef<number | null>(null)
-  const gapWaitRef = useRef<GapWait | null>(null)
-  const continueAfterIndexChangeRef = useRef(false)
   const resumeQueueAfterExampleRef = useRef(false)
-  const playFromCurrentRef = useRef<(() => Promise<void>) | null>(null)
-  const gotoPrevRef = useRef<(continuePlayback?: boolean) => void>(() => undefined)
-  const gotoNextRef = useRef<(continuePlayback?: boolean) => void>(() => undefined)
+  const engineRef = useRef<ListeningQueueEngine | null>(null)
+  const onOpenChangeRef = useRef(onOpenChange)
+  onOpenChangeRef.current = onOpenChange
+
   const mediaMetadataLabels = useMemo(() => ({
     artist: t('app.name'),
     album: t('immersivePlayer.mediaAlbum'),
   }), [t])
-  const setPlaybackStatus = useCallback((nextStatus: ImmersivePlayerStatus) => {
-    statusRef.current = nextStatus
-    setStatus(nextStatus)
-  }, [])
 
   const playlistTotal = Math.max(total ?? items.length, items.length)
   const absoluteIndex = windowOffset + index
@@ -195,308 +181,59 @@ export function ImmersivePlayerDialog({
     onIndexChange(usesAbsoluteIndex ? nextAbsolute : nextAbsolute - windowOffset)
   }, [onIndexChange, usesAbsoluteIndex, windowOffset])
 
-  const gotoPrev = useCallback((continuePlayback = false) => {
-    if (!hasPrev && !(settings.loopQueue && playlistTotal > 0)) return
-    continueAfterIndexChangeRef.current = continuePlayback
-    if (hasPrev) emitIndexChange(absoluteIndex - 1)
-    else emitIndexChange(playlistTotal - 1)
-  }, [absoluteIndex, emitIndexChange, hasPrev, playlistTotal, settings.loopQueue])
-
-  const gotoNext = useCallback((continuePlayback = false) => {
-    if (!hasNext && !(settings.loopQueue && playlistTotal > 0)) return
-    continueAfterIndexChangeRef.current = continuePlayback
-    if (hasNext) emitIndexChange(absoluteIndex + 1)
-    else emitIndexChange(0)
-  }, [absoluteIndex, emitIndexChange, hasNext, playlistTotal, settings.loopQueue])
+  useEffect(() => {
+    const engine = new ListeningQueueEngine({
+      transport: immersivePlaybackService,
+      getSettings: () => useImmersivePlayerPreferences.getState().settings,
+      scheduler: createTimerScheduler(),
+      isBackground: () => isNative() && typeof document !== 'undefined' && document.visibilityState !== 'visible',
+      mediaLabels: mediaMetadataLabels,
+      onSleepEnd: () => onOpenChangeRef.current(false),
+      onEmptySegments: () => toast.warning(t('immersivePlayer.noPlayableSegments')),
+      onPlayFailed: () => toast.error(t('immersivePlayer.playFailed')),
+    })
+    engineRef.current = engine
+    const unsubEngine = engine.subscribe((state: ListeningQueueEngineState) => {
+      statusRef.current = state.status
+      setStatus(state.status)
+    })
+    const unsubVisual = immersivePlaybackService.subscribeVisualState(setVisualPlayback)
+    return () => {
+      unsubEngine()
+      unsubVisual()
+      void engine.dispose()
+      engineRef.current = null
+    }
+  }, [mediaMetadataLabels, t])
 
   useEffect(() => {
-    gotoPrevRef.current = gotoPrev
-    gotoNextRef.current = gotoNext
-  }, [gotoNext, gotoPrev])
-
-  const enableIosGapControls = useCallback(() => {
-    void immersivePlaybackService.setIosGapTrackControls(true, {
+    const engine = engineRef.current
+    if (!engine) return
+    if (!open) {
+      void engine.stop({ clearSession: true })
+      immersivePlaybackService.clearResolveCache()
+      return
+    }
+    engine.bindPlaylist({
+      items,
+      index,
+      total: playlistTotal,
+      windowOffset,
+      onIndexChange: emitIndexChange,
+      onLoadMoreNearEnd: onLoadMore,
+    })
+    void immersivePlaybackService.registerMediaActions({
+      play: () => { void engine.resume().then((ok) => { if (!ok) void engine.play() }) },
+      pause: () => { void engine.pause() },
       previoustrack: () => {
-        gotoPrevRef.current(statusRef.current === 'playing' || statusRef.current === 'loading')
+        const playing = statusRef.current === 'playing' || statusRef.current === 'loading'
+        void engine.prev(playing)
       },
       nexttrack: () => {
-        gotoNextRef.current(statusRef.current === 'playing' || statusRef.current === 'loading')
+        const playing = statusRef.current === 'playing' || statusRef.current === 'loading'
+        void engine.next(playing)
       },
-    })
-  }, [])
-
-  const cancelGapWait = useCallback(() => {
-    const gap = gapWaitRef.current
-    if (!gap) return
-    window.clearTimeout(gap.timer)
-    gapWaitRef.current = null
-    gap.resolve(false)
-  }, [])
-
-  const pauseGapWait = useCallback(() => {
-    const gap = gapWaitRef.current
-    if (!gap) return false
-    window.clearTimeout(gap.timer)
-    gap.timer = 0
-    gap.remainingMs = Math.max(0, gap.remainingMs - (Date.now() - gap.startedAt))
-    return true
-  }, [])
-
-  const resumeGapWait = useCallback(() => {
-    const gap = gapWaitRef.current
-    if (!gap || gap.timer) return
-    if (gap.remainingMs <= 0) {
-      gapWaitRef.current = null
-      gap.resolve(runRef.current === gap.runId)
-      return
-    }
-    gap.startedAt = Date.now()
-    gap.timer = window.setTimeout(() => {
-      if (gapWaitRef.current === gap) gapWaitRef.current = null
-      gap.resolve(runRef.current === gap.runId)
-    }, gap.remainingMs)
-  }, [])
-
-  const waitForItemGap = useCallback(async (runId: number, prefetch?: PlaybackSegment | null) => {
-    const gapStartedAt = Date.now()
-    if (prefetch) immersivePlaybackService.prefetchSegment(prefetch)
-    enableIosGapControls()
-    const seconds = useImmersivePlayerPreferences.getState().settings.pauseGapSeconds
-    const ms = (IMMERSIVE_PAUSE_GAP_SECONDS.includes(seconds) ? seconds : 2) * 1000
-    const elapsed = Date.now() - gapStartedAt
-    const remaining = Math.max(0, ms - elapsed)
-    if (remaining === 0) return runRef.current === runId
-    return new Promise<boolean>((resolve) => {
-      const gap: GapWait = {
-        remainingMs: remaining,
-        startedAt: Date.now(),
-        timer: 0,
-        resolve,
-        runId,
-      }
-      gap.timer = window.setTimeout(() => {
-        if (gapWaitRef.current === gap) gapWaitRef.current = null
-        resolve(runRef.current === runId)
-      }, remaining)
-      gapWaitRef.current = gap
-    })
-  }, [enableIosGapControls])
-
-  const stopPlayback = useCallback(async (nextStatus: ImmersivePlayerStatus = 'idle', options?: { clearSession?: boolean }) => {
-    runRef.current += 1
-    cancelGapWait()
-    resumeQueueAfterExampleRef.current = false
-    setPlaybackStatus(nextStatus)
-    await immersivePlaybackService.stopCurrent(options)
-  }, [cancelGapWait, setPlaybackStatus])
-
-  const playFromCurrent = useCallback(async () => {
-    if (!current) return
-    const runId = runRef.current + 1
-    runRef.current = runId
-    resumeQueueAfterExampleRef.current = false
-    stopExampleAudio()
-    setPlaybackStatus('loading')
-
-    const segments = buildPlaybackSegments(current, settings)
-    if (segments.length === 0) {
-      setPlaybackStatus('idle')
-      toast.warning(t('immersivePlayer.noPlayableSegments'))
-      return
-    }
-
-    const nextItem = hasNext
-      ? items[index + 1]
-      : (settings.loopQueue && playlistTotal > 0 ? items[0] : null)
-    const nextItemFirstSegment = nextItem
-      ? buildPlaybackSegments(nextItem, useImmersivePlayerPreferences.getState().settings)[0] ?? null
-      : null
-
-    try {
-      do {
-        for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
-          const segment = segments[segmentIndex]
-          const upcomingInPass = segments[segmentIndex + 1] ?? null
-          if (runRef.current !== runId) return
-          setPlaybackStatus('loading')
-          immersivePlaybackService.prefetchSegment(upcomingInPass ?? nextItemFirstSegment)
-          await immersivePlaybackService.playSegment(
-            segment,
-            settings.playbackRate,
-            (event) => {
-              if (runRef.current !== runId) return
-              if (event.reason === 'remotePlay') setPlaybackStatus('playing')
-              if (event.reason === 'remotePause') setPlaybackStatus('paused')
-              if (event.reason === 'remotePreviousTrack') gotoPrev(true)
-              if (event.reason === 'remoteNextTrack') gotoNext(true)
-            },
-            () => {
-              if (runRef.current === runId) setPlaybackStatus('playing')
-            },
-            mediaMetadataLabels,
-          )
-          if (runRef.current !== runId) return
-          setPlaybackStatus('playing')
-
-          const latestSettings = useImmersivePlayerPreferences.getState().settings
-          const moreInThisPass = segmentIndex < segments.length - 1
-          const willRepeat = settings.repeatPerItem === 'infinite' && latestSettings.repeatPerItem === 'infinite'
-          const willAdvance = latestSettings.autoNext && (hasNext || latestSettings.loopQueue)
-          if (moreInThisPass || willRepeat || willAdvance) {
-            const prefetchTarget = upcomingInPass
-              ?? (willRepeat ? segments[0] : nextItemFirstSegment)
-            // Native WebViews can freeze JS timers while the screen is locked. Continue inside
-            // the native completion callback so background auto-next cannot stall on setTimeout.
-            const webViewTimerIsReliable = !isNative() || document.visibilityState === 'visible'
-            if (webViewTimerIsReliable) {
-              const continued = await waitForItemGap(runId, prefetchTarget)
-              if (!continued || runRef.current !== runId) return
-            } else if (prefetchTarget) {
-              immersivePlaybackService.prefetchSegment(prefetchTarget)
-              enableIosGapControls()
-            }
-          }
-        }
-      } while (
-        runRef.current === runId
-        && settings.repeatPerItem === 'infinite'
-        && useImmersivePlayerPreferences.getState().settings.repeatPerItem === 'infinite'
-      )
-
-      if (runRef.current !== runId) return
-      const latestSettings = useImmersivePlayerPreferences.getState().settings
-      if (latestSettings.autoNext && (hasNext || latestSettings.loopQueue)) {
-        if (!hasNext && latestSettings.loopQueue && playlistTotal === 1) {
-          void playFromCurrentRef.current?.()
-        } else if (hasNext) {
-          continueAfterIndexChangeRef.current = true
-          emitIndexChange(absoluteIndex + 1)
-        } else {
-          continueAfterIndexChangeRef.current = true
-          emitIndexChange(0)
-        }
-      } else {
-        setPlaybackStatus('ended')
-        void immersivePlaybackService.clearSession()
-      }
-    } catch (error) {
-      console.warn('[immersive-player] playback failed', error)
-      if (runRef.current === runId) {
-        setPlaybackStatus('error')
-        toast.error(t('immersivePlayer.playFailed'))
-      }
-    }
-  }, [
-    absoluteIndex,
-    current,
-    emitIndexChange,
-    enableIosGapControls,
-    gotoNext,
-    gotoPrev,
-    hasNext,
-    index,
-    items,
-    mediaMetadataLabels,
-    playlistTotal,
-    setPlaybackStatus,
-    settings,
-    stopExampleAudio,
-    t,
-    waitForItemGap,
-  ])
-
-  const togglePlay = useCallback(async () => {
-    if (status === 'loading') {
-      await playFromCurrent()
-      return
-    }
-    if (status === 'playing' && gapWaitRef.current) {
-      pauseGapWait()
-      setPlaybackStatus('paused')
-      return
-    }
-    if (status === 'paused' && gapWaitRef.current) {
-      setPlaybackStatus('playing')
-      resumeGapWait()
-      return
-    }
-    if (status === 'playing') {
-      setPlaybackStatus('paused')
-      await immersivePlaybackService.pause()
-      return
-    }
-    if (status === 'paused') {
-      setPlaybackStatus('playing')
-      const resumed = await immersivePlaybackService.resume()
-      if (!resumed) await playFromCurrent()
-      return
-    }
-    await playFromCurrent()
-  }, [pauseGapWait, playFromCurrent, resumeGapWait, setPlaybackStatus, status])
-
-  const handleRemotePlay = useCallback(() => {
-    const currentStatus = statusRef.current
-    if (currentStatus === 'paused' && gapWaitRef.current) {
-      setPlaybackStatus('playing')
-      resumeGapWait()
-      return
-    }
-    if (currentStatus === 'paused' || currentStatus === 'playing' || currentStatus === 'loading') {
-      void (async () => {
-        const resumed = await immersivePlaybackService.resume()
-        if (resumed) {
-          setPlaybackStatus('playing')
-          return
-        }
-        setPlaybackStatus('loading')
-        void playFromCurrentRef.current?.()
-      })()
-      return
-    }
-    if (currentStatus === 'idle' || currentStatus === 'ended' || currentStatus === 'error') {
-      setPlaybackStatus('loading')
-      void playFromCurrentRef.current?.()
-    }
-  }, [resumeGapWait, setPlaybackStatus])
-
-  const handleRemotePause = useCallback(() => {
-    if (statusRef.current !== 'playing') return
-    if (gapWaitRef.current) {
-      pauseGapWait()
-      setPlaybackStatus('paused')
-      return
-    }
-    setPlaybackStatus('paused')
-    void immersivePlaybackService.pause()
-  }, [pauseGapWait, setPlaybackStatus])
-
-  const handleSettingsChange = useCallback((nextSettings: Partial<ImmersivePlaybackSettings>) => {
-    updateSettings(nextSettings)
-    if (nextSettings.playbackRate !== undefined) {
-      void immersivePlaybackService.setPlaybackRate(nextSettings.playbackRate)
-    }
-  }, [updateSettings])
-
-  useEffect(() => {
-    playFromCurrentRef.current = playFromCurrent
-  }, [playFromCurrent])
-
-  useEffect(() => {
-    statusRef.current = status
-  }, [status])
-
-  useEffect(() => {
-    if (!open) {
-      void stopPlayback()
-      immersivePlaybackService.clearPrefetchCache()
-      return
-    }
-    void immersivePlaybackService.registerMediaActions({
-      play: handleRemotePlay,
-      pause: handleRemotePause,
-      previoustrack: () => { gotoPrev(statusRef.current === 'playing' || statusRef.current === 'loading') },
-      nexttrack: () => { gotoNext(statusRef.current === 'playing' || statusRef.current === 'loading') },
-      stop: () => { void stopPlayback() },
+      stop: () => { void engine.stop() },
     })
     return () => {
       void immersivePlaybackService.registerMediaActions({
@@ -508,49 +245,27 @@ export function ImmersivePlayerDialog({
       })
       void immersivePlaybackService.setIosGapTrackControls(false)
     }
-  }, [gotoNext, gotoPrev, handleRemotePause, handleRemotePlay, open, stopPlayback])
-
-  useEffect(() => immersivePlaybackService.subscribeVisualState(setVisualPlayback), [])
-
-  useEffect(() => {
-    if (status !== 'ended' && status !== 'idle' && status !== 'error') return
-    setVisualPlayback((current) => current.state === 'idle' ? current : { state: 'idle', media: null })
-  }, [status])
+  }, [emitIndexChange, index, items, onLoadMore, open, playlistTotal, windowOffset])
 
   useEffect(() => {
     if (!open) return
-    const continuePlayback = continueAfterIndexChangeRef.current
-    continueAfterIndexChangeRef.current = false
-    // Soft stop keeps MediaSession alive across auto-next wraps / window reloads.
-    void stopPlayback(continuePlayback ? 'loading' : 'idle', { clearSession: !continuePlayback }).then(() => {
-      if (continuePlayback) void playFromCurrentRef.current?.()
-    })
-  }, [index, open, stopPlayback])
-
-  useEffect(() => {
-    if (!open) return
-
     const tryResumeAfterForeground = () => {
       const currentStatus = statusRef.current
       if (currentStatus !== 'playing' && currentStatus !== 'loading') return
+      const engine = engineRef.current
+      if (!engine) return
       void (async () => {
         if (immersivePlaybackService.hasResumableAsset()) {
-          const resumed = await immersivePlaybackService.resume()
-          if (resumed) {
-            setPlaybackStatus('playing')
-            return
-          }
+          const resumed = await engine.resume()
+          if (resumed) return
         }
-        setPlaybackStatus('loading')
-        void playFromCurrentRef.current?.()
+        await engine.play()
       })()
     }
-
     const onVisibility = () => {
       if (document.visibilityState === 'visible') tryResumeAfterForeground()
     }
     document.addEventListener('visibilitychange', onVisibility)
-
     let resumeHandle: { remove: () => Promise<void> } | null = null
     if (isNative()) {
       void App.addListener('appStateChange', ({ isActive }) => {
@@ -559,49 +274,56 @@ export function ImmersivePlayerDialog({
         resumeHandle = handle
       })
     }
-
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       void resumeHandle?.remove()
     }
-  }, [open, setPlaybackStatus])
+  }, [open])
 
   useEffect(() => {
     setInsightExpanded(false)
   }, [current?.id])
 
-  const displayExamples = useMemo<ImmersivePlayerExample[]>(() => {
-    if (!current) return []
-    if (Array.isArray(current.examples) && current.examples.length > 0) return current.examples
-    if (current.exampleEn?.trim()) {
-      return [{
-        en: current.exampleEn.trim(),
-        ...(current.exampleZh?.trim() ? { zh: current.exampleZh.trim() } : {}),
-        ...(current.exampleAudioUrl?.trim() ? { audioUrl: current.exampleAudioUrl.trim() } : {}),
-      }]
-    }
-    return []
-  }, [current])
-
   useEffect(() => {
     stopExampleAudio()
   }, [current?.id, stopExampleAudio])
 
-  const sleepTimerActive = status === 'loading' || status === 'playing' || status === 'paused'
-
   useEffect(() => {
-    if (sleepTimerRef.current) window.clearTimeout(sleepTimerRef.current)
-    sleepTimerRef.current = null
-    if (!open || settings.sleepTimerMinutes === 0 || !sleepTimerActive) return
-    sleepTimerRef.current = window.setTimeout(() => {
-      void stopPlayback('ended')
-      onOpenChange(false)
-    }, settings.sleepTimerMinutes * 60 * 1000)
-    return () => {
-      if (sleepTimerRef.current) window.clearTimeout(sleepTimerRef.current)
-      sleepTimerRef.current = null
+    if (status !== 'ended' && status !== 'idle' && status !== 'error') return
+    setVisualPlayback((currentVisual) => currentVisual.state === 'idle' ? currentVisual : { state: 'idle', media: null })
+  }, [status])
+
+  const togglePlay = useCallback(async () => {
+    const engine = engineRef.current
+    if (!engine) return
+    stopExampleAudio()
+    resumeQueueAfterExampleRef.current = false
+    if (status === 'playing') {
+      await engine.pause()
+      return
     }
-  }, [onOpenChange, open, settings.sleepTimerMinutes, sleepTimerActive, stopPlayback])
+    if (status === 'paused') {
+      const resumed = await engine.resume()
+      if (!resumed) await engine.play()
+      return
+    }
+    await engine.play()
+  }, [status, stopExampleAudio])
+
+  const handleSettingsChange = useCallback((nextSettings: Partial<ImmersivePlaybackSettings>) => {
+    updateSettings(nextSettings)
+    engineRef.current?.updateSettings(nextSettings)
+  }, [updateSettings])
+
+  const gotoPrev = useCallback(() => {
+    const playing = status === 'playing' || status === 'loading'
+    void engineRef.current?.prev(playing)
+  }, [status])
+
+  const gotoNext = useCallback(() => {
+    const playing = status === 'playing' || status === 'loading'
+    void engineRef.current?.next(playing)
+  }, [status])
 
   if (!current) return null
 
@@ -610,6 +332,18 @@ export function ImmersivePlayerDialog({
   const hiddenText = !settings.textVisible
   const hasLongInsight = (current.insight?.length ?? 0) > 180
   const isVisualizerActive = status === 'playing' && visualPlayback.state === 'playing'
+
+  const displayExamples = (() => {
+    if (Array.isArray(current.examples) && current.examples.length > 0) return current.examples
+    if (current.exampleEn?.trim()) {
+      return [{
+        en: current.exampleEn.trim(),
+        ...(current.exampleZh?.trim() ? { zh: current.exampleZh.trim() } : {}),
+        ...(current.exampleAudioUrl?.trim() ? { audioUrl: current.exampleAudioUrl.trim() } : {}),
+      }] satisfies ImmersivePlayerExample[]
+    }
+    return [] as ImmersivePlayerExample[]
+  })()
 
   return (
     <>
@@ -733,12 +467,12 @@ export function ImmersivePlayerDialog({
                                   onClick={() => {
                                     const wasQueuePlaying = statusRef.current === 'playing' || statusRef.current === 'loading'
                                     resumeQueueAfterExampleRef.current = wasQueuePlaying
-                                    void stopPlayback('paused', { clearSession: false })
+                                    void engineRef.current?.pause()
                                     void playExampleAudio(example.audioUrl, null, 'voice', {
                                       onEnded: () => {
                                         if (!resumeQueueAfterExampleRef.current) return
                                         resumeQueueAfterExampleRef.current = false
-                                        void playFromCurrentRef.current?.()
+                                        void engineRef.current?.play()
                                       },
                                     })
                                   }}
@@ -777,7 +511,7 @@ export function ImmersivePlayerDialog({
               </Button>
 
               <div className="flex items-center justify-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => gotoPrev(status === 'playing' || status === 'loading')} disabled={!hasPrev && !settings.loopQueue} aria-label={t('immersivePlayer.previous')} className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
+                <Button variant="ghost" size="icon" onClick={gotoPrev} disabled={!hasPrev && !settings.loopQueue} aria-label={t('immersivePlayer.previous')} className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   <ChevronLeft className="size-5" />
                 </Button>
                 <Button
@@ -789,7 +523,7 @@ export function ImmersivePlayerDialog({
                 >
                   {status === 'loading' ? <Loader2 className="size-5 animate-spin" /> : status === 'playing' ? <Pause className="size-5" /> : <Play className="size-5" />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => gotoNext(status === 'playing' || status === 'loading')} disabled={!hasNext && !settings.loopQueue} aria-label={t('immersivePlayer.next')} className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
+                <Button variant="ghost" size="icon" onClick={gotoNext} disabled={!hasNext && !settings.loopQueue} aria-label={t('immersivePlayer.next')} className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   <ChevronRight className="size-5" />
                 </Button>
               </div>
@@ -815,8 +549,8 @@ export function ImmersivePlayerDialog({
             setQueueOpen(false)
             return
           }
-          continueAfterIndexChangeRef.current = status === 'playing' || status === 'loading'
-          emitIndexChange(windowOffset + nextIndex)
+          const playing = status === 'playing' || status === 'loading'
+          void engineRef.current?.seekTo(windowOffset + nextIndex, playing)
           setQueueOpen(false)
         }}
       />
@@ -839,72 +573,108 @@ function ImmersiveSettingsDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={cn('max-h-[88dvh] overscroll-contain rounded-t-2xl !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
-        <div className="flex items-center justify-between px-5 py-3">
-          <DrawerTitle className="text-base">{t('immersivePlayer.settingsTitle')}</DrawerTitle>
-          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className={cn('flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground', isNative() && 'hidden')}>
-            <X className="size-4" />
+      <DrawerContent
+        showHandle={false}
+        className={cn(
+          'mt-10 flex h-auto max-h-none flex-col overflow-visible rounded-t-2xl !z-[10001]',
+          isIOS() && 'pb-safe',
+        )}
+        overlayClassName="!z-[10001]"
+      >
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
+        <div className="flex items-center justify-between gap-3 px-4 pb-1.5 pt-1.5">
+          <DrawerTitle className="text-sm font-semibold">{t('immersivePlayer.settingsTitle')}</DrawerTitle>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label={t('immersivePlayer.close')}
+            className={cn('flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground', isNative() && 'hidden')}
+          >
+            <X className="size-3.5" />
           </button>
         </div>
-        <ScrollArea className="min-h-0 flex-1 px-5 pb-8">
-          <div className="space-y-5 py-2">
-            <OptionGroup label={t('immersivePlayer.settings.sleepTimer')}>
-              <SegmentedOptions
-                value={settings.sleepTimerMinutes}
-                options={[0, 15, 30, 60].map((value) => ({ value, label: value === 0 ? t('immersivePlayer.settings.off') : t('immersivePlayer.settings.minutes', { count: value }) }))}
-                onChange={(value) => onChange({ sleepTimerMinutes: value as ImmersivePlaybackSettings['sleepTimerMinutes'] })}
-              />
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.repeatPerItem')}>
-              <SegmentedOptions
-                value={settings.repeatPerItem}
-                options={[
-                  ...([1, 2, 3] as const).map((value) => ({ value, label: t('immersivePlayer.settings.times', { count: value }) })),
-                  { value: 'infinite' as const, label: t('immersivePlayer.settings.infinite') },
-                ]}
-                onChange={(value) => onChange({ repeatPerItem: value as ImmersivePlaybackSettings['repeatPerItem'] })}
-              />
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.playbackRate')}>
-              <SegmentedOptions
-                value={settings.playbackRate}
-                options={[0.75, 1, 1.25, 1.5].map((value) => ({ value, label: t('immersivePlayer.settings.speed', { value }) }))}
-                onChange={(value) => onChange({ playbackRate: value as ImmersivePlaybackSettings['playbackRate'] })}
-              />
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.accent')}>
-              <SegmentedOptions
+        <div className="flex flex-col gap-3 px-4 pb-4 pt-1">
+          <OptionGroup label={t('immersivePlayer.settings.sleepTimer')}>
+            <SegmentedOptions
+              value={settings.sleepTimerMinutes}
+              options={[0, 15, 30, 60].map((value) => ({ value, label: value === 0 ? t('immersivePlayer.settings.off') : t('immersivePlayer.settings.minutes', { count: value }) }))}
+              onChange={(value) => onChange({ sleepTimerMinutes: value as ImmersivePlaybackSettings['sleepTimerMinutes'] })}
+            />
+          </OptionGroup>
+          <OptionGroup label={t('immersivePlayer.settings.repeatPerItem')}>
+            <SegmentedOptions
+              value={settings.repeatPerItem}
+              options={[
+                ...([1, 2, 3] as const).map((value) => ({ value, label: t('immersivePlayer.settings.times', { count: value }) })),
+                { value: 'infinite' as const, label: t('immersivePlayer.settings.infinite') },
+              ]}
+              onChange={(value) => onChange({ repeatPerItem: value as ImmersivePlaybackSettings['repeatPerItem'] })}
+            />
+          </OptionGroup>
+          <OptionGroup label={t('immersivePlayer.settings.playbackRate')}>
+            <ToggleGroup
+              type="single"
+              value={String(settings.playbackRate)}
+              onValueChange={(value) => {
+                if (!value) return
+                onChange({ playbackRate: Number(value) as ImmersivePlaybackSettings['playbackRate'] })
+              }}
+              className="grid w-full grid-cols-4 gap-0.5 rounded-md bg-muted p-0.5"
+            >
+              {([0.75, 1, 1.25, 1.5] as const).map((value) => (
+                <ToggleGroupItem
+                  key={value}
+                  value={String(value)}
+                  className="h-9 min-w-0 flex-1 rounded-md border-0 bg-transparent px-1 text-[11px] font-medium text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                >
+                  {t('immersivePlayer.settings.speed', { value })}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </OptionGroup>
+          <OptionGroup label={t('immersivePlayer.settings.pauseGap')}>
+            <SegmentedOptions
+              value={settings.pauseGapSeconds}
+              options={IMMERSIVE_PAUSE_GAP_SECONDS.map((value) => ({ value, label: t('immersivePlayer.settings.seconds', { count: value }) }))}
+              onChange={(value) => onChange({ pauseGapSeconds: value })}
+            />
+          </OptionGroup>
+          <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
+            <div className="flex items-center justify-between gap-3 rounded-md bg-muted/35 px-3 py-2">
+              <span className="text-xs font-medium text-foreground">{t('immersivePlayer.settings.accent')}</span>
+              <ToggleGroup
+                type="single"
                 value={settings.accent}
-                options={[
-                  { value: 'us' as const, label: t('immersivePlayer.settings.accentUs') },
-                  { value: 'uk' as const, label: t('immersivePlayer.settings.accentUk') },
-                ]}
-                onChange={(value) => onChange({ accent: value as ImmersivePlaybackSettings['accent'] })}
-              />
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.pauseGap')}>
-              <div className="flex flex-col gap-2">
-                <SegmentedOptions
-                  value={settings.pauseGapSeconds}
-                  options={IMMERSIVE_PAUSE_GAP_SECONDS.map((value) => ({ value, label: t('immersivePlayer.settings.seconds', { count: value }) }))}
-                  onChange={(value) => onChange({ pauseGapSeconds: value })}
-                />
-                <p className="text-[11px] leading-4 text-muted-foreground">{t('immersivePlayer.settings.pauseGapHint')}</p>
-              </div>
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
-              <div className="overflow-hidden rounded-lg bg-muted/35">
-                <SwitchRow label={t('immersivePlayer.settings.playExample')} checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
-              </div>
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>
-              <div className="overflow-hidden rounded-lg bg-muted/35">
-                <SwitchRow label={t('immersivePlayer.settings.autoNext')} checked={settings.autoNext} onChange={(value) => onChange({ autoNext: value })} />
-                <SwitchRow label={t('immersivePlayer.settings.loopQueue')} checked={settings.loopQueue} onChange={(value) => onChange({ loopQueue: value })} />
-              </div>
-            </OptionGroup>
-          </div>
-        </ScrollArea>
+                onValueChange={(value) => {
+                  if (!value) return
+                  onChange({ accent: value as ImmersivePlaybackSettings['accent'] })
+                }}
+                aria-label={t('immersivePlayer.settings.accent')}
+                size="sm"
+                className="rounded-full bg-muted p-0.5"
+              >
+                <ToggleGroupItem
+                  value="us"
+                  className="h-6 rounded-full border-0 px-2 text-[11px] text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                >
+                  {t('immersivePlayer.settings.accentUs')}
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="uk"
+                  className="h-6 rounded-full border-0 px-2 text-[11px] text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                >
+                  {t('immersivePlayer.settings.accentUk')}
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </OptionGroup>
+          <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>
+            <div className="overflow-hidden rounded-md bg-muted/35">
+              <SwitchRow label={t('immersivePlayer.settings.autoNext')} checked={settings.autoNext} onChange={(value) => onChange({ autoNext: value })} />
+              <SwitchRow label={t('immersivePlayer.settings.loopQueue')} checked={settings.loopQueue} onChange={(value) => onChange({ loopQueue: value })} />
+            </div>
+          </OptionGroup>
+        </div>
       </DrawerContent>
     </Drawer>
   )
@@ -988,7 +758,7 @@ function ImmersiveQueueDrawer({
 function OptionGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section>
-      <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">{label}</p>
       {children}
     </section>
   )
@@ -1003,15 +773,22 @@ function SegmentedOptions<T extends string | number>({
   options: Array<{ value: T; label: string }>
   onChange: (value: T) => void
 }) {
+  const columns = Math.min(Math.max(options.length, 1), 4)
   return (
-    <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
+    <div
+      className="grid gap-0.5 rounded-md bg-muted p-0.5"
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+    >
       {options.map((option) => (
         <button
           key={String(option.value)}
           type="button"
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
-          className={cn('h-10 touch-manipulation rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', value === option.value ? 'bg-background text-foreground' : 'text-muted-foreground')}
+          className={cn(
+            'h-9 min-w-0 touch-manipulation rounded-md px-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            value === option.value ? 'bg-background text-foreground' : 'text-muted-foreground',
+          )}
         >
           {option.label}
         </button>
@@ -1022,8 +799,8 @@ function SegmentedOptions<T extends string | number>({
 
 function SwitchRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between px-3 py-2.5">
-      <span className="text-sm font-medium text-foreground">{label}</span>
+    <div className="flex items-center justify-between gap-3 px-3 py-2">
+      <span className="text-xs font-medium text-foreground">{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
     </div>
   )

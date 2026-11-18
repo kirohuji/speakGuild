@@ -14,7 +14,7 @@ type ClientErrorPayload = {
 }
 
 /** 暂时关闭 Sentry；恢复监控时改为 false */
-const SENTRY_TEMPORARILY_DISABLED = true
+const SENTRY_TEMPORARILY_DISABLED = false
 
 let installed = false
 let sentryEnabled = false

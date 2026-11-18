@@ -9,6 +9,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
     "cap:copy": "pnpm build && pnpm exec cap copy",
     "cap:sync": "pnpm build && pnpm exec cap sync",
     "cap:sync:ios": "pnpm build && pnpm exec cap sync ios",
