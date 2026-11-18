@@ -1,6 +1,5 @@
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
-import { NativeAudio, type PlaybackStateEvent } from '@capgo/capacitor-native-audio'
-import { MediaSession, type MediaSessionAction } from '@capgo/capacitor-media-session'
+import type { PluginListenerHandle } from '@capacitor/core'
+import { NativeAudio, type PlaybackStateEvent, type QueueChangeEvent } from '@capgo/capacitor-native-audio'
 import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 import { isNative } from '@/lib/native'
@@ -9,43 +8,42 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import type { PlaybackSegment } from './immersive-player.types'
 import type {
   ImmersiveAudioTransport,
+  ImmersiveNativeEvent,
   ImmersivePlaybackVisualState,
   MediaMetadataLabels,
-  TransportSlot,
+  QueuePlayItem,
 } from './immersive-audio.transport'
-import { resolveAppLogoArtworkUri } from './immersive-audio.transport'
+import {
+  immersiveLog,
+  resolveAppLogoArtworkUri,
+} from './immersive-audio.transport'
 
-export type { ImmersiveAudioTransport, ImmersivePlaybackVisualState, MediaMetadataLabels, TransportSlot }
-
-const SLOT_ASSET: Record<TransportSlot, string> = {
-  a: 'immersive-a',
-  b: 'immersive-b',
+export type {
+  ImmersiveAudioTransport,
+  ImmersiveNativeEvent,
+  ImmersivePlaybackVisualState,
+  MediaMetadataLabels,
+  QueuePlayItem,
 }
-
-const POSITION_THROTTLE_MS = 400
 
 let configured = false
 let listenersReady = false
 let completeHandle: PluginListenerHandle | null = null
 let stateHandle: PluginListenerHandle | null = null
-let currentTimeHandle: PluginListenerHandle | null = null
-let nativeStateHandler: ((event: PlaybackStateEvent) => void) | null = null
+let queueChangeHandle: PluginListenerHandle | null = null
 
-let playingSlot: TransportSlot | null = null
-let preparedSlots = new Set<TransportSlot>()
-let playWaiters = new Map<TransportSlot, { resolve: () => void; reject: (error: Error) => void }>()
+let nativeEventHandler: ((event: ImmersiveNativeEvent) => void) | null = null
+
+let queueItems: QueuePlayItem[] = []
+let queueIndex = -1
+let activeAssetId: string | null = null
 let playEpoch = 0
 let activePlaybackRate = 1
+let trackWaiter: { assetId: string; resolve: () => void; reject: (error: Error) => void } | null = null
 
 let htmlAudio: HTMLAudioElement | null = null
-let htmlPlayResolve: (() => void) | null = null
-let gapMediaControlsActive = false
 
 const resolveCache = new Map<string, Promise<string | null>>()
-
-let lastDuration = 0
-let lastPosition = 0
-let lastPositionPushAt = 0
 
 let visualState: ImmersivePlaybackVisualState = { state: 'idle', media: null }
 const visualStateListeners = new Set<(state: ImmersivePlaybackVisualState) => void>()
@@ -59,114 +57,121 @@ function segmentCacheKey(segment: PlaybackSegment) {
   return `${segment.id}:${segment.audioUrl ?? ''}`
 }
 
-async function artworkList() {
-  const src = await resolveAppLogoArtworkUri()
-  return [{ src, sizes: '512x512', type: 'image/png' }]
+function emitNativeEvent(event: ImmersiveNativeEvent) {
+  immersiveLog('native.event', event as unknown as Record<string, unknown>)
+  nativeEventHandler?.(event)
 }
 
-async function clearMediaSession() {
-  await MediaSession.setPlaybackState({ playbackState: 'none' }).catch(() => undefined)
-  await MediaSession.setMetadata({}).catch(() => undefined)
-  lastDuration = 0
-  lastPosition = 0
+function settleTrack(error?: Error) {
+  const waiter = trackWaiter
+  if (!waiter) return
+  trackWaiter = null
+  if (error) waiter.reject(error)
+  else waiter.resolve()
 }
 
-async function pushPositionState(playbackRate = activePlaybackRate) {
-  const duration = lastDuration > 0 ? lastDuration : undefined
-  const position = lastDuration > 0 ? Math.min(lastPosition, lastDuration) : undefined
-  await MediaSession.setPositionState({
-    playbackRate,
-    ...(duration != null ? { duration } : {}),
-    ...(position != null ? { position } : {}),
-  }).catch(() => undefined)
-}
-
-/**
- * MediaSession.setPlaybackState rewrites Now Playing from its internal dict.
- * If elapsed was only written by NativeAudio, that wipe flashes progress to 0.
- * Always seed duration/position into MediaSession before flipping playbackState.
- */
-async function syncPlaybackState(state: 'playing' | 'paused' | 'none') {
-  const rate = state === 'playing' ? activePlaybackRate : 0
-  if (state !== 'none' && lastDuration > 0) {
-    await pushPositionState(rate)
-  }
-  await MediaSession.setPlaybackState({ playbackState: state }).catch(() => undefined)
-  if (state !== 'none' && lastDuration > 0) {
-    await pushPositionState(rate)
-  }
+function waitForTrack(assetId: string): Promise<void> {
+  settleTrack()
+  return new Promise<void>((resolve, reject) => {
+    trackWaiter = { assetId, resolve, reject }
+  })
 }
 
 async function configureNativeAudio() {
   if (configured || !isNative()) return
   configured = true
+  immersiveLog('configure', { showNotification: true, backgroundPlayback: true })
   await NativeAudio.configure({
     focus: true,
     background: true,
     backgroundPlayback: true,
     ignoreSilent: true,
     showNotification: true,
+    progressInterval: 0.5,
   }).catch((error) => {
     configured = false
     throw error
   })
 }
 
-function settleSlot(slot: TransportSlot, error?: Error) {
-  const waiter = playWaiters.get(slot)
-  if (!waiter) return
-  playWaiters.delete(slot)
-  if (error) waiter.reject(error)
-  else waiter.resolve()
-}
-
-async function unloadSlot(slot: TransportSlot) {
-  const assetId = SLOT_ASSET[slot]
-  preparedSlots.delete(slot)
-  if (playingSlot === slot) playingSlot = null
-  settleSlot(slot)
-  if (!isNative()) return
-  await NativeAudio.stop({ assetId }).catch(() => undefined)
-  await NativeAudio.unload({ assetId }).catch(() => undefined)
-}
-
-async function readNativeTiming(assetId: string) {
-  const [timeResult, durationResult] = await Promise.all([
-    NativeAudio.getCurrentTime({ assetId }).catch(() => null),
-    NativeAudio.getDuration({ assetId }).catch(() => null),
-  ])
-  if (typeof timeResult?.currentTime === 'number' && Number.isFinite(timeResult.currentTime)) {
-    lastPosition = Math.max(0, timeResult.currentTime)
-  }
-  if (typeof durationResult?.duration === 'number' && Number.isFinite(durationResult.duration) && durationResult.duration > 0) {
-    lastDuration = durationResult.duration
-  }
-}
-
 async function ensureNativeListeners() {
   if (!isNative() || listenersReady) return
   listenersReady = true
+
   completeHandle = await NativeAudio.addListener('complete', (event) => {
-    const slot = (Object.keys(SLOT_ASSET) as TransportSlot[]).find((key) => SLOT_ASSET[key] === event.assetId)
-    if (!slot || playingSlot !== slot) return
-    if (lastDuration > 0) lastPosition = lastDuration
-    playingSlot = null
-    preparedSlots.delete(slot)
-    publishVisualState({ state: 'idle', media: null })
-    settleSlot(slot)
-    void NativeAudio.unload({ assetId: event.assetId }).catch(() => undefined)
+    immersiveLog('complete', { assetId: event.assetId, waiting: trackWaiter?.assetId ?? null })
+    emitNativeEvent({ type: 'complete', assetId: event.assetId })
+    if (trackWaiter?.assetId === event.assetId) {
+      settleTrack()
+    }
+    if (activeAssetId === event.assetId) {
+      activeAssetId = null
+      publishVisualState({ state: 'idle', media: null })
+    }
   })
-  stateHandle = await NativeAudio.addListener('playbackState', (event) => {
-    nativeStateHandler?.(event)
+
+  stateHandle = await NativeAudio.addListener('playbackState', (event: PlaybackStateEvent) => {
+    immersiveLog('playbackState', {
+      assetId: event.assetId,
+      state: event.state,
+      reason: event.reason,
+    })
+    emitNativeEvent({
+      type: 'playbackState',
+      reason: event.reason,
+      assetId: event.assetId,
+      state: event.state,
+    })
+    if (event.state === 'playing') {
+      activeAssetId = event.assetId
+      publishVisualState({ state: 'playing', media: null })
+    } else if (event.state === 'paused') {
+      publishVisualState({ state: 'paused', media: null })
+    } else if (event.state === 'stopped' && activeAssetId === event.assetId) {
+      activeAssetId = null
+      publishVisualState({ state: 'idle', media: null })
+    }
   })
-  currentTimeHandle = await NativeAudio.addListener('currentTime', (event) => {
-    if (typeof event.currentTime !== 'number' || !Number.isFinite(event.currentTime)) return
-    lastPosition = Math.max(0, event.currentTime)
-    const now = Date.now()
-    if (now - lastPositionPushAt < POSITION_THROTTLE_MS) return
-    lastPositionPushAt = now
-    void pushPositionState()
+
+  queueChangeHandle = await NativeAudio.addListener('queueChange', (event: QueueChangeEvent) => {
+    immersiveLog('queueChange', {
+      assetId: event.assetId,
+      index: event.index,
+      reason: event.reason,
+    })
+    queueIndex = event.index
+    if (event.assetId) activeAssetId = event.assetId
+
+    // Remote / programmatic skip mid-track: keep waiting for the newly selected asset.
+    const skipReasons = new Set(['remoteNext', 'remotePrevious', 'next', 'previous', 'select'])
+    if (skipReasons.has(event.reason) && trackWaiter && event.assetId) {
+      trackWaiter.assetId = event.assetId
+      publishVisualState({ state: 'playing', media: null })
+    }
+
+    emitNativeEvent({
+      type: 'queueChange',
+      reason: event.reason,
+      assetId: event.assetId,
+      index: event.index,
+    })
   })
+}
+
+async function clearNativeQueue() {
+  if (!isNative()) return
+  immersiveLog('clearQueue')
+  await NativeAudio.clearQueue().catch(() => undefined)
+}
+
+async function detachNativeListeners() {
+  await completeHandle?.remove().catch(() => undefined)
+  await stateHandle?.remove().catch(() => undefined)
+  await queueChangeHandle?.remove().catch(() => undefined)
+  completeHandle = null
+  stateHandle = null
+  queueChangeHandle = null
+  listenersReady = false
 }
 
 async function resolveSegmentUrl(segment: PlaybackSegment, allowTts: boolean): Promise<string | null> {
@@ -182,6 +187,7 @@ async function resolveSegmentUrl(segment: PlaybackSegment, allowTts: boolean): P
         url: segment.audioUrl,
         asFileUri,
       })
+      immersiveLog('resolve', { segmentId: segment.id, asFileUri, hasUrl: true })
       return resolvePlaybackAudio({ url: segment.audioUrl!, role: 'immersive_audio', asFileUri })
     })()
     resolveCache.set(key, pending)
@@ -193,7 +199,10 @@ async function resolveSegmentUrl(segment: PlaybackSegment, allowTts: boolean): P
     }
   }
 
-  if (!allowTts) return null
+  if (!allowTts) {
+    immersiveLog('resolve.skip_tts', { segmentId: segment.id })
+    return null
+  }
 
   const { ttsBackend } = usePreferencesStore.getState()
   const result = await synthesizeAsset({
@@ -211,6 +220,7 @@ async function resolveSegmentUrl(segment: PlaybackSegment, allowTts: boolean): P
     assetId: result.assetId,
     asFileUri,
   })
+  immersiveLog('resolve.tts', { segmentId: segment.id, assetId: result.assetId })
   return resolvePlaybackAudio({
     url: result.url,
     assetId: result.assetId,
@@ -219,160 +229,211 @@ async function resolveSegmentUrl(segment: PlaybackSegment, allowTts: boolean): P
   })
 }
 
+async function playWebQueue(items: QueuePlayItem[], startIndex: number, playbackRate: number) {
+  const item = items[startIndex]
+  if (!item) throw new Error('Empty queue')
+  queueItems = items
+  queueIndex = startIndex
+  activeAssetId = item.assetId
+  activePlaybackRate = playbackRate
+
+  const audio = new Audio(item.fileUrl)
+  htmlAudio = audio
+  audio.playbackRate = playbackRate
+  publishVisualState({ state: 'loading', media: audio })
+
+  const completion = new Promise<void>((resolve, reject) => {
+    trackWaiter = {
+      assetId: item.assetId,
+      resolve: () => {
+        trackWaiter = null
+        resolve()
+      },
+      reject: (error) => {
+        trackWaiter = null
+        reject(error)
+      },
+    }
+    audio.onended = () => {
+      immersiveLog('web.complete', { assetId: item.assetId })
+      emitNativeEvent({ type: 'complete', assetId: item.assetId })
+      publishVisualState({ state: 'idle', media: null })
+      activeAssetId = null
+      settleTrack()
+    }
+    audio.onerror = () => {
+      settleTrack(new Error('Audio playback failed'))
+    }
+  })
+
+  immersiveLog('web.play', { assetId: item.assetId, index: startIndex })
+  await audio.play()
+  publishVisualState({ state: 'playing', media: audio })
+  await completion
+}
+
+async function playWebAdjacent(delta: 1 | -1): Promise<boolean> {
+  const nextIndex = queueIndex + delta
+  if (nextIndex < 0 || nextIndex >= queueItems.length) return false
+  const epoch = playEpoch
+  await playWebQueue(queueItems, nextIndex, activePlaybackRate)
+  return epoch === playEpoch
+}
+
 function createTransport(): ImmersiveAudioTransport {
   return {
-    otherSlot(slot) {
-      return slot === 'a' ? 'b' : 'a'
-    },
-
     async resolve(segment, options) {
       return resolveSegmentUrl(segment, options?.allowTts !== false)
     },
 
-    async prepare(slot, fileUrl, meta) {
-      const logo = await resolveAppLogoArtworkUri()
-      if (!isNative()) {
-        if (playingSlot === slot) {
-          throw new Error(`Cannot prepare playing slot ${slot}`)
-        }
-        const audio = new Audio(fileUrl)
-        htmlAudio = audio
-        preparedSlots.clear()
-        preparedSlots.add(slot)
-        void meta
-        void logo
-        return
-      }
-      await configureNativeAudio()
-      await ensureNativeListeners()
-      const assetId = SLOT_ASSET[slot]
-      if (playingSlot === slot) {
-        throw new Error(`Cannot prepare playing slot ${slot}`)
-      }
-      await NativeAudio.stop({ assetId }).catch(() => undefined)
-      await NativeAudio.unload({ assetId }).catch(() => undefined)
-      preparedSlots.delete(slot)
-      await NativeAudio.preload({
-        assetId,
-        assetPath: fileUrl,
-        isUrl: true,
-        notificationMetadata: {
-          title: meta.title,
-          artist: meta.artist || 'ManYuDing',
-          album: meta.album || 'Immersive Library Playback',
-          artworkUrl: logo,
-        },
-      })
-      preparedSlots.add(slot)
-    },
-
-    async playSlot(slot, playbackRate) {
+    async playQueue(items, options) {
+      const startIndex = options?.startIndex ?? 0
+      const playbackRate = options?.playbackRate ?? 1
       const epoch = ++playEpoch
       activePlaybackRate = playbackRate
-      if (isNative()) {
-        await configureNativeAudio()
-        await ensureNativeListeners()
-        if (!preparedSlots.has(slot)) {
-          throw new Error(`Slot ${slot} is not prepared`)
-        }
-        if (playingSlot && playingSlot !== slot) {
-          await unloadSlot(playingSlot)
-        }
-        const assetId = SLOT_ASSET[slot]
-        const completion = new Promise<void>((resolve, reject) => {
-          playWaiters.set(slot, { resolve, reject })
-        })
-        playingSlot = slot
-        lastPosition = 0
-        await NativeAudio.setRate({ assetId, rate: playbackRate }).catch(() => undefined)
-        if (epoch !== playEpoch) {
-          settleSlot(slot)
-          return
-        }
-        await NativeAudio.play({ assetId, volume: 1 })
-        if (epoch !== playEpoch) {
-          settleSlot(slot)
-          return
-        }
-        await readNativeTiming(assetId)
-        await pushPositionState(playbackRate)
-        publishVisualState({ state: 'playing', media: null })
-        await completion
+      settleTrack()
+
+      if (!items.length || startIndex < 0 || startIndex >= items.length) {
+        throw new Error('Invalid playQueue items/startIndex')
+      }
+
+      queueItems = items
+      queueIndex = startIndex
+      const start = items[startIndex]
+      immersiveLog('playQueue', {
+        count: items.length,
+        startIndex,
+        assetId: start.assetId,
+        playbackRate,
+      })
+
+      if (!isNative()) {
+        await playWebQueue(items, startIndex, playbackRate)
         return
       }
 
-      if (!htmlAudio?.src || !preparedSlots.has(slot)) {
-        throw new Error('Web slot has no prepared audio')
-      }
-      const audio = htmlAudio
-      audio.playbackRate = playbackRate
-      const completion = new Promise<void>((resolve, reject) => {
-        htmlPlayResolve = resolve
-        audio.onended = () => {
-          if (Number.isFinite(audio.duration) && audio.duration > 0) {
-            lastDuration = audio.duration
-            lastPosition = audio.duration
-          }
-          publishVisualState({ state: 'idle', media: null })
-          preparedSlots.delete(slot)
-          playingSlot = null
-          htmlPlayResolve = null
-          resolve()
-        }
-        audio.onerror = () => {
-          htmlPlayResolve = null
-          reject(new Error('Audio playback failed'))
-        }
-        audio.ontimeupdate = () => {
-          lastPosition = audio.currentTime || 0
-          if (Number.isFinite(audio.duration) && audio.duration > 0) lastDuration = audio.duration
-          const now = Date.now()
-          if (now - lastPositionPushAt < POSITION_THROTTLE_MS) return
-          lastPositionPushAt = now
-          void pushPositionState(playbackRate)
-        }
+      await configureNativeAudio()
+      await ensureNativeListeners()
+
+      const logo = await resolveAppLogoArtworkUri()
+      await clearNativeQueue()
+
+      const queueState = await NativeAudio.setQueue({
+        items: items.map((item) => ({
+          assetId: item.assetId,
+          assetPath: item.fileUrl,
+          isUrl: true,
+          notificationMetadata: {
+            title: item.title,
+            artist: item.artist || 'ManYuDing',
+            album: item.album || 'Immersive Library Playback',
+            artworkUrl: logo,
+          },
+        })),
+        startIndex,
+        autoPlay: true,
       })
-      playingSlot = slot
-      lastPosition = 0
-      publishVisualState({ state: 'loading', media: audio })
-      await audio.play()
+
+      immersiveLog('setQueue', {
+        assetId: queueState.assetId,
+        index: queueState.index,
+        count: queueState.count,
+      })
+
       if (epoch !== playEpoch) {
-        htmlPlayResolve = null
+        settleTrack()
         return
       }
-      if (Number.isFinite(audio.duration) && audio.duration > 0) lastDuration = audio.duration
-      await pushPositionState(playbackRate)
-      publishVisualState({ state: 'playing', media: audio })
+
+      activeAssetId = queueState.assetId || start.assetId
+      queueIndex = queueState.index >= 0 ? queueState.index : startIndex
+
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: playbackRate }).catch(() => undefined)
+      publishVisualState({ state: 'playing', media: null })
+
+      const completion = waitForTrack(activeAssetId)
       await completion
     },
 
+    async queueNext() {
+      const nextIndex = queueIndex + 1
+      if (nextIndex >= queueItems.length) {
+        immersiveLog('queueNext.eof', { queueIndex, count: queueItems.length })
+        return false
+      }
+
+      immersiveLog('queueNext', { from: queueIndex, to: nextIndex })
+      const epoch = ++playEpoch
+      activePlaybackRate = activePlaybackRate || 1
+
+      if (!isNative()) {
+        return playWebAdjacent(1)
+      }
+
+      await configureNativeAudio()
+      await ensureNativeListeners()
+      const state = await NativeAudio.queueNext()
+      if (epoch !== playEpoch) return false
+
+      queueIndex = state.index
+      activeAssetId = state.assetId || queueItems[nextIndex]?.assetId || null
+      if (!activeAssetId) return false
+
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
+      publishVisualState({ state: 'playing', media: null })
+      await waitForTrack(activeAssetId)
+      return epoch === playEpoch
+    },
+
+    async queuePrevious() {
+      const prevIndex = queueIndex - 1
+      if (prevIndex < 0) {
+        immersiveLog('queuePrevious.bof', { queueIndex })
+        return false
+      }
+
+      immersiveLog('queuePrevious', { from: queueIndex, to: prevIndex })
+      const epoch = ++playEpoch
+
+      if (!isNative()) {
+        return playWebAdjacent(-1)
+      }
+
+      await configureNativeAudio()
+      await ensureNativeListeners()
+      const state = await NativeAudio.queuePrevious()
+      if (epoch !== playEpoch) return false
+
+      queueIndex = state.index
+      activeAssetId = state.assetId || queueItems[prevIndex]?.assetId || null
+      if (!activeAssetId) return false
+
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
+      publishVisualState({ state: 'playing', media: null })
+      await waitForTrack(activeAssetId)
+      return epoch === playEpoch
+    },
+
     async pause() {
-      if (isNative() && playingSlot) {
-        const assetId = SLOT_ASSET[playingSlot]
-        await readNativeTiming(assetId)
-        await NativeAudio.pause({ assetId }).catch(() => undefined)
-        await readNativeTiming(assetId)
+      immersiveLog('pause', { assetId: activeAssetId, queueIndex })
+      if (isNative() && activeAssetId) {
+        await NativeAudio.pause({ assetId: activeAssetId }).catch(() => undefined)
       } else if (htmlAudio) {
-        lastPosition = htmlAudio.currentTime || lastPosition
-        if (Number.isFinite(htmlAudio.duration) && htmlAudio.duration > 0) lastDuration = htmlAudio.duration
         htmlAudio.pause()
       }
       publishVisualState({ state: 'paused', media: htmlAudio })
-      await syncPlaybackState('paused')
     },
 
     async resume() {
+      immersiveLog('resume', { assetId: activeAssetId, queueIndex })
       if (isNative()) {
-        if (!playingSlot) return false
-        const assetId = SLOT_ASSET[playingSlot]
+        if (!activeAssetId) return false
         try {
-          await NativeAudio.resume({ assetId })
+          await NativeAudio.resume({ assetId: activeAssetId })
         } catch {
           return false
         }
-        await readNativeTiming(assetId)
         publishVisualState({ state: 'playing', media: null })
-        await syncPlaybackState('playing')
         return true
       }
       if (!htmlAudio) return false
@@ -381,103 +442,61 @@ function createTransport(): ImmersiveAudioTransport {
       } catch {
         return false
       }
-      lastPosition = htmlAudio.currentTime || lastPosition
-      if (Number.isFinite(htmlAudio.duration) && htmlAudio.duration > 0) lastDuration = htmlAudio.duration
       publishVisualState({ state: 'playing', media: htmlAudio })
-      await syncPlaybackState('playing')
       return true
     },
 
     async stop(options) {
+      immersiveLog('stop', { clearSession: options?.clearSession !== false, assetId: activeAssetId })
       playEpoch += 1
-      const slots: TransportSlot[] = ['a', 'b']
-      for (const slot of slots) {
-        await unloadSlot(slot)
+      settleTrack()
+      if (isNative()) {
+        if (activeAssetId) {
+          await NativeAudio.stop({ assetId: activeAssetId }).catch(() => undefined)
+        }
+        if (options?.clearSession !== false) {
+          await clearNativeQueue()
+          await detachNativeListeners()
+        }
       }
       if (htmlAudio) {
         htmlAudio.pause()
         htmlAudio.onended = null
         htmlAudio.onerror = null
-        htmlAudio.ontimeupdate = null
         htmlAudio = null
       }
-      htmlPlayResolve?.()
-      htmlPlayResolve = null
-      playingSlot = null
-      publishVisualState({ state: 'idle', media: null })
+      activeAssetId = null
       if (options?.clearSession !== false) {
-        await clearMediaSession()
+        queueItems = []
+        queueIndex = -1
       }
+      publishVisualState({ state: 'idle', media: null })
     },
 
     async setRate(playbackRate) {
       activePlaybackRate = playbackRate
-      if (isNative() && playingSlot) {
-        await NativeAudio.setRate({ assetId: SLOT_ASSET[playingSlot], rate: playbackRate }).catch(() => undefined)
+      immersiveLog('setRate', { playbackRate, assetId: activeAssetId })
+      if (isNative() && activeAssetId) {
+        await NativeAudio.setRate({ assetId: activeAssetId, rate: playbackRate }).catch(() => undefined)
       } else if (htmlAudio) {
         htmlAudio.playbackRate = playbackRate
       }
-      await pushPositionState(playbackRate)
     },
 
     hasResumableAsset() {
-      return Boolean(playingSlot || htmlAudio)
+      return Boolean(activeAssetId || htmlAudio)
     },
 
-    async setMediaMetadata(segment, playbackRate, state, labels) {
-      activePlaybackRate = playbackRate
-      await MediaSession.setMetadata({
-        title: segment.title,
-        artist: segment.subtitle || labels?.artist || 'ManYuDing',
-        album: labels?.album || 'Immersive Library Playback',
-        artwork: await artworkList(),
-      }).catch(() => undefined)
-      await syncPlaybackState(state === 'none' ? 'none' : state)
+    getActiveAssetId() {
+      return activeAssetId
     },
 
-    async holdPositionForGap() {
-      if (lastDuration > 0) lastPosition = lastDuration
-      await syncPlaybackState('paused')
+    getQueueIndex() {
+      return queueIndex
     },
 
-    async registerMediaActions(handlers, options) {
-      const includeTrackSkip = options?.includeTrackSkip ?? Capacitor.getPlatform() !== 'ios'
-      const actions = (
-        includeTrackSkip
-          ? ['play', 'pause', 'previoustrack', 'nexttrack', 'stop']
-          : ['play', 'pause', 'stop']
-      ) as MediaSessionAction[]
-      await Promise.all(actions.map((action) =>
-        MediaSession.setActionHandler({ action }, handlers[action] ? () => handlers[action]?.() : null).catch(() => undefined),
-      ))
-      if (!includeTrackSkip) {
-        await Promise.all((['previoustrack', 'nexttrack'] as MediaSessionAction[]).map((action) =>
-          MediaSession.setActionHandler({ action }, null).catch(() => undefined),
-        ))
-      }
-    },
-
-    async setIosGapTrackControls(enabled, handlers) {
-      if (Capacitor.getPlatform() !== 'ios') return
-      gapMediaControlsActive = enabled
-      if (!enabled) {
-        await Promise.all((['previoustrack', 'nexttrack'] as MediaSessionAction[]).map((action) =>
-          MediaSession.setActionHandler({ action }, null).catch(() => undefined),
-        ))
-        return
-      }
-      await MediaSession.setActionHandler(
-        { action: 'previoustrack' },
-        handlers?.previoustrack ? () => handlers.previoustrack?.() : null,
-      ).catch(() => undefined)
-      await MediaSession.setActionHandler(
-        { action: 'nexttrack' },
-        handlers?.nexttrack ? () => handlers.nexttrack?.() : null,
-      ).catch(() => undefined)
-    },
-
-    setNativeStateHandler(handler) {
-      nativeStateHandler = handler
+    setNativeEventHandler(handler) {
+      nativeEventHandler = handler
     },
 
     clearResolveCache() {
@@ -485,7 +504,14 @@ function createTransport(): ImmersiveAudioTransport {
     },
 
     async clearSession() {
-      await clearMediaSession()
+      immersiveLog('clearSession')
+      playEpoch += 1
+      settleTrack()
+      activeAssetId = null
+      queueItems = []
+      queueIndex = -1
+      if (isNative()) await clearNativeQueue()
+      publishVisualState({ state: 'idle', media: null })
     },
 
     subscribeVisualState(listener) {
@@ -502,5 +528,4 @@ export const immersivePlaybackService: ImmersiveAudioTransport = createTransport
 
 void completeHandle
 void stateHandle
-void currentTimeHandle
-void gapMediaControlsActive
+void queueChangeHandle

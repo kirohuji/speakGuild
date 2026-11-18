@@ -1,9 +1,12 @@
 import { Directory, Filesystem } from '@capacitor/filesystem'
-import type { MediaSessionAction } from '@capgo/capacitor-media-session'
-import type { PlaybackStateEvent } from '@capgo/capacitor-native-audio'
 import type { PlaybackSegment } from './immersive-player.types'
 
-export type TransportSlot = 'a' | 'b'
+export const IMMERSIVE_LOG_PREFIX = '[MANYU_IMMERSIVE]'
+
+export function immersiveLog(step: string, data?: Record<string, unknown>) {
+  if (data) console.log(IMMERSIVE_LOG_PREFIX, step, data)
+  else console.log(IMMERSIVE_LOG_PREFIX, step)
+}
 
 export type MediaMetadataLabels = {
   artist?: string
@@ -15,41 +18,68 @@ export type ImmersivePlaybackVisualState = {
   media: HTMLAudioElement | null
 }
 
+/** One ready-to-play track for NativeAudio.setQueue / Web sequential play. */
+export type QueuePlayItem = {
+  assetId: string
+  fileUrl: string
+  title: string
+  artist?: string
+  album?: string
+  /** Learning segment id; for gap tracks, the segment that just finished. */
+  segmentId: string
+  /** Silence spacer between segments so Now Playing keeps a real duration (no -:--). */
+  kind?: 'segment' | 'gap'
+}
+
+export type ImmersiveNativeEvent =
+  | {
+      type: 'playbackState'
+      reason: string
+      assetId: string
+      state: 'playing' | 'paused' | 'stopped'
+    }
+  | {
+      type: 'queueChange'
+      reason: string
+      assetId: string
+      index: number
+    }
+  | {
+      type: 'complete'
+      assetId: string
+    }
+
 export type ImmersiveAudioTransport = {
   resolve(segment: PlaybackSegment, options?: { allowTts?: boolean }): Promise<string | null>
-  prepare(
-    slot: TransportSlot,
-    fileUrl: string,
-    meta: { title: string; artist?: string; album?: string },
+  /**
+   * Replace the active queue and start at startIndex.
+   * Resolves when the started track completes (or is stopped).
+   */
+  playQueue(
+    items: QueuePlayItem[],
+    options?: { startIndex?: number; playbackRate?: number },
   ): Promise<void>
-  /** Plays prepared slot; resolves when that asset completes (or is stopped). */
-  playSlot(slot: TransportSlot, playbackRate: number): Promise<void>
+  /**
+   * Advance to the next queue item and wait for it to complete.
+   * Returns false when there is no next item.
+   */
+  queueNext(): Promise<boolean>
+  /**
+   * Move to the previous queue item and wait for it to complete.
+   * Returns false when there is no previous item.
+   */
+  queuePrevious(): Promise<boolean>
   pause(): Promise<void>
   resume(): Promise<boolean>
   stop(options?: { clearSession?: boolean }): Promise<void>
   setRate(playbackRate: number): Promise<void>
   hasResumableAsset(): boolean
-  setMediaMetadata(
-    segment: PlaybackSegment,
-    playbackRate: number,
-    state: 'none' | 'paused' | 'playing',
-    labels?: MediaMetadataLabels,
-  ): Promise<void>
-  /** Keep last duration/position visible during inter-segment gap (avoid -:--). */
-  holdPositionForGap(): Promise<void>
-  registerMediaActions(
-    handlers: Partial<Record<MediaSessionAction, () => void>>,
-    options?: { includeTrackSkip?: boolean },
-  ): Promise<void>
-  setIosGapTrackControls(
-    enabled: boolean,
-    handlers?: Partial<Record<'previoustrack' | 'nexttrack', () => void>>,
-  ): Promise<void>
-  setNativeStateHandler(handler: ((event: PlaybackStateEvent) => void) | null): void
+  getActiveAssetId(): string | null
+  getQueueIndex(): number
+  setNativeEventHandler(handler: ((event: ImmersiveNativeEvent) => void) | null): void
   clearResolveCache(): void
   clearSession(): Promise<void>
   subscribeVisualState(listener: (state: ImmersivePlaybackVisualState) => void): () => void
-  otherSlot(slot: TransportSlot): TransportSlot
 }
 
 const LOGO_CACHE_PATH = 'immersive/app-logo.png'
@@ -103,7 +133,7 @@ async function materializeLogoFileUri(): Promise<string> {
 }
 
 /**
- * iOS NativeAudio / MediaSession artwork must be file:// or http(s).
+ * iOS NativeAudio artwork must be file:// or http(s).
  * Capacitor WebView URLs (capacitor:// / https://localhost) fail in native image loaders.
  */
 export async function resolveAppLogoArtworkUri(): Promise<string> {
@@ -124,4 +154,8 @@ export async function resolveAppLogoArtworkUri(): Promise<string> {
 /** Test helper */
 export function resetAppLogoArtworkCache() {
   logoArtworkUriPromise = null
+}
+
+export function toQueueAssetId(segmentId: string) {
+  return `immersive:${segmentId}`
 }

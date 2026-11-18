@@ -1,11 +1,20 @@
 import { buildPlaybackSegments } from './immersive-player.mapper'
-import type { ImmersiveAudioTransport, MediaMetadataLabels, TransportSlot } from './immersive-audio.transport'
+import type {
+  ImmersiveAudioTransport,
+  MediaMetadataLabels,
+  QueuePlayItem,
+} from './immersive-audio.transport'
+import { immersiveLog, toQueueAssetId } from './immersive-audio.transport'
 import {
-  IMMERSIVE_PAUSE_GAP_SECONDS,
-  type ImmersivePlaybackSettings,
-  type ImmersivePlayerItem,
-  type ImmersivePlayerStatus,
-  type PlaybackSegment,
+  normalizePauseGapSeconds,
+  resolveSilenceFileUrl,
+  toGapAssetId,
+} from './immersive-silence'
+import type {
+  ImmersivePlaybackSettings,
+  ImmersivePlayerItem,
+  ImmersivePlayerStatus,
+  PlaybackSegment,
 } from './immersive-player.types'
 
 const LOAD_MORE_THRESHOLD = 5
@@ -41,6 +50,8 @@ export type ListeningQueueEngineOptions = {
   isBackground: () => boolean
   now?: () => number
   mediaLabels?: MediaMetadataLabels
+  /** Override silence URL resolution (tests / custom assets). */
+  resolveSilenceUrl?: (seconds: number) => Promise<string | null>
   onSleepEnd?: () => void
   onEmptySegments?: () => void
   onPlayFailed?: (error: unknown) => void
@@ -96,6 +107,7 @@ export class ListeningQueueEngine {
   private readonly isBackground: () => boolean
   private readonly now: () => number
   private readonly mediaLabels?: MediaMetadataLabels
+  private readonly resolveSilenceUrl: (seconds: number) => Promise<string | null>
   private readonly onSleepEnd?: () => void
   private readonly onEmptySegments?: () => void
   private readonly onPlayFailed?: (error: unknown) => void
@@ -108,12 +120,17 @@ export class ListeningQueueEngine {
   private pendingContinueTimer: ReturnType<typeof setTimeout> | null = null
   private gapPaused = false
   private gapResume: (() => void) | null = null
+  /** True only while JS timer waitGap is in flight (silence-queue gaps use transport pause). */
+  private timerGapRunning = false
   private sleepTimer: ReturnType<typeof setTimeout> | null = null
   private loadMoreInFlightOffset: number | null = null
   private itemSegments: PlaybackSegment[] = []
   private snapshotItemId: string | null = null
   private segmentIndex = 0
-  private currentSlot: TransportSlot = 'a'
+  /** Maps native queue index → learning segment index (+ whether slot is silence). */
+  private windowMeta: Array<{ segmentIndex: number; isGap: boolean }> = []
+  private windowLength = 0
+  private lastKnownQueueIndex = -1
 
   constructor(options: ListeningQueueEngineOptions) {
     this.transport = options.transport
@@ -122,19 +139,64 @@ export class ListeningQueueEngine {
     this.isBackground = options.isBackground
     this.now = options.now ?? (() => Date.now())
     this.mediaLabels = options.mediaLabels
+    this.resolveSilenceUrl = options.resolveSilenceUrl ?? resolveSilenceFileUrl
     this.onSleepEnd = options.onSleepEnd
     this.onEmptySegments = options.onEmptySegments
     this.onPlayFailed = options.onPlayFailed
 
-    this.transport.setNativeStateHandler((event) => {
-      if (event.reason === 'remotePlay') {
-        fireAndForget(this.resume())
-      } else if (event.reason === 'remotePause') {
-        fireAndForget(this.pause())
-      } else if (event.reason === 'remotePreviousTrack') {
-        fireAndForget(this.prev(true))
-      } else if (event.reason === 'remoteNextTrack') {
-        fireAndForget(this.next(true))
+    this.transport.setNativeEventHandler((event) => {
+      if (event.type === 'playbackState') {
+        if (event.reason === 'remotePlay') {
+          // NativeAudio already resumed. Only sync engine/UI — never call transport.resume()
+          // (would double-resume and can soft-restart on false → audible jump).
+          immersiveLog('engine.remotePlay.sync')
+          this.syncFromRemotePlay()
+        } else if (event.reason === 'remotePause') {
+          // NativeAudio already paused. Only sync engine/UI — never call transport.pause().
+          immersiveLog('engine.remotePause.sync')
+          this.syncFromRemotePause()
+        } else if (event.reason === 'remoteNextTrack' || event.reason === 'remoteNext') {
+          // Fallback when plugin emits playbackState instead of queueChange (e.g. empty/edge queue).
+          immersiveLog('engine.remoteNext.playbackState', { reason: event.reason })
+          if (this.windowLength <= 1 || this.transport.getQueueIndex() >= this.windowLength - 1) {
+            fireAndForget(this.next(true))
+          }
+        } else if (event.reason === 'remotePreviousTrack' || event.reason === 'remotePrevious') {
+          immersiveLog('engine.remotePrev.playbackState', { reason: event.reason })
+          if (this.windowLength <= 1 || this.transport.getQueueIndex() <= 0) {
+            fireAndForget(this.prev(true))
+          }
+        }
+        return
+      }
+
+      if (event.type !== 'queueChange') return
+
+      const isNext = event.reason === 'remoteNext' || event.reason === 'next'
+      const isPrev = event.reason === 'remotePrevious' || event.reason === 'previous'
+      if (!isNext && !isPrev) return
+
+      const prevQueueIndex = this.lastKnownQueueIndex
+      immersiveLog('engine.queueChange', {
+        reason: event.reason,
+        index: event.index,
+        assetId: event.assetId,
+        windowLength: this.windowLength,
+        prevQueueIndex,
+      })
+
+      this.syncFromQueueIndex(event.index)
+
+      // Cross learning-item when remote skip cannot move within the native window.
+      if (isNext && event.reason === 'remoteNext' && this.windowLength > 0) {
+        if (event.index >= this.windowLength - 1 && prevQueueIndex >= this.windowLength - 1) {
+          fireAndForget(this.next(true))
+        }
+      }
+      if (isPrev && event.reason === 'remotePrevious' && this.windowLength > 0) {
+        if (event.index <= 0 && prevQueueIndex <= 0) {
+          fireAndForget(this.prev(true))
+        }
       }
     })
   }
@@ -185,6 +247,7 @@ export class ListeningQueueEngine {
   }
 
   async play() {
+    immersiveLog('engine.play', { absoluteIndex: this.binding ? this.absoluteIndexOf(this.binding) : null })
     this.bumpGeneration()
     this.pendingContinue = false
     this.clearPendingContinueTimer()
@@ -192,11 +255,12 @@ export class ListeningQueueEngine {
   }
 
   async pause() {
-    if (this.state.gapActive) {
+    immersiveLog('engine.pause', { gapActive: this.state.gapActive, timerGap: this.timerGapRunning })
+    // Timer-gap fallback only — silence-queue gaps pause via NativeAudio like any track.
+    if (this.state.gapActive && this.timerGapRunning) {
       this.gapPaused = true
       this.scheduler.cancel()
       this.patchState({ status: 'paused' })
-      await this.transport.holdPositionForGap()
       return
     }
     this.patchState({ status: 'paused' })
@@ -204,7 +268,12 @@ export class ListeningQueueEngine {
   }
 
   async resume(): Promise<boolean> {
-    if (this.state.gapActive && this.gapPaused) {
+    immersiveLog('engine.resume', {
+      gapActive: this.state.gapActive,
+      gapPaused: this.gapPaused,
+      timerGap: this.timerGapRunning,
+    })
+    if (this.state.gapActive && this.timerGapRunning && this.gapPaused) {
       this.gapPaused = false
       this.patchState({ status: 'playing' })
       this.gapResume?.()
@@ -224,7 +293,40 @@ export class ListeningQueueEngine {
     return this.softRestartCurrentSegment()
   }
 
+  /**
+   * Lock-screen / headset pause already applied by NativeAudio.
+   * Sync session state only — do not call transport.pause().
+   */
+  private syncFromRemotePause() {
+    if (this.state.gapActive && this.timerGapRunning) {
+      this.gapPaused = true
+      this.scheduler.cancel()
+      this.patchState({ status: 'paused' })
+      return
+    }
+    if (this.state.status === 'playing' || this.state.status === 'loading') {
+      this.patchState({ status: 'paused' })
+    }
+  }
+
+  /**
+   * Lock-screen / headset play already applied by NativeAudio.
+   * Sync session state only — do not call transport.resume() (avoids soft-restart).
+   */
+  private syncFromRemotePlay() {
+    if (this.state.gapActive && this.timerGapRunning && this.gapPaused) {
+      this.gapPaused = false
+      this.patchState({ status: 'playing' })
+      this.gapResume?.()
+      return
+    }
+    if (this.state.status === 'paused' || this.state.status === 'loading') {
+      this.patchState({ status: 'playing' })
+    }
+  }
+
   async next(continuePlayback = true) {
+    immersiveLog('engine.next', { continuePlayback })
     const binding = this.binding
     if (!binding) return
     const absolute = this.absoluteIndexOf(binding)
@@ -236,6 +338,7 @@ export class ListeningQueueEngine {
   }
 
   async prev(continuePlayback = true) {
+    immersiveLog('engine.prev', { continuePlayback })
     const binding = this.binding
     if (!binding) return
     const absolute = this.absoluteIndexOf(binding)
@@ -247,12 +350,15 @@ export class ListeningQueueEngine {
   }
 
   async seekTo(absoluteIndex: number, continuePlayback = true) {
+    immersiveLog('engine.seekTo', { absoluteIndex, continuePlayback })
     this.bumpGeneration()
     this.scheduler.cancel()
     this.gapPaused = false
     this.segmentIndex = 0
     this.snapshotItemId = null
     this.itemSegments = []
+    this.windowMeta = []
+    this.windowLength = 0
     await this.transport.stop({ clearSession: !continuePlayback })
     if (!continuePlayback) {
       this.pendingContinue = false
@@ -266,15 +372,19 @@ export class ListeningQueueEngine {
   }
 
   async stop(options?: { clearSession?: boolean; status?: ImmersivePlayerStatus }) {
+    immersiveLog('engine.stop', { clearSession: options?.clearSession !== false })
     this.bumpGeneration()
     this.pendingContinue = false
     this.clearPendingContinueTimer()
     this.scheduler.cancel()
     this.gapPaused = false
+    this.timerGapRunning = false
     this.clearSleepTimer()
     this.segmentIndex = 0
     this.snapshotItemId = null
     this.itemSegments = []
+    this.windowMeta = []
+    this.windowLength = 0
     await this.transport.stop({ clearSession: options?.clearSession !== false })
     this.patchState({
       status: options?.status ?? 'idle',
@@ -293,10 +403,25 @@ export class ListeningQueueEngine {
 
   async dispose() {
     await this.stop({ clearSession: true })
-    this.transport.setNativeStateHandler(null)
+    this.transport.setNativeEventHandler(null)
     this.transport.clearResolveCache()
     this.listeners.clear()
     this.binding = null
+  }
+
+  private syncFromQueueIndex(queueIndex: number) {
+    if (queueIndex < 0 || queueIndex >= this.windowMeta.length) return
+    this.lastKnownQueueIndex = queueIndex
+    const meta = this.windowMeta[queueIndex]
+    this.segmentIndex = meta.segmentIndex
+    const segment = this.itemSegments[meta.segmentIndex]
+    if (segment) {
+      this.patchState({
+        currentSegment: segment,
+        status: meta.isGap && this.state.status === 'paused' ? 'paused' : 'playing',
+        gapActive: meta.isGap,
+      })
+    }
   }
 
   private absoluteIndexOf(binding: PlaylistBinding) {
@@ -377,6 +502,7 @@ export class ListeningQueueEngine {
     const segment = this.itemSegments[this.segmentIndex] ?? this.state.currentSegment
     if (!segment) return false
 
+    immersiveLog('engine.softRestart', { segmentId: segment.id, segmentIndex: this.segmentIndex })
     this.bumpGeneration()
     const generation = this.generation
     this.scheduler.cancel()
@@ -387,27 +513,8 @@ export class ListeningQueueEngine {
     this.refreshSleepTimer()
 
     try {
-      const fromIndex = this.segmentIndex
-      for (let segmentIndex = fromIndex; segmentIndex < this.itemSegments.length; segmentIndex += 1) {
-        if (!this.isCurrent(generation)) return false
-        const next = this.itemSegments[segmentIndex]
-        const played = await this.playOneSegment(generation, next, segmentIndex)
-        if (!played || !this.isCurrent(generation)) return false
-
-        const settings = this.getSettings()
-        const moreInPass = segmentIndex < this.itemSegments.length - 1
-        const willRepeat = settings.repeatPerItem === 'infinite'
-        const binding = this.binding
-        const absolute = binding ? this.absoluteIndexOf(binding) : 0
-        const total = binding ? Math.max(binding.total, binding.items.length) : 0
-        const willAdvance = settings.autoNext && binding != null && (absolute < total - 1 || settings.loopQueue)
-        if (moreInPass || willRepeat || willAdvance) {
-          const continued = await this.waitGap(generation)
-          if (!continued || !this.isCurrent(generation)) return false
-        }
-      }
-
-      if (!this.isCurrent(generation)) return false
+      const played = await this.playSegmentWindow(generation, this.segmentIndex)
+      if (!played || !this.isCurrent(generation)) return false
 
       if (this.getSettings().repeatPerItem === 'infinite') {
         await this.runItemLoop(generation)
@@ -418,7 +525,9 @@ export class ListeningQueueEngine {
       return true
     } catch (error) {
       if (!this.isCurrent(generation)) return false
-      console.warn('[listening-queue] soft restart failed', error)
+      immersiveLog('engine.softRestart.failed', {
+        message: error instanceof Error ? error.message : String(error),
+      })
       this.patchState({ status: 'error', errorMessage: error instanceof Error ? error.message : 'play failed' })
       this.onPlayFailed?.(error)
       return false
@@ -465,24 +574,8 @@ export class ListeningQueueEngine {
     try {
       do {
         if (!this.isCurrent(generation)) return
-        for (let segmentIndex = 0; segmentIndex < this.itemSegments.length; segmentIndex += 1) {
-          if (!this.isCurrent(generation)) return
-          const segment = this.itemSegments[segmentIndex]
-          const played = await this.playOneSegment(generation, segment, segmentIndex)
-          if (!played || !this.isCurrent(generation)) return
-
-          const settings = this.getSettings()
-          const moreInPass = segmentIndex < this.itemSegments.length - 1
-          const willRepeat = settings.repeatPerItem === 'infinite'
-          const binding = this.binding
-          const absolute = binding ? this.absoluteIndexOf(binding) : 0
-          const total = binding ? Math.max(binding.total, binding.items.length) : 0
-          const willAdvance = settings.autoNext && binding != null && (absolute < total - 1 || settings.loopQueue)
-          if (moreInPass || willRepeat || willAdvance) {
-            const continued = await this.waitGap(generation)
-            if (!continued || !this.isCurrent(generation)) return
-          }
-        }
+        const played = await this.playSegmentWindow(generation, 0)
+        if (!played || !this.isCurrent(generation)) return
       } while (
         this.isCurrent(generation)
         && this.getSettings().repeatPerItem === 'infinite'
@@ -492,75 +585,160 @@ export class ListeningQueueEngine {
       await this.advanceAfterItem(generation)
     } catch (error) {
       if (!this.isCurrent(generation)) return
-      console.warn('[listening-queue] playback failed', error)
+      immersiveLog('engine.playback.failed', {
+        message: error instanceof Error ? error.message : String(error),
+      })
       this.patchState({ status: 'error', errorMessage: error instanceof Error ? error.message : 'play failed' })
       this.onPlayFailed?.(error)
     }
   }
 
-  private async playOneSegment(generation: number, segment: PlaybackSegment, segmentIndex: number): Promise<boolean> {
-    this.segmentIndex = segmentIndex
-    const allowTts = !this.isBackground()
-    this.patchState({ status: 'loading', currentSegment: segment, gapActive: false })
+  private willNeedTrailingGap(): boolean {
+    const settings = this.getSettings()
+    const willRepeat = settings.repeatPerItem === 'infinite'
+    const binding = this.binding
+    if (!binding) return willRepeat
+    const absolute = this.absoluteIndexOf(binding)
+    const total = Math.max(binding.total, binding.items.length)
+    const willAdvance = settings.autoNext && (absolute < total - 1 || settings.loopQueue)
+    return willRepeat || willAdvance
+  }
 
-    const fileUrl = await this.transport.resolve(segment, { allowTts })
+  /**
+   * Resolve playable segments from `fromSegmentIndex`, setQueue the window
+   * (with silence gap tracks when possible), then queueNext until exhausted.
+   */
+  private async playSegmentWindow(generation: number, fromSegmentIndex: number): Promise<boolean> {
+    const allowTts = !this.isBackground()
+    const settings = this.getSettings()
+    const gapSeconds = normalizePauseGapSeconds(settings.pauseGapSeconds)
+    const wantGap = !this.isBackground() && gapSeconds > 0
+    const silenceUrl = wantGap ? await this.resolveSilenceUrl(gapSeconds) : null
     if (!this.isCurrent(generation)) return false
-    if (!fileUrl) {
+    const useQueueSilence = Boolean(silenceUrl)
+    const needTrailingGap = this.willNeedTrailingGap()
+
+    const windowItems: QueuePlayItem[] = []
+    const windowMeta: Array<{ segmentIndex: number; isGap: boolean }> = []
+
+    const resolvedSegments: Array<{ index: number; segment: PlaybackSegment; fileUrl: string }> = []
+    for (let i = fromSegmentIndex; i < this.itemSegments.length; i += 1) {
+      if (!this.isCurrent(generation)) return false
+      const segment = this.itemSegments[i]
+      const fileUrl = await this.transport.resolve(segment, { allowTts })
+      if (!this.isCurrent(generation)) return false
+      if (!fileUrl) continue
+      resolvedSegments.push({ index: i, segment, fileUrl })
+    }
+
+    for (let r = 0; r < resolvedSegments.length; r += 1) {
+      const { index, segment, fileUrl } = resolvedSegments[r]
+      windowItems.push({
+        assetId: toQueueAssetId(segment.id),
+        fileUrl,
+        title: segment.title,
+        artist: segment.subtitle || this.mediaLabels?.artist,
+        album: this.mediaLabels?.album,
+        segmentId: segment.id,
+        kind: 'segment',
+      })
+      windowMeta.push({ segmentIndex: index, isGap: false })
+
+      const isLast = r === resolvedSegments.length - 1
+      const insertGap = useQueueSilence && silenceUrl && (!isLast || needTrailingGap)
+      if (insertGap) {
+        windowItems.push({
+          assetId: toGapAssetId(segment.id, gapSeconds),
+          fileUrl: silenceUrl,
+          // Keep previous title so lock screen doesn't flash empty / -:--.
+          title: segment.title,
+          artist: segment.subtitle || this.mediaLabels?.artist,
+          album: this.mediaLabels?.album,
+          segmentId: segment.id,
+          kind: 'gap',
+        })
+        windowMeta.push({ segmentIndex: index, isGap: true })
+      }
+    }
+
+    this.windowMeta = windowMeta
+    this.windowLength = windowItems.length
+    this.lastKnownQueueIndex = windowItems.length > 0 ? 0 : -1
+
+    immersiveLog('engine.playWindow', {
+      fromSegmentIndex,
+      windowLength: windowItems.length,
+      useQueueSilence,
+      gapSeconds: useQueueSilence ? gapSeconds : 0,
+      kinds: windowItems.map((item) => item.kind ?? 'segment'),
+      segmentIds: windowItems.map((item) => item.segmentId),
+    })
+
+    if (windowItems.length === 0) {
       return true
     }
 
-    const settings = this.getSettings()
-    const slot = this.currentSlot
-    await this.transport.setIosGapTrackControls(false)
-    await this.transport.setMediaMetadata(segment, settings.playbackRate, 'playing', this.mediaLabels)
-    if (!this.isCurrent(generation)) return false
+    this.segmentIndex = windowMeta[0].segmentIndex
+    this.patchState({
+      status: 'playing',
+      currentSegment: this.itemSegments[this.segmentIndex],
+      gapActive: false,
+    })
 
-    await this.transport.prepare(slot, fileUrl, {
-      title: segment.title,
-      artist: segment.subtitle || this.mediaLabels?.artist,
-      album: this.mediaLabels?.album,
+    await this.transport.playQueue(windowItems, {
+      startIndex: 0,
+      playbackRate: settings.playbackRate,
     })
     if (!this.isCurrent(generation)) return false
 
-    fireAndForget(this.prefetchUpcoming(generation, segmentIndex, this.transport.otherSlot(slot)))
+    let windowPos = Math.max(0, this.transport.getQueueIndex())
+    this.syncFromQueueIndex(windowPos)
 
-    this.patchState({ status: 'playing' })
-    await this.transport.playSlot(slot, settings.playbackRate)
+    while (windowPos < windowItems.length - 1) {
+      if (!this.isCurrent(generation)) return false
+
+      const currentIsGap = windowMeta[windowPos]?.isGap === true
+      // Silence tracks already occupy the gap; only timer-fallback needs waitGap
+      // after a real segment when the next slot is also a real segment (or trailing).
+      if (!useQueueSilence && !currentIsGap) {
+        const continued = await this.waitGap(generation)
+        if (!continued || !this.isCurrent(generation)) return false
+      }
+
+      // Remote skip may have already moved the native queue ahead during gap.
+      const liveIndex = this.transport.getQueueIndex()
+      if (liveIndex > windowPos) {
+        windowPos = liveIndex
+        this.syncFromQueueIndex(windowPos)
+        continue
+      }
+
+      const advanced = await this.transport.queueNext()
+      if (!this.isCurrent(generation)) return false
+      if (!advanced) break
+
+      windowPos = Math.max(windowPos + 1, this.transport.getQueueIndex())
+      this.syncFromQueueIndex(windowPos)
+    }
+
+    // Timer-fallback trailing gap when silence could not be inserted.
     if (!this.isCurrent(generation)) return false
+    if (!useQueueSilence && needTrailingGap) {
+      const continued = await this.waitGap(generation)
+      if (!continued || !this.isCurrent(generation)) return false
+    }
 
-    this.currentSlot = this.transport.otherSlot(slot)
     return true
   }
 
-  private async prefetchUpcoming(generation: number, segmentIndex: number, slot: TransportSlot) {
-    if (!this.isCurrent(generation)) return
-    const nextSegment = this.itemSegments[segmentIndex + 1]
-    if (!nextSegment) return
-    const allowTts = !this.isBackground()
-    try {
-      const url = await this.transport.resolve(nextSegment, { allowTts })
-      if (!url || !this.isCurrent(generation)) return
-      await this.transport.prepare(slot, url, {
-        title: nextSegment.title,
-        artist: nextSegment.subtitle || this.mediaLabels?.artist,
-        album: this.mediaLabels?.album,
-      })
-    } catch {
-      // Prefetch failures are non-fatal.
-    }
-  }
-
+  /** Fallback when silence WAV cannot be resolved — keeps prior JS timer gap behavior. */
   private async waitGap(generation: number): Promise<boolean> {
-    const seconds = this.getSettings().pauseGapSeconds
-    const ms = (IMMERSIVE_PAUSE_GAP_SECONDS.includes(seconds) ? seconds : 2) * 1000
+    const seconds = normalizePauseGapSeconds(this.getSettings().pauseGapSeconds)
+    const ms = seconds * 1000
     const effectiveMs = this.isBackground() ? 0 : ms
 
-    await this.transport.holdPositionForGap()
-    await this.transport.setIosGapTrackControls(true, {
-      previoustrack: () => { fireAndForget(this.prev(true)) },
-      nexttrack: () => { fireAndForget(this.next(true)) },
-    })
-
+    immersiveLog('engine.waitGap.enter', { ms: effectiveMs, background: this.isBackground() })
+    this.timerGapRunning = true
     this.patchState({ gapActive: true, status: this.gapPaused ? 'paused' : 'playing' })
 
     let remaining = effectiveMs
@@ -568,7 +746,6 @@ export class ListeningQueueEngine {
     while (this.isCurrent(generation)) {
       if (this.gapPaused) {
         this.patchState({ status: 'paused', gapActive: true })
-        await this.transport.holdPositionForGap()
         await new Promise<void>((resolve) => {
           this.gapResume = () => {
             this.gapResume = null
@@ -587,17 +764,20 @@ export class ListeningQueueEngine {
           remaining = Math.max(0, remaining - (this.now() - startedAt))
           continue
         }
+        this.timerGapRunning = false
         this.patchState({ gapActive: false })
-        await this.transport.setIosGapTrackControls(false)
+        immersiveLog('engine.waitGap.cancelled')
         return false
       }
+      this.timerGapRunning = false
       this.patchState({ gapActive: false })
-      await this.transport.setIosGapTrackControls(false)
+      immersiveLog('engine.waitGap.exit')
       return true
     }
 
+    this.timerGapRunning = false
     this.patchState({ gapActive: false })
-    await this.transport.setIosGapTrackControls(false)
+    immersiveLog('engine.waitGap.aborted')
     return false
   }
 
@@ -609,6 +789,8 @@ export class ListeningQueueEngine {
     const absolute = this.absoluteIndexOf(binding)
     const total = Math.max(binding.total, binding.items.length)
     const hasNext = absolute < total - 1
+
+    immersiveLog('engine.advanceAfterItem', { absolute, total, hasNext, autoNext: settings.autoNext })
 
     if (!settings.autoNext || (!hasNext && !settings.loopQueue)) {
       this.patchState({ status: 'ended', currentSegment: null })
@@ -626,6 +808,8 @@ export class ListeningQueueEngine {
     this.snapshotItemId = null
     this.itemSegments = []
     this.segmentIndex = 0
+    this.windowMeta = []
+    this.windowLength = 0
     this.patchState({ status: 'loading', currentSegment: null })
     binding.onIndexChange(nextAbsolute)
   }

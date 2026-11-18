@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ImmersiveAudioTransport, TransportSlot } from '../immersive-audio.transport'
+import type { ImmersiveAudioTransport, ImmersiveNativeEvent, QueuePlayItem } from '../immersive-audio.transport'
 import { ListeningQueueEngine, type QueueScheduler } from '../listening-queue.engine'
 import { DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS } from '../immersive-player.store'
-import type { ImmersivePlaybackSettings, ImmersivePlayerItem, PlaybackSegment } from '../immersive-player.types'
+import type { ImmersivePlaybackSettings, ImmersivePlayerItem } from '../immersive-player.types'
 
 function item(id: string, title: string, audioUrl = `file://${id}.mp3`): ImmersivePlayerItem {
   return {
@@ -46,21 +46,32 @@ function createFakeScheduler() {
 }
 
 function createFakeTransport(options?: { resumeResult?: boolean }) {
-  const prepared = new Map<TransportSlot, string>()
-  const playResolvers = new Map<TransportSlot, () => void>()
   let resumeResult = options?.resumeResult ?? true
+  let allowTtsDefault = true
+  let queue: QueuePlayItem[] = []
+  let queueIndex = -1
+  let activeAssetId: string | null = null
+  let trackResolve: (() => void) | null = null
+  let eventHandler: ((event: ImmersiveNativeEvent) => void) | null = null
+
   const calls = {
     resolve: [] as string[],
-    prepare: [] as Array<{ slot: TransportSlot; url: string }>,
-    playSlot: [] as TransportSlot[],
+    playQueue: [] as Array<{ count: number; startIndex: number; assetIds: string[] }>,
+    queueNext: 0,
+    queuePrevious: 0,
     stop: 0,
-    holdPositionForGap: 0,
     resume: 0,
-    loadMore: 0,
+    clearSession: 0,
   }
-  let allowTtsDefault = true
+
+  function waitTrack(assetId: string) {
+    activeAssetId = assetId
+    return new Promise<void>((resolve) => {
+      trackResolve = resolve
+    })
+  }
+
   const transport: ImmersiveAudioTransport = {
-    otherSlot: (slot) => (slot === 'a' ? 'b' : 'a'),
     async resolve(segment, options) {
       calls.resolve.push(segment.id)
       if (!segment.audioUrl?.trim()) {
@@ -69,17 +80,46 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
       }
       return segment.audioUrl
     },
-    async prepare(slot, fileUrl) {
-      calls.prepare.push({ slot, url: fileUrl })
-      prepared.set(slot, fileUrl)
-    },
-    async playSlot(slot) {
-      calls.playSlot.push(slot)
-      if (!prepared.has(slot)) throw new Error(`not prepared ${slot}`)
-      await new Promise<void>((resolve) => {
-        playResolvers.set(slot, resolve)
+    async playQueue(items, options) {
+      const startIndex = options?.startIndex ?? 0
+      queue = items
+      queueIndex = startIndex
+      calls.playQueue.push({
+        count: items.length,
+        startIndex,
+        assetIds: items.map((entry) => entry.assetId),
       })
-      prepared.delete(slot)
+      const start = items[startIndex]
+      if (!start) throw new Error('empty queue')
+      await waitTrack(start.assetId)
+    },
+    async queueNext() {
+      calls.queueNext += 1
+      if (queueIndex + 1 >= queue.length) return false
+      queueIndex += 1
+      const next = queue[queueIndex]
+      eventHandler?.({
+        type: 'queueChange',
+        reason: 'next',
+        assetId: next.assetId,
+        index: queueIndex,
+      })
+      await waitTrack(next.assetId)
+      return true
+    },
+    async queuePrevious() {
+      calls.queuePrevious += 1
+      if (queueIndex - 1 < 0) return false
+      queueIndex -= 1
+      const prev = queue[queueIndex]
+      eventHandler?.({
+        type: 'queueChange',
+        reason: 'previous',
+        assetId: prev.assetId,
+        index: queueIndex,
+      })
+      await waitTrack(prev.assetId)
+      return true
     },
     async pause() {},
     async resume() {
@@ -88,44 +128,46 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
     },
     async stop() {
       calls.stop += 1
-      for (const [slot, resolve] of playResolvers) {
-        playResolvers.delete(slot)
-        resolve()
-      }
+      trackResolve?.()
+      trackResolve = null
+      activeAssetId = null
     },
     async setRate() {},
-    hasResumableAsset: () => playResolvers.size > 0,
-    async setMediaMetadata() {},
-    async holdPositionForGap() {
-      calls.holdPositionForGap += 1
+    hasResumableAsset: () => Boolean(activeAssetId),
+    getActiveAssetId: () => activeAssetId,
+    getQueueIndex: () => queueIndex,
+    setNativeEventHandler(handler) {
+      eventHandler = handler
     },
-    async registerMediaActions() {},
-    async setIosGapTrackControls() {},
-    setNativeStateHandler() {},
     clearResolveCache() {},
-    async clearSession() {},
-    subscribeVisualState() { return () => undefined },
+    async clearSession() {
+      calls.clearSession += 1
+      queue = []
+      queueIndex = -1
+      activeAssetId = null
+    },
+    subscribeVisualState() {
+      return () => undefined
+    },
   }
+
   return {
     transport,
     calls,
     setResumeResult(value: boolean) { resumeResult = value },
     setAllowTts(value: boolean) { allowTtsDefault = value },
-    complete(slot?: TransportSlot) {
-      if (slot) {
-        const resolve = playResolvers.get(slot)
-        if (!resolve) return false
-        playResolvers.delete(slot)
-        resolve()
-        return true
-      }
-      const first = playResolvers.keys().next().value as TransportSlot | undefined
-      if (!first) return false
-      return this.complete(first)
+    complete() {
+      if (!trackResolve) return false
+      const resolve = trackResolve
+      trackResolve = null
+      activeAssetId = null
+      resolve()
+      return true
     },
-    playingSlots() {
-      return [...playResolvers.keys()]
+    emit(event: ImmersiveNativeEvent) {
+      eventHandler?.(event)
     },
+    getQueueIndex: () => queueIndex,
   }
 }
 
@@ -158,6 +200,8 @@ describe('ListeningQueueEngine', () => {
       getSettings: () => settings,
       scheduler: fakeScheduler.scheduler,
       isBackground: () => background,
+      // Deterministic silence tracks — exercises official-queue gap path (not timer fallback).
+      resolveSilenceUrl: async (seconds) => `silence://gap-${seconds}s.wav`,
     })
   })
 
@@ -201,12 +245,17 @@ describe('ListeningQueueEngine', () => {
     bind([word])
 
     const playPromise = engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
-    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    // main + silence gap + example (no trailing gap when not advancing)
+    expect(fakeTransport.calls.playQueue[0].count).toBe(3)
+    expect(fakeTransport.calls.playQueue[0].assetIds[1]).toContain('immersive:gap:')
+    fakeTransport.complete() // main
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    expect(fakeScheduler.pending()).toEqual([])
+    expect(engine.getState().gapActive).toBe(true)
+    fakeTransport.complete() // silence
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
+    fakeTransport.complete() // example
     await playPromise
 
     expect(engine.getState().status).toBe('ended')
@@ -218,13 +267,15 @@ describe('ListeningQueueEngine', () => {
     bind(items)
 
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    fakeTransport.complete()
-    // gap before advance
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    // single main + trailing silence before advance
+    expect(fakeTransport.calls.playQueue[0].count).toBe(2)
+    expect(fakeTransport.calls.playQueue[0].assetIds[1]).toContain('immersive:gap:')
+    fakeTransport.complete() // main
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete() // trailing silence
     await vi.waitFor(() => expect(indexChanges[0]).toBe(1))
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(2))
     fakeTransport.complete()
     await vi.waitFor(() => expect(engine.getState().status).toBe('ended'))
   })
@@ -235,10 +286,10 @@ describe('ListeningQueueEngine', () => {
     bind(items, 1)
 
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    fakeTransport.complete() // main
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete() // trailing silence
     await vi.waitFor(() => expect(indexChanges).toContain(0))
   })
 
@@ -251,9 +302,11 @@ describe('ListeningQueueEngine', () => {
     bind([word])
 
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    expect(fakeTransport.calls.playQueue[0].count).toBe(2)
+    expect(fakeTransport.calls.playQueue[0].assetIds.every((id) => !id.includes(':gap:'))).toBe(true)
     fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
     expect(fakeScheduler.pending()).toEqual([])
     fakeTransport.complete()
   })
@@ -265,11 +318,10 @@ describe('ListeningQueueEngine', () => {
       id: 'w1',
       kind: 'chunk',
       title: 'need tts',
-      // no audio urls → resolve returns null in background
     }
     bind([word])
     await engine.play()
-    expect(fakeTransport.calls.playSlot).toEqual([])
+    expect(fakeTransport.calls.playQueue).toEqual([])
     expect(engine.getState().status).toBe('ended')
   })
 
@@ -278,12 +330,15 @@ describe('ListeningQueueEngine', () => {
     settings.autoNext = false
     bind([item('w1', 'hello')])
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    // two mains with silence between (no trailing — not advancing / not infinite)
+    expect(fakeTransport.calls.playQueue[0].count).toBe(3)
+    expect(fakeTransport.calls.playQueue[0].assetIds[1]).toContain('immersive:gap:')
     fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
-    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete() // silence
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
+    fakeTransport.complete() // second main
     await vi.waitFor(() => expect(engine.getState().status).toBe('ended'))
   })
 
@@ -291,24 +346,22 @@ describe('ListeningQueueEngine', () => {
     const items = [item('w1', 'one'), item('w2', 'two')]
     bind(items)
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     await engine.next(true)
     expect(indexChanges).toContain(1)
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBeGreaterThanOrEqual(2))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBeGreaterThanOrEqual(2))
   })
 
   it('seek race: old complete does not advance stale generation', async () => {
     const items = [item('w1', 'one'), item('w2', 'two'), item('w3', 'three')]
     bind(items)
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    const before = fakeTransport.calls.playSlot.length
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    const before = fakeTransport.calls.playQueue.length
     await engine.seekTo(2, true)
-    // Completing the cancelled slot should not schedule extra plays beyond the seek target.
-    fakeTransport.complete('a')
-    fakeTransport.complete('b')
+    fakeTransport.complete()
     await vi.waitFor(() => expect(indexChanges).toContain(2))
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBeGreaterThan(before))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBeGreaterThan(before))
     expect(engine.getState().absoluteIndex).toBe(2)
   })
 
@@ -326,7 +379,7 @@ describe('ListeningQueueEngine', () => {
     settings.autoNext = false
     bind([item('w1', 'hello')])
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     await vi.advanceTimersByTimeAsync(15 * 60 * 1000)
     await vi.waitFor(() => expect(engine.getState().status).toBe('ended'))
     vi.useRealTimers()
@@ -335,15 +388,15 @@ describe('ListeningQueueEngine', () => {
   it('bindPlaylist is idempotent while playing same index', async () => {
     bind([item('w1', 'hello')])
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    const plays = fakeTransport.calls.playSlot.length
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    const plays = fakeTransport.calls.playQueue.length
     engine.bindPlaylist({
       items: [item('w1', 'hello')],
       index: 0,
       total: 1,
       onIndexChange: () => undefined,
     })
-    expect(fakeTransport.calls.playSlot.length).toBe(plays)
+    expect(fakeTransport.calls.playQueue.length).toBe(plays)
     fakeTransport.complete()
   })
 
@@ -359,11 +412,11 @@ describe('ListeningQueueEngine', () => {
     bind([word])
 
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    fakeTransport.complete() // main
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete() // silence gap
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
     expect(engine.getState().currentSegment?.role).toBe('example')
     expect(engine.getState().currentSegment?.text).toBe('ex-a')
     const locked = engine.getItemSegmentSnapshot()
@@ -377,7 +430,6 @@ describe('ListeningQueueEngine', () => {
     expect(fakeTransport.calls.resume).toBe(1)
     expect(engine.getItemSegmentSnapshot()).toEqual(locked)
     expect(engine.getState().currentSegment?.text).toBe('ex-a')
-    // Successful native resume must not rebuild / re-resolve segments.
     expect(fakeTransport.calls.resolve.length).toBe(resolveBefore)
     fakeTransport.complete()
     randomSpy.mockRestore()
@@ -395,11 +447,11 @@ describe('ListeningQueueEngine', () => {
     bind([word])
 
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
-    fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    fakeTransport.complete() // main
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete() // silence
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
     const locked = engine.getItemSegmentSnapshot()
     expect(locked[1]).toBe('w1:example:0')
     expect(engine.getState().currentSegment?.text).toBe('ex-a')
@@ -408,24 +460,20 @@ describe('ListeningQueueEngine', () => {
     fakeTransport.setResumeResult(false)
     randomSpy.mockReturnValue(0.9)
     const stopBefore = fakeTransport.calls.stop
-    const playBefore = fakeTransport.calls.playSlot.length
+    const playBefore = fakeTransport.calls.playQueue.length
 
     const resumePromise = engine.resume()
     await vi.waitFor(() => expect(fakeTransport.calls.stop).toBeGreaterThan(stopBefore))
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBeGreaterThan(playBefore))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBeGreaterThan(playBefore))
     expect(engine.getItemSegmentSnapshot()).toEqual(locked)
     expect(engine.getState().currentSegment?.id).toBe('w1:example:0')
     expect(engine.getState().currentSegment?.text).toBe('ex-a')
-    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('ex-b'))).toBe(false)
 
-    const playsAtSoftRestart = fakeTransport.calls.playSlot.length
-    // Completing cancelled pre-restart slots must not spawn extra plays / re-roll examples.
-    fakeTransport.complete('a')
-    fakeTransport.complete('b')
+    const playsAtSoftRestart = fakeTransport.calls.playQueue.length
+    fakeTransport.complete()
     await resumePromise
     expect(engine.getItemSegmentSnapshot()).toEqual(locked)
-    expect(fakeTransport.calls.playSlot.length).toBe(playsAtSoftRestart)
-    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('ex-b'))).toBe(false)
+    expect(fakeTransport.calls.playQueue.length).toBe(playsAtSoftRestart)
     randomSpy.mockRestore()
   })
 
@@ -440,7 +488,7 @@ describe('ListeningQueueEngine', () => {
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
     bind([word])
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     const firstSnapshot = engine.getItemSegmentSnapshot()
     expect(firstSnapshot).toEqual(['w1:main:0', 'w1:example:0'])
     expect(engine.getState().currentSegment?.text).toBe('hello')
@@ -449,32 +497,125 @@ describe('ListeningQueueEngine', () => {
     fakeTransport.setResumeResult(false)
     randomSpy.mockReturnValue(0.99)
     void engine.resume()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBeGreaterThan(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBeGreaterThan(1))
     expect(engine.getItemSegmentSnapshot()).toEqual(firstSnapshot)
-    fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
-    fakeScheduler.flush()
+    fakeTransport.complete() // restart main
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBeGreaterThan(0))
+    fakeTransport.complete() // silence after main
     await vi.waitFor(() => expect(engine.getState().currentSegment?.role).toBe('example'))
-    // Soft restart must not re-roll Math.random example selection.
     expect(engine.getState().currentSegment?.text).toBe('alpha')
-    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('beta'))).toBe(false)
-    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('alpha'))).toBe(true)
+    expect(fakeTransport.calls.playQueue.at(-1)?.assetIds.some((id) => id.includes('example'))).toBe(true)
     fakeTransport.complete()
     randomSpy.mockRestore()
   })
 
-  it('calls holdPositionForGap during inter-segment wait', async () => {
+  it('advances with queueNext through silence gap tracks', async () => {
     settings.autoNext = false
     settings.playExample = true
     const word = item('w1', 'hello')
     word.examples = [{ en: 'ex', audioUrl: 'file://ex.mp3' }]
     bind([word])
     void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    expect(fakeTransport.calls.playQueue[0].assetIds).toEqual([
+      'immersive:w1:main:0',
+      'immersive:gap:2s:after:w1:main:0',
+      'immersive:w1:example:0',
+    ])
     fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeTransport.calls.holdPositionForGap).toBeGreaterThan(0))
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    expect(engine.getState().gapActive).toBe(true)
+    expect(fakeScheduler.pending()).toEqual([])
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
+    expect(engine.getState().gapActive).toBe(false)
+    fakeTransport.complete()
+  })
+
+  it('falls back to timer gap when silence URL is unavailable', async () => {
+    await engine.dispose()
+    engine = new ListeningQueueEngine({
+      transport: fakeTransport.transport,
+      getSettings: () => settings,
+      scheduler: fakeScheduler.scheduler,
+      isBackground: () => background,
+      resolveSilenceUrl: async () => null,
+    })
+    settings.autoNext = false
+    settings.playExample = true
+    const word = item('w1', 'hello')
+    word.examples = [{ en: 'ex', audioUrl: 'file://ex.mp3' }]
+    bind([word])
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    expect(fakeTransport.calls.playQueue[0].count).toBe(2)
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
     fakeScheduler.flush()
-    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete()
+  })
+
+  it('remoteNext at last window track seeks next learning item', async () => {
+    const items = [item('w1', 'one'), item('w2', 'two')]
+    bind(items)
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    // Window is [main, trailing silence]. Move to last slot then remoteNext again.
+    fakeTransport.emit({
+      type: 'queueChange',
+      reason: 'remoteNext',
+      assetId: 'immersive:gap:2s:after:w1:main:0',
+      index: 1,
+    })
+    fakeTransport.emit({
+      type: 'queueChange',
+      reason: 'remoteNext',
+      assetId: 'immersive:gap:2s:after:w1:main:0',
+      index: 1,
+    })
+    await vi.waitFor(() => expect(indexChanges).toContain(1))
+  })
+
+  it('remotePause / remotePlay only sync state and do not call transport pause/resume', async () => {
+    settings.autoNext = false
+    bind([item('w1', 'hello')])
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    expect(engine.getState().status).toBe('playing')
+
+    fakeTransport.emit({
+      type: 'playbackState',
+      reason: 'remotePause',
+      assetId: 'immersive:w1:main:0',
+      state: 'paused',
+    })
+    expect(engine.getState().status).toBe('paused')
+    expect(fakeTransport.calls.resume).toBe(0)
+    // transport.pause must not be invoked — native already paused
+    expect(fakeTransport.calls.stop).toBe(0)
+
+    const pauseSpy = vi.spyOn(fakeTransport.transport, 'pause')
+    const resumeSpy = vi.spyOn(fakeTransport.transport, 'resume')
+    fakeTransport.emit({
+      type: 'playbackState',
+      reason: 'remotePause',
+      assetId: 'immersive:w1:main:0',
+      state: 'paused',
+    })
+    expect(pauseSpy).not.toHaveBeenCalled()
+
+    fakeTransport.emit({
+      type: 'playbackState',
+      reason: 'remotePlay',
+      assetId: 'immersive:w1:main:0',
+      state: 'playing',
+    })
+    expect(engine.getState().status).toBe('playing')
+    expect(resumeSpy).not.toHaveBeenCalled()
+    expect(fakeTransport.calls.playQueue.length).toBe(1)
+    pauseSpy.mockRestore()
+    resumeSpy.mockRestore()
     fakeTransport.complete()
   })
 })
@@ -502,7 +643,7 @@ describe('buildPlaybackSegments integration via engine settings', () => {
       onIndexChange: () => undefined,
     })
     await engine.play()
-    expect(fakeTransport.calls.playSlot).toEqual([])
+    expect(fakeTransport.calls.playQueue).toEqual([])
     expect(engine.getState().status).toBe('idle')
     await engine.dispose()
   })

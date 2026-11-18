@@ -222,29 +222,6 @@ export function ImmersivePlayerDialog({
       onIndexChange: emitIndexChange,
       onLoadMoreNearEnd: onLoadMore,
     })
-    void immersivePlaybackService.registerMediaActions({
-      play: () => { void engine.resume().then((ok) => { if (!ok) void engine.play() }) },
-      pause: () => { void engine.pause() },
-      previoustrack: () => {
-        const playing = statusRef.current === 'playing' || statusRef.current === 'loading'
-        void engine.prev(playing)
-      },
-      nexttrack: () => {
-        const playing = statusRef.current === 'playing' || statusRef.current === 'loading'
-        void engine.next(playing)
-      },
-      stop: () => { void engine.stop() },
-    })
-    return () => {
-      void immersivePlaybackService.registerMediaActions({
-        play: undefined,
-        pause: undefined,
-        previoustrack: undefined,
-        nexttrack: undefined,
-        stop: undefined,
-      })
-      void immersivePlaybackService.setIosGapTrackControls(false)
-    }
   }, [emitIndexChange, index, items, onLoadMore, open, playlistTotal, windowOffset])
 
   useEffect(() => {
@@ -640,32 +617,39 @@ function ImmersiveSettingsDrawer({
             />
           </OptionGroup>
           <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
-            <div className="flex items-center justify-between gap-3 rounded-md bg-muted/35 px-3 py-2">
-              <span className="text-xs font-medium text-foreground">{t('immersivePlayer.settings.accent')}</span>
-              <ToggleGroup
-                type="single"
-                value={settings.accent}
-                onValueChange={(value) => {
-                  if (!value) return
-                  onChange({ accent: value as ImmersivePlaybackSettings['accent'] })
-                }}
-                aria-label={t('immersivePlayer.settings.accent')}
-                size="sm"
-                className="rounded-full bg-muted p-0.5"
-              >
-                <ToggleGroupItem
-                  value="us"
-                  className="h-6 rounded-full border-0 px-2 text-[11px] text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+            <div className="overflow-hidden rounded-md bg-muted/35">
+              <div className="flex items-center justify-between gap-3 px-3 py-2">
+                <span className="text-xs font-medium text-foreground">{t('immersivePlayer.settings.accent')}</span>
+                <ToggleGroup
+                  type="single"
+                  value={settings.accent}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    onChange({ accent: value as ImmersivePlaybackSettings['accent'] })
+                  }}
+                  aria-label={t('immersivePlayer.settings.accent')}
+                  size="sm"
+                  className="rounded-full bg-muted p-0.5"
                 >
-                  {t('immersivePlayer.settings.accentUs')}
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="uk"
-                  className="h-6 rounded-full border-0 px-2 text-[11px] text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
-                >
-                  {t('immersivePlayer.settings.accentUk')}
-                </ToggleGroupItem>
-              </ToggleGroup>
+                  <ToggleGroupItem
+                    value="us"
+                    className="h-6 rounded-full border-0 px-2 text-[11px] text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                  >
+                    {t('immersivePlayer.settings.accentUs')}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="uk"
+                    className="h-6 rounded-full border-0 px-2 text-[11px] text-muted-foreground shadow-none data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                  >
+                    {t('immersivePlayer.settings.accentUk')}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              <SwitchRow
+                label={t('immersivePlayer.settings.playExample')}
+                checked={settings.playExample}
+                onChange={(value) => onChange({ playExample: value })}
+              />
             </div>
           </OptionGroup>
           <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>

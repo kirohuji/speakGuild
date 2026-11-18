@@ -31,8 +31,7 @@
     },
     "patchedDependencies": {
       "@capgo/capacitor-wechat@8.0.32": "patches/@capgo__capacitor-wechat@8.0.32.patch",
-      "@sentry/capacitor@4.1.0": "patches/@sentry__capacitor@4.1.0.patch",
-      "@capgo/capacitor-native-audio@8.4.15": "patches/@capgo__capacitor-native-audio@8.4.15.patch"
+      "@sentry/capacitor@4.1.0": "patches/@sentry__capacitor@4.1.0.patch"
     }
   }
 }

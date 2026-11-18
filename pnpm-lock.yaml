@@ -8,9 +8,6 @@ overrides:
   sql.js: 1.11.0
 
 patchedDependencies:
-  '@capgo/capacitor-native-audio@8.4.15':
-    hash: db8e3e1b07dd1326af187bc4e1ec5a5c7efd26e1739aede1a4c9cc96c0e549c9
-    path: patches/@capgo__capacitor-native-audio@8.4.15.patch
   '@capgo/capacitor-wechat@8.0.32':
     hash: 643906a9ef3a7af4556b2c68af41c9bb36f8f69637556eaa5fdc206a772fd1e5
     path: patches/@capgo__capacitor-wechat@8.0.32.patch
@@ -333,12 +330,9 @@ importers:
       '@capgo/capacitor-in-app-review':
         specifier: ^8.1.7
         version: 8.1.7(@capacitor/core@8.3.1)
-      '@capgo/capacitor-media-session':
-        specifier: ^8.0.28
-        version: 8.0.28(@capacitor/core@8.3.1)
       '@capgo/capacitor-native-audio':
-        specifier: ^8.4.15
-        version: 8.4.15(patch_hash=db8e3e1b07dd1326af187bc4e1ec5a5c7efd26e1739aede1a4c9cc96c0e549c9)(@capacitor/core@8.3.1)
+        specifier: ^8.5.4
+        version: 8.5.4(@capacitor/core@8.3.1)
       '@capgo/capacitor-social-login':
         specifier: ^8.3.22
         version: 8.3.22(@capacitor/core@8.3.1)
@@ -993,13 +987,8 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
-  '@capgo/capacitor-media-session@8.0.28':
-    resolution: {integrity: sha512-p9hEbujYixWr//s66moL/nHd3ppeLk3yirT5VvAJvWHCTWXIqVSeL+dP12XTcpSobMQBKlC28LpIWdYvFcDyXQ==}
-    peerDependencies:
-      '@capacitor/core': '>=8.0.0'
-
-  '@capgo/capacitor-native-audio@8.4.15':
-    resolution: {integrity: sha512-2RsPkG+9ybODYFBL2OoftmaAMm7vA2ke4I6/8E+GcCbdZ8IEGaOHKcsLbtI8XaWyjfvay3gljhiNTnE63fP89Q==}
+  '@capgo/capacitor-native-audio@8.5.4':
+    resolution: {integrity: sha512-T6tfH03yQc1wTbCccSvE366vfcQkxf3lCeMOB4DVc+ElFJ9Ab6PLyjHYO3qQfqBMPjQiYhYhzNUwK2YYagX9+A==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -7956,11 +7945,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.1
 
-  '@capgo/capacitor-media-session@8.0.28(@capacitor/core@8.3.1)':
-    dependencies:
-      '@capacitor/core': 8.3.1
-
-  '@capgo/capacitor-native-audio@8.4.15(patch_hash=db8e3e1b07dd1326af187bc4e1ec5a5c7efd26e1739aede1a4c9cc96c0e549c9)(@capacitor/core@8.3.1)':
+  '@capgo/capacitor-native-audio@8.5.4(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
