@@ -665,6 +665,19 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
       return { contentIds: rows.map((row) => row.content_id), total: totals[0]?.cnt ?? 0 }
     },
 
+    async findExpressionEntryByInsightId(insightId: string): Promise<Record<string, any> | null> {
+      const rows = await executor.queryRows<Record<string, any>>(
+        `SELECT * FROM expression_entries
+         WHERE id = ?
+            OR json_extract(data, '$.sourceId') = ?
+            OR json_extract(data, '$.contentSnapshot.id') = ?
+         LIMIT 1`,
+        [insightId, insightId, insightId],
+      )
+      if (rows.length === 0) return null
+      return hydrateRow('expression_entries', rows[0]!)
+    },
+
     async listNotebookExpressionPage(query: NotebookExpressionPageQuery): Promise<NotebookExpressionPage> {
       const offset = query.offset ?? 0
       assertPageBounds(query.limit, offset)

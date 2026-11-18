@@ -1,5 +1,7 @@
-/** Windowed playlist helpers for Insight / Immersive — keep memory to ±1 page. */
-
+/**
+ * @deprecated Insight / Immersive playlists now use lean append
+ * (`insight-playlist.ts`). Kept for tests / any remaining callers.
+ */
 export function computePlaylistWindow(input: {
   absoluteIndex: number
   total: number
@@ -17,7 +19,7 @@ export function computePlaylistWindow(input: {
   }
 }
 
-/** Reload when outside the window or within 2 items of either edge. */
+/** @deprecated See `shouldLoadMoreInsightList` in `insight-playlist.ts`. */
 export function shouldReloadPlaylistWindow(inWindow: number, windowLength: number) {
   if (windowLength <= 0) return true
   return inWindow < 0 || inWindow >= windowLength || inWindow <= 1 || inWindow >= windowLength - 2

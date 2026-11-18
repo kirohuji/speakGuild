@@ -43,6 +43,7 @@ import { WordMeaningInline, WordMeaningLines } from '@/features/learning/compone
 import { InsightPracticeButton } from './insight-practice-button'
 import { InsightRegenerateButton, useInsightRegeneration } from './insight-regeneration'
 import { patternSlotLabel, type PatternSlot } from '@/features/learning/lib/pattern-slot'
+import { InsightListLoadMoreSentinel, insightLoadMoreAfterIndex } from './insight-list-load-more'
 
 type VocabularyInsight = {
   kind: 'word'
@@ -357,10 +358,15 @@ interface LearningInsightDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onIndexChange: (index: number) => void
-  /** Absolute playlist size (may exceed windowed `items.length`). */
+  /** Absolute playlist size (may exceed loaded `items.length`). */
   total?: number
-  /** Absolute offset of `items[0]` in the full playlist. */
+  /**
+   * Absolute offset of `items[0]` in the full playlist.
+   * Lean append playlists keep this at 0 (`index` is absolute).
+   */
   windowOffset?: number
+  /** Append the next lean page when the playlist drawer scrolls near the end. */
+  onLoadMore?: () => void
   /** 在"我的学习库"页面使用时设为 true，隐藏保存按钮 */
   hideSaveActions?: boolean
   /** 'inspect' | 'guided' | 'review' — review 模式底部显示复述输入 */
@@ -376,6 +382,7 @@ export function LearningInsightDialog({
   onIndexChange,
   total,
   windowOffset = 0,
+  onLoadMore,
   hideSaveActions = false,
   mode,
 }: LearningInsightDialogProps) {
@@ -552,32 +559,41 @@ export function LearningInsightDialog({
                 const title =
                   item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
                 const isActive = i === index
+                const loadMoreAfter = insightLoadMoreAfterIndex(items.length)
 
                 return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectFromPlaylist(i)}
-                    className={cn(
-                      'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-foreground hover:bg-muted',
-                    )}
-                  >
-                    <Icon className={cn('size-4 shrink-0', iconTone)} />
-                    <span className="min-w-0 max-w-full overflow-hidden">
-                      <span className="block truncate font-english text-sm font-medium">{title}</span>
-                      <WordMeaningInline meaning={item.meaning} className="mt-0" />
-                    </span>
-                    {isActive ? (
-                      <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">
-                        {t('insight.current')}
-                      </Badge>
-                    ) : (
-                      <span className="w-0" />
-                    )}
-                  </button>
+                  <div key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => selectFromPlaylist(i)}
+                      className={cn(
+                        'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
+                        isActive
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-foreground hover:bg-muted',
+                      )}
+                    >
+                      <Icon className={cn('size-4 shrink-0', iconTone)} />
+                      <span className="min-w-0 max-w-full overflow-hidden">
+                        <span className="block truncate font-english text-sm font-medium">{title}</span>
+                        <WordMeaningInline meaning={item.meaning} className="mt-0" />
+                      </span>
+                      {isActive ? (
+                        <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">
+                          {t('insight.current')}
+                        </Badge>
+                      ) : (
+                        <span className="w-0" />
+                      )}
+                    </button>
+                    {i === loadMoreAfter ? (
+                      <InsightListLoadMoreSentinel
+                        enabled={items.length < playlistTotal}
+                        itemCount={items.length}
+                        onLoadMore={onLoadMore}
+                      />
+                    ) : null}
+                  </div>
                 )
               })}
             </div>

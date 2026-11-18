@@ -38,6 +38,7 @@ import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
 import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerExample, type ImmersivePlayerItem, type ImmersivePlayerStatus, type PlaybackSegment } from './immersive-player.types'
+import { InsightListLoadMoreSentinel, insightLoadMoreAfterIndex } from '@/features/practice/components/insight-list-load-more'
 
 type ImmersivePlayerDialogProps = {
   open: boolean
@@ -45,10 +46,12 @@ type ImmersivePlayerDialogProps = {
   items: ImmersivePlayerItem[]
   index: number
   onIndexChange: (index: number) => void
-  /** Absolute playlist size (may exceed windowed `items.length`). */
+  /** Absolute playlist size (may exceed loaded `items.length`). */
   total?: number
-  /** Absolute offset of `items[0]` in the full playlist. */
+  /** Absolute offset of `items[0]`; lean append keeps this at 0. */
   windowOffset?: number
+  /** Append the next lean page when the queue drawer scrolls near the end. */
+  onLoadMore?: () => void
 }
 
 const TYPE_META = {
@@ -151,6 +154,7 @@ export function ImmersivePlayerDialog({
   onIndexChange,
   total,
   windowOffset = 0,
+  onLoadMore,
 }: ImmersivePlayerDialogProps) {
   const { t } = useTranslation()
   useBgmSuppress('immersive-player-dialog', open)
@@ -804,6 +808,8 @@ export function ImmersivePlayerDialog({
         onOpenChange={setQueueOpen}
         items={items}
         index={index}
+        total={playlistTotal}
+        onLoadMore={onLoadMore}
         onSelect={(nextIndex) => {
           if (nextIndex === index) {
             setQueueOpen(false)
@@ -909,15 +915,20 @@ function ImmersiveQueueDrawer({
   onOpenChange,
   items,
   index,
+  total,
+  onLoadMore,
   onSelect,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   items: ImmersivePlayerItem[]
   index: number
+  total: number
+  onLoadMore?: () => void
   onSelect: (index: number) => void
 }) {
   const { t } = useTranslation()
+  const loadMoreAfter = insightLoadMoreAfterIndex(items.length)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -935,28 +946,36 @@ function ImmersiveQueueDrawer({
               const Icon = meta.Icon
               const active = itemIndex === index
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onSelect(itemIndex)}
-                  className={cn(
-                    'grid w-full max-w-full min-w-0 touch-manipulation grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-                    active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
-                  )}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  <span className="min-w-0 max-w-full overflow-hidden">
-                    <span className="block truncate text-sm font-medium">{item.title}</span>
-                    {item.meaning
-                      ? <WordMeaningInline meaning={item.meaning} className="mt-0" />
-                      : <span className="block truncate text-xs text-muted-foreground">{item.sceneName || t(KIND_LABEL_KEY[item.kind])}</span>}
-                  </span>
-                  {active ? (
-                    <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">{t('immersivePlayer.current')}</Badge>
-                  ) : (
-                    <span className="w-0" />
-                  )}
-                </button>
+                <div key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(itemIndex)}
+                    className={cn(
+                      'grid w-full max-w-full min-w-0 touch-manipulation grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                      active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <span className="min-w-0 max-w-full overflow-hidden">
+                      <span className="block truncate text-sm font-medium">{item.title}</span>
+                      {item.meaning
+                        ? <WordMeaningInline meaning={item.meaning} className="mt-0" />
+                        : <span className="block truncate text-xs text-muted-foreground">{item.sceneName || t(KIND_LABEL_KEY[item.kind])}</span>}
+                    </span>
+                    {active ? (
+                      <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">{t('immersivePlayer.current')}</Badge>
+                    ) : (
+                      <span className="w-0" />
+                    )}
+                  </button>
+                  {itemIndex === loadMoreAfter ? (
+                    <InsightListLoadMoreSentinel
+                      enabled={items.length < total}
+                      itemCount={items.length}
+                      onLoadMore={onLoadMore}
+                    />
+                  ) : null}
+                </div>
               )
             })}
           </div>

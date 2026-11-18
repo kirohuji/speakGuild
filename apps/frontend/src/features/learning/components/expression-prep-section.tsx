@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   BookText,
@@ -16,13 +16,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { LEARNING_LIBRARY_CHANGED_EVENT, learningContentRepository } from '@/lib/offline'
-import { listContentPage, type ContentKind } from '@/lib/offline/learning-pack-read-model'
-import { computePlaylistWindow, shouldReloadPlaylistWindow } from '@/lib/offline/playlist-window'
+import { getContentDetail, listContentLeanPage, listContentPage, type ContentKind } from '@/lib/offline/learning-pack-read-model'
+import type { InsightListItem } from '@/lib/offline/insight-playlist'
 import { PrepPager } from '@/features/practice/components/prep-pager'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
 } from '@/features/practice/components/learning-insight-dialog'
+import { useLeanInsightPlaylist } from '@/features/practice/hooks/use-lean-insight-playlist'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { CurrentTabExpandButton } from './current-tab-expand-button'
@@ -383,12 +384,9 @@ export function ExpressionPrepSection({
   }
   const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogIndex, setDialogIndex] = useState(0)
   const [dialogKind, setDialogKind] = useState<ExpressionPrepTab>('vocab')
-  const [dialogItems, setDialogItems] = useState<LearningInsightItem[]>([])
-  const [dialogTotal, setDialogTotal] = useState(0)
-  const [dialogWindowOffset, setDialogWindowOffset] = useState(0)
+  const dialogKindRef = useRef(dialogKind)
+  dialogKindRef.current = dialogKind
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
@@ -577,106 +575,81 @@ export function ExpressionPrepSection({
     setPendingSave(null)
   }, [pendingSave, sceneName, t])
 
-  const loadInsightWindow = useCallback(async (kind: ExpressionPrepTab, startIndex: number) => {
-    const knownTotal =
-      kind === 'chunk' ? chunkTotal
-        : kind === 'pattern' ? patternTotal
-          : vocabTotal
-    const inlineFull =
-      kind === 'chunk' ? inlineChunkItems
-        : kind === 'pattern' ? inlinePatternItems
-          : inlineVocabItems
-
-    if (!useLocalIndex) {
-      const { windowStart, windowSize, indexInWindow } = computePlaylistWindow({
-        absoluteIndex: startIndex,
-        total: knownTotal,
-        pageSize,
-      })
-      const slice = inlineFull.slice(windowStart, windowStart + windowSize)
-      const items = kind === 'chunk'
-        ? (slice as ChunkItem[]).map(mapChunkToInsight)
-        : kind === 'pattern'
-          ? (slice as SentencePattern[]).map((p, i) => mapPatternToInsight(p, windowStart + i))
-          : (slice as VocabItem[]).map(mapVocabToInsight)
-      return {
-        items,
-        index: Math.min(Math.max(indexInWindow, 0), Math.max(items.length - 1, 0)),
-        total: knownTotal,
-        windowOffset: windowStart,
-      }
+  const packLeanFromInline = useCallback((kind: ExpressionPrepTab): InsightListItem[] => {
+    if (kind === 'chunk') {
+      return inlineChunkItems.map((c) => ({ id: c.id, kind: 'chunk' as const, title: c.text, meaning: c.meaning }))
     }
+    if (kind === 'pattern') {
+      return inlinePatternItems.map((p, i) => ({
+        id: p.id ?? `${p.topicId}-${i}`,
+        kind: 'pattern' as const,
+        title: p.pattern,
+        meaning: p.meaning,
+      }))
+    }
+    return inlineVocabItems.map((v) => ({ id: v.id, kind: 'word' as const, title: v.word, meaning: v.meaning }))
+  }, [inlineChunkItems, inlinePatternItems, inlineVocabItems])
 
-    const { windowStart, windowSize, indexInWindow } = computePlaylistWindow({
-      absoluteIndex: startIndex,
-      total: knownTotal,
-      pageSize,
-    })
-    const page = await listContentPage({
+  const fetchLeanPage = useCallback(async ({ offset, limit }: { offset: number; limit: number }) => {
+    const kind = dialogKindRef.current
+    if (!useLocalIndex) {
+      const all = packLeanFromInline(kind)
+      return { items: all.slice(offset, offset + limit), total: all.length }
+    }
+    return listContentLeanPage({
       unitId: contentSource?.topicId ? undefined : contentSource?.unitId,
       topicId: contentSource?.topicId,
       kind: kind as ContentKind,
-      page: 1,
-      pageSize: windowSize,
-      offset: windowStart,
+      limit,
+      offset,
     })
-    const items = kind === 'chunk'
-      ? (page.items as ChunkItem[]).map((item) => mapChunkToInsight(normalizeChunkItem(item)))
-      : kind === 'pattern'
-        ? (page.items as SentencePattern[]).map((item, i) => mapPatternToInsight(
-          normalizePatternItem(item, { topicId: sceneName, topicTitle: sceneName, index: windowStart + i }),
-          windowStart + i,
-        ))
-        : (page.items as VocabItem[]).map((item) => mapVocabToInsight(normalizeVocabItem(item)))
-    return {
-      items,
-      index: Math.min(Math.max(indexInWindow, 0), Math.max(items.length - 1, 0)),
-      total: page.total || knownTotal,
-      windowOffset: windowStart,
+  }, [contentSource?.topicId, contentSource?.unitId, packLeanFromInline, useLocalIndex])
+
+  const fetchLeanDetail = useCallback(async (id: string) => {
+    const kind = dialogKindRef.current
+    if (!useLocalIndex) {
+      if (kind === 'chunk') {
+        const item = inlineChunkItems.find((c) => c.id === id)
+        return item ? mapChunkToInsight(item) : null
+      }
+      if (kind === 'pattern') {
+        const index = inlinePatternItems.findIndex((p, i) => (p.id ?? `${p.topicId}-${i}`) === id)
+        return index >= 0 ? mapPatternToInsight(inlinePatternItems[index]!, index) : null
+      }
+      const item = inlineVocabItems.find((v) => v.id === id)
+      return item ? mapVocabToInsight(item) : null
     }
+    const raw = await getContentDetail(kind as ContentKind, id)
+    if (!raw) return null
+    if (kind === 'chunk') return mapChunkToInsight(normalizeChunkItem(raw))
+    if (kind === 'pattern') {
+      return mapPatternToInsight(
+        normalizePatternItem(raw, { topicId: sceneName, topicTitle: sceneName, index: 0 }),
+        0,
+      )
+    }
+    return mapVocabToInsight(normalizeVocabItem(raw))
   }, [
-    chunkTotal,
-    contentSource?.topicId,
-    contentSource?.unitId,
     inlineChunkItems,
     inlinePatternItems,
     inlineVocabItems,
     mapChunkToInsight,
     mapPatternToInsight,
     mapVocabToInsight,
-    pageSize,
-    patternTotal,
     sceneName,
     useLocalIndex,
-    vocabTotal,
   ])
+
+  const insightPlaylist = useLeanInsightPlaylist({
+    fetchPage: fetchLeanPage,
+    fetchDetail: fetchLeanDetail,
+  })
 
   const openDialog = useCallback((kind: ExpressionPrepTab, startIndex: number) => {
     setDialogKind(kind)
-    void loadInsightWindow(kind, startIndex).then(({ items, index, total, windowOffset }) => {
-      if (items.length === 0) return
-      setDialogItems(items)
-      setDialogIndex(index)
-      setDialogTotal(total)
-      setDialogWindowOffset(windowOffset)
-      setDialogOpen(true)
-    })
-  }, [loadInsightWindow])
-
-  const handleDialogAbsoluteIndex = useCallback((absoluteIndex: number) => {
-    const inWindow = absoluteIndex - dialogWindowOffset
-    if (!shouldReloadPlaylistWindow(inWindow, dialogItems.length)) {
-      setDialogIndex(inWindow)
-      return
-    }
-    void loadInsightWindow(dialogKind, absoluteIndex).then(({ items, index, total, windowOffset }) => {
-      if (items.length === 0) return
-      setDialogItems(items)
-      setDialogIndex(index)
-      setDialogTotal(total)
-      setDialogWindowOffset(windowOffset)
-    })
-  }, [dialogItems.length, dialogKind, dialogWindowOffset, loadInsightWindow])
+    dialogKindRef.current = kind
+    void insightPlaylist.openAt(startIndex)
+  }, [insightPlaylist])
 
   const visibleVocabs = collapsed ? vocabItems.slice(0, collapsedPreviewCount) : vocabPageItems.items
   const visibleChunks = collapsed ? chunkItems.slice(0, collapsedPreviewCount) : chunkPageItems.items
@@ -808,16 +781,21 @@ export function ExpressionPrepSection({
 
       <LearningInsightDialog
         practiceUnitId={contentSource?.unitId}
-        items={dialogItems}
-        index={Math.min(dialogIndex, Math.max(dialogItems.length - 1, 0))}
-        open={dialogOpen}
+        items={insightPlaylist.displayItems}
+        index={Math.min(insightPlaylist.index, Math.max(insightPlaylist.displayItems.length - 1, 0))}
+        open={insightPlaylist.open}
         onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (!open) void refreshCollectedTexts()
+          if (!open) {
+            insightPlaylist.reset()
+            void refreshCollectedTexts()
+          } else {
+            insightPlaylist.setOpen(true)
+          }
         }}
-        onIndexChange={handleDialogAbsoluteIndex}
-        total={dialogTotal}
-        windowOffset={dialogWindowOffset}
+        onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
+        total={insightPlaylist.total}
+        windowOffset={insightPlaylist.windowOffset}
+        onLoadMore={() => { void insightPlaylist.loadMore() }}
       />
       <SaveToNotebookDrawer
         entry={pendingSave ? { kind: pendingSave.kind, text: pendingSave.kind === 'word' ? pendingSave.item.word : pendingSave.kind === 'chunk' ? pendingSave.item.text : pendingSave.item.pattern } : null}

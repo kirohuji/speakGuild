@@ -1,6 +1,7 @@
 import type { TrainingTopicItem, UnitDetail } from '@/features/learning/api/learning-api'
 import { localDb } from './unified-storage'
 import { learningContentRepository } from './learning-content.repository'
+import { insightListDiag } from './insight-list-diag'
 import { buildWarmupPracticeItemIds } from './warmup-practice-item-id'
 
 export const PACK_PROJECTION_VERSION = 1
@@ -450,6 +451,89 @@ export async function listContentPage(params: {
     pageSize,
     offset,
   }
+}
+
+function leanFromContent(kind: ContentKind, item: any): {
+  id: string
+  kind: 'word' | 'chunk' | 'pattern'
+  title: string
+  meaning?: string
+} | null {
+  if (!item?.id) return null
+  const data = item?.data && typeof item.data === 'object' ? item.data : item
+  if (kind === 'vocab') {
+    const title = String(data.word || item.word || '').trim()
+    if (!title) return null
+    const meaning = String(data.meaning || item.meaning || '').trim() || undefined
+    return { id: String(item.id), kind: 'word', title, meaning }
+  }
+  if (kind === 'chunk') {
+    const title = String(data.text || item.text || '').trim()
+    if (!title) return null
+    const meaning = String(data.meaning || item.meaning || '').trim() || undefined
+    return { id: String(item.id), kind: 'chunk', title, meaning }
+  }
+  const title = String(data.pattern || item.pattern || '').trim()
+  if (!title) return null
+  const meaning = String(data.meaning || item.meaning || '').trim() || undefined
+  return { id: String(item.id), kind: 'pattern', title, meaning }
+}
+
+/** Lean playlist page — refs + title/meaning only (meaning from content JSON). */
+export async function listContentLeanPage(params: {
+  unitId?: string
+  topicId?: string
+  kind: ContentKind
+  limit: number
+  offset?: number
+}) {
+  const limit = Math.min(PAGE_LIMIT, Math.max(1, params.limit))
+  const offset = Math.max(0, params.offset ?? 0)
+  insightListDiag('pack.lean_page', {
+    unitId: params.unitId ?? null,
+    topicId: params.topicId ?? null,
+    kind: params.kind,
+    limit,
+    offset,
+    hydrate: false,
+  })
+  const page = await listContentPage({
+    unitId: params.unitId,
+    topicId: params.topicId,
+    kind: params.kind,
+    page: 1,
+    pageSize: limit,
+    offset,
+  })
+  const items = page.items
+    .map((item) => leanFromContent(params.kind, item))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+  insightListDiag('pack.lean_page_ok', {
+    kind: params.kind,
+    offset,
+    limit,
+    rowCount: items.length,
+    total: page.total,
+    hydrate: false,
+  })
+  return {
+    items,
+    total: page.total,
+    offset,
+    limit,
+  }
+}
+
+/** Full content row for a single insight / immersive item. */
+export async function getContentDetail(kind: ContentKind, id: string) {
+  insightListDiag('pack.detail', { kind, id })
+  const rows = await localDb.findByIndexIn<any>(CONTENT_TABLE[kind], 'id', [id])
+  if (rows.length === 0) {
+    insightListDiag('pack.detail_miss', { kind, id })
+    return null
+  }
+  insightListDiag('pack.detail_ok', { kind, id })
+  return contentItem(rows[0])
 }
 
 export async function readPracticeSource(unitId: string) {
