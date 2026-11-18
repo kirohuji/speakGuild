@@ -67,10 +67,14 @@ const activePackTaskControllers = new Map<string, AbortController>()
 
 function packTaskStepLabel(step: string, kind: DownloadTask['kind'] = 'download') {
   if (kind === 'uninstall') {
-    if (step === 'quitting') return i18n.t('learning.packTaskStepQuitting')
-    if (step === 'removing_assets') return i18n.t('learning.packTaskStepRemovingAssets')
+    if (step === 'preparing') return i18n.t('learning.packTaskStepPreparingUninstall')
+    if (step === 'quitting' || step === 'clearing_progress') return i18n.t('learning.packTaskStepClearingProgress')
+    if (step === 'resolving_refs') return i18n.t('learning.packTaskStepResolvingRefs')
+    if (step === 'removing_indexes' || step === 'removing_assets') return i18n.t('learning.packTaskStepRemovingIndexes')
+    if (step === 'removing_pack_record') return i18n.t('learning.packTaskStepRemovingPackRecord')
+    if (step === 'reclaiming_files') return i18n.t('learning.packTaskStepReclaimingFiles')
     if (step === 'refreshing') return i18n.t('learning.packTaskStepRefreshingPlan')
-    if (step === 'done') return i18n.t('learning.packTaskStepUninstallDone')
+    if (step === 'finishing' || step === 'done') return i18n.t('learning.packTaskStepUninstallDone')
     if (step === 'paused') return i18n.t('learning.packTaskPaused')
     return i18n.t('learning.packTaskUninstalling')
   }
@@ -421,7 +425,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async quitUnit(unitId) {
-    if (activePackTaskIds.has(unitId)) return
+    if (activePackTaskIds.has(unitId) || activePackTaskControllers.has(unitId)) return
     const state = getState()
     const unitTitle =
       state.myUnits.find((unit) => unit.id === unitId)?.title ??
@@ -441,20 +445,26 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
           coverImage,
           kind: 'uninstall' as const,
           status: 'uninstalling' as const,
-          progress: 5,
-          step: 'quitting',
-          stepLabel: packTaskStepLabel('quitting', 'uninstall'),
+          progress: 4,
+          step: 'clearing_progress',
+          stepLabel: packTaskStepLabel('clearing_progress', 'uninstall'),
         },
       ],
       packInstallingIds: s.packInstallingIds.includes(unitId)
         ? s.packInstallingIds
         : [...s.packInstallingIds, unitId],
     }))
-    const updateUninstallProgress = (progress: number, step: string, stepLabel: string) => {
+    const updateUninstallProgress = (progress: number, step: string) => {
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
-            ? { ...task, progress, step, stepLabel, status: 'uninstalling' as const }
+            ? {
+                ...task,
+                progress: Math.max(task.progress ?? 0, progress),
+                step,
+                stepLabel: packTaskStepLabel(step, 'uninstall'),
+                status: 'uninstalling' as const,
+              }
             : task,
         ),
       }))
@@ -462,14 +472,14 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     try {
       // “退出学习”是放弃该学习包，而非仅移除下载的素材。先清本地 SRS
       // 与 run，避免卸载期间 Today 继续显示旧包的到期/逾期题。
+      updateUninstallProgress(12, 'clearing_progress')
       await learningRepository.clearPackPracticeProgress(unitId)
       useDailyPracticeStore.getState().invalidatePlans()
       await learningRepository.quitUnit(unitId)
-      updateUninstallProgress(55, 'removing_assets', packTaskStepLabel('removing_assets', 'uninstall'))
-      // Metadata removal is the UI-blocking path; file GC continues in background.
-      await learningPackService.uninstallMetadata(unitId)
-      void learningPackService.drainPackGcQueue()
-      updateUninstallProgress(82, 'refreshing', packTaskStepLabel('refreshing', 'uninstall'))
+      await learningPackService.uninstall(unitId, (step, progress) => {
+        updateUninstallProgress(Math.max(20, progress), step)
+      })
+      updateUninstallProgress(92, 'refreshing')
       await getState().syncPackStateAfterLocalChange(unitId)
       set((current) => ({
         availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
@@ -586,15 +596,95 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async uninstallUnitPack(unitId) {
-    await learningPackService.uninstallMetadata(unitId)
-    void learningPackService.drainPackGcQueue()
-    // 单纯卸载保留进度，以便将来重新下载；但不能继续把已卸载包作为 Today
-    // 的内存计划展示。重新加载时会按仍安装的学习包重新解析。
-    useDailyPracticeStore.getState().invalidatePlans()
-    await getState().syncPackStateAfterLocalChange(unitId)
-    set((state) => ({
-      availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
+    if (activePackTaskIds.has(unitId) || activePackTaskControllers.has(unitId)) return
+    const state = getState()
+    const unitTitle =
+      state.myUnits.find((unit) => unit.id === unitId)?.title ??
+      state.downloadedPacks.find((pack) => pack.packId === unitId)?.title ??
+      unitId
+    const coverImage =
+      state.myUnits.find((unit) => unit.id === unitId)?.coverImage
+      ?? state.shopUnits.find((unit) => unit.id === unitId)?.coverImage
+      ?? resolvePackCoverImage(unitId)
+    activePackTaskIds.add(unitId)
+    set((s) => ({
+      downloadTasks: [
+        ...s.downloadTasks.filter((task) => task.packId !== unitId),
+        {
+          packId: unitId,
+          title: unitTitle,
+          coverImage,
+          kind: 'uninstall' as const,
+          status: 'uninstalling' as const,
+          progress: 4,
+          step: 'preparing',
+          stepLabel: packTaskStepLabel('preparing', 'uninstall'),
+        },
+      ],
+      packInstallingIds: s.packInstallingIds.includes(unitId)
+        ? s.packInstallingIds
+        : [...s.packInstallingIds, unitId],
     }))
+    const updateUninstallProgress = (progress: number, step: string) => {
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((task) =>
+          task.packId === unitId
+            ? {
+                ...task,
+                progress: Math.max(task.progress ?? 0, progress),
+                step,
+                stepLabel: packTaskStepLabel(step, 'uninstall'),
+                status: 'uninstalling' as const,
+              }
+            : task,
+        ),
+      }))
+    }
+    try {
+      // 单纯卸载保留进度，以便将来重新下载；但不能继续把已卸载包作为 Today
+      // 的内存计划展示。重新加载时会按仍安装的学习包重新解析。
+      await learningPackService.uninstall(unitId, (step, progress) => {
+        updateUninstallProgress(progress, step)
+      })
+      useDailyPracticeStore.getState().invalidatePlans()
+      updateUninstallProgress(92, 'refreshing')
+      await getState().syncPackStateAfterLocalChange(unitId)
+      set((s) => ({
+        availablePackUpdates: s.availablePackUpdates.filter((update) => update.packId !== unitId),
+        downloadTasks: s.downloadTasks.map((task) =>
+          task.packId === unitId
+            ? { ...task, progress: 100, status: 'done' as const, step: 'done', stepLabel: packTaskStepLabel('done', 'uninstall') }
+            : task,
+        ),
+        packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
+      }))
+      toast.success(i18n.t('learning.packUninstallSuccess', { title: unitTitle }))
+      setTimeout(() => {
+        useLearningStore.setState((s) => ({
+          downloadTasks: s.downloadTasks.filter(
+            (task) => !(task.packId === unitId && task.status === 'done'),
+          ),
+        }))
+      }, 3000)
+    } catch (error) {
+      console.warn('[learning-store] uninstallUnitPack failed', { unitId, error })
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((task) =>
+          task.packId === unitId
+            ? {
+                ...task,
+                status: 'error' as const,
+                error: error instanceof Error ? error.message : i18n.t('learning.packTaskUninstallFailed'),
+                stepLabel: i18n.t('learning.packTaskUninstallFailed'),
+              }
+            : task,
+        ),
+        packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
+      }))
+      toast.error(i18n.t('learning.packUninstallFailed', { title: unitTitle }))
+    } finally {
+      activePackTaskIds.delete(unitId)
+    }
   },
 
   pauseActivePackTasks(reason = i18n.t('learning.packTaskPausedInBackground')) {

@@ -508,6 +508,8 @@ interface PackOperationJournal {
   kind: PackOperationKind
   phase: 'prepared' | 'committing'
   snapshot: PackStateSnapshot
+  /** Uninstall: sha256 list that must be deleted (crash-safe for GC retry). */
+  filesToRemove?: string[]
   createdAt: string
   updatedAt: string
 }
@@ -609,10 +611,15 @@ async function ensurePackGcJobFromUninstallJournal(packId: string): Promise<void
   if (existingJob) return
   const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
   if (!journal || journal.kind !== 'uninstall' || journal.phase !== 'committing') return
+  // Prefer the sha list computed before committing. An empty fallback only
+  // finishes discard/rmdir + journal cleanup — never invents files to delete.
+  const filesToRemove = Array.isArray(journal.filesToRemove)
+    ? [...new Set(journal.filesToRemove.filter(Boolean))]
+    : []
   await putPackGcJob({
     id: packGcJobId(packId),
     packId,
-    filesToRemove: [],
+    filesToRemove,
     version: journal.snapshot.pack?.version,
     title: journal.snapshot.pack?.title,
     createdAt: new Date().toISOString(),
@@ -839,10 +846,18 @@ async function beginPackOperation(packId: string, kind: PackOperationKind): Prom
   })
 }
 
-async function markPackOperationCommitting(packId: string): Promise<void> {
+async function markPackOperationCommitting(packId: string, filesToRemove?: string[]): Promise<void> {
   const id = operationJournalId(packId)
   const journal = await localDb.get<PackOperationJournal>('kv', id)
-  if (journal) await localDb.put('kv', { ...journal, phase: 'committing', updatedAt: new Date().toISOString() })
+  if (!journal) return
+  await localDb.put('kv', {
+    ...journal,
+    phase: 'committing',
+    filesToRemove: filesToRemove
+      ? [...new Set(filesToRemove.filter(Boolean))]
+      : journal.filesToRemove,
+    updatedAt: new Date().toISOString(),
+  })
 }
 
 async function restorePackOperation(journal: PackOperationJournal): Promise<void> {
@@ -890,21 +905,9 @@ export const learningPackService = {
       if (committed) {
         await restoreReferencedPreviousPackZips(journal.packId)
         if (journal.kind === 'uninstall') {
-          // Metadata already committed; ensure a durable GC job exists so
-          // drainPackGcQueue can finish file cleanup + journal removal.
-          const existingJob = await getPackGcJob(journal.packId)
-          if (!existingJob) {
-            const now = new Date().toISOString()
-            await putPackGcJob({
-              id: packGcJobId(journal.packId),
-              packId: journal.packId,
-              filesToRemove: [],
-              version: journal.snapshot.pack?.version,
-              title: journal.snapshot.pack?.title,
-              createdAt: now,
-              status: 'pending',
-            })
-          }
+          // Metadata already committed; ensure a durable GC job carries the
+          // precomputed filesToRemove list so drain can finish file cleanup.
+          await ensurePackGcJobFromUninstallJournal(journal.packId)
           continue
         }
         await finishPackOperation(journal.packId)
@@ -1905,25 +1908,32 @@ export const learningPackService = {
   },
 
   /**
-   * Fast path: remove pack from SQLite indexes and enqueue file GC.
-   * UI can treat the pack as uninstalled as soon as this resolves.
+   * Full uninstall in-path: metadata + content index + best-effort file delete.
+   * GC only retries files that failed to delete (crash-safe via journal.filesToRemove).
    */
-  async uninstallMetadata(packId: string): Promise<void> {
+  async uninstallMetadata(
+    packId: string,
+    onProgress?: LearningPackInstallProgressHandler,
+  ): Promise<void> {
+    const report = (step: string, progress: number) => {
+      onProgress?.(step, Math.min(99, Math.round(progress)), { label: step })
+    }
     const timer = createTimer(`learning-pack:uninstall-metadata:${packId}`)
-    logger.info(`[uninstall:${packId}] metadata start`)
+    logger.info(`[uninstall:${packId}] start`)
+    report('preparing', 4)
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
     timer.lap('load pack record', { found: Boolean(pack) })
     if (!pack) {
-      // Pack row already gone — still try to finish any leftover GC.
-      void drainPackGcQueueInternal()
+      await drainPackGcQueueInternal()
+      onProgress?.('finishing', 100, { label: 'finishing' })
       return
     }
     await beginPackOperation(packId, 'uninstall')
 
+    report('resolving_refs', 18)
     let myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
     // Web never installs vocabulary pronunciations/example audio; skip them on
-    // uninstall too so old packs with leftover word-audio refs do not dominate
-    // shared counting / GC.
+    // uninstall too so old leftover word-audio refs do not dominate shared counting.
     if (!Capacitor.isNativePlatform()) {
       const before = myRefs.length
       myRefs = myRefs.filter((ref) => !isSkippableWebVocabularyAudioAssetRef(ref))
@@ -1934,33 +1944,36 @@ export const learningPackService = {
     }
     timer.lap('load asset refs', { packRefs: myRefs.length })
 
-    const refCountBySha = new Map<string, number>()
-    for (const shaBatch of chunkArray([...new Set(myRefs.map((ref) => String(ref.sha256)))], 8)) {
-      const results = await Promise.all(shaBatch.map(async (sha256) => ({
-        sha256,
-        refs: await localDb.findByIndex<any>('asset_refs', 'sha256', sha256),
-      })))
-      for (const result of results) {
-        const sharedCount = result.refs.filter((ref) => ref.packId !== packId).length
-        if (sharedCount > 0) refCountBySha.set(result.sha256, sharedCount)
+    const uniqueShas = [...new Set(myRefs.map((ref) => String(ref.sha256)).filter(Boolean))]
+    const sharedSha = new Set<string>()
+    // Batch like install: findByIndexIn instead of N× findByIndex.
+    for (const shaBatch of chunkArray(uniqueShas, 80)) {
+      const allRefs = await localDb.findByIndexIn<any>('asset_refs', 'sha256', shaBatch)
+      const bySha = new Map<string, any[]>()
+      for (const ref of allRefs) {
+        const sha = String(ref.sha256 ?? '')
+        if (!sha) continue
+        const list = bySha.get(sha)
+        if (list) list.push(ref)
+        else bySha.set(sha, [ref])
+      }
+      for (const sha of shaBatch) {
+        const refs = bySha.get(sha) ?? []
+        if (refs.some((ref) => ref.packId !== packId)) sharedSha.add(sha)
       }
     }
-    timer.lap('compute shared asset refs', { sharedAssetCount: refCountBySha.size })
+    timer.lap('compute shared asset refs', { sharedAssetCount: sharedSha.size })
 
-    let deletedFiles = 0
-    let keptFiles = 0
-    const filesToRemove: string[] = []
-    for (const ref of myRefs) {
-      if (!refCountBySha.has(ref.sha256)) {
-        filesToRemove.push(ref.sha256)
-        deletedFiles++
-      } else {
-        keptFiles++
-      }
-    }
+    const filesToRemove = [...new Set(
+      myRefs
+        .map((ref) => String(ref.sha256 ?? ''))
+        .filter((sha) => sha && !sharedSha.has(sha)),
+    )]
+    const keptFiles = uniqueShas.length - filesToRemove.length
 
     // Keep SQLite cleanup sequential. The web adapter is much happier when
     // large deletes do not compete on the same connection.
+    report('removing_indexes', 40)
     try {
       await deferredPackAssetService.withPackLock(packId, () => localDb.deleteByIndex('deferred_pack_assets', 'pack_id', packId))
       await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
@@ -1973,6 +1986,7 @@ export const learningPackService = {
       timer.lap('delete topic unit details')
       await localDb.delete('downloaded_unit_details', packId)
       timer.lap('delete root unit detail')
+      report('removing_pack_record', 62)
       await localDb.delete('downloaded_packs', packId)
       timer.lap('delete downloaded pack record')
     } catch (error) {
@@ -1982,33 +1996,72 @@ export const learningPackService = {
       throw error
     }
 
-    // After SQLite no longer advertises the pack, enqueue durable file GC and
-    // return. Physical deletes run in drainPackGcQueue (crash-safe).
-    await markPackOperationCommitting(packId)
-    const now = new Date().toISOString()
-    await putPackGcJob({
-      id: packGcJobId(packId),
-      packId,
-      filesToRemove: [...new Set(filesToRemove)],
-      version: pack.version,
-      title: pack.title,
-      createdAt: now,
-      status: 'pending',
-    })
-    timer.lap('enqueue gc job', { deletedFiles, keptFiles })
+    // Persist the sha list before file I/O so crash recovery never invents an empty job.
+    await markPackOperationCommitting(packId, filesToRemove)
     invalidateInstalledPackMediaCache(packId)
-    // Drop click-time VN prep so the next open cannot reuse deleted pack URLs.
     void import('@/features/vn-engine/prepare-story-vn-entry')
       .then((mod) => mod.clearPreparedStoryVnEntry())
       .catch(() => undefined)
-    logger.info(`🗑️ 已标记卸载: ${packId} (${pack.title} v${pack.version}); GC queued (${deletedFiles} files, ${keptFiles} retained)`)
+
+    report('reclaiming_files', 78)
+    const failedFiles: string[] = []
+    for (const shaBatch of chunkArray(filesToRemove, 8)) {
+      const results = await Promise.allSettled(shaBatch.map((sha256) => assetCacheService.remove(sha256)))
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          failedFiles.push(shaBatch[index]!)
+          logger.warn('asset remove failed during uninstall', { packId, sha256: shaBatch[index], error: result.reason })
+        }
+      })
+    }
+    await deferredPackAssetService.discardPack(packId).catch((error) => {
+      logger.warn('discardPack failed during uninstall', { packId, error: debugError(error) })
+    })
+    if (Capacitor.isNativePlatform()) {
+      await Filesystem.rmdir({
+        path: `learning-packs/${packId}`,
+        directory: Directory.Data,
+        recursive: true,
+      }).catch(() => undefined)
+    }
+    timer.lap('reclaim files', {
+      removed: filesToRemove.length - failedFiles.length,
+      failed: failedFiles.length,
+      keptShared: keptFiles,
+    })
+
+    if (failedFiles.length > 0) {
+      await markPackOperationCommitting(packId, failedFiles)
+      await putPackGcJob({
+        id: packGcJobId(packId),
+        packId,
+        filesToRemove: failedFiles,
+        version: pack.version,
+        title: pack.title,
+        createdAt: new Date().toISOString(),
+        status: 'pending',
+      })
+      logger.info(`🗑️ 卸载元数据完成，${failedFiles.length} 个文件改由 GC 重试: ${packId}`)
+    } else {
+      await finishPackOperation(packId)
+      await recordPackAudit({
+        packId,
+        action: 'uninstall',
+        version: pack.version ?? null,
+        previousVersion: pack.version ?? null,
+        title: pack.title,
+      })
+      logger.info(`🗑️ 卸载完成: ${packId} (${pack.title} v${pack.version}); removed ${filesToRemove.length}, retained ${keptFiles}`)
+    }
+    report('finishing', 100)
+    onProgress?.('finishing', 100, { label: 'finishing' })
     timer.done({ packId, title: pack.title, version: pack.version })
   },
 
-  /** Compatible uninstall: metadata fast path + background file GC. */
-  async uninstall(packId: string): Promise<void> {
-    await this.uninstallMetadata(packId)
-    void drainPackGcQueueInternal()
+  /** Full uninstall; awaits residual GC only when some file deletes failed. */
+  async uninstall(packId: string, onProgress?: LearningPackInstallProgressHandler): Promise<void> {
+    await this.uninstallMetadata(packId, onProgress)
+    await drainPackGcQueueInternal()
   },
 
   listInstalled(): Promise<InstalledLearningPack[]> {

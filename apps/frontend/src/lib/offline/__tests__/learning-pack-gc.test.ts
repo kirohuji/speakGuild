@@ -5,6 +5,7 @@ const packs = new Map<string, any>()
 const assetRefs: any[] = []
 const removedAssets: string[] = []
 const rmdirCalls: string[] = []
+const failingShas = new Set<string>()
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
@@ -41,6 +42,7 @@ vi.mock('@zip.js/zip.js', () => ({
 vi.mock('../asset-cache.service', () => ({
   assetCacheService: {
     remove: vi.fn(async (sha256: string) => {
+      if (failingShas.has(sha256)) throw new Error(`remove failed: ${sha256}`)
       removedAssets.push(sha256)
     }),
   },
@@ -130,7 +132,21 @@ vi.mock('../unified-storage', () => ({
   },
 }))
 
+import { localDb } from '../unified-storage'
 import { learningPackService } from '../learning-pack.service'
+
+function seedPack(packId: string, title = 'Cafe', version = 3) {
+  packs.set(packId, {
+    id: packId,
+    packId,
+    version,
+    title,
+    manifest: { packId, version, title },
+    status: 'installed',
+    installedAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  })
+}
 
 describe('learning pack uninstall GC', () => {
   beforeEach(() => {
@@ -139,17 +155,10 @@ describe('learning pack uninstall GC', () => {
     assetRefs.length = 0
     removedAssets.length = 0
     rmdirCalls.length = 0
+    failingShas.clear()
+    vi.mocked(localDb.findByIndexIn).mockClear()
 
-    packs.set('pack-a', {
-      id: 'pack-a',
-      packId: 'pack-a',
-      version: 3,
-      title: 'Cafe',
-      manifest: { packId: 'pack-a', version: 3, title: 'Cafe' },
-      status: 'installed',
-      installedAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-    })
+    seedPack('pack-a')
     assetRefs.push(
       { id: 'ref-1', packId: 'pack-a', sha256: 'sha-unique' },
       { id: 'ref-2', packId: 'pack-a', sha256: 'sha-shared' },
@@ -157,13 +166,50 @@ describe('learning pack uninstall GC', () => {
     )
   })
 
-  it('uninstallMetadata removes pack row and enqueues GC without deleting files yet', async () => {
+  it('uninstallMetadata deletes unshared files sync and batches shared-ref lookup', async () => {
     await learningPackService.uninstallMetadata('pack-a')
 
     expect(packs.has('pack-a')).toBe(false)
-    expect(removedAssets).toEqual([])
-    expect(rmdirCalls).toEqual([])
+    expect(removedAssets).toEqual(['sha-unique'])
+    expect(rmdirCalls).toContain('learning-packs/pack-a')
+    expect(kv.has('learning-pack-gc:pack-a')).toBe(false)
+    expect(kv.has('learning-pack-operation:pack-a')).toBe(false)
+    expect(localDb.findByIndexIn).toHaveBeenCalledWith(
+      'asset_refs',
+      'sha256',
+      expect.arrayContaining(['sha-unique', 'sha-shared']),
+    )
+  })
 
+  it('keeps cross-pack shared sha until every owner is uninstalled', async () => {
+    seedPack('pack-b', 'Market', 2)
+    assetRefs.push({ id: 'ref-4', packId: 'pack-b', sha256: 'sha-b-only' })
+
+    await learningPackService.uninstallMetadata('pack-a')
+    expect(removedAssets).toEqual(['sha-unique'])
+    expect(removedAssets).not.toContain('sha-shared')
+
+    await learningPackService.uninstallMetadata('pack-b')
+    expect(removedAssets).toEqual(expect.arrayContaining(['sha-unique', 'sha-b-only', 'sha-shared']))
+  })
+
+  it('keeps files still pinned by favorite:{entryId} asset_refs', async () => {
+    assetRefs.push({ id: 'favorite:word:hello:sha-unique', packId: 'favorite:word:hello', sha256: 'sha-unique' })
+
+    await learningPackService.uninstallMetadata('pack-a')
+    await learningPackService.drainPackGcQueue()
+
+    expect(removedAssets).toEqual([])
+    expect(rmdirCalls).toContain('learning-packs/pack-a')
+    expect(kv.has('learning-pack-gc:pack-a')).toBe(false)
+  })
+
+  it('failed file deletes enqueue GC job with failed shas; drain retries them', async () => {
+    failingShas.add('sha-unique')
+
+    await learningPackService.uninstallMetadata('pack-a')
+
+    expect(removedAssets).toEqual([])
     const job = kv.get('learning-pack-gc:pack-a')
     expect(job).toMatchObject({
       packId: 'pack-a',
@@ -173,10 +219,9 @@ describe('learning pack uninstall GC', () => {
     })
     expect(job.filesToRemove).toEqual(['sha-unique'])
     expect(kv.get('learning-pack-operation:pack-a')?.phase).toBe('committing')
-  })
+    expect(kv.get('learning-pack-operation:pack-a')?.filesToRemove).toEqual(['sha-unique'])
 
-  it('drainPackGcQueue removes unshared assets, rmdirs pack dir, and clears journal/job', async () => {
-    await learningPackService.uninstallMetadata('pack-a')
+    failingShas.clear()
     await learningPackService.drainPackGcQueue()
 
     expect(removedAssets).toEqual(['sha-unique'])
@@ -186,8 +231,10 @@ describe('learning pack uninstall GC', () => {
   })
 
   it('installUnit waits for pending GC before starting', async () => {
+    failingShas.add('sha-unique')
     await learningPackService.uninstallMetadata('pack-a')
     expect(kv.has('learning-pack-gc:pack-a')).toBe(true)
+    failingShas.clear()
 
     const installSpy = vi.spyOn(learningPackService, 'installUnitFromZip').mockResolvedValue({
       id: 'pack-a',
@@ -207,15 +254,4 @@ describe('learning pack uninstall GC', () => {
     expect(installSpy).toHaveBeenCalled()
     installSpy.mockRestore()
   })
-
-  it('keeps files still pinned by favorite:{entryId} asset_refs after pack uninstall GC', async () => {
-    assetRefs.push({ id: 'favorite:word:hello:sha-unique', packId: 'favorite:word:hello', sha256: 'sha-unique' })
-
-    await learningPackService.uninstallMetadata('pack-a')
-    await learningPackService.drainPackGcQueue()
-
-    expect(removedAssets).toEqual([])
-    expect(rmdirCalls).toContain('learning-packs/pack-a')
-  })
 })
-

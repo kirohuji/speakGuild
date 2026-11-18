@@ -445,8 +445,7 @@ export const offlineStorageService = {
   },
 
   async clearPack(packId: string): Promise<void> {
-    await learningPackService.uninstallMetadata(packId)
-    void learningPackService.drainPackGcQueue()
+    await learningPackService.uninstall(packId)
   },
 
   async clearCategory(category: OfflineCacheCategory): Promise<void> {
