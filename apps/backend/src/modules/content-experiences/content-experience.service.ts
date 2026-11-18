@@ -17,6 +17,7 @@ import {
   GenerateReadingTeachingDocumentDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
+  GenerateTranslationTeachingDocumentDto,
   GenerateWritingSupportDto,
   GenerateWritingTopicDto,
   SaveNovelProgressDto,
@@ -30,6 +31,7 @@ import { MaterialConstraintService } from './material-constraint.service';
 import { buildDialoguePolishPrompt } from './prompts/dialogue-polish.prompt';
 import { buildDialogueTeachingPrompt } from './prompts/dialogue-teaching.prompt';
 import { buildReadingTeachingPrompt, type ReadingTeachingQuestionInput } from './prompts/reading-teaching.prompt';
+import { buildTranslationTeachingPrompt } from './prompts/translation-teaching.prompt';
 import { buildWritingTeachingPrompt } from './prompts/writing-teaching.prompt';
 
 function toJson(value: unknown): Prisma.InputJsonValue {
@@ -996,6 +998,57 @@ Rules for generate mode:
       if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
       const message = error instanceof Error ? error.message : 'unknown error';
       throw new ServiceUnavailableException(`AI 生成写作教学文档失败：${message}`);
+    }
+  }
+
+  /** 根据翻译原文与参考译文生成教学文档 */
+  async generateTranslationTeachingDocument(sceneId: string, dto: GenerateTranslationTeachingDocumentDto) {
+    await this.assertWritingScene(sceneId);
+    const direction = dto.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en';
+    const scope = dto.scope === 'article' ? 'article' : 'sentence';
+    const segments = (dto.segments ?? []).slice(0, 8).map((segment, index) => ({
+      id: String(segment.id || `s${index + 1}`).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || `s${index + 1}`,
+      source: String(segment.source ?? '').trim().slice(0, 3000),
+      reference: String(segment.reference ?? '').trim().slice(0, 3000),
+      hint: String(segment.hint ?? '').trim().slice(0, 500),
+      referenceExplanation: String(segment.referenceExplanation ?? '').trim().slice(0, 4000),
+    }));
+    if (!segments.length || segments.some((segment) => !segment.source)) {
+      throw new BadRequestException('请先填写每段原文后再生成教学文档');
+    }
+    const sourceLength = segments.reduce((sum, segment) => sum + segment.source.length, 0);
+    if (scope === 'sentence' ? sourceLength < 4 : sourceLength < 40) {
+      throw new BadRequestException('请先完善原文后再生成教学文档');
+    }
+
+    const config = await this.aiModels.getLlmConfig();
+    if (!config.apiKey) throw new ServiceUnavailableException('LLM API key is not configured');
+
+    try {
+      const markdown = await this.generateLongMarkdown(
+        config,
+        buildTranslationTeachingPrompt({
+          title: dto.title,
+          description: dto.description,
+          difficulty: dto.difficulty,
+          promptEn: dto.promptEn,
+          promptZh: dto.promptZh,
+          direction,
+          scope,
+          sourceTitle: dto.sourceTitle,
+          segments,
+        }),
+        scope === 'sentence' ? 14000 : 18000,
+      );
+      const requiredHeadings = ['## 一、翻译思路与信息结构', '## 二、核心表达与搭配', '## 三、关键句型与语言选择', '## 四、示范译文与语言拆解'];
+      if (markdown.length < 1800 || !requiredHeadings.every((heading) => markdown.includes(heading))) {
+        throw new BadRequestException('AI 教学文档结构不完整或篇幅过短，请重试');
+      }
+      return { markdown };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
+      const message = error instanceof Error ? error.message : 'unknown error';
+      throw new ServiceUnavailableException(`AI 生成翻译教学文档失败：${message}`);
     }
   }
 

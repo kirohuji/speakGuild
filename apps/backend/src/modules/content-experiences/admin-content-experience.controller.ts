@@ -22,6 +22,7 @@ import {
   GenerateReadingTeachingDocumentDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
+  GenerateTranslationTeachingDocumentDto,
   GenerateWritingSupportDto,
   CreatePackageGroupDto,
   GenerateWritingTopicDto,
@@ -182,6 +183,17 @@ export class AdminContentExperienceController {
   ) {
     await this.requireAdmin(req);
     return this.experiences.generateReadingTeachingDocument(sceneId, dto);
+  }
+
+  /** 根据翻译原文与参考译文生成教学文档 */
+  @Post('scenes/:sceneId/translation/teaching-document')
+  async generateTranslationTeachingDocument(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: GenerateTranslationTeachingDocumentDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateTranslationTeachingDocument(sceneId, dto);
   }
 
   @Post('scenes/:sceneId/writing-support/ai-draft')

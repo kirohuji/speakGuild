@@ -507,3 +507,47 @@ export class GenerateTranslationSupportDto {
   @MaxLength(300, { each: true })
   sentencePatterns?: string[];
 }
+
+/** 翻译题：根据原文与参考译文生成教学文档 */
+export class GenerateTranslationTeachingDocumentDto {
+  @IsIn(['zh_to_en', 'en_to_zh'])
+  direction: 'zh_to_en' | 'en_to_zh';
+
+  @IsOptional()
+  @IsIn(['sentence', 'article'])
+  scope?: 'sentence' | 'article';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  promptEn?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  promptZh?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  sourceTitle?: string;
+
+  @IsArray()
+  @ArrayMaxSize(8)
+  segments: Array<{ id?: string; source?: string; reference?: string; hint?: string; referenceExplanation?: string }>;
+}

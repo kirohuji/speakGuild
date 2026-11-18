@@ -47,7 +47,7 @@ type Props = {
     sentencePatterns?: string[]
   }
   onApplyDraft?: (draft: AiTopicDraft) => void
-  /** 对话题生成教学文档后写回话题 teachingMarkdown */
+  /** 体验题（对话／写作／阅读／翻译）生成教学文档后写回话题 teachingMarkdown */
   onApplyTeachingMarkdown?: (markdown: string) => void
   onChange: (next: { contentConfig?: Record<string, any>; mediaAssetId?: string | null; transcript?: TrainingTopic['transcript'] }) => void
 }
@@ -586,7 +586,13 @@ function WritingFields({
 
       {/* ====== 对话模式专属 UI ====== */}
       {isTranslation ? (
-        <TranslationFields value={value} sceneId={sceneId} context={context} onChange={onChange} />
+        <TranslationFields
+          value={value}
+          sceneId={sceneId}
+          context={context}
+          onApplyTeachingMarkdown={onApplyTeachingMarkdown}
+          onChange={onChange}
+        />
       ) : isDialogue ? (
         <>
           {/* 对话轮次 */}
@@ -841,14 +847,17 @@ function TranslationFields({
   value,
   sceneId,
   context,
+  onApplyTeachingMarkdown,
   onChange,
 }: {
   value: Record<string, any>
   sceneId: string
   context?: Props['draftContext']
+  onApplyTeachingMarkdown?: (markdown: string) => void
   onChange: (value: Record<string, any>) => void
 }) {
   const [generatingSupport, setGeneratingSupport] = useState(false)
+  const [generatingTeachingDoc, setGeneratingTeachingDoc] = useState(false)
   const scope = value.scope === 'article' ? 'article' : 'sentence'
   const direction = value.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en'
   const segments: TranslationSegment[] = Array.isArray(value.segments) && value.segments.length
@@ -867,7 +876,7 @@ function TranslationFields({
   const emptySegment = (): TranslationSegment => ({ id: `s${Date.now()}`, source: '', reference: '', hint: '', referenceExplanation: '' })
 
   const generateTranslationSupport = async () => {
-    if (generatingSupport) return
+    if (generatingSupport || generatingTeachingDoc) return
     if (segments.some((segment) => !segment.source.trim())) {
       toast.error('请先填写每段原文')
       return
@@ -902,6 +911,34 @@ function TranslationFields({
     }
   }
 
+  const generateTranslationTeachingDocument = async () => {
+    if (generatingTeachingDoc || generatingSupport) return
+    if (segments.some((segment) => !segment.source.trim())) {
+      toast.error('请先填写每段原文后再生成教学文档')
+      return
+    }
+    setGeneratingTeachingDoc(true)
+    try {
+      const result = await contentExperienceAdminApi.generateTranslationTeachingDocument(sceneId, {
+        direction,
+        scope,
+        title: context?.title,
+        description: context?.description,
+        difficulty: context?.difficulty,
+        promptEn: context?.promptEn,
+        promptZh: context?.promptZh,
+        sourceTitle: value.sourceTitle,
+        segments,
+      })
+      onApplyTeachingMarkdown?.(result.markdown)
+      toast.success('教学文档已生成，请到「教学文档」Tab 查看后保存')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 生成教学文档失败')
+    } finally {
+      setGeneratingTeachingDoc(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="space-y-3">
@@ -917,7 +954,18 @@ function TranslationFields({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <SectionHeading icon={FilePenLine} step="03" title={scope === 'article' ? '原文、参考译文与见解' : '原文、参考译文与见解'} description={scope === 'article' ? '每一项对应一段原文和下划线输入区。提示给学习者策略；见解给后台审阅与 AI 评估。' : '单句题只有一项。提示可给关键词或语法策略；见解用「结构 / 可借鉴表达 / 为什么这样写」。'} />
           <div className="flex shrink-0 flex-wrap gap-2">
-            <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={generatingSupport || !segments.some((segment) => segment.source.trim())} onClick={generateTranslationSupport}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={generatingTeachingDoc || generatingSupport || segments.some((segment) => !segment.source.trim())}
+              onClick={generateTranslationTeachingDocument}
+            >
+              {generatingTeachingDoc ? <Loader2 className="size-3.5 animate-spin" /> : <BookOpen className="size-3.5 text-primary" />}
+              {generatingTeachingDoc ? '正在生成' : '教学文档'}
+            </Button>
+            <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={generatingSupport || generatingTeachingDoc || !segments.some((segment) => segment.source.trim())} onClick={generateTranslationSupport}>
               {generatingSupport ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}
               {generatingSupport ? '正在补全' : 'AI 补全译文与见解'}
             </Button>

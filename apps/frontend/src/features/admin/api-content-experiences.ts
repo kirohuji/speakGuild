@@ -134,6 +134,18 @@ export const contentExperienceAdminApi = {
     questions?: Array<{ type?: string; prompt?: string; options?: string[]; answer?: string; evidence?: string }>
   }) =>
     post<{ markdown: string }>(`/admin/content-experiences/scenes/${sceneId}/reading/teaching-document`, data, { timeout: 360_000 }),
+  generateTranslationTeachingDocument: (sceneId: string, data: {
+    direction: 'zh_to_en' | 'en_to_zh'
+    scope?: 'sentence' | 'article'
+    title?: string
+    description?: string
+    difficulty?: string
+    promptEn?: string
+    promptZh?: string
+    sourceTitle?: string
+    segments: Array<{ id?: string; source?: string; reference?: string; hint?: string; referenceExplanation?: string }>
+  }) =>
+    post<{ markdown: string }>(`/admin/content-experiences/scenes/${sceneId}/translation/teaching-document`, data, { timeout: 360_000 }),
   generateWritingSupport: (sceneId: string, data: Record<string, unknown>) =>
     post<{ referenceAnswer: string; referenceExplanation: string; situation: string; requirements: string[] }>(`/admin/content-experiences/scenes/${sceneId}/writing-support/ai-draft`, data),
   generateTranslationSupport: (sceneId: string, data: Record<string, unknown>) =>
