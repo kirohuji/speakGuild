@@ -1,11 +1,11 @@
 import { MembershipEditor } from '@/features/admin/components/membership-editor'
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Search, Shield, ShieldAlert,
   Mail, Phone, Calendar, Loader2, ArrowLeft, CheckCircle2, XCircle,
   MessageSquare, Clapperboard, Star, Target, BarChart3, MonitorSmartphone, Link2,
-  GitBranch, TestTube2,
+  GitBranch, TestTube2, Wifi,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,13 +21,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/cn';
 import {
-  listUsers, updateUserRole, getUserDetail, getUserAiUsage, getUserLearningOverview, getUserLoginHistory,
+  listUsers, getOnlineUsers, updateUserRole, getUserDetail, getUserAiUsage, getUserLearningOverview, getUserLoginHistory,
   updateUserOtaTest,
   type AdminUser, type AdminUserDetail, type AdminUsersResult, type UserAiUsage, type AdminUserLearningOverview,
-  type AdminLoginHistoryResult,
+  type AdminLoginHistoryResult, type AdminOnlineUser,
 } from '@/features/admin/api';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { useAuth } from '@/providers/auth-provider';
+import {
+  connectNotificationSocket,
+  getNotificationSocket,
+  onPresence,
+  offPresence,
+  type PresencePayload,
+} from '@/features/notification/socket';
+
+const ONLINE_PREVIEW_LIMIT = 50;
+
+function onlineUserToAdminUser(user: AdminOnlineUser): AdminUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    username: null,
+    image: user.image,
+    role: (user.role as AdminUser['role']) || 'user',
+    emailVerified: false,
+    phoneNumber: null,
+    phoneNumberVerified: false,
+    createdAt: '',
+    updatedAt: '',
+    online: true,
+  };
+}
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -208,6 +234,11 @@ export function AdminUsersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlinePreview, setOnlinePreview] = useState<AdminOnlineUser[]>([]);
+  const [onlineLoading, setOnlineLoading] = useState(true);
+  const [inspectUser, setInspectUser] = useState<AdminUser | null>(null);
+  const snapshotInFlight = useRef<Promise<void> | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -221,9 +252,89 @@ export function AdminUsersPage() {
     }
   }, [page, pageSize, keyword]);
 
+  const fetchOnlineSnapshot = useCallback(async () => {
+    if (snapshotInFlight.current) return snapshotInFlight.current;
+    const run = (async () => {
+      setOnlineLoading(true);
+      try {
+        const result = await getOnlineUsers(ONLINE_PREVIEW_LIMIT);
+        setOnlineCount(result.total);
+        setOnlinePreview(result.list);
+        const previewIds = new Set(result.list.map((u) => u.id));
+        const complete = result.total <= result.list.length;
+        setData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            list: prev.list.map((user) => {
+              if (previewIds.has(user.id)) return { ...user, online: true };
+              if (complete) return { ...user, online: false };
+              return user;
+            }),
+          };
+        });
+      } catch {
+        // keep previous presence snapshot
+      } finally {
+        setOnlineLoading(false);
+        snapshotInFlight.current = null;
+      }
+    })();
+    snapshotInFlight.current = run;
+    return run;
+  }, []);
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    if (!session || session.user.role !== 'admin') return;
+
+    void fetchOnlineSnapshot();
+    connectNotificationSocket();
+
+    const handlePresence = (payload: PresencePayload) => {
+      setOnlineCount(payload.onlineCount);
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          list: prev.list.map((user) =>
+            user.id === payload.userId ? { ...user, online: payload.online } : user,
+          ),
+        };
+      });
+
+      setOnlinePreview((prev) => {
+        if (!payload.online) {
+          return prev.filter((u) => u.id !== payload.userId);
+        }
+        const idx = prev.findIndex((u) => u.id === payload.userId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = { ...next[idx], socketCount: payload.socketCount };
+          return next;
+        }
+        if (prev.length < ONLINE_PREVIEW_LIMIT) {
+          // Unknown profile: refresh snapshot instead of inventing placeholders.
+          void fetchOnlineSnapshot();
+        }
+        return prev;
+      });
+    };
+
+    onPresence(handlePresence);
+
+    const sock = getNotificationSocket();
+    const onConnect = () => { void fetchOnlineSnapshot(); };
+    sock?.on('connect', onConnect);
+
+    return () => {
+      offPresence(handlePresence);
+      sock?.off('connect', onConnect);
+    };
+  }, [session, fetchOnlineSnapshot]);
 
   // Admin guard redirect
   if (session && session.user.role !== 'admin') {
@@ -260,7 +371,7 @@ export function AdminUsersPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card className="shadow-none">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -277,51 +388,69 @@ export function AdminUsersPage() {
         <Card className="shadow-none">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
-                <Shield className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {data ? data.list.filter((u) => u.role === 'admin').length : '--'}
-                </p>
-                <p className="text-xs text-muted-foreground">管理员</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                <Wifi className="h-5 w-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                  {data ? data.list.filter((u) => u.emailVerified).length : '--'}
-                </p>
-                <p className="text-xs text-muted-foreground">邮箱已验证</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-none">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
-                <Calendar className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {data && data.list.length > 0
-                    ? new Date(data.list[0].createdAt).toLocaleDateString('zh-CN')
-                    : '--'}
-                </p>
-                <p className="text-xs text-muted-foreground">最新注册</p>
+                <p className="text-2xl font-bold">{onlineLoading && onlineCount === 0 ? '--' : onlineCount}</p>
+                <p className="text-xs text-muted-foreground">在线人数</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-none">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-base">当前在线</CardTitle>
+            <Badge variant="outline" className="text-xs">
+              {onlineCount > onlinePreview.length
+                ? `显示 ${onlinePreview.length} / 共 ${onlineCount} 人`
+                : `共 ${onlineCount} 人`}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {onlineLoading && onlinePreview.length === 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-9 w-28 rounded-full" />)}
+            </div>
+          ) : onlinePreview.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无在线用户</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {onlinePreview.map((user) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => setInspectUser(onlineUserToAdminUser(user))}
+                  className="inline-flex max-w-[220px] items-center gap-2 rounded-full border bg-background px-2.5 py-1.5 text-left transition-colors hover:bg-muted/50"
+                >
+                  <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-700">
+                    {user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || '?'}
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-medium">{user.name || '未命名'}</span>
+                    <span className="block truncate text-[10px] text-muted-foreground">{user.email}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {inspectUser && (
+        <UserRow
+          user={inspectUser}
+          hideRow
+          detailOpen
+          onDetailOpenChange={(open) => { if (!open) setInspectUser(null); }}
+          onRoleUpdated={fetchUsers}
+        />
+      )}
 
       {/* 搜索栏 */}
       <div className="flex items-center gap-3">
@@ -479,11 +608,22 @@ function OtaToggle({
 function UserRow({
   user,
   onRoleUpdated,
+  hideRow = false,
+  detailOpen: controlledOpen,
+  onDetailOpenChange,
 }: {
   user: AdminUser;
   onRoleUpdated: () => void;
+  hideRow?: boolean;
+  detailOpen?: boolean;
+  onDetailOpenChange?: (open: boolean) => void;
 }) {
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const detailOpen = controlledOpen ?? uncontrolledOpen;
+  const setDetailOpen = (open: boolean) => {
+    onDetailOpenChange?.(open);
+    if (controlledOpen === undefined) setUncontrolledOpen(open);
+  };
   const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
   const [newRole, setNewRole] = useState<'user' | 'creator' | 'admin'>(user.role);
   const [updating, setUpdating] = useState(false);
@@ -501,6 +641,7 @@ function UserRow({
   const [otaNotes, setOtaNotes] = useState('');
   const [loginHistory, setLoginHistory] = useState<AdminLoginHistoryResult | null>(null);
   const [loginHistoryLoading, setLoginHistoryLoading] = useState(false);
+  const loadedForOpenRef = useRef(false);
 
   const loadLoginHistory = async (page = 1, pageSize = loginHistory?.pageSize ?? 10) => {
     setLoginHistoryLoading(true);
@@ -511,8 +652,7 @@ function UserRow({
     }
   };
 
-  const openDetail = async () => {
-    setDetailOpen(true);
+  const loadDetail = useCallback(async () => {
     setDetailLoading(true);
     setLearningOverview(null);
     setLoginHistory(null);
@@ -539,7 +679,40 @@ function UserRow({
     } finally {
       setDetailLoading(false);
     }
+  }, [user.id]);
+
+  const openDetail = () => {
+    loadedForOpenRef.current = false;
+    setDetailOpen(true);
   };
+
+  useEffect(() => {
+    if (!detailOpen) {
+      loadedForOpenRef.current = false;
+      return;
+    }
+    if (loadedForOpenRef.current) return;
+    loadedForOpenRef.current = true;
+    void loadDetail();
+  }, [detailOpen, loadDetail, user.id]);
+
+  useEffect(() => {
+    if (!detailOpen) return;
+    const handlePresence = (payload: PresencePayload) => {
+      if (payload.userId !== user.id) return;
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              presence: { online: payload.online, socketCount: payload.socketCount },
+              online: payload.online,
+            }
+          : prev,
+      );
+    };
+    onPresence(handlePresence);
+    return () => offPresence(handlePresence);
+  }, [detailOpen, user.id]);
 
   const handleSaveOtaTest = async () => {
     setOtaSaving(true);
@@ -581,9 +754,10 @@ function UserRow({
 
   return (
     <>
+      {!hideRow && (
       <tr
         className="transition-colors hover:bg-muted/30 cursor-pointer"
-        onClick={openDetail}
+        onClick={() => { void openDetail(); }}
       >
         <td className="px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -678,6 +852,7 @@ function UserRow({
           </Button>
         </td>
       </tr>
+      )}
 
       {/* 用户详情弹窗 */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>

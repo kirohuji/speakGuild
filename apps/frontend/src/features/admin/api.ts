@@ -237,12 +237,31 @@ export interface AdminOrderStats {
   recentOrders: AdminOrder[];
 }
 
+export interface AdminOnlineUser {
+  id: string;
+  email: string;
+  name: string;
+  image: string | null;
+  role: 'user' | 'creator' | 'admin' | string | null;
+  socketCount: number;
+}
+
+export interface AdminOnlineUsersResult {
+  total: number;
+  limit: number;
+  list: AdminOnlineUser[];
+}
+
 export async function listUsers(params: {
   page?: number;
   pageSize?: number;
   keyword?: string;
 }) {
   return get<AdminUsersResult>('/admin/users', params);
+}
+
+export async function getOnlineUsers(limit = 50) {
+  return get<AdminOnlineUsersResult>('/admin/users/online', { limit });
 }
 
 export async function getUserDetail(id: string) {

@@ -91,6 +91,49 @@ export class AdminService {
     );
   }
 
+  async listOnlineUsers(limitRaw?: number) {
+    const limit = Math.min(Math.max(Number(limitRaw) || 50, 1), 100);
+    const ids = this.notificationGateway.getOnlineUserIds();
+    const total = ids.length;
+    const previewIds = ids.slice(0, limit);
+
+    if (previewIds.length === 0) {
+      return { total, limit, list: [] as Array<{
+        id: string;
+        email: string;
+        name: string;
+        image: string | null;
+        role: string | null;
+        socketCount: number;
+      }> };
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: previewIds } },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        role: true,
+      },
+    });
+
+    const byId = new Map(users.map((u) => [u.id, u]));
+    const list = previewIds
+      .map((id) => {
+        const user = byId.get(id);
+        if (!user) return null;
+        return {
+          ...user,
+          socketCount: this.notificationGateway.getUserPresence(id).socketCount,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item != null);
+
+    return { total, limit, list };
+  }
+
   async getUserDetail(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

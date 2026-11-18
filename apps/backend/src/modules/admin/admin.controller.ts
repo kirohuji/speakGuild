@@ -37,6 +37,13 @@ export class AdminController {
     return this.adminService.listUsers(pagination);
   }
 
+  /** Must stay before users/:id so "online" is not captured as an id. */
+  @Get('users/online')
+  async listOnlineUsers(@Req() req: Request, @Query('limit') limit?: string) {
+    await this.requireAdmin(req);
+    return this.adminService.listOnlineUsers(limit ? Number(limit) : undefined);
+  }
+
   @Get('users/:id')
   async getUserDetail(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
