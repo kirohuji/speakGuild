@@ -1915,8 +1915,8 @@ export const learningPackService = {
     packId: string,
     onProgress?: LearningPackInstallProgressHandler,
   ): Promise<void> {
-    const report = (step: string, progress: number) => {
-      onProgress?.(step, Math.min(99, Math.round(progress)), { label: step })
+    const report = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
+      onProgress?.(step, Math.min(99, Math.round(progress)), { label: step, ...detail })
     }
     const timer = createTimer(`learning-pack:uninstall-metadata:${packId}`)
     logger.info(`[uninstall:${packId}] start`)
@@ -1930,7 +1930,7 @@ export const learningPackService = {
     }
     await beginPackOperation(packId, 'uninstall')
 
-    report('resolving_refs', 18)
+    report('resolving_refs', 18, { current: 0, total: 0 })
     let myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
     // Web never installs vocabulary pronunciations/example audio; skip them on
     // uninstall too so old leftover word-audio refs do not dominate shared counting.
@@ -1946,7 +1946,10 @@ export const learningPackService = {
 
     const uniqueShas = [...new Set(myRefs.map((ref) => String(ref.sha256)).filter(Boolean))]
     const sharedSha = new Set<string>()
+    const shaTotal = uniqueShas.length
+    report('resolving_refs', 18, { current: 0, total: shaTotal })
     // Batch like install: findByIndexIn instead of N× findByIndex.
+    let shaDone = 0
     for (const shaBatch of chunkArray(uniqueShas, 80)) {
       const allRefs = await localDb.findByIndexIn<any>('asset_refs', 'sha256', shaBatch)
       const bySha = new Map<string, any[]>()
@@ -1961,6 +1964,11 @@ export const learningPackService = {
         const refs = bySha.get(sha) ?? []
         if (refs.some((ref) => ref.packId !== packId)) sharedSha.add(sha)
       }
+      shaDone += shaBatch.length
+      report('resolving_refs', 18 + Math.round((shaDone / Math.max(shaTotal, 1)) * 20), {
+        current: shaDone,
+        total: shaTotal,
+      })
     }
     timer.lap('compute shared asset refs', { sharedAssetCount: sharedSha.size })
 
@@ -1973,12 +1981,21 @@ export const learningPackService = {
 
     // Keep SQLite cleanup sequential. The web adapter is much happier when
     // large deletes do not compete on the same connection.
-    report('removing_indexes', 40)
+    report('removing_indexes', 40, { current: 0, total: 0 })
     try {
       await deferredPackAssetService.withPackLock(packId, () => localDb.deleteByIndex('deferred_pack_assets', 'pack_id', packId))
       await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
       timer.lap('delete asset refs', { deletedRefs: myRefs.length })
-      await learningContentRepository.removePackContentIndex(packId)
+      await learningContentRepository.removePackContentIndex(packId, (current, total, phase) => {
+        const base = phase === 'scanning' ? 42 : 50
+        const span = phase === 'scanning' ? 8 : 8
+        const ratio = total > 0 ? current / total : 1
+        report('removing_indexes', base + Math.round(ratio * span), {
+          current,
+          total,
+          currentItem: phase,
+        })
+      })
       timer.lap('remove content index')
       await localDb.deleteByIndex('ink_scripts', 'unit_id', packId)
       timer.lap('delete ink scripts')
@@ -2003,8 +2020,10 @@ export const learningPackService = {
       .then((mod) => mod.clearPreparedStoryVnEntry())
       .catch(() => undefined)
 
-    report('reclaiming_files', 78)
+    const fileTotal = filesToRemove.length
+    report('reclaiming_files', 78, { current: 0, total: fileTotal })
     const failedFiles: string[] = []
+    let fileDone = 0
     for (const shaBatch of chunkArray(filesToRemove, 8)) {
       const results = await Promise.allSettled(shaBatch.map((sha256) => assetCacheService.remove(sha256)))
       results.forEach((result, index) => {
@@ -2012,6 +2031,11 @@ export const learningPackService = {
           failedFiles.push(shaBatch[index]!)
           logger.warn('asset remove failed during uninstall', { packId, sha256: shaBatch[index], error: result.reason })
         }
+      })
+      fileDone += shaBatch.length
+      report('reclaiming_files', 78 + Math.round((fileDone / Math.max(fileTotal, 1)) * 18), {
+        current: fileDone,
+        total: fileTotal,
       })
     }
     await deferredPackAssetService.discardPack(packId).catch((error) => {

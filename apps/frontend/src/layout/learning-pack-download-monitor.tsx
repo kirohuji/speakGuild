@@ -52,7 +52,7 @@ function taskSecondaryCount(task: DownloadTask, t: ReturnType<typeof useTranslat
     })
   }
   if (typeof task.current === 'number' && typeof task.total === 'number' && task.total > 0) {
-    return `${task.current}/${task.total}`
+    return t('learning.packTaskProgressCount', { current: task.current, total: task.total })
   }
   return null
 }
@@ -307,10 +307,8 @@ export function LearningPackDownloadDrawer({
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-3 text-muted-foreground">
                           <span>{task.kind === 'uninstall' ? t('learning.packTaskCurrentStep') : t('learning.packTaskCurrentResource')}</span>
-                          {secondaryCount && task.step === 'downloading' ? (
+                          {secondaryCount ? (
                             <span className="tabular-nums">{secondaryCount}</span>
-                          ) : typeof task.total === 'number' && task.total > 0 && typeof task.current === 'number' ? (
-                            <span className="tabular-nums">{t('learning.packTaskRemaining', { count: Math.max(0, task.total - task.current) })}</span>
                           ) : null}
                         </div>
                         <code
@@ -318,7 +316,10 @@ export function LearningPackDownloadDrawer({
                           className="block truncate rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground"
                         >
                           {task.kind === 'uninstall'
-                            ? (task.stepLabel || task.step || t('learning.packTaskWaiting'))
+                            ? [
+                                task.stepLabel || task.step || t('learning.packTaskWaiting'),
+                                secondaryCount,
+                              ].filter(Boolean).join(' · ')
                             : task.step === 'downloading' && secondaryCount
                               ? secondaryCount
                               : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}

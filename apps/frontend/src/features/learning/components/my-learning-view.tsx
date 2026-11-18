@@ -259,7 +259,20 @@ function InProgressUnitCard({
     if (isTaskError) return downloadTask?.error || t('learning.downloadFailedRetry')
     if (isPaused) return downloadTask?.kind === 'uninstall' ? t('learning.packUninstallPaused') : t('learning.packDownloadPaused')
     if (isTaskActive) {
-      if (downloadTask?.kind === 'uninstall') return downloadTask.stepLabel ?? t('learning.packTaskUninstalling')
+      if (downloadTask?.kind === 'uninstall') {
+        const label = downloadTask.stepLabel ?? t('learning.packTaskUninstalling')
+        if (
+          typeof downloadTask.current === 'number'
+          && typeof downloadTask.total === 'number'
+          && downloadTask.total > 0
+        ) {
+          return `${label} ${t('learning.packTaskProgressCount', {
+            current: downloadTask.current,
+            total: downloadTask.total,
+          })}`
+        }
+        return label
+      }
       if (downloadTask?.status === 'queued') return t('learning.packDownloadQueued')
       return downloadTask?.stepLabel ?? t('learning.packTaskDownloading')
     }

@@ -576,17 +576,25 @@ export const learningContentRepository = {
     }
   },
 
-  async removePackContentIndex(packId: string): Promise<void> {
+  async removePackContentIndex(
+    packId: string,
+    onProgress?: (current: number, total: number, phase: 'scanning' | 'deleting') => void,
+  ): Promise<void> {
     const refs = await localDb.findByIndex<{ id: string; kind: 'vocab' | 'chunk' | 'pattern'; contentId: string; packId: string }>(
       'offline_content_refs',
       'pack_id',
       packId,
     )
-    if (refs.length === 0) return
+    if (refs.length === 0) {
+      onProgress?.(0, 0, 'scanning')
+      return
+    }
 
     const keyOf = (ref: { kind: string; contentId: string }) => `${ref.kind}\u0000${ref.contentId}`
     const remainingKeys = new Set<string>()
     const uniqueContentIds = [...new Set(refs.map((ref) => ref.contentId))]
+    const scanTotal = uniqueContentIds.length
+    onProgress?.(0, Math.max(scanTotal, 1), 'scanning')
     for (let index = 0; index < uniqueContentIds.length; index += 50) {
       const matches = await localDb.findByIndexIn<typeof refs[number]>(
         'offline_content_refs',
@@ -596,6 +604,7 @@ export const learningContentRepository = {
       for (const ref of matches) {
         if (ref.packId !== packId) remainingKeys.add(keyOf(ref))
       }
+      onProgress?.(Math.min(index + 50, scanTotal), scanTotal, 'scanning')
     }
     const orphanIds = {
       vocab: new Set<string>(),
@@ -610,15 +619,18 @@ export const learningContentRepository = {
     }
 
     await localDb.deleteByIndex('offline_content_refs', 'pack_id', packId)
-    const deleteAll = async (store: 'offline_vocabularies' | 'offline_chunks' | 'offline_patterns', ids: Set<string>) => {
-      const list = [...ids]
-      for (let index = 0; index < list.length; index += 40) {
-        await Promise.all(list.slice(index, index + 40).map((id) => localDb.delete(store, id)))
-      }
+    const orphanList = [
+      ...[...orphanIds.vocab].map((id) => ({ store: 'offline_vocabularies' as const, id })),
+      ...[...orphanIds.chunk].map((id) => ({ store: 'offline_chunks' as const, id })),
+      ...[...orphanIds.pattern].map((id) => ({ store: 'offline_patterns' as const, id })),
+    ]
+    const deleteTotal = orphanList.length
+    onProgress?.(0, Math.max(deleteTotal, 1), 'deleting')
+    for (let index = 0; index < orphanList.length; index += 40) {
+      const batch = orphanList.slice(index, index + 40)
+      await Promise.all(batch.map((item) => localDb.delete(item.store, item.id)))
+      onProgress?.(Math.min(index + batch.length, deleteTotal), Math.max(deleteTotal, 1), 'deleting')
     }
-    await deleteAll('offline_vocabularies', orphanIds.vocab)
-    await deleteAll('offline_chunks', orphanIds.chunk)
-    await deleteAll('offline_patterns', orphanIds.pattern)
   },
 
   /** 从已下载的学习包中提取词汇数据 */

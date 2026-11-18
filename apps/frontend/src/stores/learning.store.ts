@@ -65,12 +65,16 @@ const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
 const activePackTaskIds = new Set<string>()
 const activePackTaskControllers = new Map<string, AbortController>()
 
-function packTaskStepLabel(step: string, kind: DownloadTask['kind'] = 'download') {
+function packTaskStepLabel(step: string, kind: DownloadTask['kind'] = 'download', phase?: string) {
   if (kind === 'uninstall') {
     if (step === 'preparing') return i18n.t('learning.packTaskStepPreparingUninstall')
     if (step === 'quitting' || step === 'clearing_progress') return i18n.t('learning.packTaskStepClearingProgress')
     if (step === 'resolving_refs') return i18n.t('learning.packTaskStepResolvingRefs')
-    if (step === 'removing_indexes' || step === 'removing_assets') return i18n.t('learning.packTaskStepRemovingIndexes')
+    if (step === 'removing_indexes' || step === 'removing_assets') {
+      if (phase === 'scanning') return i18n.t('learning.packTaskStepScanningContentIndex')
+      if (phase === 'deleting') return i18n.t('learning.packTaskStepDeletingOrphans')
+      return i18n.t('learning.packTaskStepRemovingIndexes')
+    }
     if (step === 'removing_pack_record') return i18n.t('learning.packTaskStepRemovingPackRecord')
     if (step === 'reclaiming_files') return i18n.t('learning.packTaskStepReclaimingFiles')
     if (step === 'refreshing') return i18n.t('learning.packTaskStepRefreshingPlan')
@@ -454,7 +458,11 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
         ? s.packInstallingIds
         : [...s.packInstallingIds, unitId],
     }))
-    const updateUninstallProgress = (progress: number, step: string) => {
+    const updateUninstallProgress = (
+      progress: number,
+      step: string,
+      detail?: { current?: number; total?: number; currentItem?: string },
+    ) => {
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
@@ -462,7 +470,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
                 ...task,
                 progress: Math.max(task.progress ?? 0, progress),
                 step,
-                stepLabel: packTaskStepLabel(step, 'uninstall'),
+                stepLabel: packTaskStepLabel(step, 'uninstall', detail?.currentItem),
+                current: detail?.current,
+                total: detail?.total,
+                currentItem: detail?.currentItem,
                 status: 'uninstalling' as const,
               }
             : task,
@@ -476,8 +487,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       await learningRepository.clearPackPracticeProgress(unitId)
       useDailyPracticeStore.getState().invalidatePlans()
       await learningRepository.quitUnit(unitId)
-      await learningPackService.uninstall(unitId, (step, progress) => {
-        updateUninstallProgress(Math.max(20, progress), step)
+      await learningPackService.uninstall(unitId, (step, progress, detail) => {
+        updateUninstallProgress(Math.max(20, progress), step, detail)
       })
       updateUninstallProgress(92, 'refreshing')
       await getState().syncPackStateAfterLocalChange(unitId)
@@ -625,7 +636,11 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
         ? s.packInstallingIds
         : [...s.packInstallingIds, unitId],
     }))
-    const updateUninstallProgress = (progress: number, step: string) => {
+    const updateUninstallProgress = (
+      progress: number,
+      step: string,
+      detail?: { current?: number; total?: number; currentItem?: string },
+    ) => {
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
@@ -633,7 +648,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
                 ...task,
                 progress: Math.max(task.progress ?? 0, progress),
                 step,
-                stepLabel: packTaskStepLabel(step, 'uninstall'),
+                stepLabel: packTaskStepLabel(step, 'uninstall', detail?.currentItem),
+                current: detail?.current,
+                total: detail?.total,
+                currentItem: detail?.currentItem,
                 status: 'uninstalling' as const,
               }
             : task,
@@ -643,8 +661,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     try {
       // 单纯卸载保留进度，以便将来重新下载；但不能继续把已卸载包作为 Today
       // 的内存计划展示。重新加载时会按仍安装的学习包重新解析。
-      await learningPackService.uninstall(unitId, (step, progress) => {
-        updateUninstallProgress(progress, step)
+      await learningPackService.uninstall(unitId, (step, progress, detail) => {
+        updateUninstallProgress(progress, step, detail)
       })
       useDailyPracticeStore.getState().invalidatePlans()
       updateUninstallProgress(92, 'refreshing')
