@@ -2,6 +2,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const nativeListeners = new Map<string, Set<(payload: unknown) => void>>()
 
+const { LOGO_FILE_URI, fsMock } = vi.hoisted(() => {
+  const LOGO_FILE_URI = 'file:///var/mobile/Library/Caches/immersive/app-logo.png'
+  return {
+    LOGO_FILE_URI,
+    fsMock: {
+      stat: vi.fn(async () => ({ type: 'file', size: 12, ctime: 0, mtime: 0, uri: LOGO_FILE_URI })),
+      getUri: vi.fn(async () => ({ uri: LOGO_FILE_URI })),
+      writeFile: vi.fn(async () => ({ uri: LOGO_FILE_URI })),
+    },
+  }
+})
+
+vi.mock('@capacitor/filesystem', () => ({
+  Directory: { Cache: 'CACHE' },
+  Filesystem: fsMock,
+}))
+
 vi.mock('@capgo/capacitor-native-audio', () => {
   const NativeAudio = {
     configure: vi.fn(async () => undefined),
@@ -12,6 +29,8 @@ vi.mock('@capgo/capacitor-native-audio', () => {
     pause: vi.fn(async () => undefined),
     resume: vi.fn(async () => undefined),
     setRate: vi.fn(async () => undefined),
+    getCurrentTime: vi.fn(async () => ({ currentTime: 1.25 })),
+    getDuration: vi.fn(async () => ({ duration: 4 })),
     addListener: vi.fn(async (event: string, handler: (payload: unknown) => void) => {
       if (!nativeListeners.has(event)) nativeListeners.set(event, new Set())
       nativeListeners.get(event)!.add(handler)
@@ -62,13 +81,16 @@ vi.mock('@capacitor/core', async () => {
 })
 
 const { NativeAudio } = await import('@capgo/capacitor-native-audio')
+const { MediaSession } = await import('@capgo/capacitor-media-session')
 const { resolvePlaybackAudio } = await import('@/lib/offline/playback-audio')
+const { resetAppLogoArtworkCache } = await import('../immersive-audio.transport')
 const { immersivePlaybackService } = await import('../immersive-playback.service')
 
 describe('immersivePlaybackService dual-buffer transport', () => {
   beforeEach(async () => {
     nativeListeners.clear()
     vi.clearAllMocks()
+    resetAppLogoArtworkCache()
     await immersivePlaybackService.stop({ clearSession: true })
     immersivePlaybackService.clearResolveCache()
   })
@@ -134,6 +156,99 @@ describe('immersivePlaybackService dual-buffer transport', () => {
     }))
     const playPromise = immersivePlaybackService.playSlot('a', 1)
     await vi.waitFor(() => expect(NativeAudio.play).toHaveBeenCalled())
+    await immersivePlaybackService.stop({ clearSession: true })
+    await expect(playPromise).resolves.toBeUndefined()
+  })
+
+  it('pause seeds position before flipping playbackState', async () => {
+    await immersivePlaybackService.prepare('a', 'file://a.mp3', { title: 'a' })
+    const playPromise = immersivePlaybackService.playSlot('a', 1)
+    await vi.waitFor(() => expect(NativeAudio.play).toHaveBeenCalled())
+    vi.mocked(MediaSession.setPositionState).mockClear()
+    vi.mocked(MediaSession.setPlaybackState).mockClear()
+
+    await immersivePlaybackService.pause()
+
+    const positionOrder = vi.mocked(MediaSession.setPositionState).mock.invocationCallOrder[0]
+    const stateOrder = vi.mocked(MediaSession.setPlaybackState).mock.invocationCallOrder[0]
+    expect(positionOrder).toBeLessThan(stateOrder)
+    expect(MediaSession.setPlaybackState).toHaveBeenCalledWith({ playbackState: 'paused' })
+    expect(MediaSession.setPositionState).toHaveBeenCalledWith(expect.objectContaining({
+      duration: 4,
+      position: 1.25,
+      playbackRate: 0,
+    }))
+    await immersivePlaybackService.stop({ clearSession: true })
+    await expect(playPromise).resolves.toBeUndefined()
+  })
+
+  it('resume seeds position before flipping playbackState to playing', async () => {
+    await immersivePlaybackService.prepare('a', 'file://a.mp3', { title: 'a' })
+    const playPromise = immersivePlaybackService.playSlot('a', 1)
+    await vi.waitFor(() => expect(NativeAudio.play).toHaveBeenCalled())
+    await immersivePlaybackService.pause()
+    vi.mocked(MediaSession.setPositionState).mockClear()
+    vi.mocked(MediaSession.setPlaybackState).mockClear()
+
+    const ok = await immersivePlaybackService.resume()
+    expect(ok).toBe(true)
+    const positionOrder = vi.mocked(MediaSession.setPositionState).mock.invocationCallOrder[0]
+    const stateOrder = vi.mocked(MediaSession.setPlaybackState).mock.invocationCallOrder[0]
+    expect(positionOrder).toBeLessThan(stateOrder)
+    expect(MediaSession.setPositionState).toHaveBeenCalledWith(expect.objectContaining({
+      duration: 4,
+      position: 1.25,
+      playbackRate: 1,
+    }))
+    expect(MediaSession.setPlaybackState).toHaveBeenCalledWith({ playbackState: 'playing' })
+
+    await immersivePlaybackService.stop({ clearSession: true })
+    await expect(playPromise).resolves.toBeUndefined()
+  })
+
+  it('setMediaMetadata uses file:// logo artwork for iOS loaders', async () => {
+    const segment = {
+      id: 'seg-1',
+      itemId: 'item-1',
+      role: 'main' as const,
+      text: 'hello',
+      lang: 'en' as const,
+      audioUrl: 'https://cdn.test/a.mp3',
+      title: 'hello',
+      subtitle: 'word',
+    }
+    await immersivePlaybackService.setMediaMetadata(segment, 1, 'playing')
+    expect(MediaSession.setMetadata).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'hello',
+      artist: 'word',
+      artwork: [expect.objectContaining({
+        src: LOGO_FILE_URI,
+        sizes: '512x512',
+        type: 'image/png',
+      })],
+    }))
+  })
+
+  it('preload notificationMetadata uses file:// artworkUrl', async () => {
+    await immersivePlaybackService.prepare('a', 'file://a.mp3', { title: 'hello', artist: 'ManYuDing' })
+    expect(NativeAudio.preload).toHaveBeenCalledWith(expect.objectContaining({
+      notificationMetadata: expect.objectContaining({
+        title: 'hello',
+        artworkUrl: LOGO_FILE_URI,
+      }),
+    }))
+  })
+
+  it('holdPositionForGap keeps last duration at end position', async () => {
+    await immersivePlaybackService.prepare('a', 'file://a.mp3', { title: 'a' })
+    const playPromise = immersivePlaybackService.playSlot('a', 1)
+    await vi.waitFor(() => expect(NativeAudio.play).toHaveBeenCalled())
+    await immersivePlaybackService.holdPositionForGap()
+    expect(MediaSession.setPlaybackState).toHaveBeenCalledWith({ playbackState: 'paused' })
+    expect(MediaSession.setPositionState).toHaveBeenCalledWith(expect.objectContaining({
+      duration: 4,
+      position: 4,
+    }))
     await immersivePlaybackService.stop({ clearSession: true })
     await expect(playPromise).resolves.toBeUndefined()
   })

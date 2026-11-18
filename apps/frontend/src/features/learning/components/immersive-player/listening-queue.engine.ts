@@ -111,6 +111,8 @@ export class ListeningQueueEngine {
   private sleepTimer: ReturnType<typeof setTimeout> | null = null
   private loadMoreInFlightOffset: number | null = null
   private itemSegments: PlaybackSegment[] = []
+  private snapshotItemId: string | null = null
+  private segmentIndex = 0
   private currentSlot: TransportSlot = 'a'
 
   constructor(options: ListeningQueueEngineOptions) {
@@ -149,6 +151,11 @@ export class ListeningQueueEngine {
     return { ...this.state }
   }
 
+  /** Test helper: locked segment snapshot for current item. */
+  getItemSegmentSnapshot() {
+    return this.itemSegments.map((segment) => segment.id)
+  }
+
   bindPlaylist(binding: PlaylistBinding) {
     const prevIndex = this.binding ? this.absoluteIndexOf(this.binding) : null
     this.binding = binding
@@ -161,17 +168,16 @@ export class ListeningQueueEngine {
     if (this.pendingContinue && prevIndex !== absoluteIndex) {
       this.clearPendingContinueTimer()
       this.pendingContinue = false
-      fireAndForget(this.playFromCurrentItem())
+      fireAndForget(this.playFromCurrentItem({ rebuildSnapshot: true }))
       return
     }
 
     if (this.pendingContinue && binding.items[binding.index]) {
-      // Same index but item hydrated — start if we were waiting for content.
       const item = binding.items[binding.index]
       if (item && this.state.status !== 'playing' && this.state.status !== 'loading') {
         this.clearPendingContinueTimer()
         this.pendingContinue = false
-        fireAndForget(this.playFromCurrentItem())
+        fireAndForget(this.playFromCurrentItem({ rebuildSnapshot: true }))
       }
     }
 
@@ -182,7 +188,7 @@ export class ListeningQueueEngine {
     this.bumpGeneration()
     this.pendingContinue = false
     this.clearPendingContinueTimer()
-    await this.playFromCurrentItem()
+    await this.playFromCurrentItem({ rebuildSnapshot: true })
   }
 
   async pause() {
@@ -190,6 +196,7 @@ export class ListeningQueueEngine {
       this.gapPaused = true
       this.scheduler.cancel()
       this.patchState({ status: 'paused' })
+      await this.transport.holdPositionForGap()
       return
     }
     this.patchState({ status: 'paused' })
@@ -203,16 +210,18 @@ export class ListeningQueueEngine {
       this.gapResume?.()
       return true
     }
+
     const resumed = await this.transport.resume()
     if (resumed) {
       this.patchState({ status: 'playing' })
       return true
     }
-    if (this.state.status === 'paused' || this.state.status === 'playing' || this.state.status === 'loading') {
-      await this.playFromCurrentItem()
-      return true
+
+    if (this.state.status !== 'paused' && this.state.status !== 'playing' && this.state.status !== 'loading') {
+      return false
     }
-    return false
+
+    return this.softRestartCurrentSegment()
   }
 
   async next(continuePlayback = true) {
@@ -241,6 +250,9 @@ export class ListeningQueueEngine {
     this.bumpGeneration()
     this.scheduler.cancel()
     this.gapPaused = false
+    this.segmentIndex = 0
+    this.snapshotItemId = null
+    this.itemSegments = []
     await this.transport.stop({ clearSession: !continuePlayback })
     if (!continuePlayback) {
       this.pendingContinue = false
@@ -260,6 +272,9 @@ export class ListeningQueueEngine {
     this.scheduler.cancel()
     this.gapPaused = false
     this.clearSleepTimer()
+    this.segmentIndex = 0
+    this.snapshotItemId = null
+    this.itemSegments = []
     await this.transport.stop({ clearSession: options?.clearSession !== false })
     this.patchState({
       status: options?.status ?? 'idle',
@@ -358,7 +373,59 @@ export class ListeningQueueEngine {
     }
   }
 
-  private async playFromCurrentItem() {
+  private async softRestartCurrentSegment(): Promise<boolean> {
+    const segment = this.itemSegments[this.segmentIndex] ?? this.state.currentSegment
+    if (!segment) return false
+
+    this.bumpGeneration()
+    const generation = this.generation
+    this.scheduler.cancel()
+    this.gapPaused = false
+    await this.transport.stop({ clearSession: false })
+
+    this.patchState({ status: 'loading', gapActive: false, currentSegment: segment, errorMessage: null })
+    this.refreshSleepTimer()
+
+    try {
+      const fromIndex = this.segmentIndex
+      for (let segmentIndex = fromIndex; segmentIndex < this.itemSegments.length; segmentIndex += 1) {
+        if (!this.isCurrent(generation)) return false
+        const next = this.itemSegments[segmentIndex]
+        const played = await this.playOneSegment(generation, next, segmentIndex)
+        if (!played || !this.isCurrent(generation)) return false
+
+        const settings = this.getSettings()
+        const moreInPass = segmentIndex < this.itemSegments.length - 1
+        const willRepeat = settings.repeatPerItem === 'infinite'
+        const binding = this.binding
+        const absolute = binding ? this.absoluteIndexOf(binding) : 0
+        const total = binding ? Math.max(binding.total, binding.items.length) : 0
+        const willAdvance = settings.autoNext && binding != null && (absolute < total - 1 || settings.loopQueue)
+        if (moreInPass || willRepeat || willAdvance) {
+          const continued = await this.waitGap(generation)
+          if (!continued || !this.isCurrent(generation)) return false
+        }
+      }
+
+      if (!this.isCurrent(generation)) return false
+
+      if (this.getSettings().repeatPerItem === 'infinite') {
+        await this.runItemLoop(generation)
+        return this.isCurrent(generation)
+      }
+
+      await this.advanceAfterItem(generation)
+      return true
+    } catch (error) {
+      if (!this.isCurrent(generation)) return false
+      console.warn('[listening-queue] soft restart failed', error)
+      this.patchState({ status: 'error', errorMessage: error instanceof Error ? error.message : 'play failed' })
+      this.onPlayFailed?.(error)
+      return false
+    }
+  }
+
+  private async playFromCurrentItem(options?: { rebuildSnapshot?: boolean }) {
     const generation = this.generation
     const binding = this.binding
     if (!binding) return
@@ -369,8 +436,14 @@ export class ListeningQueueEngine {
       return
     }
 
-    const settings = this.getSettings()
-    this.itemSegments = buildPlaybackSegments(item, settings)
+    const rebuild = options?.rebuildSnapshot !== false || this.snapshotItemId !== item.id || this.itemSegments.length === 0
+    if (rebuild) {
+      const settings = this.getSettings()
+      this.itemSegments = buildPlaybackSegments(item, settings)
+      this.snapshotItemId = item.id
+      this.segmentIndex = 0
+    }
+
     if (this.itemSegments.length === 0) {
       this.patchState({ status: 'idle', currentItemId: item.id, currentSegment: null })
       this.onEmptySegments?.()
@@ -426,6 +499,7 @@ export class ListeningQueueEngine {
   }
 
   private async playOneSegment(generation: number, segment: PlaybackSegment, segmentIndex: number): Promise<boolean> {
+    this.segmentIndex = segmentIndex
     const allowTts = !this.isBackground()
     this.patchState({ status: 'loading', currentSegment: segment, gapActive: false })
 
@@ -481,6 +555,7 @@ export class ListeningQueueEngine {
     const ms = (IMMERSIVE_PAUSE_GAP_SECONDS.includes(seconds) ? seconds : 2) * 1000
     const effectiveMs = this.isBackground() ? 0 : ms
 
+    await this.transport.holdPositionForGap()
     await this.transport.setIosGapTrackControls(true, {
       previoustrack: () => { fireAndForget(this.prev(true)) },
       nexttrack: () => { fireAndForget(this.next(true)) },
@@ -493,6 +568,7 @@ export class ListeningQueueEngine {
     while (this.isCurrent(generation)) {
       if (this.gapPaused) {
         this.patchState({ status: 'paused', gapActive: true })
+        await this.transport.holdPositionForGap()
         await new Promise<void>((resolve) => {
           this.gapResume = () => {
             this.gapResume = null
@@ -547,6 +623,9 @@ export class ListeningQueueEngine {
 
     const nextAbsolute = hasNext ? absolute + 1 : 0
     this.armPendingContinue()
+    this.snapshotItemId = null
+    this.itemSegments = []
+    this.segmentIndex = 0
     this.patchState({ status: 'loading', currentSegment: null })
     binding.onIndexChange(nextAbsolute)
   }

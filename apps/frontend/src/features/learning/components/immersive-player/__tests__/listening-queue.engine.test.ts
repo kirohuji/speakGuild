@@ -45,14 +45,17 @@ function createFakeScheduler() {
   }
 }
 
-function createFakeTransport() {
+function createFakeTransport(options?: { resumeResult?: boolean }) {
   const prepared = new Map<TransportSlot, string>()
   const playResolvers = new Map<TransportSlot, () => void>()
+  let resumeResult = options?.resumeResult ?? true
   const calls = {
     resolve: [] as string[],
     prepare: [] as Array<{ slot: TransportSlot; url: string }>,
     playSlot: [] as TransportSlot[],
     stop: 0,
+    holdPositionForGap: 0,
+    resume: 0,
     loadMore: 0,
   }
   let allowTtsDefault = true
@@ -79,7 +82,10 @@ function createFakeTransport() {
       prepared.delete(slot)
     },
     async pause() {},
-    async resume() { return true },
+    async resume() {
+      calls.resume += 1
+      return resumeResult
+    },
     async stop() {
       calls.stop += 1
       for (const [slot, resolve] of playResolvers) {
@@ -90,6 +96,9 @@ function createFakeTransport() {
     async setRate() {},
     hasResumableAsset: () => playResolvers.size > 0,
     async setMediaMetadata() {},
+    async holdPositionForGap() {
+      calls.holdPositionForGap += 1
+    },
     async registerMediaActions() {},
     async setIosGapTrackControls() {},
     setNativeStateHandler() {},
@@ -100,6 +109,7 @@ function createFakeTransport() {
   return {
     transport,
     calls,
+    setResumeResult(value: boolean) { resumeResult = value },
     setAllowTts(value: boolean) { allowTtsDefault = value },
     complete(slot?: TransportSlot) {
       if (slot) {
@@ -334,6 +344,137 @@ describe('ListeningQueueEngine', () => {
       onIndexChange: () => undefined,
     })
     expect(fakeTransport.calls.playSlot.length).toBe(plays)
+    fakeTransport.complete()
+  })
+
+  it('pause on example segment then resume keeps locked snapshot', async () => {
+    settings.autoNext = false
+    settings.playExample = true
+    const word = item('w1', 'hello')
+    word.examples = [
+      { en: 'ex-a', audioUrl: 'file://ex-a.mp3' },
+      { en: 'ex-b', audioUrl: 'file://ex-b.mp3' },
+    ]
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    bind([word])
+
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
+    fakeScheduler.flush()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    expect(engine.getState().currentSegment?.role).toBe('example')
+    expect(engine.getState().currentSegment?.text).toBe('ex-a')
+    const locked = engine.getItemSegmentSnapshot()
+    expect(locked).toEqual(['w1:main:0', 'w1:example:0'])
+
+    randomSpy.mockReturnValue(0.9)
+    await engine.pause()
+    const resolveBefore = fakeTransport.calls.resolve.length
+    const ok = await engine.resume()
+    expect(ok).toBe(true)
+    expect(fakeTransport.calls.resume).toBe(1)
+    expect(engine.getItemSegmentSnapshot()).toEqual(locked)
+    expect(engine.getState().currentSegment?.text).toBe('ex-a')
+    // Successful native resume must not rebuild / re-resolve segments.
+    expect(fakeTransport.calls.resolve.length).toBe(resolveBefore)
+    fakeTransport.complete()
+    randomSpy.mockRestore()
+  })
+
+  it('resume failure soft-restarts current snapshot and ignores stale complete', async () => {
+    settings.autoNext = false
+    settings.playExample = true
+    const word = item('w1', 'hello')
+    word.examples = [
+      { en: 'ex-a', audioUrl: 'file://ex-a.mp3' },
+      { en: 'ex-b', audioUrl: 'file://ex-b.mp3' },
+    ]
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    bind([word])
+
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
+    fakeScheduler.flush()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
+    const locked = engine.getItemSegmentSnapshot()
+    expect(locked[1]).toBe('w1:example:0')
+    expect(engine.getState().currentSegment?.text).toBe('ex-a')
+
+    await engine.pause()
+    fakeTransport.setResumeResult(false)
+    randomSpy.mockReturnValue(0.9)
+    const stopBefore = fakeTransport.calls.stop
+    const playBefore = fakeTransport.calls.playSlot.length
+
+    const resumePromise = engine.resume()
+    await vi.waitFor(() => expect(fakeTransport.calls.stop).toBeGreaterThan(stopBefore))
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBeGreaterThan(playBefore))
+    expect(engine.getItemSegmentSnapshot()).toEqual(locked)
+    expect(engine.getState().currentSegment?.id).toBe('w1:example:0')
+    expect(engine.getState().currentSegment?.text).toBe('ex-a')
+    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('ex-b'))).toBe(false)
+
+    const playsAtSoftRestart = fakeTransport.calls.playSlot.length
+    // Completing cancelled pre-restart slots must not spawn extra plays / re-roll examples.
+    fakeTransport.complete('a')
+    fakeTransport.complete('b')
+    await resumePromise
+    expect(engine.getItemSegmentSnapshot()).toEqual(locked)
+    expect(fakeTransport.calls.playSlot.length).toBe(playsAtSoftRestart)
+    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('ex-b'))).toBe(false)
+    randomSpy.mockRestore()
+  })
+
+  it('keeps locked segment ids for the same item after soft restart', async () => {
+    settings.autoNext = false
+    settings.playExample = true
+    const word = item('w1', 'hello')
+    word.examples = [
+      { en: 'alpha', audioUrl: 'file://alpha.mp3' },
+      { en: 'beta', audioUrl: 'file://beta.mp3' },
+    ]
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    bind([word])
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    const firstSnapshot = engine.getItemSegmentSnapshot()
+    expect(firstSnapshot).toEqual(['w1:main:0', 'w1:example:0'])
+    expect(engine.getState().currentSegment?.text).toBe('hello')
+
+    await engine.pause()
+    fakeTransport.setResumeResult(false)
+    randomSpy.mockReturnValue(0.99)
+    void engine.resume()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBeGreaterThan(1))
+    expect(engine.getItemSegmentSnapshot()).toEqual(firstSnapshot)
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
+    fakeScheduler.flush()
+    await vi.waitFor(() => expect(engine.getState().currentSegment?.role).toBe('example'))
+    // Soft restart must not re-roll Math.random example selection.
+    expect(engine.getState().currentSegment?.text).toBe('alpha')
+    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('beta'))).toBe(false)
+    expect(fakeTransport.calls.prepare.some((entry) => entry.url.includes('alpha'))).toBe(true)
+    fakeTransport.complete()
+    randomSpy.mockRestore()
+  })
+
+  it('calls holdPositionForGap during inter-segment wait', async () => {
+    settings.autoNext = false
+    settings.playExample = true
+    const word = item('w1', 'hello')
+    word.examples = [{ en: 'ex', audioUrl: 'file://ex.mp3' }]
+    bind([word])
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(1))
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeTransport.calls.holdPositionForGap).toBeGreaterThan(0))
+    fakeScheduler.flush()
+    await vi.waitFor(() => expect(fakeTransport.calls.playSlot.length).toBe(2))
     fakeTransport.complete()
   })
 })

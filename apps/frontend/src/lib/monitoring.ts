@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/capacitor'
 import {
   browserTracingIntegration,
-  consoleLoggingIntegration,
   init as sentryReactInit,
 } from '@sentry/react'
 
@@ -12,9 +11,6 @@ type ClientErrorPayload = {
   route: string
   userAgent: string
 }
-
-/** 暂时关闭 Sentry；恢复监控时改为 false */
-const SENTRY_TEMPORARILY_DISABLED = false
 
 let installed = false
 let sentryEnabled = false
@@ -73,21 +69,23 @@ export function installMonitoring() {
   if (installed || typeof window === 'undefined') return
   installed = true
 
-  const dsn = import.meta.env.VITE_SENTRY_DSN
-  if (dsn && !SENTRY_TEMPORARILY_DISABLED) {
+  // 仅当构建/环境注入了 DSN 时启用；本地不填即不上报。
+  const dsn = String(import.meta.env.VITE_SENTRY_DSN || '').trim()
+  if (dsn) {
+    const isProd = import.meta.env.PROD
     Sentry.init(
       {
         dsn,
         environment: import.meta.env.MODE,
         enableAutoSessionTracking: true,
-        enableLogs: true,
+        enableLogs: false,
         integrations: (defaultIntegrations) => [
           ...defaultIntegrations,
           browserTracingIntegration(),
-          consoleLoggingIntegration({ levels: ['warn', 'error'] }),
         ],
         sendDefaultPii: false,
-        tracesSampleRate: 1,
+        // 生产抽样；开发有 DSN 时也不打满量 tracing。
+        tracesSampleRate: isProd ? 0.1 : 0,
       },
       sentryReactInit,
     )

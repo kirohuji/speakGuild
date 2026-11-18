@@ -1,6 +1,7 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 import i18n from '@/lib/i18n'
 import { ErrorState } from '@/components/common/error-state'
+import { reportClientError } from '@/lib/monitoring'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -24,6 +25,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary] 捕获渲染错误:', error, info.componentStack)
+    reportClientError(error, 'react.error-boundary')
   }
 
   handleRetry = () => {
