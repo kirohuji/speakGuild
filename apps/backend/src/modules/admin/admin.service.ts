@@ -221,7 +221,19 @@ export class AdminService {
     });
     if (!user) throw new NotFoundException('用户不存在');
 
-    const [sceneProgresses, warmupProgresses, warmupAttempts, practiceSessions, storyRecords] = await Promise.all([
+    const [
+      sceneProgresses,
+      warmupProgresses,
+      attemptCount,
+      practiceSessionCount,
+      analyzedCount,
+      storyRecordCount,
+      storyPassedCount,
+      storyXpAgg,
+      warmupAttempts,
+      practiceSessions,
+      storyRecords,
+    ] = await Promise.all([
       this.prisma.userSceneProgress.findMany({
         where: { userId },
         include: {
@@ -237,30 +249,65 @@ export class AdminService {
         },
         orderBy: { updatedAt: 'desc' },
       }),
-      (this.prisma as any).userWarmupItemProgress.findMany({
+      this.prisma.userWarmupItemProgress.findMany({
         where: { userId },
         orderBy: { updatedAt: 'desc' },
       }),
-      (this.prisma as any).userDailyPracticeAttempt.findMany({
+      this.prisma.userDailyPracticeAttempt.count({ where: { userId } }),
+      this.prisma.practiceSession.count({ where: { userId } }),
+      this.prisma.practiceSession.count({ where: { userId, status: 'analyzed' } }),
+      this.prisma.storyRecord.count({ where: { userId } }),
+      this.prisma.storyRecord.count({ where: { userId, passed: true } }),
+      this.prisma.storyRecord.aggregate({
+        where: { userId },
+        _sum: { xpEarned: true },
+      }),
+      this.prisma.userDailyPracticeAttempt.findMany({
         where: { userId },
         orderBy: { practicedAt: 'desc' },
-        take: 100,
+        take: 10,
       }),
       this.prisma.practiceSession.findMany({
         where: { userId },
-        select: { id: true, sceneId: true, topicId: true, status: true, analysisResult: true, startedAt: true, analyzedAt: true },
+        select: {
+          id: true,
+          sceneId: true,
+          topicId: true,
+          status: true,
+          analysisResult: true,
+          startedAt: true,
+          analyzedAt: true,
+        },
         orderBy: { startedAt: 'desc' },
         take: 100,
       }),
       this.prisma.storyRecord.findMany({
         where: { userId },
-        select: { id: true, episodeId: true, passed: true, turnCount: true, xpEarned: true, completedAt: true, createdAt: true },
+        select: {
+          id: true,
+          episodeId: true,
+          passed: true,
+          turnCount: true,
+          xpEarned: true,
+          completedAt: true,
+          createdAt: true,
+        },
         orderBy: { createdAt: 'desc' },
-        take: 100,
+        take: 10,
       }),
     ]);
 
-    const warmupByPack = new Map<string, any>();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const warmupByPack = new Map<string, {
+      packId: string;
+      total: number;
+      mastered: number;
+      due: number;
+      overdue: number;
+      attempts: number;
+    }>();
     for (const item of warmupProgresses) {
       const row = warmupByPack.get(item.packId) ?? {
         packId: item.packId,
@@ -273,20 +320,43 @@ export class AdminService {
       row.total += 1;
       if (item.status === 'mastered') row.mastered += 1;
       const due = item.dueDate ? new Date(item.dueDate) : null;
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      if (due && due <= today) row.due += 1;
-      if (due && due < today) row.overdue += 1;
+      if (due) {
+        due.setHours(0, 0, 0, 0);
+        if (due.getTime() < today.getTime()) row.overdue += 1;
+        else if (due.getTime() === today.getTime()) row.due += 1;
+      }
       row.attempts += item.attempts ?? 0;
       warmupByPack.set(item.packId, row);
     }
 
-    const analyzed = practiceSessions.filter((session) => session.status === 'analyzed');
-    const avgPracticeScore = analyzed.length
-      ? Math.round(analyzed.reduce((sum, session) => sum + Number((session.analysisResult as any)?.overallScore ?? 0), 0) / analyzed.length)
+    const analyzedForAvg = practiceSessions.filter((session) => session.status === 'analyzed');
+    const avgPracticeScore = analyzedForAvg.length
+      ? Math.round(
+          analyzedForAvg.reduce(
+            (sum, session) => sum + Number((session.analysisResult as any)?.overallScore ?? 0),
+            0,
+          ) / analyzedForAvg.length,
+        )
       : null;
 
-    return {
-      packages: sceneProgresses.map((progress) => {
+    const progressSceneIds = new Set(sceneProgresses.map((progress) => progress.sceneId));
+    const orphanPackIds = Array.from(warmupByPack.keys()).filter((id) => !progressSceneIds.has(id));
+    const orphanScenes = orphanPackIds.length
+      ? await this.prisma.scene.findMany({
+          where: { id: { in: orphanPackIds } },
+          select: {
+            id: true,
+            title: true,
+            packageType: true,
+            location: true,
+            _count: { select: { trainingTopics: true, storyEpisodes: true } },
+          },
+        })
+      : [];
+    const orphanSceneById = new Map(orphanScenes.map((scene) => [scene.id, scene]));
+
+    const packages = [
+      ...sceneProgresses.map((progress) => {
         const warmup = warmupByPack.get(progress.sceneId);
         return {
           sceneId: progress.sceneId,
@@ -301,25 +371,45 @@ export class AdminService {
           warmup: warmup ?? { total: 0, mastered: 0, due: 0, overdue: 0, attempts: 0 },
         };
       }),
+      ...orphanPackIds.map((packId) => {
+        const scene = orphanSceneById.get(packId);
+        const warmup = warmupByPack.get(packId)!;
+        return {
+          sceneId: packId,
+          title: scene?.title ?? `学习包 ${packId.slice(0, 8)}`,
+          packageType: scene?.packageType ?? 'unknown',
+          location: scene?.location ?? '',
+          readiness: 0,
+          mastery: 0,
+          updatedAt: null as Date | null,
+          topicCount: scene?._count.trainingTopics ?? 0,
+          storyCount: scene?._count.storyEpisodes ?? 0,
+          warmup,
+        };
+      }),
+    ];
+
+    return {
+      packages,
       warmup: {
         totalItems: warmupProgresses.length,
-        masteredItems: warmupProgresses.filter((item: any) => item.status === 'mastered').length,
+        masteredItems: warmupProgresses.filter((item) => item.status === 'mastered').length,
         dueItems: Array.from(warmupByPack.values()).reduce((sum, row) => sum + row.due, 0),
         overdueItems: Array.from(warmupByPack.values()).reduce((sum, row) => sum + row.overdue, 0),
-        attemptCount: warmupAttempts.length,
-        recentAttempts: warmupAttempts.slice(0, 10),
+        attemptCount,
+        recentAttempts: warmupAttempts,
       },
       practice: {
-        sessionCount: practiceSessions.length,
-        analyzedCount: analyzed.length,
+        sessionCount: practiceSessionCount,
+        analyzedCount,
         avgScore: avgPracticeScore,
         recentSessions: practiceSessions.slice(0, 10),
       },
       story: {
-        recordCount: storyRecords.length,
-        passedCount: storyRecords.filter((record) => record.passed).length,
-        xpEarned: storyRecords.reduce((sum, record) => sum + (record.xpEarned ?? 0), 0),
-        recentRecords: storyRecords.slice(0, 10),
+        recordCount: storyRecordCount,
+        passedCount: storyPassedCount,
+        xpEarned: storyXpAgg._sum.xpEarned ?? 0,
+        recentRecords: storyRecords,
       },
     };
   }

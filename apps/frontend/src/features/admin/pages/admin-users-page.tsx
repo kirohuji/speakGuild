@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -36,7 +37,7 @@ import {
   type PresencePayload,
 } from '@/features/notification/socket';
 
-const ONLINE_PREVIEW_LIMIT = 50;
+const ONLINE_PREVIEW_LIMIT = 100;
 
 function onlineUserToAdminUser(user: AdminOnlineUser): AdminUser {
   return {
@@ -53,6 +54,38 @@ function onlineUserToAdminUser(user: AdminOnlineUser): AdminUser {
     updatedAt: '',
     online: true,
   };
+}
+
+function AdminUserAvatar({
+  name,
+  email,
+  image,
+  className,
+  fallbackClassName,
+  online,
+}: {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  className?: string;
+  fallbackClassName?: string;
+  online?: boolean;
+}) {
+  const initial = (name?.[0] || email?.[0] || '?').toUpperCase();
+  const src = image?.startsWith('//') ? `https:${image}` : image || undefined;
+  return (
+    <span className="relative inline-flex shrink-0">
+      <Avatar className={cn('h-9 w-9', className)}>
+        {src ? <AvatarImage src={src} alt={name || email || 'avatar'} /> : null}
+        <AvatarFallback className={cn('text-xs font-semibold', fallbackClassName)}>
+          {initial}
+        </AvatarFallback>
+      </Avatar>
+      {online ? (
+        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+      ) : null}
+    </span>
+  );
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -182,8 +215,8 @@ function UserLearningTabs({ overview }: { overview: AdminUserLearningOverview | 
         <TabsTrigger value="story" className="text-xs">剧本</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="packages" className="mt-3 space-y-2">
-        {overview.packages.length ? overview.packages.slice(0, 5).map((pack) => (
+      <TabsContent value="packages" className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+        {overview.packages.length ? overview.packages.map((pack) => (
           <div key={pack.sceneId} className="rounded-lg bg-muted/35 px-3 py-2">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
@@ -201,8 +234,8 @@ function UserLearningTabs({ overview }: { overview: AdminUserLearningOverview | 
         <div className="grid grid-cols-4 gap-2 text-center">
           <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold">{overview.warmup.totalItems}</p><p className="text-[10px] text-muted-foreground">题目</p></div>
           <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-emerald-600">{overview.warmup.masteredItems}</p><p className="text-[10px] text-muted-foreground">掌握</p></div>
-          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-amber-600">{overview.warmup.dueItems}</p><p className="text-[10px] text-muted-foreground">待复习</p></div>
-          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-red-600">{overview.warmup.overdueItems}</p><p className="text-[10px] text-muted-foreground">逾期</p></div>
+          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-amber-600">{overview.warmup.dueItems}</p><p className="text-[10px] text-muted-foreground">今日到期</p></div>
+          <div className="rounded-lg bg-muted/35 py-2"><p className="text-base font-bold text-red-600">{overview.warmup.overdueItems}</p><p className="text-[10px] text-muted-foreground">已逾期</p></div>
         </div>
         <Progress value={warmupPct} className="h-1.5" />
       </TabsContent>
@@ -401,39 +434,43 @@ export function AdminUsersPage() {
       </div>
 
       <Card className="shadow-none">
-        <CardHeader className="pb-3">
+        <CardHeader className="py-3">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base">当前在线</CardTitle>
-            <Badge variant="outline" className="text-xs">
+            <CardTitle className="text-sm font-medium">当前在线</CardTitle>
+            <Badge variant="outline" className="text-[10px]">
               {onlineCount > onlinePreview.length
-                ? `显示 ${onlinePreview.length} / 共 ${onlineCount} 人`
-                : `共 ${onlineCount} 人`}
+                ? `显示 ${onlinePreview.length} / 共 ${onlineCount}`
+                : `${onlineCount} 人`}
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0 pb-3">
           {onlineLoading && onlinePreview.length === 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-9 w-28 rounded-full" />)}
+            <div className="flex flex-wrap gap-1.5">
+              {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-7 w-20 rounded-full" />)}
             </div>
           ) : onlinePreview.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无在线用户</p>
+            <p className="text-xs text-muted-foreground">暂无在线用户</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
               {onlinePreview.map((user) => (
                 <button
                   key={user.id}
                   type="button"
+                  title={user.email}
                   onClick={() => setInspectUser(onlineUserToAdminUser(user))}
-                  className="inline-flex max-w-[220px] items-center gap-2 rounded-full border bg-background px-2.5 py-1.5 text-left transition-colors hover:bg-muted/50"
+                  className="inline-flex max-w-[140px] items-center gap-1.5 rounded-full border bg-background px-1.5 py-1 text-left transition-colors hover:bg-muted/50"
                 >
-                  <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-700">
-                    {user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || '?'}
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-xs font-medium">{user.name || '未命名'}</span>
-                    <span className="block truncate text-[10px] text-muted-foreground">{user.email}</span>
+                  <AdminUserAvatar
+                    name={user.name}
+                    email={user.email}
+                    image={user.image}
+                    online
+                    className="h-5 w-5"
+                    fallbackClassName="bg-emerald-500/15 text-[9px] text-emerald-700"
+                  />
+                  <span className="min-w-0 truncate text-[11px] font-medium leading-none">
+                    {user.name || user.email.split('@')[0] || '未命名'}
                   </span>
                 </button>
               ))}
@@ -761,14 +798,17 @@ function UserRow({
       >
         <td className="px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={cn(
-              'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-              user.role === 'admin'
-                ? 'bg-amber-500/15 text-amber-600'
-                : 'bg-primary/10 text-primary'
-            )}>
-              {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-            </div>
+            <AdminUserAvatar
+              name={user.name}
+              email={user.email}
+              image={user.image}
+              online={user.online}
+              fallbackClassName={cn(
+                user.role === 'admin'
+                  ? 'bg-amber-500/15 text-amber-600'
+                  : 'bg-primary/10 text-primary',
+              )}
+            />
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">
                 {user.name || '未命名'}
@@ -786,7 +826,6 @@ function UserRow({
               )}
               {user.online && (
                 <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-emerald-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   在线
                 </span>
               )}
@@ -879,14 +918,19 @@ function UserRow({
 
                 <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
                   <div className="flex items-start gap-4">
-                    <div className={cn(
-                      'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold',
-                      detail.role === 'admin'
-                        ? 'bg-amber-500/15 text-amber-600'
-                        : 'bg-primary/10 text-primary'
-                    )}>
-                      {detail.name?.[0]?.toUpperCase() || detail.email[0].toUpperCase()}
-                    </div>
+                    <AdminUserAvatar
+                      name={detail.name}
+                      email={detail.email}
+                      image={detail.image}
+                      online={detail.presence?.online}
+                      className="h-16 w-16 rounded-2xl"
+                      fallbackClassName={cn(
+                        'rounded-2xl text-2xl font-bold',
+                        detail.role === 'admin'
+                          ? 'bg-amber-500/15 text-amber-600'
+                          : 'bg-primary/10 text-primary',
+                      )}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-lg font-semibold">{detail.name || '未命名'}</p>
@@ -1036,8 +1080,18 @@ function UserRow({
                       <div className="grid grid-cols-4 gap-3">
                         <StatDot icon={Target} label="知识点题目" value={learningOverview?.warmup.totalItems ?? 0} accent="cyan" />
                         <StatDot icon={CheckCircle2} label="已掌握" value={learningOverview?.warmup.masteredItems ?? 0} accent="emerald" />
-                        <StatDot icon={MessageSquare} label="VN 会话" value={detail._count.practiceSessions} accent="blue" />
-                        <StatDot icon={Clapperboard} label="剧本记录" value={detail._count.storyRecords} accent="violet" />
+                        <StatDot
+                          icon={MessageSquare}
+                          label="VN 会话"
+                          value={learningOverview?.practice.sessionCount ?? detail._count.practiceSessions}
+                          accent="blue"
+                        />
+                        <StatDot
+                          icon={Clapperboard}
+                          label="剧本记录"
+                          value={learningOverview?.story.recordCount ?? detail._count.storyRecords}
+                          accent="violet"
+                        />
                       </div>
                       <UserLearningTabs overview={learningOverview} />
                       {detail.outputLevelDetail && (
