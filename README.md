@@ -64,7 +64,7 @@ iOS 客户端支持学习包下载、本地 SQLite、离线作答、录音保存
 - 用户、会员、账单、通知、反馈、成就和主题；
 - AI 模型、离线模型、后台任务与数据统计。
 
-教学内容以 Markdown 进入版本管理。`apps/docs-md` 中的正文文件与 `.learning.md` 练习配置可和数据库双向同步，详细规则见 [教学文档目录说明](apps/docs-md/README.md) 与 [学习配置写作规则](docs/learning-md-writing-rules.md)。
+教学内容以 Markdown 进入版本管理。`apps/docs-md` 中的正文文件与 `.learning.md` 练习配置可和数据库双向同步，详细规则见 [教学文档目录说明](apps/docs-md/README.md) 与 [教学文档写作规则](docs/教学文档写作规则.md)。
 
 ## 系统组成
 
@@ -185,13 +185,17 @@ pnpm --filter @manyu/frontend cap:open:ios
 
 ## 业务文档
 
-- [漫语町剧本包设计与剧情圣经](docs/漫语町剧本包设计与剧情圣经.md)
-- [剧本与叙事剧情包方案](docs/剧本-叙事剧情包方案.md)
-- [NQTR 架构与流程说明](docs/NQTR架构与流程说明.md)
+完整索引见 [docs/README.md](docs/README.md)。
+
 - [离线学习与沉浸式播放器手册](docs/离线学习与沉浸式播放器手册.md)
-- [会员付费与 RevenueCat 技术实现](docs/会员付费与RevenueCat技术实现.md)
-- [离线学习统计](docs/offline-learning-statistics.md)
-- [同步内容更新设计](docs/sync-content-update-design.md)
+- [移动端OTA热更新](docs/移动端OTA热更新.md)
+- [离线同步与账号](docs/离线同步与账号.md)
+- [离线学习统计与签到](docs/离线学习统计与签到.md)
+- [知识点练习判题](docs/知识点练习判题.md)
+- [漫语町剧本包设计与剧情圣经](docs/漫语町剧本包设计与剧情圣经.md)
+- [剧本叙事剧情包方案](docs/剧本叙事剧情包方案.md)
+- [NQTR架构与流程说明](docs/NQTR架构与流程说明.md)
+- [会员付费与RevenueCat](docs/会员付费与RevenueCat.md)
 - [部署环境变量参考](docs/部署环境变量参考.md)
 
 ## 安全与发布

@@ -594,12 +594,19 @@ export const learningApi = {
     post<{ updates: PackUpdateInfo[] }>('/learning/packs/check', { installed }),
 
   /** V2: 下载 delta 增量包 */
-  downloadDelta: (unitId: string, fromVersion: number, toVersion: number, signal?: AbortSignal) =>
+  downloadDelta: (
+    unitId: string,
+    fromVersion: number,
+    toVersion: number,
+    signal?: AbortSignal,
+    onDownloadProgress?: (loaded: number, total?: number) => void,
+  ) =>
     get<ArrayBuffer>(`/learning/units/${unitId}/download-delta?from=${fromVersion}&to=${toVersion}`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
       timeout: LEARNING_PACK_DOWNLOAD_TIMEOUT_MS,
       signal,
+      onDownloadProgress: (event) => onDownloadProgress?.(event.loaded, event.total),
     }),
 
   /** 更新学习单元进度 */

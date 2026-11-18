@@ -58,7 +58,7 @@ Splash 隐藏后若短暂空白，闪感更强。
 
 **OTA `next()`**
 
-普通更新下载后调用 `CapacitorUpdater.next()`：切后台后再进可能换 bundle 冷启。  
+普通更新下载后调用 `CapacitorUpdater.next()`：切后台后再进可能换 bundle 冷启。完整 OTA 流程见 [移动端OTA热更新](./移动端OTA热更新.md)。  
 这不要求「挂很久」——只要 pending update 存在，短后台也可能触发整页重载。
 
 ### 3.3 如何确认是路径 A

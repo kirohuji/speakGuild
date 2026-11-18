@@ -65,6 +65,9 @@ export interface LearningPackInstallProgress {
   current?: number
   total?: number
   currentItem?: string
+  /** Zip download bytes (downloading step only). */
+  loadedBytes?: number
+  totalBytes?: number
 }
 
 export type LearningPackInstallProgressHandler = (
@@ -166,33 +169,38 @@ function isAssetPath(path: string) {
   return normalizeZipPath(path).startsWith('assets/')
 }
 
-/** Word pronunciation audio — large and slow to extract on web IndexedDB. */
-function isVocabularyPronunciationRole(role?: string | null) {
-  return role === 'vocabulary_pronunciation_us' || role === 'vocabulary_pronunciation_uk'
+/** Word pronunciation + example audio — large and slow to extract on web IndexedDB. */
+function isSkippableWebVocabularyAudioRole(role?: string | null) {
+  return role === 'vocabulary_pronunciation_us'
+    || role === 'vocabulary_pronunciation_uk'
+    || role === 'vocabulary_example_audio'
 }
 
-function isVocabularyPronunciationPath(path: string) {
+function isSkippableWebVocabularyAudioPath(path: string) {
   const normalized = normalizeZipPath(path)
   return normalized.startsWith('assets/vocabulary_pronunciation_us/')
     || normalized.startsWith('assets/vocabulary_pronunciation_uk/')
+    || normalized.startsWith('assets/vocabulary_example_audio/')
 }
 
 /**
- * Web skips word-audio install/uninstall (playback already falls back to
- * signed URLs). Native indexes deferred rows; materialize on demand (resolve/preload).
+ * Web skips vocabulary pronunciation/example-audio install/uninstall (playback
+ * already falls back to signed URLs). Native indexes deferred rows; materialize
+ * on demand (resolve/preload).
+ * Exported for unit tests.
  */
-function shouldSkipWebVocabularyPronunciation(asset?: Pick<AssetRef, 'role' | 'path'> | null, path?: string) {
+export function shouldSkipWebVocabularyAudio(asset?: Pick<AssetRef, 'role' | 'path'> | null, path?: string) {
   if (Capacitor.isNativePlatform()) return false
-  if (isVocabularyPronunciationRole(asset?.role)) return true
-  return isVocabularyPronunciationPath(path ?? asset?.path ?? '')
+  if (isSkippableWebVocabularyAudioRole(asset?.role)) return true
+  return isSkippableWebVocabularyAudioPath(path ?? asset?.path ?? '')
 }
 
-function isVocabularyPronunciationAssetRef(ref: { logicalPath?: string | null; data?: unknown }) {
-  if (isVocabularyPronunciationPath(String(ref.logicalPath ?? ''))) return true
+function isSkippableWebVocabularyAudioAssetRef(ref: { logicalPath?: string | null; data?: unknown }) {
+  if (isSkippableWebVocabularyAudioPath(String(ref.logicalPath ?? ''))) return true
   try {
     const raw = ref.data
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-    return isVocabularyPronunciationRole(
+    return isSkippableWebVocabularyAudioRole(
       parsed && typeof parsed === 'object' ? (parsed as { role?: string }).role : null,
     )
   } catch {
@@ -322,11 +330,11 @@ async function pruneUnreferencedPackZips(packId: string) {
 }
 
 async function cleanupObsoletePackAssetRefs(packId: string, manifest: LearningPackManifest) {
-  // Web never installs vocabulary pronunciations, so treat them as undeclared
+  // Web never installs vocabulary pronunciations/example audio, so treat them as undeclared
   // and drop leftovers from older installs. Native keeps every declared sha.
   const declared = new Set(
     (manifest.assets ?? [])
-      .filter((asset) => !shouldSkipWebVocabularyPronunciation(asset))
+      .filter((asset) => !shouldSkipWebVocabularyAudio(asset))
       .map((asset) => asset.sha256)
       .filter(Boolean),
   )
@@ -945,7 +953,11 @@ export const learningPackService = {
         const percent = total && total > 0
           ? 5 + (loaded / total) * 10
           : Math.min(14, 5 + Math.log10(Math.max(loaded, 1)) * 1.5)
-        onProgress?.('downloading', percent, { label: '下载学习包' })
+        onProgress?.('downloading', percent, {
+          label: '下载学习包',
+          loadedBytes: loaded,
+          totalBytes: total && total > 0 ? total : undefined,
+        })
       })
       return { blob: new Blob([buffer], { type: 'application/zip' }) }
     }
@@ -962,7 +974,11 @@ export const learningPackService = {
       if (progress.url !== url) return
       const total = progress.contentLength || 0
       const percent = total > 0 ? 5 + (progress.bytes / total) * 10 : 5
-      onProgress?.('downloading', percent, { label: '下载学习包' })
+      onProgress?.('downloading', percent, {
+        label: '下载学习包',
+        loadedBytes: progress.bytes,
+        totalBytes: total > 0 ? total : undefined,
+      })
     })
 
     try {
@@ -1415,12 +1431,12 @@ export const learningPackService = {
         perf?.mergeExtras({ assetOk, assetDeduped, assetDeferred, manifestAssets: manifestAssets.length })
       } else {
         // Web: keep eager extract — there is no retained zip for deferred materialize.
-        // Skip vocabulary pronunciations: web playback already uses signed URLs,
-        // and extracting hundreds of short audio files into IndexedDB is too slow.
-        const eagerAssets = manifestAssets.filter((asset) => !shouldSkipWebVocabularyPronunciation(asset))
+        // Skip vocabulary pronunciations + example audio: web playback already uses
+        // signed URLs, and extracting hundreds of short clips into IndexedDB is too slow.
+        const eagerAssets = manifestAssets.filter((asset) => !shouldSkipWebVocabularyAudio(asset))
         const skippedVocabAudio = manifestAssets.length - eagerAssets.length
         if (skippedVocabAudio > 0) {
-          logger.info(`Web: skip installing ${skippedVocabAudio} vocabulary pronunciation assets`)
+          logger.info(`Web: skip installing ${skippedVocabAudio} vocabulary audio assets`)
         }
         report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: eagerAssets.length })
         logger.info(`⏳ ⑨ 提取资源文件 (${eagerAssets.length} 个)...`)
@@ -1631,10 +1647,17 @@ export const learningPackService = {
   },
 
   /** V2: 安装 delta 增量包 */
-  async installDelta(packId: string, fromVersion: number, toVersion: number, signal?: AbortSignal): Promise<InstalledLearningPack> {
+  async installDelta(
+    packId: string,
+    fromVersion: number,
+    toVersion: number,
+    signal?: AbortSignal,
+    onProgress?: LearningPackInstallProgressHandler,
+  ): Promise<InstalledLearningPack> {
+    onProgress?.('preparing', 2, { label: '准备安装' })
     await beginPackOperation(packId, 'update')
     try {
-      const installed = await this.installDeltaUnsafe(packId, fromVersion, toVersion, signal)
+      const installed = await this.installDeltaUnsafe(packId, fromVersion, toVersion, signal, onProgress)
       await finishPackOperation(packId)
       await recordPackAudit({
         packId,
@@ -1644,6 +1667,7 @@ export const learningPackService = {
         title: installed.title,
         updateMode: 'delta',
       })
+      onProgress?.('finishing', 100, { label: '完成安装' })
       return installed
     } catch (error) {
       const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
@@ -1652,14 +1676,37 @@ export const learningPackService = {
     }
   },
 
-  async installDeltaUnsafe(packId: string, fromVersion: number, toVersion: number, signal?: AbortSignal): Promise<InstalledLearningPack> {
+  async installDeltaUnsafe(
+    packId: string,
+    fromVersion: number,
+    toVersion: number,
+    signal?: AbortSignal,
+    onProgress?: LearningPackInstallProgressHandler,
+  ): Promise<InstalledLearningPack> {
     const startTime = performance.now()
     logger.info(`📦 开始安装增量包 v${fromVersion} → v${toVersion}`, { packId })
 
-    const deltaBuffer = await learningApi.downloadDelta(packId, fromVersion, toVersion, signal)
+    onProgress?.('downloading', 5, { label: '下载学习包' })
+    const deltaBuffer = await learningApi.downloadDelta(
+      packId,
+      fromVersion,
+      toVersion,
+      signal,
+      (loaded, total) => {
+        const percent = total && total > 0
+          ? 5 + (loaded / total) * 10
+          : Math.min(14, 5 + Math.log10(Math.max(loaded, 1)) * 1.5)
+        onProgress?.('downloading', percent, {
+          label: '下载学习包',
+          loadedBytes: loaded,
+          totalBytes: total && total > 0 ? total : undefined,
+        })
+      },
+    )
     throwIfAborted(signal)
     const deltaSizeMB = (deltaBuffer.byteLength / 1024 / 1024).toFixed(1)
     logger.info(`✅ delta 下载完成: ${deltaSizeMB} MB`)
+    onProgress?.('parsing', 15, { label: '解析压缩包' })
 
     const reader = new ZipReader(new BlobReader(new Blob([deltaBuffer], { type: 'application/zip' })))
     try {
@@ -1729,7 +1776,7 @@ export const learningPackService = {
       for (const path of deltaManifest.added ?? []) {
         if (!isAssetPath(path)) continue
         const manifestAsset = targetAssetForPath(path)
-        if (shouldSkipWebVocabularyPronunciation(manifestAsset, path)) {
+        if (shouldSkipWebVocabularyAudio(manifestAsset, path)) {
           skippedWebVocabAdded++
           continue
         }
@@ -1761,7 +1808,7 @@ export const learningPackService = {
       for (const path of deltaManifest.modified ?? []) {
         if (!isAssetPath(path)) continue
         const manifestAsset = targetAssetForPath(path)
-        if (shouldSkipWebVocabularyPronunciation(manifestAsset, path)) {
+        if (shouldSkipWebVocabularyAudio(manifestAsset, path)) {
           skippedWebVocabModified++
           // Drop any leftover local refs from older installs that still extracted these.
           const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
@@ -1874,14 +1921,15 @@ export const learningPackService = {
     await beginPackOperation(packId, 'uninstall')
 
     let myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
-    // Web never installs vocabulary pronunciations; skip them on uninstall too
-    // so old packs with leftover word-audio refs do not dominate shared counting / GC.
+    // Web never installs vocabulary pronunciations/example audio; skip them on
+    // uninstall too so old packs with leftover word-audio refs do not dominate
+    // shared counting / GC.
     if (!Capacitor.isNativePlatform()) {
       const before = myRefs.length
-      myRefs = myRefs.filter((ref) => !isVocabularyPronunciationAssetRef(ref))
+      myRefs = myRefs.filter((ref) => !isSkippableWebVocabularyAudioAssetRef(ref))
       const skipped = before - myRefs.length
       if (skipped > 0) {
-        logger.info(`Web: skip uninstalling ${skipped} vocabulary pronunciation assets`)
+        logger.info(`Web: skip uninstalling ${skipped} vocabulary audio assets`)
       }
     }
     timer.lap('load asset refs', { packRefs: myRefs.length })

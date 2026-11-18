@@ -45,6 +45,9 @@ export interface DownloadTask {
   currentItem?: string
   current?: number
   total?: number
+  /** Zip download bytes (downloading step only). */
+  loadedBytes?: number
+  totalBytes?: number
   status: 'queued' | 'downloading' | 'extracting' | 'uninstalling' | 'paused' | 'done' | 'error'
   pausedFrom?: Exclude<DownloadTask['status'], 'paused'>
   error?: string
@@ -755,6 +758,8 @@ function reclaimOrphanedDownloadTasks() {
       currentItem: undefined,
       current: undefined,
       total: undefined,
+      loadedBytes: undefined,
+      totalBytes: undefined,
       error: undefined,
     }
   })
@@ -812,6 +817,7 @@ async function processDownloadQueue() {
     // 真实进度回调：安装流程每步上报
     const onProgress = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
       const status: DownloadTask['status'] = step === 'extracting_assets' ? 'extracting' : 'downloading'
+      const isDownloading = step === 'downloading'
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
           t.packId === next.packId && (t.status === 'downloading' || t.status === 'extracting')
@@ -824,6 +830,8 @@ async function processDownloadQueue() {
                 currentItem: detail?.currentItem,
                 current: detail?.current,
                 total: detail?.total,
+                loadedBytes: isDownloading ? detail?.loadedBytes : undefined,
+                totalBytes: isDownloading ? detail?.totalBytes : undefined,
               }
             : t,
         ),
@@ -833,7 +841,7 @@ async function processDownloadQueue() {
     const update = useLearningStore.getState().availablePackUpdates.find((u) => u.packId === next.packId)
     if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
       try {
-        await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal)
+        await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal, onProgress)
       } catch (error) {
         if (controller.signal.aborted) throw error
         console.warn('[learning-store] delta failed; falling back to full package', error)

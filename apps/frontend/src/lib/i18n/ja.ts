@@ -1553,6 +1553,7 @@ const ja = {
       packTaskCurrentStep: '現在のステップ',
       packTaskCurrentResource: '現在のリソース',
       packTaskRemaining: '残り {{count}} 件',
+      packTaskDownloadBytes: '{{loaded}} / {{total}}',
       packTaskWaiting: '開始待ち',
       packTaskPausedInBackground: 'アプリがバックグラウンドに移動しました',
       packTaskPausedFromLastRun: '前回のタスクは一時停止中',

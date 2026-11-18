@@ -1555,6 +1555,7 @@ const en = {
       packTaskCurrentStep: 'Current step',
       packTaskCurrentResource: 'Current resource',
       packTaskRemaining: '{{count}} remaining',
+      packTaskDownloadBytes: '{{loaded}} / {{total}}',
       packTaskWaiting: 'Waiting to start',
       packTaskPausedInBackground: 'App moved to background',
       packTaskPausedFromLastRun: 'Previous task paused',

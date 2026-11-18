@@ -35,6 +35,28 @@ function taskPercent(task: DownloadTask) {
   return Math.max(0, Math.min(100, Math.round(task.progress || 0)))
 }
 
+function formatDownloadMegabytes(bytes: number) {
+  return `${(Math.max(0, bytes) / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function taskSecondaryCount(task: DownloadTask, t: ReturnType<typeof useTranslation>['t']) {
+  if (
+    task.step === 'downloading'
+    && typeof task.loadedBytes === 'number'
+    && typeof task.totalBytes === 'number'
+    && task.totalBytes > 0
+  ) {
+    return t('learning.packTaskDownloadBytes', {
+      loaded: formatDownloadMegabytes(task.loadedBytes),
+      total: formatDownloadMegabytes(task.totalBytes),
+    })
+  }
+  if (typeof task.current === 'number' && typeof task.total === 'number' && task.total > 0) {
+    return `${task.current}/${task.total}`
+  }
+  return null
+}
+
 function compactPath(value?: string | null) {
   if (!value) return ''
   const clean = value.split('?')[0] ?? value
@@ -224,7 +246,9 @@ export function LearningPackDownloadDrawer({
                   </div>
                 </div>
               ))}
-              {tasks.map((task) => (
+              {tasks.map((task) => {
+                const secondaryCount = taskSecondaryCount(task, t)
+                return (
                 <details
                   key={task.packId}
                   open={isRunning(task) || task.status === 'error'}
@@ -239,8 +263,8 @@ export function LearningPackDownloadDrawer({
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
                         <span className="truncate">{taskTitle(task, t)} / {statusLabel(task, t)}</span>
-                        {typeof task.current === 'number' && typeof task.total === 'number' && task.total > 0 && (
-                          <span className="shrink-0 tabular-nums">{task.current}/{task.total}</span>
+                        {secondaryCount && (
+                          <span className="shrink-0 tabular-nums">{secondaryCount}</span>
                         )}
                       </div>
                       <Progress value={taskPercent(task)} className="mt-2 h-1" />
@@ -283,15 +307,21 @@ export function LearningPackDownloadDrawer({
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-3 text-muted-foreground">
                           <span>{task.kind === 'uninstall' ? t('learning.packTaskCurrentStep') : t('learning.packTaskCurrentResource')}</span>
-                          {typeof task.total === 'number' && task.total > 0 && typeof task.current === 'number' && (
+                          {secondaryCount && task.step === 'downloading' ? (
+                            <span className="tabular-nums">{secondaryCount}</span>
+                          ) : typeof task.total === 'number' && task.total > 0 && typeof task.current === 'number' ? (
                             <span className="tabular-nums">{t('learning.packTaskRemaining', { count: Math.max(0, task.total - task.current) })}</span>
-                          )}
+                          ) : null}
                         </div>
                         <code
                           title={task.kind === 'uninstall' ? undefined : (task.currentItem ?? undefined)}
                           className="block truncate rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground"
                         >
-                          {task.kind === 'uninstall' ? (task.stepLabel || task.step || t('learning.packTaskWaiting')) : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}
+                          {task.kind === 'uninstall'
+                            ? (task.stepLabel || task.step || t('learning.packTaskWaiting'))
+                            : task.step === 'downloading' && secondaryCount
+                              ? secondaryCount
+                              : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}
                         </code>
                         {task.kind === 'uninstall' && task.status === 'paused' && (
                           <Button
@@ -328,7 +358,8 @@ export function LearningPackDownloadDrawer({
                     )}
                   </div>
                 </details>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

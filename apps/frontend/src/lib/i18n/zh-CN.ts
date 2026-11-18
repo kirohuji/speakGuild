@@ -1554,6 +1554,7 @@ const zhCN = {
       packTaskCurrentStep: '当前步骤',
       packTaskCurrentResource: '当前资源',
       packTaskRemaining: '剩余 {{count}} 个',
+      packTaskDownloadBytes: '{{loaded}} / {{total}}',
       packTaskWaiting: '等待开始',
       packTaskPausedInBackground: '应用已进入后台',
       packTaskPausedFromLastRun: '上次任务已暂停',
