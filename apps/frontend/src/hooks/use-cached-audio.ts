@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 
 /**
@@ -18,12 +19,15 @@ export function useCachedAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playGenerationRef = useRef(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  /** Requested source URL (or asset id) for the in-flight / active clip — survives stop→play switches. */
+  const [activeUrl, setActiveUrl] = useState<string | null>(null)
 
-  const stopCurrent = useCallback(() => {
+  const stopCurrent = useCallback((options?: { clearActiveUrl?: boolean }) => {
     playGenerationRef.current += 1
     const current = audioRef.current
     if (!current) {
       setIsPlaying(false)
+      if (options?.clearActiveUrl !== false) setActiveUrl(null)
       return
     }
     current.pause()
@@ -39,15 +43,25 @@ export function useCachedAudio() {
     }
     audioRef.current = null
     setIsPlaying(false)
+    if (options?.clearActiveUrl !== false) setActiveUrl(null)
   }, [])
 
   useEffect(() => () => stopCurrent(), [stopCurrent])
 
-  const play = useCallback(async (url?: string | null, assetId?: string | null, role = 'voice') => {
+  const play = useCallback(async (
+    url?: string | null,
+    assetId?: string | null,
+    role = 'voice',
+    options?: { onEnded?: () => void },
+  ) => {
     if (!url && !assetId) return
 
-    // Stop any currently playing audio
-    stopCurrent()
+    audioDiag('ui.play_click', { url: url || null, assetId: assetId || null, role })
+
+    // Keep activeUrl across the stop→start gap so UI highlight can move to the new clip.
+    stopCurrent({ clearActiveUrl: false })
+    const requestKey = url || assetId || null
+    setActiveUrl(requestKey)
     const generation = playGenerationRef.current
     const audio = new Audio()
     audio.preload = 'auto'
@@ -55,23 +69,46 @@ export function useCachedAudio() {
     audio.onplay = () => {
       if (audioRef.current === audio) setIsPlaying(true)
     }
-    const clearPlayingState = () => {
-      if (audioRef.current === audio) setIsPlaying(false)
+    const clearPlayingState = (clearActive: boolean, ended = false) => {
+      if (audioRef.current !== audio) return
+      setIsPlaying(false)
+      if (clearActive) setActiveUrl(null)
+      if (ended) options?.onEnded?.()
     }
-    audio.onpause = clearPlayingState
-    audio.onended = clearPlayingState
-    audio.onerror = clearPlayingState
+    audio.onpause = () => clearPlayingState(false)
+    audio.onended = () => clearPlayingState(true, true)
+    audio.onerror = () => {
+      clearPlayingState(true)
+      audioDiag('ui.audio_element_error', {
+        url: url || null,
+        src: audio.src || null,
+        code: audio.error?.code ?? null,
+        message: audio.error?.message ?? null,
+      })
+    }
 
     const resolvedUrl = await resolvePlaybackAudio({ url, assetId, role })
     if (playGenerationRef.current !== generation || audioRef.current !== audio) return
-    if (!resolvedUrl) return
+    if (!resolvedUrl) {
+      audioDiag('ui.play_aborted_null_resolve', { url: url || null, assetId: assetId || null, role })
+      setActiveUrl(null)
+      return
+    }
     try {
       audio.src = resolvedUrl
       audio.load()
       await audio.play()
+      audioDiag('ui.play_started', { url: url || null, resolved: resolvedUrl, role })
     } catch (error) {
       if (playGenerationRef.current === generation) {
+        audioDiag('ui.play_failed', {
+          url: url || null,
+          resolved: resolvedUrl,
+          error: error instanceof Error ? error.message : String(error),
+        })
         console.warn('[useCachedAudio] playback failed', error)
+        setIsPlaying(false)
+        setActiveUrl(null)
       }
     }
   }, [stopCurrent])
@@ -82,23 +119,26 @@ export function useCachedAudio() {
    */
   const playDirect = useCallback((url: string) => {
     if (!url) return
-    stopCurrent()
+    stopCurrent({ clearActiveUrl: false })
+    setActiveUrl(url)
     const resolvedUrl = url.startsWith('//') ? `https:${url}` : url
     const audio = new Audio(resolvedUrl)
     audioRef.current = audio
     audio.onplay = () => {
       if (audioRef.current === audio) setIsPlaying(true)
     }
-    const clearPlayingState = () => {
-      if (audioRef.current === audio) setIsPlaying(false)
+    const clearPlayingState = (clearActive: boolean) => {
+      if (audioRef.current !== audio) return
+      setIsPlaying(false)
+      if (clearActive) setActiveUrl(null)
     }
-    audio.onpause = clearPlayingState
-    audio.onended = clearPlayingState
-    audio.onerror = clearPlayingState
+    audio.onpause = () => clearPlayingState(false)
+    audio.onended = () => clearPlayingState(true)
+    audio.onerror = () => clearPlayingState(true)
     audio.play().catch(() => {})
   }, [stopCurrent])
 
-  const stop = stopCurrent
+  const stop = useCallback(() => stopCurrent({ clearActiveUrl: true }), [stopCurrent])
 
-  return { play, playDirect, stop, isPlaying }
+  return { play, playDirect, stop, isPlaying, activeUrl }
 }

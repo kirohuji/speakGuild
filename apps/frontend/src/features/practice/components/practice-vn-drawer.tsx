@@ -539,15 +539,17 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
           <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{printTitle}</p><p className="mt-0.5 text-xs text-muted-foreground">{t('practiceVn.a4Summary', { count: printPages.length })}</p></div>
           <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">A4</span>
         </div>
-        <div className="relative min-h-0 flex-1 overflow-y-auto bg-muted/30 px-0 pb-5 pt-3 sm:px-4 sm:pt-4">
-          <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4">
-            <p className="text-center text-xs text-muted-foreground">{t('practiceVn.tapToZoom')}</p>
-            {printPages.map((blocks, pageIndex) => <div key={pageIndex} className="relative mx-auto w-fit">
-              <TeachingDocumentPreviewFrame scale={previewScale}><TeachingDocumentPage blocks={blocks} title={printTitle} date={printDate} pageNumber={`${pageIndex + 1} / ${printPages.length}`} /></TeachingDocumentPreviewFrame>
-              <button type="button" className="absolute inset-0 rounded-xl" onClick={() => setZoomPreviewPage(pageIndex)} aria-label={t('practiceVn.tapToZoom')} />
-            </div>)}
+        <div className="relative z-0 min-h-0 flex-1">
+          <div className="h-full overflow-y-auto bg-muted/30 px-0 pb-5 pt-3 sm:px-4 sm:pt-4">
+            <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4">
+              <p className="text-center text-xs text-muted-foreground">{t('practiceVn.tapToZoom')}</p>
+              {printPages.map((blocks, pageIndex) => <div key={pageIndex} className="relative mx-auto w-fit">
+                <TeachingDocumentPreviewFrame scale={previewScale}><TeachingDocumentPage blocks={blocks} title={printTitle} date={printDate} pageNumber={`${pageIndex + 1} / ${printPages.length}`} /></TeachingDocumentPreviewFrame>
+                <button type="button" className="absolute inset-0 rounded-xl" onClick={() => setZoomPreviewPage(pageIndex)} aria-label={t('practiceVn.tapToZoom')} />
+              </div>)}
+            </div>
           </div>
-          {printPages.length > 0 && <span className="pointer-events-none absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm"><Expand /></span>}
+          {printPages.length > 0 && <span className="pointer-events-none absolute bottom-3 right-3 z-10 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm"><Expand /></span>}
         </div>
         <div className="shrink-0 px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
           <Button className="h-12 w-full rounded-xl text-base font-semibold" onClick={() => void exportTeachingDocument()} disabled={exporting || !teachingMarkdown?.trim()}>{exporting ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}{exporting ? t('practiceVn.exporting') : t('practiceVn.exportPdf')}</Button>

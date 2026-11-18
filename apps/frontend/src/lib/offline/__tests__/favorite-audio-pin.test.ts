@@ -10,10 +10,16 @@ vi.mock('@/lib/native', () => ({
 }))
 
 vi.mock('@/lib/file-asset-reference', () => ({
+  createFileAssetReference: (id: string, suffix = '') => `asset://${encodeURIComponent(id)}${suffix}`,
   fileAssetIdFromUrl: (url?: string | null) => {
     if (!url?.startsWith('asset://')) return null
     return decodeURIComponent(url.slice('asset://'.length))
   },
+  parseFileAssetReference: (url?: string | null) => {
+    if (!url?.startsWith('asset://')) return null
+    return { assetId: decodeURIComponent(url.slice('asset://'.length)), suffix: '' }
+  },
+  parseFileAssetContentUrl: () => null,
 }))
 
 vi.mock('../playback-audio', () => ({

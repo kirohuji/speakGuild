@@ -53,6 +53,7 @@ export interface ILocalDb {
     offset?: number
   }): Promise<{ contentIds: string[]; total: number }>
   listNotebookExpressionPage(query: NotebookExpressionPageQuery): Promise<NotebookExpressionPage>
+  findExpressionEntryByInsightId(insightId: string): Promise<Record<string, any> | null>
   clear(storeName: TableName): Promise<void>
   deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
@@ -178,6 +179,10 @@ export const localDb: ILocalDb = {
 
   async listNotebookExpressionPage(query) {
     return (await getBackend()).listNotebookExpressionPage(query)
+  },
+
+  async findExpressionEntryByInsightId(insightId: string) {
+    return (await getBackend()).findExpressionEntryByInsightId(insightId)
   },
 
   async clear(storeName: TableName): Promise<void> {

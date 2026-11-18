@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePauseGapSeconds, type ImmersivePlaybackSettings } from './immersive-player.types'
+import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersiveAccent, type ImmersivePauseGapSeconds, type ImmersivePlaybackSettings } from './immersive-player.types'
 
 export const DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS: ImmersivePlaybackSettings = {
   sleepTimerMinutes: 0,
   repeatPerItem: 1,
   playbackRate: 1,
   pauseGapSeconds: 2,
+  accent: 'us',
   playMainText: true,
   playMeaning: true,
   playExample: false,
@@ -20,10 +21,17 @@ function isPauseGap(value: unknown): value is ImmersivePauseGapSeconds {
   return IMMERSIVE_PAUSE_GAP_SECONDS.includes(value as ImmersivePauseGapSeconds)
 }
 
+function isAccent(value: unknown): value is ImmersiveAccent {
+  return value === 'us' || value === 'uk'
+}
+
 function mergeSettings(settings: Partial<ImmersivePlaybackSettings> | undefined): ImmersivePlaybackSettings {
   const merged = { ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS, ...settings }
   if (!isPauseGap(merged.pauseGapSeconds)) {
     merged.pauseGapSeconds = DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS.pauseGapSeconds
+  }
+  if (!isAccent(merged.accent)) {
+    merged.accent = DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS.accent
   }
   return merged
 }

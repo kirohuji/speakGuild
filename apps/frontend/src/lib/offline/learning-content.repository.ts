@@ -1,4 +1,28 @@
+import { canonicalContentUrl, preferAudioUrl } from './asset-url-identity'
 import { localDb } from './unified-storage'
+
+/** Upgrade parseable managed URLs to asset:// before persisting pack vocab rows. */
+function canonicalizeSnapshotAudioUrls<T>(item: T): T {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return item
+  const record = { ...(item as Record<string, unknown>) }
+  for (const field of AUDIO_URL_FIELDS) {
+    const value = record[field]
+    if (typeof value === 'string' && value.trim()) {
+      record[field] = canonicalContentUrl(null, value) || value
+    }
+  }
+  if (Array.isArray(record.examples)) {
+    record.examples = record.examples.map((example) => {
+      if (!example || typeof example !== 'object' || Array.isArray(example)) return example
+      const next = { ...(example as Record<string, unknown>) }
+      if (typeof next.audioUrl === 'string' && next.audioUrl.trim()) {
+        next.audioUrl = canonicalContentUrl(null, next.audioUrl) || next.audioUrl
+      }
+      return next
+    })
+  }
+  return record as T
+}
 
 function includesText(value: unknown, query: string) {
   return typeof value === 'string' && value.toLowerCase().includes(query.toLowerCase())
@@ -64,10 +88,53 @@ function contentScore(snapshot: unknown) {
 
 const SNAPSHOT_FIELDS = [
   'word', 'text', 'pattern', 'meaning', 'description', 'definitionEn', 'partOfSpeech',
-  'phoneticUs', 'phoneticUk', 'audioUsUrl', 'audioUkUrl', 'difficulty', 'example', 'slots',
+  'phoneticUs', 'phoneticUk', 'difficulty', 'example', 'slots',
 ] as const
 
-/** 以更完整的一份为底，只用另一份补上仍为空的释义、例句和发音。 */
+const AUDIO_URL_FIELDS = ['audioUsUrl', 'audioUkUrl'] as const
+
+function exampleEnKey(example: unknown): string {
+  if (!example || typeof example !== 'object' || Array.isArray(example)) return ''
+  return String((example as Record<string, unknown>).en ?? '').trim().toLowerCase()
+}
+
+/**
+ * Keep `primary` example copy (pack teaching sentences). Only borrow better
+ * audioUrl from `secondary` when the English line matches — never append
+ * dictionary/global Vocabulary leftovers.
+ */
+function mergeExampleAudio(primaryExamples: unknown, secondaryExamples: unknown) {
+  const primaryList = Array.isArray(primaryExamples) ? [...primaryExamples] : []
+  const secondaryList = Array.isArray(secondaryExamples) ? secondaryExamples : []
+  if (primaryList.length === 0) return secondaryList.length > 0 ? secondaryList : primaryExamples
+  if (secondaryList.length === 0) return primaryList
+
+  const secondaryByEn = new Map<string, any>()
+  for (const example of secondaryList) {
+    const key = exampleEnKey(example)
+    if (key && !secondaryByEn.has(key)) secondaryByEn.set(key, example)
+  }
+
+  return primaryList.map((example) => {
+    if (!example || typeof example !== 'object' || Array.isArray(example)) return example
+    const record = { ...(example as Record<string, unknown>) }
+    const key = exampleEnKey(record)
+    const other = key ? secondaryByEn.get(key) : null
+    if (other && typeof other === 'object') {
+      record.audioUrl = preferAudioUrl(
+        typeof record.audioUrl === 'string' ? record.audioUrl : null,
+        typeof other.audioUrl === 'string' ? other.audioUrl : null,
+      )
+    }
+    return record
+  })
+}
+
+/**
+ * Copy fields still pick the richer snapshot; examples do NOT use score.
+ * Callers that hydrate from an installed pack pass pack as `incoming` so pack
+ * sentences win over dictionary / stale favorite snapshots.
+ */
 function mergeContentSnapshot(current: any, incoming: any) {
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return current ?? null
   if (!current || typeof current !== 'object' || Array.isArray(current)) return { ...incoming }
@@ -76,7 +143,18 @@ function mergeContentSnapshot(current: any, incoming: any) {
   for (const field of SNAPSHOT_FIELDS) {
     if (!hasText(merged[field]) && hasText(extra[field])) merged[field] = extra[field]
   }
-  if (!hasExamples(merged.examples) && hasExamples(extra.examples)) merged.examples = extra.examples
+  for (const field of AUDIO_URL_FIELDS) {
+    merged[field] = preferAudioUrl(
+      typeof merged[field] === 'string' ? merged[field] : null,
+      typeof extra[field] === 'string' ? extra[field] : null,
+    )
+  }
+  // Pack / teaching snapshot is passed as `incoming` on hydrate & pack index refresh.
+  if (hasExamples(incoming.examples)) {
+    merged.examples = mergeExampleAudio(incoming.examples, current.examples)
+  } else if (hasExamples(current.examples)) {
+    merged.examples = current.examples
+  }
   if ((!Array.isArray(merged.synonyms) || merged.synonyms.length === 0) && Array.isArray(extra.synonyms) && extra.synonyms.length > 0) {
     merged.synonyms = extra.synonyms
   }
@@ -241,8 +319,8 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
   if (!text) return null
 
-  // 词库行、内容详情和收藏时保存的 sourceSnapshot 各自可能缺字段，合并后保留更完整的一份。
-  const vocabSnapshot = [item.sourceSnapshot, item.contentData, item.vocabulary]
+  // sourceSnapshot（学习包收藏）最后合并：例句以包内为准，不被全局 Vocabulary/词典盖掉。
+  const vocabSnapshot = [item.vocabulary, item.contentData, item.sourceSnapshot]
     .reduce((snapshot, candidate) => mergeContentSnapshot(snapshot, candidate), null)
 
   const entry = makeEntry({
@@ -417,27 +495,36 @@ export const learningContentRepository = {
 
     // 并行写入三个内容表，refs 量最大放在最后
     await Promise.all([
-      localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => ({
-        id: item.id,
-        word: item.word ?? item.text ?? '',
-        normalizedText: normalizeIndexText(item.word ?? item.text ?? item.id),
-        data: item,
-        updatedAt: now,
-      }))),
-      localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => ({
-        id: item.id,
-        text: item.text ?? '',
-        normalizedText: normalizeIndexText(item.text ?? item.id),
-        data: item,
-        updatedAt: now,
-      }))),
-      localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => ({
-        id: item.id,
-        pattern: item.pattern ?? item.text ?? '',
-        normalizedText: normalizeIndexText(item.pattern ?? item.text ?? item.id),
-        data: item,
-        updatedAt: now,
-      }))),
+      localDb.putMany('offline_vocabularies', [...vocabById.values()].map((item: any) => {
+        const data = canonicalizeSnapshotAudioUrls(item)
+        return {
+          id: data.id,
+          word: data.word ?? data.text ?? '',
+          normalizedText: normalizeIndexText(data.word ?? data.text ?? data.id),
+          data,
+          updatedAt: now,
+        }
+      })),
+      localDb.putMany('offline_chunks', [...chunkById.values()].map((item: any) => {
+        const data = canonicalizeSnapshotAudioUrls(item)
+        return {
+          id: data.id,
+          text: data.text ?? '',
+          normalizedText: normalizeIndexText(data.text ?? data.id),
+          data,
+          updatedAt: now,
+        }
+      })),
+      localDb.putMany('offline_patterns', [...patternById.values()].map((item: any) => {
+        const data = canonicalizeSnapshotAudioUrls(item)
+        return {
+          id: data.id,
+          pattern: data.pattern ?? data.text ?? '',
+          normalizedText: normalizeIndexText(data.pattern ?? data.text ?? data.id),
+          data,
+          updatedAt: now,
+        }
+      })),
     ])
     console.log(`[content-index] ✅ offline_vocabularies: ${vocabById.size} 条, offline_chunks: ${chunkById.size} 条, offline_patterns: ${patternById.size} 条`)
 
@@ -547,8 +634,8 @@ export const learningContentRepository = {
   },
 
   /**
-   * 学习库只保存收藏关系。展示时从已下载学习包补齐释义、例句和发音，
-   * 和播放时从学习包取出音频是同一条路，不改写收藏记录。
+   * 学习库只保存收藏关系。展示时从已下载学习包补齐释义、例句，
+   * 并用统一身份规则把 Wikimedia 等外链发音纠正为 asset://（不强制写回收藏行）。
    */
   async hydrateExpressionSnapshots<T extends ExpressionEntry>(entries: T[]): Promise<T[]> {
     if (entries.length === 0) return entries
@@ -592,6 +679,27 @@ export const learningContentRepository = {
       const pack = richerContent(id ? packs.byId.get(id) : null, text ? packs.byText.get(text) : null)
       if (!pack) return entry
       const contentSnapshot = mergeContentSnapshot(entry.contentSnapshot, pack)
+      if (import.meta.env.DEV && entry.kind === 'word') {
+        const savedEns = Array.isArray(entry.contentSnapshot?.examples)
+          ? entry.contentSnapshot.examples.map((ex: any) => ex?.en).filter(Boolean).slice(0, 3)
+          : []
+        const packEns = Array.isArray(pack.examples)
+          ? pack.examples.map((ex: any) => ex?.en).filter(Boolean).slice(0, 3)
+          : []
+        const mergedEns = Array.isArray(contentSnapshot?.examples)
+          ? contentSnapshot.examples.map((ex: any) => ex?.en).filter(Boolean).slice(0, 3)
+          : []
+        console.log('[MANYU_AUDIO_DIAG] library.hydrate_examples', {
+          word: expressionText(entry),
+          savedExampleCount: Array.isArray(entry.contentSnapshot?.examples) ? entry.contentSnapshot.examples.length : 0,
+          packExampleCount: Array.isArray(pack.examples) ? pack.examples.length : 0,
+          mergedExampleCount: Array.isArray(contentSnapshot?.examples) ? contentSnapshot.examples.length : 0,
+          savedEns,
+          packEns,
+          mergedEns,
+          usedPackExamples: hasExamples(pack.examples),
+        })
+      }
       return {
         ...entry,
         contentSnapshot,

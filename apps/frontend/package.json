@@ -42,6 +42,7 @@
     "@capawesome/capacitor-badge": "^8.0.2",
     "@capgo/capacitor-audio-recorder": "^8.2.5",
     "@capgo/capacitor-autofill-save-password": "^8.0.28",
+    "@capgo/capacitor-device-info": "^8.0.0",
     "@capgo/capacitor-in-app-review": "^8.1.7",
     "@capgo/capacitor-media-session": "^8.0.28",
     "@capgo/capacitor-native-audio": "^8.4.15",

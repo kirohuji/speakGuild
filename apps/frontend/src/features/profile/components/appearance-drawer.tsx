@@ -2,22 +2,18 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import {
-  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft, Lock,
+  Sun, Moon, Monitor, CheckCircle2, ChevronLeft, Lock,
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/cn';
 import { useThemePreset } from '@/providers/theme-preset-provider';
 import { useThemePresetStore } from '@/stores/theme-preset.store';
-import { usePreferencesStore } from '@/stores/preferences.store';
 import { useUserStore } from '@/stores/user.store';
 import { useOnboardingStore } from '@/stores/onboarding.store';
 import { useAuth } from '@/providers/auth-provider';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
 import { MembershipPurchaseDrawer } from '@/features/membership/components/membership-purchase-drawer';
-import { resolveBgmDisplayVolume } from '@/lib/bgm-volume';
 
 /** 普通用户可用：默认主题、深海梦境。其余主题走会员解锁。 */
 const FREE_THEME_IDS = new Set(['theme-default', 'theme-deepsea']);
@@ -68,7 +64,6 @@ export function AppearanceContent() {
   const membership = useUserStore((s) => s.membership);
   const [memberOpen, setMemberOpen] = useState(false);
 
-  const { bgmEnabled, bgmVolume, setBgmEnabled, setBgmVolume } = usePreferencesStore();
   const canUseAllThemes = session?.user?.role === 'admin' || membership?.level === 'admin' || !!membership?.isActive;
 
   useEffect(() => {
@@ -79,8 +74,6 @@ export function AppearanceContent() {
   useEffect(() => {
     ensurePresets();
   }, [ensurePresets]);
-
-  const effectiveBgmVolume = resolveBgmDisplayVolume(bgmVolume, activePreset?.bgmVolume);
 
   const modeLabel: Record<string, string> = {
     light: t('profile.themeLight'),
@@ -163,46 +156,7 @@ export function AppearanceContent() {
         </div>
       </section>
 
-      {/* ═══ 3. 背景音效 ═══ */}
-      <section>
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {t('profile.bgm')}
-        </p>
-        <div className="space-y-3 overflow-hidden rounded-xl bg-muted/30 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {bgmEnabled ? (
-                <Volume2 className="size-4 text-foreground" />
-              ) : (
-                <VolumeX className="size-4 text-muted-foreground" />
-              )}
-              <span className="text-sm">{bgmEnabled ? t('profile.bgmOn') : t('profile.bgmOff')}</span>
-            </div>
-            <Switch
-              checked={bgmEnabled}
-              onCheckedChange={setBgmEnabled}
-              disabled={!activePreset?.bgmUrl}
-            />
-          </div>
-
-          {bgmEnabled && (
-            <div className="flex items-center gap-3 pt-1">
-              <Volume2 className="size-4 shrink-0 text-muted-foreground" />
-              <Slider
-                value={[effectiveBgmVolume]}
-                onValueChange={([v]) => setBgmVolume(v)}
-                min={0}
-                max={1}
-                step={0.05}
-                className="flex-1"
-              />
-              <span className="w-10 text-right text-sm tabular-nums text-muted-foreground">
-                {Math.round(effectiveBgmVolume * 100)}%
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
+      {/* 背景音效：暂时隐藏，默认不播放、不开放用户开关 */}
 
       <MembershipPurchaseDrawer open={memberOpen} onOpenChange={setMemberOpen} />
 

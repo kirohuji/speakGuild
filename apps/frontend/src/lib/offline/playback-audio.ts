@@ -2,6 +2,7 @@ import { LOCAL_RECORDING_SCHEME, resolveLocalRecording } from './user-recordings
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
+import { audioDiag } from './audio-playback-diag'
 import { assetCacheService, isCachedPlaybackUrl, OFFLINE_RESOURCE_MISSING } from './asset-cache.service'
 import { deferredPackAssetService } from './deferred-pack-asset.service'
 
@@ -31,17 +32,27 @@ export async function resolvePlaybackAudio(input: {
   const role = input.role ?? 'voice'
   const asFileUri = input.asFileUri === true
 
+  audioDiag('resolve.start', { url: rawUrl || null, assetId, role, asFileUri, native: isNative() })
+
   if (!isNative()) {
-    if (!assetId) return rawUrl || null
+    if (!assetId) {
+      audioDiag('resolve.web_raw', { url: rawUrl || null })
+      return rawUrl || null
+    }
     try {
       const fresh = await getFileAssetPrivateUrl(assetId)
+      audioDiag('resolve.web_signed', { assetId, url: fresh.url })
       return fresh.url
     } catch {
+      audioDiag('resolve.web_signed_failed', { assetId, url: rawUrl || null })
       return rawUrl || null
     }
   }
 
-  if (rawUrl && isPlayable(rawUrl, asFileUri)) return rawUrl
+  if (rawUrl && isPlayable(rawUrl, asFileUri)) {
+    audioDiag('resolve.already_local', { url: rawUrl })
+    return rawUrl
+  }
 
   if (rawUrl) {
     const local = await assetCacheService.resolve({
@@ -50,7 +61,15 @@ export async function resolvePlaybackAudio(input: {
       role,
       asFileUri,
     }).catch(() => '')
-    if (local && local !== OFFLINE_RESOURCE_MISSING && isPlayable(local, asFileUri)) return local
+    const playable = Boolean(local && local !== OFFLINE_RESOURCE_MISSING && isPlayable(local, asFileUri))
+    audioDiag('resolve.cache', {
+      url: rawUrl,
+      assetId,
+      got: local || null,
+      playable,
+      missing: local === OFFLINE_RESOURCE_MISSING,
+    })
+    if (playable) return local
   }
 
   // Vocabulary pronunciations included in a native learning pack are indexed
@@ -63,10 +82,15 @@ export async function resolvePlaybackAudio(input: {
       role,
       asFileUri,
     }).catch(() => null)
-    if (deferred && isPlayable(deferred, asFileUri)) return deferred
+    const playable = Boolean(deferred && isPlayable(deferred, asFileUri))
+    audioDiag('resolve.deferred', { url: rawUrl, assetId, got: deferred, playable })
+    if (playable) return deferred
   }
 
-  if (!assetId) return null
+  if (!assetId) {
+    audioDiag('resolve.fail_no_asset_id', { url: rawUrl || null, role })
+    return null
+  }
   try {
     const fresh = await getFileAssetPrivateUrl(assetId)
     const downloaded = await assetCacheService.download({
@@ -75,8 +99,14 @@ export async function resolvePlaybackAudio(input: {
       role,
       asFileUri,
     })
-    return downloaded && isPlayable(downloaded, asFileUri) ? downloaded : null
-  } catch {
+    const playable = Boolean(downloaded && isPlayable(downloaded, asFileUri))
+    audioDiag('resolve.network_download', { assetId, url: fresh.url, got: downloaded, playable })
+    return playable ? downloaded : null
+  } catch (error) {
+    audioDiag('resolve.network_failed', {
+      assetId,
+      error: error instanceof Error ? error.message : String(error),
+    })
     return null
   }
 }

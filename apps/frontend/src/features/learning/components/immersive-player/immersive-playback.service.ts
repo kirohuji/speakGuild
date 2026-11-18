@@ -1,6 +1,7 @@
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { NativeAudio, type PlaybackStateEvent } from '@capgo/capacitor-native-audio'
 import { MediaSession, type MediaSessionAction } from '@capgo/capacitor-media-session'
+import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 import { isNative } from '@/lib/native'
 import { synthesizeAsset } from '@/lib/tts-api'
@@ -12,6 +13,9 @@ let htmlAudio: HTMLAudioElement | null = null
 let currentNativeAssetId: string | null = null
 let cancelCurrentPlayback: (() => void) | null = null
 let playbackRequestId = 0
+/** Resolved local/file URLs for segments that already have audioUrl (no TTS). */
+const resolveCache = new Map<string, Promise<string | null>>()
+let gapMediaControlsActive = false
 
 export type ImmersivePlaybackVisualState = {
   state: 'idle' | 'loading' | 'playing' | 'paused'
@@ -36,13 +40,36 @@ type MediaMetadataLabels = {
   album?: string
 }
 
+function segmentCacheKey(segment: PlaybackSegment) {
+  return `${segment.id}:${segment.audioUrl ?? ''}`
+}
+
 async function resolveAudioUrl(segment: PlaybackSegment): Promise<string | null> {
   // NativeAudio crashes on the WebView capacitor:// URL. It can only open file://.
   const asFileUri = isNative()
   if (segment.audioUrl) {
-    return resolvePlaybackAudio({ url: segment.audioUrl, role: 'immersive_audio', asFileUri })
+    const key = segmentCacheKey(segment)
+    const cached = resolveCache.get(key)
+    if (cached) return cached
+
+    const pending = (async () => {
+      audioDiag('immersive.resolve', {
+        segmentId: segment.id,
+        url: segment.audioUrl,
+        asFileUri,
+      })
+      return resolvePlaybackAudio({ url: segment.audioUrl!, role: 'immersive_audio', asFileUri })
+    })()
+    resolveCache.set(key, pending)
+    try {
+      return await pending
+    } catch (error) {
+      resolveCache.delete(key)
+      throw error
+    }
   }
 
+  // Missing audioUrl: keep existing on-demand TTS path (no prefetch).
   const { ttsBackend } = usePreferencesStore.getState()
   const result = await synthesizeAsset({
     text: segment.text,
@@ -52,6 +79,12 @@ async function resolveAudioUrl(segment: PlaybackSegment): Promise<string | null>
     params: ttsBackend.params,
     bizType: 'immersive_player',
     bizId: segment.id,
+  })
+  audioDiag('immersive.resolve_tts', {
+    segmentId: segment.id,
+    url: result.url,
+    assetId: result.assetId,
+    asFileUri,
   })
   return resolvePlaybackAudio({
     url: result.url,
@@ -76,7 +109,7 @@ async function configureNativeAudio() {
   })
 }
 
-async function stopActivePlayback() {
+async function stopActivePlayback(options?: { clearSession?: boolean }) {
   if (isNative() && currentNativeAssetId) {
     const assetId = currentNativeAssetId
     currentNativeAssetId = null
@@ -88,10 +121,28 @@ async function stopActivePlayback() {
   audio?.pause()
   cancelCurrentPlayback?.()
   publishVisualState({ state: 'idle', media: null })
-  await clearMediaSession()
+  if (options?.clearSession !== false) {
+    await clearMediaSession()
+  }
 }
 
 export const immersivePlaybackService = {
+  /** Warm resolve for segments that already have audioUrl. Does not touch TTS. */
+  prefetchSegment(segment: PlaybackSegment | null | undefined) {
+    if (!segment?.audioUrl?.trim()) return
+    const key = segmentCacheKey(segment)
+    if (resolveCache.has(key)) return
+    void resolveAudioUrl(segment).catch(() => undefined)
+  },
+
+  clearPrefetchCache() {
+    resolveCache.clear()
+  },
+
+  hasResumableAsset() {
+    return Boolean(currentNativeAssetId || htmlAudio)
+  },
+
   async setMediaMetadata(segment: PlaybackSegment, playbackRate: number, state: 'none' | 'paused' | 'playing', labels?: MediaMetadataLabels) {
     await MediaSession.setMetadata({
       title: segment.title,
@@ -102,16 +153,49 @@ export const immersivePlaybackService = {
     await MediaSession.setPositionState({ playbackRate }).catch(() => undefined)
   },
 
-  async registerMediaActions(handlers: Partial<Record<MediaSessionAction, () => void>>) {
-    // NativeAudio owns the iOS previous/next commands (and emits playbackState events for
-    // them). Registering the same commands through MediaSession would create two global
-    // MPRemoteCommandCenter targets. Web keeps using the browser Media Session API.
-    const actions = (Capacitor.getPlatform() === 'ios'
-      ? ['play', 'pause', 'stop']
-      : ['play', 'pause', 'previoustrack', 'nexttrack', 'stop']) as MediaSessionAction[]
+  async registerMediaActions(handlers: Partial<Record<MediaSessionAction, () => void>>, options?: { includeTrackSkip?: boolean }) {
+    // NativeAudio owns the iOS previous/next commands while an asset is loaded.
+    // During gap / between-item unload we temporarily register MediaSession skip.
+    const includeTrackSkip = options?.includeTrackSkip ?? Capacitor.getPlatform() !== 'ios'
+    const actions = (
+      includeTrackSkip
+        ? ['play', 'pause', 'previoustrack', 'nexttrack', 'stop']
+        : ['play', 'pause', 'stop']
+    ) as MediaSessionAction[]
     await Promise.all(actions.map((action) =>
       MediaSession.setActionHandler({ action }, handlers[action] ? () => handlers[action]?.() : null).catch(() => undefined),
     ))
+    if (!includeTrackSkip) {
+      await Promise.all((['previoustrack', 'nexttrack'] as MediaSessionAction[]).map((action) =>
+        MediaSession.setActionHandler({ action }, null).catch(() => undefined),
+      ))
+    }
+  },
+
+  async setIosGapTrackControls(
+    enabled: boolean,
+    handlers?: Partial<Record<'previoustrack' | 'nexttrack', () => void>>,
+  ) {
+    if (Capacitor.getPlatform() !== 'ios') return
+    gapMediaControlsActive = enabled
+    if (!enabled) {
+      await Promise.all((['previoustrack', 'nexttrack'] as MediaSessionAction[]).map((action) =>
+        MediaSession.setActionHandler({ action }, null).catch(() => undefined),
+      ))
+      return
+    }
+    await MediaSession.setActionHandler(
+      { action: 'previoustrack' },
+      handlers?.previoustrack ? () => handlers.previoustrack?.() : null,
+    ).catch(() => undefined)
+    await MediaSession.setActionHandler(
+      { action: 'nexttrack' },
+      handlers?.nexttrack ? () => handlers.nexttrack?.() : null,
+    ).catch(() => undefined)
+  },
+
+  isIosGapTrackControlsActive() {
+    return gapMediaControlsActive
   },
 
   async playSegment(segment: PlaybackSegment, playbackRate: number, onNativeState?: (event: PlaybackStateEvent) => void, onStarted?: () => void, labels?: MediaMetadataLabels): Promise<void> {
@@ -121,10 +205,11 @@ export const immersivePlaybackService = {
     if (requestId !== playbackRequestId) return
     if (!audioUrl) throw new Error('No audio URL available')
 
-    await stopActivePlayback()
+    await stopActivePlayback({ clearSession: false })
     if (requestId !== playbackRequestId) return
     if (isNative()) await configureNativeAudio()
     if (requestId !== playbackRequestId) return
+    await this.setIosGapTrackControls(false)
     await this.setMediaMetadata(segment, playbackRate, 'playing', labels)
     if (requestId !== playbackRequestId) return
 
@@ -264,14 +349,27 @@ export const immersivePlaybackService = {
     await MediaSession.setPlaybackState({ playbackState: 'paused' }).catch(() => undefined)
   },
 
-  async resume() {
-    if (isNative() && currentNativeAssetId) {
-      await NativeAudio.resume({ assetId: currentNativeAssetId }).catch(() => undefined)
-    } else {
-      await htmlAudio?.play().catch(() => undefined)
+  async resume(): Promise<boolean> {
+    if (isNative()) {
+      if (!currentNativeAssetId) return false
+      try {
+        await NativeAudio.resume({ assetId: currentNativeAssetId })
+      } catch {
+        return false
+      }
+      publishVisualState({ state: 'playing', media: null })
+      await MediaSession.setPlaybackState({ playbackState: 'playing' }).catch(() => undefined)
+      return true
+    }
+    if (!htmlAudio) return false
+    try {
+      await htmlAudio.play()
+    } catch {
+      return false
     }
     publishVisualState({ state: 'playing', media: htmlAudio })
     await MediaSession.setPlaybackState({ playbackState: 'playing' }).catch(() => undefined)
+    return true
   },
 
   async setPlaybackRate(playbackRate: number) {
@@ -283,9 +381,9 @@ export const immersivePlaybackService = {
     await MediaSession.setPositionState({ playbackRate }).catch(() => undefined)
   },
 
-  async stopCurrent() {
+  async stopCurrent(options?: { clearSession?: boolean }) {
     playbackRequestId += 1
-    await stopActivePlayback()
+    await stopActivePlayback(options)
   },
 
   async clearSession() {

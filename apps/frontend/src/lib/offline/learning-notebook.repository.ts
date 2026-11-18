@@ -5,6 +5,9 @@ import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { createPayload } from './learning-content.repository'
 import { localDb } from './unified-storage'
 import { learningContentRepository, type ExpressionEntry } from './learning-content.repository'
+import type { InsightListItem } from './insight-playlist'
+import { insightListDiag } from './insight-list-diag'
+import { expressionDisplayTitle, hasExpressionTitle } from './playlist-window'
 
 type NotebookCounts = {
   total: number
@@ -60,6 +63,40 @@ export type LocalNotebookExpression = ExpressionEntry & {
 export type LocalExpressionPageResult = {
   items: LocalNotebookExpression[]
   total: number
+}
+
+export type LocalExpressionLeanPageResult = {
+  items: InsightListItem[]
+  total: number
+}
+
+function insightIdFromEntry(entry: ExpressionEntry): string {
+  const snapshot = entry.contentSnapshot
+  if (entry.kind === 'word') {
+    return String(snapshot?.id || entry.sourceId || `word:${entry.original ?? entry.id}`)
+  }
+  if (entry.kind === 'pattern') {
+    return String(snapshot?.id || entry.sourceId || entry.id)
+  }
+  return String(snapshot?.id || entry.sourceId || entry.id)
+}
+
+function leanFromEntry(entry: ExpressionEntry): InsightListItem | null {
+  const apiType = entry.type === 'scene_phrase' ? 'scene_phrase' : entry.kind === 'word' ? 'word' : 'chunk'
+  if (!hasExpressionTitle(entry, apiType)) return null
+  const title = expressionDisplayTitle(entry, apiType).trim()
+  if (!title) return null
+  const snapshot = entry.contentSnapshot
+  const meaning =
+    entry.kind === 'word'
+      ? String(snapshot?.meaning || entry.chunkText || entry.corrected || '').trim() || undefined
+      : String(snapshot?.meaning || entry.original || '').trim() || undefined
+  return {
+    id: insightIdFromEntry(entry),
+    kind: entry.kind,
+    title,
+    meaning,
+  }
 }
 
 type CachedNotebook = LearningNotebook & {
@@ -157,7 +194,7 @@ export const learningNotebookRepository = {
       rows.push(...page.items)
       if (rows.length >= page.total || page.items.length === 0) break
     }
-    return request.sort === 'oldest' ? rows.reverse() : rows
+    return rows
   },
 
   async listCachedExpressionPage(
@@ -168,6 +205,7 @@ export const learningNotebookRepository = {
       kind: request.type === 'scene_phrase' ? 'pattern' : request.type,
       reviewState: request.reviewState,
       search: request.search,
+      sort: request.sort ?? 'newest',
       limit: request.limit,
       offset: request.offset,
     })
@@ -184,6 +222,75 @@ export const learningNotebookRepository = {
         item as CachedNotebookItem,
       )),
     }
+  },
+
+  /** Lean playlist rows — same filters/sort as the full page, no pack hydrate. */
+  async listCachedExpressionLeanPage(
+    request: LocalExpressionListRequest & { limit: number; offset?: number },
+  ): Promise<LocalExpressionLeanPageResult> {
+    insightListDiag('notebook.lean_page', {
+      notebookId: request.notebookId,
+      type: request.type,
+      limit: request.limit,
+      offset: request.offset ?? 0,
+      hydrate: false,
+    })
+    const page = await localDb.listNotebookExpressionPage({
+      notebookId: request.notebookId,
+      kind: request.type === 'scene_phrase' ? 'pattern' : request.type,
+      reviewState: request.reviewState,
+      search: request.search,
+      sort: request.sort ?? 'newest',
+      limit: request.limit,
+      offset: request.offset,
+    })
+    const items = page.items
+      .map(({ entry }) => leanFromEntry(entry as ExpressionEntry))
+      .filter((item): item is InsightListItem => Boolean(item))
+    insightListDiag('notebook.lean_page_ok', {
+      offset: request.offset ?? 0,
+      limit: request.limit,
+      rowCount: items.length,
+      total: page.total,
+      hydrate: false,
+    })
+    return { total: page.total, items }
+  },
+
+  /** Hydrate one notebook expression into a library-shaped row for insight detail. */
+  async getCachedExpressionDetail(insightId: string): Promise<LocalNotebookExpression | null> {
+    insightListDiag('notebook.detail', { insightId, hydrate: true })
+    const found = await localDb.findExpressionEntryByInsightId(insightId)
+    if (!found) {
+      insightListDiag('notebook.detail_miss', { insightId })
+      return null
+    }
+    const entry = found as ExpressionEntry
+
+    const [hydrated] = await learningContentRepository.hydrateExpressionSnapshots([entry])
+    const resolved = hydrated ?? entry
+    const items = await localDb.activeNotebookItems()
+    const notebookItem = items.find((row) => row.expressionEntryId === resolved.id)
+    insightListDiag('notebook.detail_ok', {
+      insightId,
+      entryId: resolved.id,
+      kind: resolved.kind,
+      hydrate: true,
+    })
+    if (!notebookItem) {
+      return {
+        ...resolved,
+        notebookItemId: '',
+        notebookId: '',
+        masteryStatus: 'learning',
+        reviewCount: 0,
+        intervalDays: 0,
+        lapseCount: 0,
+        vocabulary: resolved.kind === 'word' ? resolved.contentSnapshot : undefined,
+        contentData: resolved.kind === 'word' ? undefined : resolved.contentSnapshot,
+      }
+    }
+    return toLibraryExpression(resolved, notebookItem as CachedNotebookItem)
   },
 
   async updateCachedNotebookItemStatus(id: string, masteryStatus: string): Promise<void> {

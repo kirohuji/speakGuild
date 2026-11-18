@@ -61,4 +61,30 @@ describe('immersive player example playback', () => {
 
     expect(segments.map((segment) => segment.role)).toEqual(['main'])
   })
+
+  it('picks UK audio when accent is uk and falls back to US', () => {
+    const uk = buildPlaybackSegments({
+      id: 'word-1',
+      kind: 'word',
+      title: 'color',
+      audioUsUrl: 'https://audio.test/us.mp3',
+      audioUkUrl: 'https://audio.test/uk.mp3',
+    }, {
+      ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS,
+      accent: 'uk',
+    })
+    expect(uk[0]?.audioUrl).toBe('https://audio.test/uk.mp3')
+
+    const fallback = buildPlaybackSegments({
+      id: 'word-2',
+      kind: 'word',
+      title: 'color',
+      audioUsUrl: 'https://audio.test/us.mp3',
+      audioUkUrl: null,
+    }, {
+      ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS,
+      accent: 'uk',
+    })
+    expect(fallback[0]?.audioUrl).toBe('https://audio.test/us.mp3')
+  })
 })

@@ -110,15 +110,12 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
       resumeHandle = await App.addListener('resume', () => {
         const now = Date.now();
 
-        // Continue pack file GC / deferred asset materialize even when other
-        // resume work is throttled.
+        // Continue pack file GC on resume. Deferred assets stay on-demand
+        // (resolve/preload / VN prepare), not bulk-materialized here.
         void import('@/lib/offline/learning-pack.service')
-          .then(({ learningPackService }) => Promise.all([
-            learningPackService.drainPackGcQueue(),
-            learningPackService.drainPackAssetMaterializeQueue(),
-          ]))
+          .then(({ learningPackService }) => learningPackService.drainPackGcQueue())
           .catch((err) => {
-            console.warn('[NativeBridge] Resume pack GC/materialize drain failed:', err)
+            console.warn('[NativeBridge] Resume pack GC drain failed:', err)
           })
 
         // Subscription changes made in iOS Settings/Customer Center do not

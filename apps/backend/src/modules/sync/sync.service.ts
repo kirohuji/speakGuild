@@ -732,7 +732,8 @@ export class SyncService {
         expressionItems: compact ? expressionItems.map(item => ({ id: item.id })) : enrichedExpressionItems,
         ...(compact ? { expressions: enrichedExpressionItems.map(item => {
           const { vocabulary, contentData, ...expression } = item as typeof item & { vocabulary?: unknown; contentData?: unknown };
-          return { ...expression, sourceSnapshot: mergeContentSnapshots(expression.sourceSnapshot, vocabulary ?? contentData) };
+          // Pack teaching snapshot last: examples must not be overwritten by global Vocabulary.
+          return { ...expression, sourceSnapshot: mergeContentSnapshots(vocabulary ?? contentData, expression.sourceSnapshot) };
         }) } : {}),
         sceneProgresses: want('sceneProgresses') ? sceneProgresses : [],
         chunkProgresses: want('chunkProgresses') ? chunkProgresses : [],

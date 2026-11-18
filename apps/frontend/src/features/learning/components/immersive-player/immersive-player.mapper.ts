@@ -1,8 +1,20 @@
 import type { LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
-import type { ImmersivePlayerExample, ImmersivePlayerItem, ImmersivePlaybackSettings, PlaybackSegment } from './immersive-player.types'
+import type { ImmersiveAccent, ImmersivePlayerExample, ImmersivePlayerItem, ImmersivePlaybackSettings, PlaybackSegment } from './immersive-player.types'
 
 function textOrEmpty(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+function pickAccentAudioUrl(
+  accent: ImmersiveAccent,
+  audioUsUrl?: string | null,
+  audioUkUrl?: string | null,
+  fallback?: string | null,
+) {
+  const us = audioUsUrl?.trim() || null
+  const uk = audioUkUrl?.trim() || null
+  if (accent === 'uk') return uk || us || fallback?.trim() || null
+  return us || uk || fallback?.trim() || null
 }
 
 function normalizeExamples(value: unknown): ImmersivePlayerExample[] {
@@ -42,6 +54,8 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
       insight: textOrEmpty(item.description) || textOrEmpty(item.definitionEn),
       exampleEn: example?.en,
       exampleZh: example?.zh,
+      audioUsUrl: item.audioUsUrl,
+      audioUkUrl: item.audioUkUrl,
       mainAudioUrl: item.audioUsUrl || item.audioUkUrl,
       exampleAudioUrl: example?.audioUrl,
       examples,
@@ -107,7 +121,7 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       role: 'main',
       text: item.title.trim(),
       lang: item.kind === 'word' || item.kind === 'chunk' || item.kind === 'pattern' ? 'en' : 'zh',
-      audioUrl: item.mainAudioUrl,
+      audioUrl: pickAccentAudioUrl(settings.accent, item.audioUsUrl, item.audioUkUrl, item.mainAudioUrl),
       title: item.title,
       subtitle: item.meaning,
     })
