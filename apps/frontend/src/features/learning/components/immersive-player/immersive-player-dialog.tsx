@@ -35,6 +35,7 @@ import { useCachedAudio } from '@/hooks/use-cached-audio'
 import { isIOS, isNative } from '@/lib/native'
 import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
+import { immersiveLog } from './immersive-audio.transport'
 import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
 import { createTimerScheduler, ListeningQueueEngine, type ListeningQueueEngineState } from './listening-queue.engine'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
@@ -161,6 +162,7 @@ export function ImmersivePlayerDialog({
   const [visualPlayback, setVisualPlayback] = useState<ImmersivePlaybackVisualState>({ state: 'idle', media: null })
   const { play: playExampleAudio, activeUrl: playingExampleUrl, stop: stopExampleAudio } = useCachedAudio()
   const statusRef = useRef<ImmersivePlayerStatus>('idle')
+  const visualPlaybackRef = useRef<ImmersivePlaybackVisualState>({ state: 'idle', media: null })
   const resumeQueueAfterExampleRef = useRef(false)
   const engineRef = useRef<ListeningQueueEngine | null>(null)
   const onOpenChangeRef = useRef(onOpenChange)
@@ -197,7 +199,10 @@ export function ImmersivePlayerDialog({
       statusRef.current = state.status
       setStatus(state.status)
     })
-    const unsubVisual = immersivePlaybackService.subscribeVisualState(setVisualPlayback)
+    const unsubVisual = immersivePlaybackService.subscribeVisualState((next) => {
+      visualPlaybackRef.current = next
+      setVisualPlayback(next)
+    })
     return () => {
       unsubEngine()
       unsubVisual()
@@ -226,15 +231,32 @@ export function ImmersivePlayerDialog({
 
   useEffect(() => {
     if (!open) return
+    /**
+     * iOS may pause the native session while the UI still thinks we are playing.
+     * Only re-assert resume when transport visual state is NOT already playing —
+     * otherwise lock-screen / brief appState flaps double-call NativeAudio.resume
+     * and the Now Playing scrubber jumps backward (see [MANYU_IMMERSIVE] engine.resume
+     * with reason "resume" during an already-playing track).
+     */
     const tryResumeAfterForeground = () => {
       const currentStatus = statusRef.current
       if (currentStatus !== 'playing' && currentStatus !== 'loading') return
+      if (visualPlaybackRef.current.state === 'playing') {
+        immersiveLog('dialog.foregroundResume.skip_already_playing')
+        return
+      }
       const engine = engineRef.current
       if (!engine) return
       void (async () => {
+        immersiveLog('dialog.foregroundResume', {
+          status: currentStatus,
+          visual: visualPlaybackRef.current.state,
+          hasAsset: immersivePlaybackService.hasResumableAsset(),
+        })
         if (immersivePlaybackService.hasResumableAsset()) {
-          const resumed = await engine.resume()
-          if (resumed) return
+          // engine.resume() already soft-restarts on failure — do not play() (setQueue from 0).
+          await engine.resume()
+          return
         }
         await engine.play()
       })()
