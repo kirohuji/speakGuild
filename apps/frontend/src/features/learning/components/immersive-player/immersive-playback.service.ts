@@ -80,13 +80,15 @@ function waitForTrack(assetId: string): Promise<void> {
 async function configureNativeAudio() {
   if (configured || !isNative()) return
   configured = true
-  immersiveLog('configure', { showNotification: true, backgroundPlayback: true })
+  // showNotification: false — Capgo Now Playing rewrites elapsed on remotePlay/Pause and
+  // causes lock-screen scrubber flash-back; we keep background audio without the system card.
+  immersiveLog('configure', { showNotification: false, backgroundPlayback: true })
   await NativeAudio.configure({
     focus: true,
     background: true,
     backgroundPlayback: true,
     ignoreSilent: true,
-    showNotification: true,
+    showNotification: false,
     progressInterval: 0.5,
   }).catch((error) => {
     configured = false
