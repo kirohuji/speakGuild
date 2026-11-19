@@ -4,6 +4,40 @@ import { ListeningQueueEngine, type QueueScheduler } from '../listening-queue.en
 import { DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS } from '../immersive-player.store'
 import type { ImmersivePlaybackSettings, ImmersivePlayerItem } from '../immersive-player.types'
 
+const mediaSessionMock = vi.hoisted(() => ({
+  ensureMediaSessionHandlers: vi.fn(async () => undefined),
+  setMediaSessionMeta: vi.fn(async () => undefined),
+  setMediaSessionPlaying: vi.fn(async () => undefined),
+  setMediaSessionPaused: vi.fn(async () => undefined),
+  clearMediaSession: vi.fn(async () => undefined),
+  handlers: null as null | {
+    play: () => void
+    pause: () => void
+    next: () => void
+    prev: () => void
+    seekTo: (seconds: number) => void
+  },
+}))
+
+vi.mock('../immersive-media-session', () => ({
+  ensureMediaSessionHandlers: vi.fn(async (handlers: typeof mediaSessionMock.handlers) => {
+    mediaSessionMock.handlers = handlers
+    return mediaSessionMock.ensureMediaSessionHandlers(handlers)
+  }),
+  setMediaSessionMeta: mediaSessionMock.setMediaSessionMeta,
+  setMediaSessionPlaying: mediaSessionMock.setMediaSessionPlaying,
+  setMediaSessionPaused: mediaSessionMock.setMediaSessionPaused,
+  clearMediaSession: mediaSessionMock.clearMediaSession,
+}))
+
+vi.mock('../immersive-audio.transport', async () => {
+  const actual = await vi.importActual<typeof import('../immersive-audio.transport')>('../immersive-audio.transport')
+  return {
+    ...actual,
+    resolveAppLogoArtworkUri: vi.fn(async () => 'file://logo.png'),
+  }
+})
+
 function item(id: string, title: string, audioUrl = `file://${id}.mp3`): ImmersivePlayerItem {
   return {
     id,
@@ -60,7 +94,9 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
     queueNext: 0,
     queuePrevious: 0,
     stop: 0,
+    pause: 0,
     resume: 0,
+    seekTo: [] as number[],
     clearSession: 0,
   }
 
@@ -121,7 +157,9 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
       await waitTrack(prev.assetId)
       return true
     },
-    async pause() {},
+    async pause() {
+      calls.pause += 1
+    },
     async resume() {
       calls.resume += 1
       return resumeResult
@@ -133,6 +171,9 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
       activeAssetId = null
     },
     async setRate() {},
+    async seekTo(seconds: number) {
+      calls.seekTo.push(seconds)
+    },
     hasResumableAsset: () => Boolean(activeAssetId),
     getActiveAssetId: () => activeAssetId,
     getQueueIndex: () => queueIndex,
@@ -181,6 +222,12 @@ describe('ListeningQueueEngine', () => {
   let loadMoreCount: number
 
   beforeEach(() => {
+    mediaSessionMock.handlers = null
+    mediaSessionMock.ensureMediaSessionHandlers.mockClear()
+    mediaSessionMock.setMediaSessionMeta.mockClear()
+    mediaSessionMock.setMediaSessionPlaying.mockClear()
+    mediaSessionMock.setMediaSessionPaused.mockClear()
+    mediaSessionMock.clearMediaSession.mockClear()
     settings = {
       ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS,
       pauseGapSeconds: 2,
@@ -617,6 +664,29 @@ describe('ListeningQueueEngine', () => {
     pauseSpy.mockRestore()
     resumeSpy.mockRestore()
     fakeTransport.complete()
+  })
+
+  it('MediaSession handlers drive pause/resume/next/prev/seekTo', async () => {
+    settings.autoNext = false
+    const items = [item('w1', 'one'), item('w2', 'two')]
+    bind(items)
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    await vi.waitFor(() => expect(mediaSessionMock.handlers).toBeTruthy())
+
+    mediaSessionMock.handlers!.pause()
+    await vi.waitFor(() => expect(fakeTransport.calls.pause).toBe(1))
+    expect(engine.getState().status).toBe('paused')
+
+    mediaSessionMock.handlers!.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.resume).toBe(1))
+    expect(engine.getState().status).toBe('playing')
+
+    mediaSessionMock.handlers!.seekTo(1.5)
+    await vi.waitFor(() => expect(fakeTransport.calls.seekTo).toEqual([1.5]))
+
+    mediaSessionMock.handlers!.next()
+    await vi.waitFor(() => expect(indexChanges).toContain(1))
   })
 })
 

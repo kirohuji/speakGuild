@@ -330,6 +330,9 @@ importers:
       '@capgo/capacitor-in-app-review':
         specifier: ^8.1.7
         version: 8.1.7(@capacitor/core@8.3.1)
+      '@capgo/capacitor-media-session':
+        specifier: ^8.1.11
+        version: 8.1.11(@capacitor/core@8.3.1)
       '@capgo/capacitor-native-audio':
         specifier: ^8.5.4
         version: 8.5.4(@capacitor/core@8.3.1)
@@ -984,6 +987,11 @@ packages:
 
   '@capgo/capacitor-in-app-review@8.1.7':
     resolution: {integrity: sha512-Q8Pj+OQadXyldX51czJ95zzteQnxHnfQnmBnTD8gU3JMPuECV3CUDI8TcjbQVScAEr7Jk5ckBwHjSi5VoWqJ9Q==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-media-session@8.1.11':
+    resolution: {integrity: sha512-xrk/nALOI2l8sLPQcgcaBbgCfpa9oZFr469TAul/hi64Jwn3L8PPQ9UlX7gLV0cN2DP+Z51jUdmJQBSgKiYCpg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -7942,6 +7950,10 @@ snapshots:
       '@capacitor/core': 8.3.1
 
   '@capgo/capacitor-in-app-review@8.1.7(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
+  '@capgo/capacitor-media-session@8.1.11(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 

@@ -4,7 +4,18 @@ import type {
   MediaMetadataLabels,
   QueuePlayItem,
 } from './immersive-audio.transport'
-import { immersiveLog, toQueueAssetId } from './immersive-audio.transport'
+import {
+  immersiveLog,
+  resolveAppLogoArtworkUri,
+  toQueueAssetId,
+} from './immersive-audio.transport'
+import {
+  clearMediaSession,
+  ensureMediaSessionHandlers,
+  setMediaSessionMeta,
+  setMediaSessionPaused,
+  setMediaSessionPlaying,
+} from './immersive-media-session'
 import {
   normalizePauseGapSeconds,
   resolveSilenceFileUrl,
@@ -131,6 +142,8 @@ export class ListeningQueueEngine {
   private windowMeta: Array<{ segmentIndex: number; isGap: boolean }> = []
   private windowLength = 0
   private lastKnownQueueIndex = -1
+  private artworkUri: string | null = null
+  private mediaSessionReady = false
 
   constructor(options: ListeningQueueEngineOptions) {
     this.transport = options.transport
@@ -143,6 +156,8 @@ export class ListeningQueueEngine {
     this.onSleepEnd = options.onSleepEnd
     this.onEmptySegments = options.onEmptySegments
     this.onPlayFailed = options.onPlayFailed
+
+    void this.ensureLockScreenSession()
 
     this.transport.setNativeEventHandler((event) => {
       if (event.type === 'playbackState') {
@@ -261,6 +276,7 @@ export class ListeningQueueEngine {
       this.gapPaused = true
       this.scheduler.cancel()
       this.patchState({ status: 'paused' })
+      void setMediaSessionPaused()
       return
     }
     this.patchState({ status: 'paused' })
@@ -276,6 +292,7 @@ export class ListeningQueueEngine {
     if (this.state.gapActive && this.timerGapRunning && this.gapPaused) {
       this.gapPaused = false
       this.patchState({ status: 'playing' })
+      void setMediaSessionPlaying()
       this.gapResume?.()
       return true
     }
@@ -302,26 +319,30 @@ export class ListeningQueueEngine {
       this.gapPaused = true
       this.scheduler.cancel()
       this.patchState({ status: 'paused' })
+      void setMediaSessionPaused()
       return
     }
     if (this.state.status === 'playing' || this.state.status === 'loading') {
       this.patchState({ status: 'paused' })
+      void setMediaSessionPaused()
     }
   }
 
   /**
-   * Lock-screen / headset play already applied by NativeAudio.
+   * Headset / legacy NativeAudio remote play already applied.
    * Sync session state only — do not call transport.resume() (avoids soft-restart).
    */
   private syncFromRemotePlay() {
     if (this.state.gapActive && this.timerGapRunning && this.gapPaused) {
       this.gapPaused = false
       this.patchState({ status: 'playing' })
+      void setMediaSessionPlaying()
       this.gapResume?.()
       return
     }
     if (this.state.status === 'paused' || this.state.status === 'loading') {
       this.patchState({ status: 'playing' })
+      void setMediaSessionPlaying()
     }
   }
 
@@ -386,6 +407,9 @@ export class ListeningQueueEngine {
     this.windowMeta = []
     this.windowLength = 0
     await this.transport.stop({ clearSession: options?.clearSession !== false })
+    if (options?.clearSession !== false) {
+      await clearMediaSession()
+    }
     this.patchState({
       status: options?.status ?? 'idle',
       currentSegment: null,
@@ -409,6 +433,43 @@ export class ListeningQueueEngine {
     this.binding = null
   }
 
+  private async ensureLockScreenSession() {
+    if (this.mediaSessionReady) return
+    this.mediaSessionReady = true
+    await ensureMediaSessionHandlers({
+      play: () => {
+        fireAndForget(this.resume())
+      },
+      pause: () => {
+        fireAndForget(this.pause())
+      },
+      next: () => {
+        fireAndForget(this.next(true))
+      },
+      prev: () => {
+        fireAndForget(this.prev(true))
+      },
+      seekTo: (seconds) => {
+        fireAndForget(this.transport.seekTo(seconds))
+      },
+    })
+    try {
+      this.artworkUri = await resolveAppLogoArtworkUri()
+    } catch {
+      this.artworkUri = null
+    }
+  }
+
+  private publishLockScreenMeta(item: QueuePlayItem | null | undefined) {
+    if (!item) return
+    void setMediaSessionMeta({
+      title: item.title,
+      artist: item.artist || this.mediaLabels?.artist,
+      album: item.album || this.mediaLabels?.album,
+      artworkSrc: this.artworkUri ?? undefined,
+    })
+  }
+
   private syncFromQueueIndex(queueIndex: number) {
     if (queueIndex < 0 || queueIndex >= this.windowMeta.length) return
     this.lastKnownQueueIndex = queueIndex
@@ -421,6 +482,17 @@ export class ListeningQueueEngine {
         status: meta.isGap && this.state.status === 'paused' ? 'paused' : 'playing',
         gapActive: meta.isGap,
       })
+      this.publishLockScreenMeta({
+        assetId: toQueueAssetId(segment.id),
+        fileUrl: '',
+        title: segment.title,
+        artist: segment.subtitle || this.mediaLabels?.artist,
+        album: this.mediaLabels?.album,
+        segmentId: segment.id,
+        kind: meta.isGap ? 'gap' : 'segment',
+      })
+      if (this.state.status === 'playing') void setMediaSessionPlaying()
+      else if (this.state.status === 'paused') void setMediaSessionPaused()
     }
   }
 
@@ -684,6 +756,9 @@ export class ListeningQueueEngine {
       currentSegment: this.itemSegments[this.segmentIndex],
       gapActive: false,
     })
+    await this.ensureLockScreenSession()
+    this.publishLockScreenMeta(windowItems[0])
+    void setMediaSessionPlaying()
 
     await this.transport.playQueue(windowItems, {
       startIndex: 0,
@@ -795,6 +870,7 @@ export class ListeningQueueEngine {
     if (!settings.autoNext || (!hasNext && !settings.loopQueue)) {
       this.patchState({ status: 'ended', currentSegment: null })
       await this.transport.clearSession()
+      await clearMediaSession()
       return
     }
 

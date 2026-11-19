@@ -1,5 +1,5 @@
 import type { PluginListenerHandle } from '@capacitor/core'
-import { NativeAudio, type PlaybackStateEvent, type QueueChangeEvent } from '@capgo/capacitor-native-audio'
+import { NativeAudio, type PlaybackStateEvent, type ProgressEvent, type QueueChangeEvent } from '@capgo/capacitor-native-audio'
 import { audioDiag } from '@/lib/offline/audio-playback-diag'
 import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 import { isNative } from '@/lib/native'
@@ -15,8 +15,13 @@ import type {
 } from './immersive-audio.transport'
 import {
   immersiveLog,
-  resolveAppLogoArtworkUri,
 } from './immersive-audio.transport'
+import {
+  clearMediaSession,
+  setMediaSessionPaused,
+  setMediaSessionPlaying,
+  setMediaSessionPosition,
+} from './immersive-media-session'
 
 export type {
   ImmersiveAudioTransport,
@@ -31,6 +36,7 @@ let listenersReady = false
 let completeHandle: PluginListenerHandle | null = null
 let stateHandle: PluginListenerHandle | null = null
 let queueChangeHandle: PluginListenerHandle | null = null
+let progressHandle: PluginListenerHandle | null = null
 
 let nativeEventHandler: ((event: ImmersiveNativeEvent) => void) | null = null
 
@@ -39,6 +45,8 @@ let queueIndex = -1
 let activeAssetId: string | null = null
 let playEpoch = 0
 let activePlaybackRate = 1
+let lastKnownPosition = 0
+let lastKnownDuration = 0
 let trackWaiter: { assetId: string; resolve: () => void; reject: (error: Error) => void } | null = null
 
 let htmlAudio: HTMLAudioElement | null = null
@@ -47,6 +55,14 @@ const resolveCache = new Map<string, Promise<string | null>>()
 
 let visualState: ImmersivePlaybackVisualState = { state: 'idle', media: null }
 const visualStateListeners = new Set<(state: ImmersivePlaybackVisualState) => void>()
+
+function pushMediaSessionPosition(playbackRate: number) {
+  void setMediaSessionPosition({
+    position: lastKnownPosition,
+    duration: lastKnownDuration > 0 ? lastKnownDuration : undefined,
+    playbackRate,
+  })
+}
 
 function publishVisualState(state: ImmersivePlaybackVisualState) {
   visualState = state
@@ -158,6 +174,15 @@ async function ensureNativeListeners() {
       index: event.index,
     })
   })
+
+  progressHandle = await NativeAudio.addListener('progress', (event: ProgressEvent) => {
+    if (activeAssetId && event.assetId !== activeAssetId) return
+    lastKnownPosition = event.position
+    if (event.duration > 0) lastKnownDuration = event.duration
+    if (visualState.state === 'playing') {
+      pushMediaSessionPosition(activePlaybackRate)
+    }
+  })
 }
 
 async function clearNativeQueue() {
@@ -170,9 +195,11 @@ async function detachNativeListeners() {
   await completeHandle?.remove().catch(() => undefined)
   await stateHandle?.remove().catch(() => undefined)
   await queueChangeHandle?.remove().catch(() => undefined)
+  await progressHandle?.remove().catch(() => undefined)
   completeHandle = null
   stateHandle = null
   queueChangeHandle = null
+  progressHandle = null
   listenersReady = false
 }
 
@@ -316,21 +343,14 @@ function createTransport(): ImmersiveAudioTransport {
 
       await configureNativeAudio()
       await ensureNativeListeners()
-
-      const logo = await resolveAppLogoArtworkUri()
       await clearNativeQueue()
 
+      // MediaSession owns lock-screen Now Playing — omit Capgo notificationMetadata.
       const queueState = await NativeAudio.setQueue({
         items: items.map((item) => ({
           assetId: item.assetId,
           assetPath: item.fileUrl,
           isUrl: true,
-          notificationMetadata: {
-            title: item.title,
-            artist: item.artist || 'ManYuDing',
-            album: item.album || 'Immersive Library Playback',
-            artworkUrl: logo,
-          },
         })),
         startIndex,
         autoPlay: true,
@@ -349,9 +369,13 @@ function createTransport(): ImmersiveAudioTransport {
 
       activeAssetId = queueState.assetId || start.assetId
       queueIndex = queueState.index >= 0 ? queueState.index : startIndex
+      lastKnownPosition = 0
+      lastKnownDuration = 0
 
       await NativeAudio.setRate({ assetId: activeAssetId, rate: playbackRate }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
+      void setMediaSessionPlaying()
+      pushMediaSessionPosition(playbackRate)
 
       const completion = waitForTrack(activeAssetId)
       await completion
@@ -417,11 +441,17 @@ function createTransport(): ImmersiveAudioTransport {
     },
 
     async pause() {
-      immersiveLog('pause', { assetId: activeAssetId, queueIndex })
+      immersiveLog('pause', { assetId: activeAssetId, queueIndex, position: lastKnownPosition })
+      // Freeze scrubber before native pause so lock-screen position does not keep advancing.
+      pushMediaSessionPosition(0)
+      void setMediaSessionPaused()
       if (isNative() && activeAssetId) {
         await NativeAudio.pause({ assetId: activeAssetId }).catch(() => undefined)
       } else if (htmlAudio) {
+        lastKnownPosition = htmlAudio.currentTime
+        lastKnownDuration = Number.isFinite(htmlAudio.duration) ? htmlAudio.duration : lastKnownDuration
         htmlAudio.pause()
+        pushMediaSessionPosition(0)
       }
       publishVisualState({ state: 'paused', media: htmlAudio })
     },
@@ -436,6 +466,8 @@ function createTransport(): ImmersiveAudioTransport {
           return false
         }
         publishVisualState({ state: 'playing', media: null })
+        void setMediaSessionPlaying()
+        pushMediaSessionPosition(activePlaybackRate)
         return true
       }
       if (!htmlAudio) return false
@@ -459,6 +491,7 @@ function createTransport(): ImmersiveAudioTransport {
         if (options?.clearSession !== false) {
           await clearNativeQueue()
           await detachNativeListeners()
+          await clearMediaSession()
         }
       }
       if (htmlAudio) {
@@ -468,6 +501,8 @@ function createTransport(): ImmersiveAudioTransport {
         htmlAudio = null
       }
       activeAssetId = null
+      lastKnownPosition = 0
+      lastKnownDuration = 0
       if (options?.clearSession !== false) {
         queueItems = []
         queueIndex = -1
@@ -483,6 +518,36 @@ function createTransport(): ImmersiveAudioTransport {
       } else if (htmlAudio) {
         htmlAudio.playbackRate = playbackRate
       }
+      if (visualState.state === 'playing') {
+        pushMediaSessionPosition(playbackRate)
+      }
+    },
+
+    async seekTo(seconds: number) {
+      if (!Number.isFinite(seconds)) return
+      immersiveLog('seekTo', { seconds, assetId: activeAssetId, duration: lastKnownDuration })
+
+      if (isNative()) {
+        if (!activeAssetId) return
+        let duration = lastKnownDuration
+        if (!(duration > 0)) {
+          const result = await NativeAudio.getDuration({ assetId: activeAssetId }).catch(() => null)
+          duration = result?.duration ?? 0
+          if (duration > 0) lastKnownDuration = duration
+        }
+        const clamped = duration > 0 ? Math.min(Math.max(0, seconds), duration) : Math.max(0, seconds)
+        await NativeAudio.setCurrentTime({ assetId: activeAssetId, time: clamped }).catch(() => undefined)
+        lastKnownPosition = clamped
+        pushMediaSessionPosition(visualState.state === 'playing' ? activePlaybackRate : 0)
+        return
+      }
+
+      if (!htmlAudio) return
+      const duration = Number.isFinite(htmlAudio.duration) ? htmlAudio.duration : 0
+      const clamped = duration > 0 ? Math.min(Math.max(0, seconds), duration) : Math.max(0, seconds)
+      htmlAudio.currentTime = clamped
+      lastKnownPosition = clamped
+      lastKnownDuration = duration > 0 ? duration : lastKnownDuration
     },
 
     hasResumableAsset() {
@@ -512,7 +577,12 @@ function createTransport(): ImmersiveAudioTransport {
       activeAssetId = null
       queueItems = []
       queueIndex = -1
-      if (isNative()) await clearNativeQueue()
+      lastKnownPosition = 0
+      lastKnownDuration = 0
+      if (isNative()) {
+        await clearNativeQueue()
+        await clearMediaSession()
+      }
       publishVisualState({ state: 'idle', media: null })
     },
 
@@ -527,7 +597,3 @@ function createTransport(): ImmersiveAudioTransport {
 }
 
 export const immersivePlaybackService: ImmersiveAudioTransport = createTransport()
-
-void completeHandle
-void stateHandle
-void queueChangeHandle

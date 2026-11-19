@@ -46,6 +46,7 @@
     "@capgo/capacitor-autofill-save-password": "^8.0.28",
     "@capgo/capacitor-device-info": "^8.0.0",
     "@capgo/capacitor-in-app-review": "^8.1.7",
+    "@capgo/capacitor-media-session": "^8.1.11",
     "@capgo/capacitor-native-audio": "^8.5.4",
     "@capgo/capacitor-social-login": "^8.3.22",
     "@capgo/capacitor-speech-recognition": "^8.1.3",

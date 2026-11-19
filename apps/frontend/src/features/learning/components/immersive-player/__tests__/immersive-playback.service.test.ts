@@ -37,6 +37,7 @@ vi.mock('@capgo/capacitor-native-audio', () => {
     pause: vi.fn(async () => undefined),
     resume: vi.fn(async () => undefined),
     setRate: vi.fn(async () => undefined),
+    setCurrentTime: vi.fn(async () => undefined),
     getCurrentTime: vi.fn(async () => ({ currentTime: 1.25 })),
     getDuration: vi.fn(async () => ({ duration: 4 })),
     addListener: vi.fn(async (event: string, handler: (payload: unknown) => void) => {
@@ -52,8 +53,18 @@ vi.mock('@capgo/capacitor-native-audio', () => {
   return { NativeAudio }
 })
 
+const mediaSessionApi = vi.hoisted(() => ({
+  setMediaSessionPosition: vi.fn(async () => undefined),
+  setMediaSessionPlaying: vi.fn(async () => undefined),
+  setMediaSessionPaused: vi.fn(async () => undefined),
+  clearMediaSession: vi.fn(async () => undefined),
+}))
+
+vi.mock('../immersive-media-session', () => mediaSessionApi)
+
 vi.mock('@/lib/native', () => ({
   isNative: () => true,
+  isIOS: () => true,
 }))
 
 vi.mock('@/lib/offline/playback-audio', () => ({
@@ -102,8 +113,13 @@ describe('immersivePlaybackService setQueue transport', () => {
     vi.mocked(NativeAudio.resume).mockClear()
     vi.mocked(NativeAudio.stop).mockClear()
     vi.mocked(NativeAudio.setRate).mockClear()
+    vi.mocked(NativeAudio.setCurrentTime).mockClear()
     vi.mocked(NativeAudio.addListener).mockClear()
     vi.mocked(resolvePlaybackAudio).mockClear()
+    mediaSessionApi.setMediaSessionPosition.mockClear()
+    mediaSessionApi.setMediaSessionPlaying.mockClear()
+    mediaSessionApi.setMediaSessionPaused.mockClear()
+    mediaSessionApi.clearMediaSession.mockClear()
     fsMock.stat.mockClear()
     fsMock.getUri.mockClear()
     fsMock.writeFile.mockClear()
@@ -149,13 +165,14 @@ describe('immersivePlaybackService setQueue transport', () => {
           assetId: 'immersive:seg-1',
           assetPath: url,
           isUrl: true,
-          notificationMetadata: expect.objectContaining({
-            title: 'hello',
-            artworkUrl: expect.any(String),
-          }),
         })],
       }))
     })
+    const queued = vi.mocked(NativeAudio.setQueue).mock.calls[0]?.[0]
+    expect(queued?.items[0]).not.toHaveProperty('notificationMetadata')
+    expect(NativeAudio.configure).toHaveBeenCalledWith(expect.objectContaining({
+      showNotification: false,
+    }))
 
     emit('complete', { assetId: 'immersive:seg-1' })
     await playPromise
@@ -205,9 +222,40 @@ describe('immersivePlaybackService setQueue transport', () => {
     await vi.waitFor(() => expect(NativeAudio.setQueue).toHaveBeenCalled())
     await immersivePlaybackService.pause()
     expect(NativeAudio.pause).toHaveBeenCalledWith({ assetId: 'immersive:a' })
+    expect(mediaSessionApi.setMediaSessionPaused).toHaveBeenCalled()
     const ok = await immersivePlaybackService.resume()
     expect(ok).toBe(true)
     expect(NativeAudio.resume).toHaveBeenCalledWith({ assetId: 'immersive:a' })
+    expect(mediaSessionApi.setMediaSessionPlaying).toHaveBeenCalled()
+    await immersivePlaybackService.stop({ clearSession: true })
+    await expect(playPromise).resolves.toBeUndefined()
+    expect(mediaSessionApi.clearMediaSession).toHaveBeenCalled()
+  })
+
+  it('progress updates MediaSession position and seekTo sets current time', async () => {
+    const playPromise = immersivePlaybackService.playQueue([
+      { assetId: 'immersive:a', fileUrl: 'file://a.mp3', title: 'a', segmentId: 'a' },
+    ])
+    await vi.waitFor(() => expect(NativeAudio.setQueue).toHaveBeenCalled())
+    mediaSessionApi.setMediaSessionPosition.mockClear()
+
+    emit('progress', { assetId: 'immersive:a', position: 1.25, duration: 4 })
+    await vi.waitFor(() => {
+      expect(mediaSessionApi.setMediaSessionPosition).toHaveBeenCalledWith({
+        position: 1.25,
+        duration: 4,
+        playbackRate: 1,
+      })
+    })
+
+    await immersivePlaybackService.seekTo(2.5)
+    expect(NativeAudio.setCurrentTime).toHaveBeenCalledWith({ assetId: 'immersive:a', time: 2.5 })
+    expect(mediaSessionApi.setMediaSessionPosition).toHaveBeenCalledWith({
+      position: 2.5,
+      duration: 4,
+      playbackRate: 1,
+    })
+
     await immersivePlaybackService.stop({ clearSession: true })
     await expect(playPromise).resolves.toBeUndefined()
   })

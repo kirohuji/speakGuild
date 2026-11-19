@@ -73,6 +73,8 @@ export type ImmersiveAudioTransport = {
   resume(): Promise<boolean>
   stop(options?: { clearSession?: boolean }): Promise<void>
   setRate(playbackRate: number): Promise<void>
+  /** Seek within the active asset (lock-screen scrubber). */
+  seekTo(seconds: number): Promise<void>
   hasResumableAsset(): boolean
   getActiveAssetId(): string | null
   getQueueIndex(): number
