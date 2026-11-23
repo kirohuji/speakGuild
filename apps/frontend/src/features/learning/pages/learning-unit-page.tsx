@@ -35,6 +35,9 @@ import {
 } from '../components/expression-prep-section'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { DesktopLearningShell } from '@/layout/desktop-learning-shell'
+import { desktopLearningHref } from '@/features/home/desktop-learning-section'
 import { displayLearningUnitLocation } from '../lib/learning-unit-display'
 
 const PREP_PAGE_SIZE = 8
@@ -47,9 +50,11 @@ function pageFromSearchParams(searchParams: URLSearchParams, name: string) {
 
 export function LearningUnitPage() {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const { unitId } = useParams<{ unitId: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const planHref = isMobile ? '/learning' : desktopLearningHref('learning')
 
   // 数据：来自 store
   const unit = useLearningStore((s) => s.unitDetail)
@@ -441,35 +446,48 @@ export function LearningUnitPage() {
   }, [setSearchParams])
 
   // 当前 unit 已有数据时不展示骨架，避免切换/重进时闪烁
-  if (loading && unit?.id !== unitId) return <MobilePageLoading rows={5} />
-  if (!unit && !loading) return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <Target className="size-12 text-muted-foreground/40" />
-      <p className="text-center text-muted-foreground">{isEnrolled ? t('learning.packNeedsDownload') : t('learning.unitNotFound')}</p>
-      {isEnrolled ? (
-        <Button
-          onClick={() => unitId && void downloadUnitPack(unitId)}
-          disabled={Boolean(downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done')}
-        >
-          <Download className="size-4" />
-          {downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done'
-            ? t('learning.downloading')
-            : t('learning.redownloadPack')}
-        </Button>
-      ) : (
-        <Button variant="secondary" className="border-0 shadow-none" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
-      )}
-    </div>
-  )
+  if (loading && unit?.id !== unitId) {
+    const loadingPage = <MobilePageLoading rows={5} />
+    if (!isMobile) {
+      return <DesktopLearningShell section="learning">{loadingPage}</DesktopLearningShell>
+    }
+    return loadingPage
+  }
+  if (!unit && !loading) {
+    const emptyPage = (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+        <Target className="size-12 text-muted-foreground/40" />
+        <p className="text-center text-muted-foreground">{isEnrolled ? t('learning.packNeedsDownload') : t('learning.unitNotFound')}</p>
+        {isEnrolled ? (
+          <Button
+            onClick={() => unitId && void downloadUnitPack(unitId)}
+            disabled={Boolean(downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done')}
+          >
+            <Download className="size-4" />
+            {downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done'
+              ? t('learning.downloading')
+              : t('learning.redownloadPack')}
+          </Button>
+        ) : (
+          <Button variant="secondary" className="border-0 shadow-none" asChild><Link to={planHref}>{t('learning.backToPlan')}</Link></Button>
+        )}
+      </div>
+    )
+    if (!isMobile) {
+      return <DesktopLearningShell section="learning">{emptyPage}</DesktopLearningShell>
+    }
+    return emptyPage
+  }
 
-  return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
+  const page = (
+    <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-24 pt-3' : 'w-full pb-2')}>
       {/* ===== Header ===== */}
       <div className="mb-4">
-        <div className="flex min-h-10 items-center gap-3 md:hidden">
+        {isMobile ? (
+        <div className="flex min-h-10 items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/learning')}
+            onClick={() => navigate(planHref)}
             className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
             aria-label={t('learning.learningPlan')}
           >
@@ -480,8 +498,9 @@ export function LearningUnitPage() {
             <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{unit.title}</h1>
           </div>
         </div>
-        <div className="hidden md:block">
-          <Link to="/learning" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        ) : (
+        <div>
+          <Link to={planHref} className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ChevronLeft className="size-4" /> {t('learning.learningPlan')}
           </Link>
           <div className="flex items-start justify-between gap-3 px-1">
@@ -499,6 +518,7 @@ export function LearningUnitPage() {
           </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* ===== 说明 ===== */}
@@ -739,6 +759,11 @@ export function LearningUnitPage() {
       />
     </div>
   )
+
+  if (!isMobile) {
+    return <DesktopLearningShell section="learning">{page}</DesktopLearningShell>
+  }
+  return page
 }
 
 function SectionHeader({

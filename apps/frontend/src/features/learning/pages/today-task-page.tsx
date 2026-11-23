@@ -1220,7 +1220,7 @@ export function TodayTaskPage() {
   // ── 加载态：登录恢复中，或无缓存数据时展示 ──
   if ((loginRestorePending || loading) && !plan) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
+      <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3' : 'w-full pb-2', isMobile && 'md:pb-24')} data-spotlight="today-overview">
         <div className="rounded-lg bg-muted/30 px-5 py-6">
           <div className="flex items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -1243,7 +1243,7 @@ export function TodayTaskPage() {
   // ── 空态 ──
   if (error || (!loading && !loginRestorePending && !plan)) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
+      <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3' : 'w-full pb-2', isMobile && 'md:pb-24')} data-spotlight="today-overview">
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Target className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-muted-foreground">
@@ -1268,7 +1268,7 @@ export function TodayTaskPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
+    <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24' : 'w-full pb-2')} data-spotlight="today-overview">
       {/* ── Header ── */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -1282,39 +1282,37 @@ export function TodayTaskPage() {
             </Link>
           )}
         </div>
-        {isMobile && (
-          <div className="flex shrink-0 items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
-            <button
-              type="button"
-              onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-              data-spotlight="today-records"
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-              aria-label={t('todayTask.practiceRecords')}
-            >
-              <ClipboardList className="size-[18px]" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
-              disabled={manualSyncing || !isOnline}
-              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
-              aria-label={isOnline ? '同步今日任务' : t('common.offline')}
-              title={isOnline ? '同步今日任务' : t('common.offline')}
-            >
-              <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
-              {!isOnline && (
-                <span className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
-                  <WifiOff className="size-2.5" />
-                </span>
-              )}
-              {isOnline && hasPendingSync && !manualSyncing && (
-                <span className="absolute -right-0.5 -top-0.5">
-                  <AlertCircle className="size-3.5 text-amber-500" />
-                </span>
-              )}
-            </button>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
+          <button
+            type="button"
+            onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+            data-spotlight="today-records"
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+            aria-label={t('todayTask.practiceRecords')}
+          >
+            <ClipboardList className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
+            disabled={manualSyncing || !isOnline}
+            className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
+            aria-label={isOnline ? '同步今日任务' : t('common.offline')}
+            title={isOnline ? '同步今日任务' : t('common.offline')}
+          >
+            <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
+            {!isOnline && (
+              <span className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
+                <WifiOff className="size-2.5" />
+              </span>
+            )}
+            {isOnline && hasPendingSync && !manualSyncing && (
+              <span className="absolute -right-0.5 -top-0.5">
+                <AlertCircle className="size-3.5 text-amber-500" />
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ── 进度条 ── */}
@@ -1829,28 +1827,16 @@ export function TodayTaskPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── 题目列表 Drawer ── */}
-      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent showHandle={false} className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
-          <div className="flex items-center justify-between px-5 pb-2 pt-1">
-            <DrawerTitle className="text-lg">{plan.mode === 'review' ? t('todayTask.todayReviewQuestions') : t('todayTask.todayPracticeQuestions')}</DrawerTitle>
-            <button
-              type="button"
-              onClick={() => setPlaylistOpen(false)}
-              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-            >
-              <ChevronDown className="size-5" />
-            </button>
-          </div>
+      {/* ── 题目列表：移动 Drawer / 桌面 Dialog ── */}
+      {(() => {
+        const playlistTitle = plan.mode === 'review' ? t('todayTask.todayReviewQuestions') : t('todayTask.todayPracticeQuestions')
+        const playlistInner = (
           <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
             <div className="space-y-5">
               {playlistGroups.map((group) => {
                 const Icon = group.meta.icon
                 return (
-                  <section
-                    key={group.type}
-                    className="space-y-1"
-                  >
+                  <section key={group.type} className="space-y-1">
                     <div className="flex items-center gap-2 px-2.5 pb-1 pt-0.5 text-muted-foreground">
                       <Icon className="size-4 shrink-0" />
                       <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{group.meta.label}</p>
@@ -1900,8 +1886,37 @@ export function TodayTaskPage() {
               })}
             </div>
           </ScrollArea>
-        </DrawerContent>
-      </Drawer>
+        )
+        if (isMobile) {
+          return (
+            <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+              <DrawerContent showHandle={false} className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
+                <div className="flex items-center justify-between px-5 pb-2 pt-1">
+                  <DrawerTitle className="text-lg">{playlistTitle}</DrawerTitle>
+                  <button
+                    type="button"
+                    onClick={() => setPlaylistOpen(false)}
+                    className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                  >
+                    <ChevronDown className="size-5" />
+                  </button>
+                </div>
+                {playlistInner}
+              </DrawerContent>
+            </Drawer>
+          )
+        }
+        return (
+          <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
+            <DialogContent className="flex h-[min(80vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl">
+              <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+                <DialogTitle className="text-lg">{playlistTitle}</DialogTitle>
+              </div>
+              {playlistInner}
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
 
       {/* ── 练习记录 Drawer ── */}
       <Dialog

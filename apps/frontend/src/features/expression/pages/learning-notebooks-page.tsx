@@ -16,6 +16,13 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -25,6 +32,7 @@ import {
 import { cn } from '@/lib/cn'
 import { learningNotebookRepository } from '@/lib/offline'
 import { useOnboardingStore } from '@/stores/onboarding.store'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 type EditorMode = 'create' | 'manage' | 'rename' | 'delete' | null
 
@@ -120,6 +128,7 @@ function NotebookRow({
 export function LearningNotebooksPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [notebooks, setNotebooks] = useState<LearningNotebook[]>([])
   const [loading, setLoading] = useState(true)
   const restoring = useOfflineSyncStore(s => s.loginRestorePending)
@@ -218,8 +227,86 @@ export function LearningNotebooksPage() {
     }
   }
 
+  const editorBody = (
+    <>
+      {(mode === 'create' || mode === 'rename') && (
+        <>
+          <div className="px-4 pt-2">
+            <Label htmlFor="notebook-name">{t('learningNotebooks.name')}</Label>
+            <Input
+              id="notebook-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={30}
+              autoFocus
+              className="mt-2 border-0 bg-muted/45 shadow-none"
+              placeholder={t('learningNotebooks.namePlaceholder')}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void submitName()
+              }}
+            />
+          </div>
+          <div className="flex flex-row gap-3 px-4 pb-4 pt-4">
+            <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={closeCurrentLayer}>
+              {t('learningNotebooks.cancel')}
+            </Button>
+            <Button className="flex-1" onClick={() => void submitName()} disabled={submitting}>
+              {mode === 'create' ? t('learningNotebooks.create') : t('learningNotebooks.save')}
+            </Button>
+          </div>
+        </>
+      )}
+      {mode === 'manage' && selected && (
+        <>
+          <div className="flex flex-col gap-2 px-4">
+            <Button
+              variant="secondary"
+              className="justify-start border-0 shadow-none"
+              onClick={() => {
+                setName(selected.name)
+                setMode('rename')
+              }}
+            >
+              <Pencil data-icon="inline-start" />
+              {t('learningNotebooks.renameAction')}
+            </Button>
+            <Button variant="destructive" className="justify-start border-0 shadow-none" onClick={() => setMode('delete')}>
+              <Trash2 data-icon="inline-start" />
+              {t('learningNotebooks.deleteAction')}
+            </Button>
+          </div>
+          <div className="px-4 pb-4 pt-4">
+            <Button variant="secondary" className="w-full border-0 shadow-none" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
+          </div>
+        </>
+      )}
+      {mode === 'delete' && selected && (
+        <div className="flex flex-row gap-3 px-4 pb-4 pt-2">
+          <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setMode('manage')}>
+            {t('learningNotebooks.cancel')}
+          </Button>
+          <Button variant="destructive" className="flex-1 border-0 shadow-none" onClick={() => void removeNotebook()} disabled={submitting}>
+            {t('learningNotebooks.deleteAction')}
+          </Button>
+        </div>
+      )}
+    </>
+  )
+
+  const editorTitle =
+    mode === 'create' ? t('learningNotebooks.createNew')
+      : mode === 'rename' ? t('learningNotebooks.rename')
+        : mode === 'manage' && selected ? t('learningNotebooks.manageTitle', { name: selected.name })
+          : mode === 'delete' && selected ? t('learningNotebooks.deleteTitle', { name: selected.name })
+            : ''
+  const editorDescription =
+    mode === 'create' || mode === 'rename' ? t('learningNotebooks.description')
+      : mode === 'manage' && selected ? t('learningNotebooks.totalItems', { count: selected.counts.total })
+        : mode === 'delete' ? t('learningNotebooks.deleteDescription')
+          : ''
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 pb-24 pt-5">
+    <div className={cn(isMobile ? 'mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 pb-24 pt-5' : 'flex w-full flex-col gap-5 pb-2')}>
       <header className="flex justify-end">
         <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full bg-muted text-foreground hover:bg-muted/80" onClick={openCreate} aria-label={t('learningNotebooks.createNew')}>
           <Plus />
@@ -271,89 +358,27 @@ export function LearningNotebooksPage() {
         </>
       )}
 
-      <Drawer open={mode !== null} onOpenChange={(open) => !open && closeCurrentLayer()}>
-        <DrawerContent className="rounded-t-[28px] border-0 bg-background shadow-none drawer-surface">
-          {(mode === 'create' || mode === 'rename') && (
-            <>
-              <DrawerHeader className="text-left">
-                <DrawerTitle>{mode === 'create' ? t('learningNotebooks.createNew') : t('learningNotebooks.rename')}</DrawerTitle>
-                <DrawerDescription>{t('learningNotebooks.description')}</DrawerDescription>
-              </DrawerHeader>
-              <div className="px-4">
-                <Label htmlFor="notebook-name">{t('learningNotebooks.name')}</Label>
-                <Input
-                  id="notebook-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  maxLength={30}
-                  autoFocus
-                  className="mt-2 border-0 bg-muted/45 shadow-none"
-                  placeholder={t('learningNotebooks.namePlaceholder')}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') void submitName()
-                  }}
-                />
-              </div>
-              <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={closeCurrentLayer}>
-                  {t('learningNotebooks.cancel')}
-                </Button>
-                <Button className="flex-1" onClick={() => void submitName()} disabled={submitting}>
-                  {mode === 'create' ? t('learningNotebooks.create') : t('learningNotebooks.save')}
-                </Button>
-              </DrawerFooter>
-            </>
-          )}
-
-          {mode === 'manage' && selected && (
-            <>
-              <DrawerHeader className="text-left">
-                <DrawerTitle>{t('learningNotebooks.manageTitle', { name: selected.name })}</DrawerTitle>
-                <DrawerDescription>{t('learningNotebooks.totalItems', { count: selected.counts.total })}</DrawerDescription>
-              </DrawerHeader>
-              <div className="flex flex-col gap-2 px-4">
-                <Button
-                  variant="secondary"
-                  className="justify-start border-0 shadow-none"
-                  onClick={() => {
-                    setName(selected.name)
-                    setMode('rename')
-                  }}
-                >
-                  <Pencil data-icon="inline-start" />
-                  {t('learningNotebooks.renameAction')}
-                </Button>
-                <Button variant="destructive" className="justify-start border-0 shadow-none" onClick={() => setMode('delete')}>
-                  <Trash2 data-icon="inline-start" />
-                  {t('learningNotebooks.deleteAction')}
-                </Button>
-              </div>
-              <DrawerFooter className="bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="secondary" className="border-0 shadow-none" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
-              </DrawerFooter>
-            </>
-          )}
-
-          {mode === 'delete' && selected && (
-            <>
-              <DrawerHeader className="text-left">
-                <DrawerTitle>{t('learningNotebooks.deleteTitle', { name: selected.name })}</DrawerTitle>
-                <DrawerDescription>
-                  {t('learningNotebooks.deleteDescription')}
-                </DrawerDescription>
-              </DrawerHeader>
-              <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setMode('manage')}>
-                  {t('learningNotebooks.cancel')}
-                </Button>
-                <Button variant="destructive" className="flex-1 border-0 shadow-none" onClick={() => void removeNotebook()} disabled={submitting}>
-                  {t('learningNotebooks.deleteAction')}
-                </Button>
-              </DrawerFooter>
-            </>
-          )}
-        </DrawerContent>
-      </Drawer>
+      {isMobile ? (
+        <Drawer open={mode !== null} onOpenChange={(open) => !open && closeCurrentLayer()}>
+          <DrawerContent className="rounded-t-[28px] border-0 bg-background shadow-none drawer-surface">
+            <DrawerHeader className="text-left">
+              <DrawerTitle>{editorTitle}</DrawerTitle>
+              {editorDescription ? <DrawerDescription>{editorDescription}</DrawerDescription> : null}
+            </DrawerHeader>
+            {editorBody}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={mode !== null} onOpenChange={(open) => !open && closeCurrentLayer()}>
+          <DialogContent className="max-w-md gap-0 p-0 sm:rounded-2xl">
+            <DialogHeader className="px-4 pt-4 text-left">
+              <DialogTitle>{editorTitle}</DialogTitle>
+              {editorDescription ? <DialogDescription>{editorDescription}</DialogDescription> : null}
+            </DialogHeader>
+            {editorBody}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

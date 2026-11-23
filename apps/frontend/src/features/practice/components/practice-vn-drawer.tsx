@@ -494,30 +494,50 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     }
   }, [exporting, printDate, printTitle, requireMembership, t, teachingMarkdown])
 
+  const teachingBody = (
+    <>
+      <div className="shrink-0 px-5 pb-3 pt-3 text-left">
+        <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2">{!inlineToc && (document.toc.length > 0 ? <button type="button" onClick={() => setTocOpen(true)} className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>)}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => { if (requireMembership()) setPreviewOpen(true) }}><FileText className="size-5" /></button></div>
+          <div className="min-w-0"><p className="text-base font-semibold tracking-tight">{t('practiceVn.teaching')}</p><p className="mt-1 text-xs text-muted-foreground">{t('practiceVn.teachingDesc')}</p></div>
+        </div><Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label={t('common.close')} onClick={beginClose}><X /></Button></div>
+        <div className="mt-3">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${readingProgress}%` }} /></div>
+          <div className="mt-1.5 text-center"><span className="text-[10px] tabular-nums text-muted-foreground/80">{t('practiceVn.readingProgress', { progress: readingProgress })}</span></div>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="flex h-full min-h-0">
+          {inlineToc && document.toc.length > 0 && <aside className="flex w-60 shrink-0 flex-col border-r border-border/45"><div className="flex shrink-0 items-center justify-between border-b border-border/45 bg-muted/35 px-3 py-2"><p className="px-1 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div className="flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.expandAll')} aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.collapseAll')} aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></div><TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="flex-1" /></aside>}
+          <div className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <><Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} restoreStateFrom={savedVirtuosoState ?? undefined} increaseViewportBy={{ top: 900, bottom: 1200 }} rangeChanged={handleRangeChanged} isScrolling={(isScrolling) => { if (!isScrolling && !restoringRef.current) persistReadingPosition() }} itemContent={(index, section) => <TeachingSectionView section={section} sectionIndex={index} isLast={index === document.sections.length - 1} />} />{restoringReadingPosition && <div className="app-surface drawer-surface absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"><Loader2 className="size-5 animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t('common.loading')}</p></div>}</> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
+        </div>
+      </div>
+    </>
+  )
+
   return <>
     {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full bg-muted/50 px-3.5 py-2 text-xs font-medium text-foreground transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
-    <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
-      <DrawerContent onPointerDownOutside={keepDrawerOpenForToc} className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-0 bg-background text-foreground shadow-none contain-paint !z-[10001]" overlayClassName="!z-[10001]">
-        <DrawerHeader className="shrink-0 px-5 pb-3 pt-3 text-left">
-          <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
-          <div className="flex shrink-0 items-center gap-2">{!inlineToc && (document.toc.length > 0 ? <button type="button" onClick={() => setTocOpen(true)} className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>)}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => { if (requireMembership()) setPreviewOpen(true) }}><FileText className="size-5" /></button></div>
-            <div className="min-w-0"><DrawerTitle className="text-base font-semibold tracking-tight">{t('practiceVn.teaching')}</DrawerTitle><DrawerDescription className="mt-1 text-xs">{t('practiceVn.teachingDesc')}</DrawerDescription></div>
-          </div><Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label={t('common.close')} onClick={beginClose}><X /></Button></div>
-          <div className="mt-3">
-            <div className="h-1 w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${readingProgress}%` }} /></div>
-            <div className="mt-1.5 text-center"><span className="text-[10px] tabular-nums text-muted-foreground/80">{t('practiceVn.readingProgress', { progress: readingProgress })}</span></div>
-          </div>
-        </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-hidden">
-          {/* Tablets keep the outline in this row. Phones use the same flex row
-              without the aside, so the Markdown list still gets a real height. */}
-          <div className="flex h-full min-h-0">
-            {inlineToc && document.toc.length > 0 && <aside className="flex w-60 shrink-0 flex-col border-r border-border/45"><div className="flex shrink-0 items-center justify-between border-b border-border/45 bg-muted/35 px-3 py-2"><p className="px-1 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div className="flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.expandAll')} aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.collapseAll')} aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></div><TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="flex-1" /></aside>}
-            <div className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <><Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} restoreStateFrom={savedVirtuosoState ?? undefined} increaseViewportBy={{ top: 900, bottom: 1200 }} rangeChanged={handleRangeChanged} isScrolling={(isScrolling) => { if (!isScrolling && !restoringRef.current) persistReadingPosition() }} itemContent={(index, section) => <TeachingSectionView section={section} sectionIndex={index} isLast={index === document.sections.length - 1} />} />{restoringReadingPosition && <div className="app-surface drawer-surface absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"><Loader2 className="size-5 animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t('common.loading')}</p></div>}</> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
-          </div>
-        </div>
-      </DrawerContent>
-    </Drawer>
+    {isMobile ? (
+      <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
+        <DrawerContent onPointerDownOutside={keepDrawerOpenForToc} className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-0 bg-background text-foreground shadow-none contain-paint !z-[10001]" overlayClassName="!z-[10001]">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{t('practiceVn.teaching')}</DrawerTitle>
+            <DrawerDescription>{t('practiceVn.teachingDesc')}</DrawerDescription>
+          </DrawerHeader>
+          {teachingBody}
+        </DrawerContent>
+      </Drawer>
+    ) : (
+      <Dialog open={open} onOpenChange={onDrawerOpenChange}>
+        <DialogContent
+          onPointerDownOutside={keepDrawerOpenForToc}
+          className="flex h-[min(88vh,900px)] max-w-5xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden"
+        >
+          <DialogTitle className="sr-only">{t('practiceVn.teaching')}</DialogTitle>
+          {teachingBody}
+        </DialogContent>
+      </Dialog>
+    )}
     <Sheet open={tocOpen && !inlineToc} onOpenChange={setTocOpen}>
       <SheetContent
         side="left"

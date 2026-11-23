@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useLearningStore } from '@/stores/learning.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { ShopCard } from './shop-card'
@@ -31,6 +32,7 @@ type PackageTypeFilter = LearningPackageType | 'all'
 
 export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore, excludePackageType }: Props) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const tags = useLearningStore((s) => s.tags)
   const fetchTags = useLearningStore((s) => s.fetchTags)
   const units = useLearningStore((s) => s.shopUnits)
@@ -42,6 +44,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
   const [activeTag, setActiveTag] = useState('all')
   const [keyword, setKeyword] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
 
   const doSearch = useCallback((kw: string, tag: string, packageType: PackageTypeFilter) => {
     const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string } = {}
@@ -94,16 +97,28 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
     doSearch(keyword, tag, activeType)
   }
 
-  const handleEndReached = () => {
+  const handleEndReached = useCallback(() => {
     if (shopHasMore && !loading) {
       const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string } = {}
       if (activeType !== 'all') params.packageType = activeType
       if (excludePackageType) params.excludePackageType = excludePackageType
       if (activeTag !== 'all') params.tag = activeTag
       if (keyword.trim()) params.search = keyword.trim()
-      onLoadMore(params)
+      void onLoadMore(params)
     }
-  }
+  }, [activeTag, activeType, excludePackageType, keyword, loading, onLoadMore, shopHasMore])
+
+  // 桌面中栏是外层滚动，Virtuoso 的 height:100% 会塌成空白；用哨兵触发加载更多
+  useEffect(() => {
+    if (isMobile) return
+    const node = loadMoreSentinelRef.current
+    if (!node) return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) handleEndReached()
+    }, { root: null, rootMargin: '200px 0px' })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [handleEndReached, isMobile, units.length])
 
   const categoryTabs = useMemo(
     () => [
@@ -197,6 +212,33 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
     )
   }
 
+  const renderCard = (unit: (typeof units)[number], index: number) => (
+    <div className="py-1">
+      <ShopCard
+        unit={unit}
+        onMemberOpen={onMemberOpen}
+        onEnroll={onEnrollUnit}
+        {...(index === 0 ? { 'data-spotlight': 'first-shop-unit' } : {})}
+      />
+    </div>
+  )
+
+  // 桌面：跟随中栏自然滚动，避免 Virtuoso 在无固定高度容器中高度为 0
+  if (!isMobile) {
+    return (
+      <div className="flex flex-col">
+        {headerEl}
+        <div className="space-y-0">
+          {units.map((unit, index) => (
+            <div key={unit.id}>{renderCard(unit, index)}</div>
+          ))}
+        </div>
+        {Footer}
+        <div ref={loadMoreSentinelRef} className="h-4 w-full" aria-hidden />
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full flex-col">
       {headerEl}
@@ -204,19 +246,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
         <Virtuoso
           style={{ height: '100%' }}
           totalCount={units.length}
-          itemContent={(index) => {
-            const unit = units[index]
-            return (
-              <div className="py-1">
-                <ShopCard
-                  unit={unit}
-                  onMemberOpen={onMemberOpen}
-                  onEnroll={onEnrollUnit}
-                  {...(index === 0 ? { 'data-spotlight': 'first-shop-unit' } : {})}
-                />
-              </div>
-            )
-          }}
+          itemContent={(index) => renderCard(units[index], index)}
           endReached={handleEndReached}
           components={{ Footer: () => Footer }}
         />

@@ -210,11 +210,12 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
       </button>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="flex max-h-[88dvh] w-[90vw] min-w-0 flex-col gap-0 overflow-y-auto overscroll-contain rounded-2xl p-0 sm:max-w-md">
+        <DialogContent className="flex max-h-[88dvh] w-[90vw] min-w-0 flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-md">
           <DialogHeader className="sr-only">
             <DialogTitle>{unit.title}</DialogTitle>
             <DialogDescription>{displayLocation}</DialogDescription>
           </DialogHeader>
+          <div className="scrollbar-hide min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="flex min-w-0 flex-col">
             <div className="flex gap-3 bg-muted/30 p-4">
               <UnitCover unit={unit} icon={Icon} className="size-20" />
@@ -348,6 +349,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 <p className="py-8 text-center text-sm text-muted-foreground">{t('learning.noTopics')}</p>
               )}
             </div>
+          </div>
           </div>
         </DialogContent>
       </Dialog>

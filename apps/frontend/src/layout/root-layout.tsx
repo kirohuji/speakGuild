@@ -51,7 +51,13 @@ export function RootLayout() {
   const restoreProgress = useOfflineSyncStore((s) => s.restoreProgress)
   const isMobile = useIsMobile()
   const isAuthPage = pathname === '/auth/login' || pathname === '/auth/register'
-  const isHomePage = pathname === '/'
+  // 移动端 `/` 仍是沉浸首页；桌面 `/` 是学习壳，按普通内容页处理
+  const isHomePage = pathname === '/' && isMobile
+  const isDesktopLearningShell = !isMobile && (
+    pathname === '/'
+    || pathname.startsWith('/learning/units/')
+    || /^\/expressions\/[^/]+$/.test(pathname)
+  )
   const isLearningSubPage =
     pathname.startsWith('/learning/units/') ||
     pathname.startsWith('/learning/writing/') ||
@@ -197,7 +203,9 @@ export function RootLayout() {
       }`)}>
         <div
           className={cn(
-            isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0' : 'px-4 py-6'),
+            isAuthPage || isHomePage || isDesktopLearningShell || immersiveMode
+              ? 'h-full max-w-none px-0 py-0'
+              : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0' : 'px-4 py-6'),
             // Keep layout (and scrollHeight) intact while restoring; only hide the
             // wrong-offset paint so the learner never sees a jump from the top.
             isRestoringScroll && 'invisible pointer-events-none',
@@ -207,7 +215,7 @@ export function RootLayout() {
           <Outlet />
         </div>
       </main>
-      {!isAuthPage && !isMobile && !immersiveMode && <Footer />}
+      {!isAuthPage && !isMobile && !immersiveMode && !isDesktopLearningShell && <Footer />}
       {!isAuthPage && showBottomNav && <BottomNav />}
       {!isAuthPage && <AppUpdateDialog />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>

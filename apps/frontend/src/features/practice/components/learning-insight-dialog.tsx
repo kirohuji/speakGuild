@@ -1,5 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { InsightPracticeHostProvider } from './insight-practice-host'
 import {
   BookText,
   BookmarkPlus,
@@ -394,10 +396,21 @@ export function LearningInsightDialog({
   const usesAbsoluteIndex = total != null
   const hasPrev = absoluteIndex > 0
   const hasNext = absoluteIndex < playlistTotal - 1
+  const isMobile = useIsMobile()
   const [playlistOpen, setPlaylistOpen] = useState(false)
+  const [practiceView, setPracticeView] = useState<ReactNode>(null)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const touchAxis = useRef<'pending' | 'horizontal' | 'vertical'>('pending')
+
+  useEffect(() => {
+    if (!open) setPracticeView(null)
+  }, [open])
+
+  const practiceHost = useMemo(() => ({
+    openPractice: (node: ReactNode) => setPracticeView(node),
+    closePractice: () => setPracticeView(null),
+  }), [])
 
   // Native packages defer only this word's two pronunciations. Start opening
   // the retained ZIP after the dialog is visible so the first tap shares the
@@ -480,6 +493,60 @@ export function LearningInsightDialog({
 
   if (!current) return null
 
+  const playlistBody = (
+    <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8">
+      <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
+        {items.map((item, i) => {
+          const Icon = item.kind === 'word' ? BookText : item.kind === 'chunk' ? MessageSquareText : TextQuote
+          const iconTone = item.kind === 'word'
+            ? 'text-sky-600 dark:text-sky-400'
+            : item.kind === 'chunk'
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-violet-600 dark:text-violet-400'
+          const title =
+            item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
+          const isActive = i === index
+          const loadMoreAfter = insightLoadMoreAfterIndex(items.length)
+
+          return (
+            <div key={item.id}>
+              <button
+                type="button"
+                onClick={() => selectFromPlaylist(i)}
+                className={cn(
+                  'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-foreground hover:bg-muted',
+                )}
+              >
+                <Icon className={cn('size-4 shrink-0', iconTone)} />
+                <span className="min-w-0 max-w-full overflow-hidden">
+                  <span className="block truncate font-english text-sm font-medium">{title}</span>
+                  <WordMeaningInline meaning={item.meaning} className="mt-0" />
+                </span>
+                {isActive ? (
+                  <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">
+                    {t('insight.current')}
+                  </Badge>
+                ) : (
+                  <span className="w-0" />
+                )}
+              </button>
+              {i === loadMoreAfter ? (
+                <InsightListLoadMoreSentinel
+                  enabled={items.length < playlistTotal}
+                  itemCount={items.length}
+                  onLoadMore={onLoadMore}
+                />
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+    </ScrollArea>
+  )
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -497,109 +564,74 @@ export function LearningInsightDialog({
           <DialogDescription className="sr-only">
             {current.kind === 'word' ? current.meaning : current.kind === 'chunk' ? current.meaning : ''}
           </DialogDescription>
-          <div className="flex min-h-0 flex-1 flex-col">
-            {/* Header - 固定在顶部，关闭按钮在右侧 */}
-            <InsightHeader item={current} surface={hideSaveActions ? 'library' : 'pack'} onClose={() => onOpenChange(false)} />
-
-            {/* Content - 中间弹性区域，可滚动 */}
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {current.kind === 'word' && <WordInsight item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
-              {current.kind === 'chunk' && <ChunkInsightView item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
-              {current.kind === 'pattern' && <PatternInsightView item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
+          <InsightPracticeHostProvider value={practiceHost}>
+            <div className="flex min-h-0 flex-1 flex-col" data-insight-practice={practiceView ? '' : undefined}>
+              {practiceView ? (
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                  {practiceView}
+                </div>
+              ) : (
+                <>
+                  <InsightHeader item={current} surface={hideSaveActions ? 'library' : 'pack'} onClose={() => onOpenChange(false)} />
+                  <div className="min-h-0 flex-1 overflow-y-auto">
+                    {current.kind === 'word' && <WordInsight item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
+                    {current.kind === 'chunk' && <ChunkInsightView item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
+                    {current.kind === 'pattern' && <PatternInsightView item={current} hideSave={hideSaveActions} practiceUnitId={practiceUnitId} />}
+                  </div>
+                  <div className={cn('flex shrink-0 items-center justify-between gap-3 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
+                    <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
+                      <ChevronLeft className="size-4" /> {t('insight.prev')}
+                    </Button>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {absoluteIndex + 1} / {playlistTotal}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
+                        {t('insight.next')} <ChevronRight className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setPlaylistOpen(true)}
+                        title={t('insight.playlist')}
+                      >
+                        <ListMusic className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-
-            {/* Footer - 固定在底部 */}
-            <div className={cn('flex shrink-0 items-center justify-between gap-3 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
-              <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
-                <ChevronLeft className="size-4" /> {t('insight.prev')}
-              </Button>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {absoluteIndex + 1} / {playlistTotal}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
-                  {t('insight.next')} <ChevronRight className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setPlaylistOpen(true)}
-                  title={t('insight.playlist')}
-                >
-                  <ListMusic className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+          </InsightPracticeHostProvider>
         </DialogContent>
       </Dialog>
 
-      {/* 播放列表抽屉 */}
-      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent showHandle={false} className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
-          <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-1">
-            <DrawerTitle className="min-w-0 truncate text-lg">{t('insight.playlist')}</DrawerTitle>
-            <button
-              type="button"
-              onClick={() => setPlaylistOpen(false)}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-            >
-              <ChevronDown className="size-5" />
-            </button>
-          </div>
-          <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8">
-            <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
-              {items.map((item, i) => {
-                const Icon = item.kind === 'word' ? BookText : item.kind === 'chunk' ? MessageSquareText : TextQuote
-                const iconTone = item.kind === 'word'
-                  ? 'text-sky-600 dark:text-sky-400'
-                  : item.kind === 'chunk'
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-violet-600 dark:text-violet-400'
-                const title =
-                  item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
-                const isActive = i === index
-                const loadMoreAfter = insightLoadMoreAfterIndex(items.length)
-
-                return (
-                  <div key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => selectFromPlaylist(i)}
-                      className={cn(
-                        'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
-                        isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-foreground hover:bg-muted',
-                      )}
-                    >
-                      <Icon className={cn('size-4 shrink-0', iconTone)} />
-                      <span className="min-w-0 max-w-full overflow-hidden">
-                        <span className="block truncate font-english text-sm font-medium">{title}</span>
-                        <WordMeaningInline meaning={item.meaning} className="mt-0" />
-                      </span>
-                      {isActive ? (
-                        <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">
-                          {t('insight.current')}
-                        </Badge>
-                      ) : (
-                        <span className="w-0" />
-                      )}
-                    </button>
-                    {i === loadMoreAfter ? (
-                      <InsightListLoadMoreSentinel
-                        enabled={items.length < playlistTotal}
-                        itemCount={items.length}
-                        onLoadMore={onLoadMore}
-                      />
-                    ) : null}
-                  </div>
-                )
-              })}
+      {isMobile ? (
+        <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+          <DrawerContent showHandle={false} className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
+            <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-1">
+              <DrawerTitle className="min-w-0 truncate text-lg">{t('insight.playlist')}</DrawerTitle>
+              <button
+                type="button"
+                onClick={() => setPlaylistOpen(false)}
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+              >
+                <ChevronDown className="size-5" />
+              </button>
             </div>
-          </ScrollArea>
-        </DrawerContent>
-      </Drawer>
+            {playlistBody}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
+          <DialogContent className="flex h-[min(80vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl">
+            <div className="flex min-w-0 items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
+              <DialogTitle className="min-w-0 truncate text-lg">{t('insight.playlist')}</DialogTitle>
+            </div>
+            {playlistBody}
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

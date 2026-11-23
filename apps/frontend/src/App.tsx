@@ -20,6 +20,7 @@ import { installMediaPlaybackTracking, stopTransientMediaPlayback } from '@/lib/
 import { ScriptVideoTaskMonitor } from '@/features/scripts/components/script-video-task-monitor'
 // ── 首屏必需：静态导入 ──
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
+import { DesktopLegacyLearningRedirect } from '@/features/home/components/desktop-section-redirect'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
 import { TodayTaskPage } from '@/features/learning/pages/today-task-page'
 import { LearningUnitPage } from '@/features/learning/pages/learning-unit-page'
@@ -131,10 +132,10 @@ export default function App() {
               <Route element={<RootLayout />}>
                 {/* 首屏静态 */}
                 <Route path="/" element={<EnglishHomePage />} />
-                <Route path="/learning" element={<LearningPlanPage />} />
+                <Route path="/learning" element={<DesktopLegacyLearningRedirect><LearningPlanPage /></DesktopLegacyLearningRedirect>} />
                 <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
                 <Route path="/learning/units/:unitId/read" element={<LearningReaderPage />} />
-                <Route path="/today" element={<TodayTaskPage />} />
+                <Route path="/today" element={<DesktopLegacyLearningRedirect><TodayTaskPage /></DesktopLegacyLearningRedirect>} />
                 <Route path="/scripts" element={<ScriptCenterPage />} />
                 <Route path="/scripts/packages/:packageId" element={<ScriptPackagePage />} />
                 <Route path="/scripts/packages/:packageId/episodes/:episodeId" element={<ScriptEpisodePage />} />
@@ -152,7 +153,7 @@ export default function App() {
                 <Route path="/learning/writing/:topicId" element={<WritingSessionPage />} />
                 <Route path="/learning/reading/:topicId" element={<ReadingSessionPage />} />
                 <Route path="/learning/listening/:topicId" element={<ListeningSessionPage />} />
-                <Route path="/expressions" element={<LearningNotebooksPage />} />
+                <Route path="/expressions" element={<DesktopLegacyLearningRedirect><LearningNotebooksPage /></DesktopLegacyLearningRedirect>} />
                 <Route path="/expressions/:notebookId" element={<ExpressionLibraryPage />} />
                 <Route path="/growth" element={<AchievementHallPage />} />
                 <Route path="/achievements" element={<AchievementHallPage />} />
