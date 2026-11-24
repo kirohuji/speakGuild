@@ -6,6 +6,7 @@ import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { makeupAvailability } from '@/features/points/makeup-policy'
 import { useUserStore } from '@/stores/user.store'
 import { useHomeStore } from '@/stores/home.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -198,6 +199,12 @@ export function CheckInCalendarDrawer({
   const invalidateCalendar = useLearningStore(state => state.invalidateCheckInCalendar)
   const storeCheckIn = useHomeStore((s) => s.checkIn)
   const checkInLoading = useHomeStore((s) => s.checkInLoading)
+
+  // 签到按钮真正渲染后才尝试分段引导（桌面右栏统计面板）
+  useEffect(() => {
+    if (!canCheckInToday) return
+    useOnboardingStore.getState().tryStartSegment('home-checkin')
+  }, [canCheckInToday])
   const selectDay = useCallback((day?: Date) => {
     if (!day || isAfter(day, today)) return
     setSelectedDay(day)

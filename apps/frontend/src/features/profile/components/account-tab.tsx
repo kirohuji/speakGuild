@@ -321,7 +321,8 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
         </div>
       </div>
 
-      {/* 账号绑定 */}
+      {/* 账号绑定：仅移动端；桌面 header 账户管理 dialog 隐藏 */}
+      {!desktop && (
       <div className="overflow-hidden rounded-xl bg-muted/30">
         <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.accountBinding')}</p>
         <div className="divide-y divide-border/40">
@@ -402,6 +403,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* 账号安全 */}
       {desktop && <div className="overflow-hidden rounded-xl bg-muted/30">

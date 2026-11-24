@@ -308,6 +308,22 @@ function saveCompleted(completed: Record<string, boolean>) {
   }
 }
 
+/** 目标已挂载且有可点击尺寸时才算「真正显示在界面上」 */
+export function isSpotlightTargetPresent(selector: string): boolean {
+  if (typeof document === 'undefined') return false
+  try {
+    const el = document.querySelector(selector)
+    if (!el) return false
+    const rect = el.getBoundingClientRect()
+    return rect.width >= 1 && rect.height >= 1
+  } catch {
+    return false
+  }
+}
+
+/** 取消尚未找到 target 的分段探测，避免重复 rAF */
+let segmentProbeToken = 0
+
 // ---- Store ----
 interface OnboardingStore {
   /** 当前引导模式，null = 无引导 */
@@ -357,8 +373,29 @@ export const useOnboardingStore = create<OnboardingStore>()((set, get) => ({
     const { mode, completedSegments } = get()
     if (mode || completedSegments[segmentId]) return
     const segment = ONBOARDING_SEGMENTS.find((s) => s.id === segmentId)
-    if (!segment) return
-    set({ mode: 'segment', activeSegmentId: segment.id, currentIndex: 0, steps: segment.steps })
+    if (!segment?.steps[0]?.targetSelector) return
+    const selector = segment.steps[0].targetSelector
+
+    const activate = () => {
+      const state = get()
+      if (state.mode || state.completedSegments[segmentId]) return true
+      if (!isSpotlightTargetPresent(selector)) return false
+      set({ mode: 'segment', activeSegmentId: segment.id, currentIndex: 0, steps: segment.steps })
+      return true
+    }
+
+    // 数据就绪当帧 DOM 可能还没画完：短轮询，始终要求 target 真在界面上
+    if (activate()) return
+    const token = ++segmentProbeToken
+    let attempts = 0
+    const tick = () => {
+      if (token !== segmentProbeToken) return
+      if (activate()) return
+      attempts += 1
+      // ~2s（60fps），覆盖签到按钮 / 列表首项等晚一点挂载的情况
+      if (attempts < 120) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
   },
 
   cancelSegment: () => {
