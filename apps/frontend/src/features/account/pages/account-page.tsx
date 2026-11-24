@@ -29,6 +29,7 @@ import {
   mapEmailChangeError,
 } from '@/features/auth/api'
 import { useCountdown } from '@/hooks/use-countdown'
+import { isIOS } from '@/lib/native'
 
 // ─── 第三方登录图标（与登录页一致）────────────────────────────────────────
 
@@ -834,7 +835,8 @@ export function AccountPage() {
         )}
       </IosSection>
 
-      {/* 区域三：第三方账号绑定 */}
+      {/* 微信 / Apple 绑定仅 iOS 原生 */}
+      {isIOS() && (
       <IosSection header={t('profile.accountBinding')}>
         {isLoading ? (
           <>
@@ -939,6 +941,7 @@ export function AccountPage() {
           </>
         )}
       </IosSection>
+      )}
 
       {/* 区域：离线数据 */}
       <IosSection header={t('profile.offlineData', { defaultValue: '离线数据' })}>
