@@ -417,8 +417,9 @@ function ExpressionLibraryPageContent() {
       useOnboardingStore.getState().tryStartSegment('expression-immersive')
       return
     }
-    useOnboardingStore.getState().tryStartSegment('expression-export-pdf')
-  }, [loading, result.items.length, libraryTab, onboardingCompletedSegments])
+    // PDF 导出仅移动端有入口
+    if (isMobile) useOnboardingStore.getState().tryStartSegment('expression-export-pdf')
+  }, [loading, result.items.length, libraryTab, onboardingCompletedSegments, isMobile])
 
   // ---- dialog ----
   const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
@@ -1141,7 +1142,9 @@ function ExpressionLibraryPageContent() {
           <button type="button" onClick={() => setGroupByDate((value) => !value)} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20', groupByDate && 'bg-primary/20')} aria-label={t('expressionLib.groupByDate')} aria-pressed={groupByDate}>
             <CalendarDays className="size-4" />
           </button>
-          <button type="button" onClick={() => void openExportPreview()} data-spotlight="expression-export-pdf" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
+          {isMobile && (
+            <button type="button" onClick={() => void openExportPreview()} data-spotlight="expression-export-pdf" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
+          )}
         </div>
 
         {/* ---- 二级状态过滤 ---- */}
