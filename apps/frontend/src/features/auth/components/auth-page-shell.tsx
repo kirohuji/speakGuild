@@ -15,8 +15,8 @@ export function AuthPageShell({
   className,
 }: AuthPageShellProps) {
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
-      <div className={cn('relative mx-auto flex min-h-[calc(100dvh-1.75rem)] w-full max-w-md flex-col justify-center', className)}>
+    <div className="relative min-h-[100dvh] overflow-y-auto overscroll-contain bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+      <div className={cn('relative mx-auto flex min-h-[calc(100dvh-1.75rem)] w-full max-w-md flex-col justify-center py-6', className)}>
         <div className="mb-4 text-center">
           <img src="/logo.png" alt="ManYuDing" className="mx-auto h-16 w-auto dark:invert" />
           {description ? (

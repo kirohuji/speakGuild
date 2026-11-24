@@ -1,6 +1,7 @@
 import { showRequestError } from '@/lib/request-feedback'
 import { LEARNING_LIBRARY_CHANGED_EVENT } from '@/lib/offline/learning-content.repository'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -39,11 +40,13 @@ import { Switch } from '@/components/ui/switch'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { DesktopLearningShell } from '@/layout/desktop-learning-shell'
+import { LearningStatsRail } from '@/features/home/components/learning-stats-rail'
+import { DesktopLearningShell, useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
 import { desktopLearningHref } from '@/features/home/desktop-learning-section'
 import { Virtuoso } from 'react-virtuoso'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { PrepPager } from '@/features/practice/components/prep-pager'
 import {
   PracticeSheetPage,
   PracticeSheetPreviewFrame,
@@ -88,10 +91,23 @@ const PAGE_SIZE = 30
 type ExportMode = PracticeSheetExportMode
 
 export function ExpressionLibraryPage() {
+  const isMobile = useIsMobile()
+  if (!isMobile) {
+    return (
+      <DesktopLearningShell section="expressions" asideMode="slot">
+        <ExpressionLibraryPageContent />
+      </DesktopLearningShell>
+    )
+  }
+  return <ExpressionLibraryPageContent />
+}
+
+function ExpressionLibraryPageContent() {
   const { t, i18n } = useTranslation()
   const { session } = useAuth()
   const { requireMembership, membershipDrawer } = useMembershipPurchase()
   const isMobile = useIsMobile()
+  const asideSlot = useDesktopAsideSlot()
   const setBottomNavVisible = useLayoutStore((state) => state.setBottomNavVisible)
   const { notebookId } = useParams<{ notebookId: string }>()
   const navigate = useNavigate()
@@ -161,7 +177,6 @@ export function ExpressionLibraryPage() {
   const tabSwipeRef = useRef({ x: 0, y: 0, blocked: false })
   const listScrollTopRef = useRef(0)
   const headerScrollIntentRef = useRef({ down: 0, up: 0 })
-  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
   const [headerCondensed, setHeaderCondensed] = useState(false)
   const exportItemsPerPage = practiceSheetItemsPerPage(exportColumns)
   const exportThumbScale = isMobile ? 0.43 : 0.58
@@ -232,6 +247,31 @@ export function ExpressionLibraryPage() {
       setLoadingMore(false)
     }
   }, [loading, loadingMore, localListRequest, notebookId, result.items.length, result.total])
+
+  // 桌面端分页：替换当前页，不做无限追加
+  const goToListPage = useCallback(async (page: number) => {
+    if (!notebookId || loading || loadingMore) return
+    const nextPage = Math.max(1, page)
+    setLoadingMore(true)
+    try {
+      const pageResult = await learningNotebookRepository.listCachedExpressionPage({
+        ...localListRequest,
+        limit: PAGE_SIZE,
+        offset: (nextPage - 1) * PAGE_SIZE,
+      })
+      if (localListKeyRef.current !== JSON.stringify(localListRequest)) return
+      setResult({
+        items: pageResult.items as Expression[],
+        total: pageResult.total,
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+        totalPages: Math.max(1, Math.ceil(pageResult.total / PAGE_SIZE)),
+      })
+      setSelectedIds(new Set())
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [loading, loadingMore, localListRequest, notebookId])
 
   const syncThisNotebook = useCallback(async () => {
     if (!notebookId || !session?.user?.id || notebookSyncing) return
@@ -919,18 +959,6 @@ export function ExpressionLibraryPage() {
     ])
   }, [groupByDate, i18n.language, t, visibleListItems])
 
-  // 桌面中栏外层滚动时 Virtuoso 的 h-full 会塌成空白；改用普通列表 + 哨兵加载
-  useEffect(() => {
-    if (isMobile) return
-    const node = loadMoreSentinelRef.current
-    if (!node) return
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) void loadNextPage()
-    }, { root: null, rootMargin: '200px 0px' })
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [isMobile, loadNextPage, virtualRows.length, libraryTab])
-
   const renderListRow = (row: (typeof virtualRows)[number]) => {
     if (row.kind === 'item') {
       return <div key={row.id} className="mx-1 pb-2">{renderExpressionItem(row.expression, row.index)}</div>
@@ -983,11 +1011,20 @@ export function ExpressionLibraryPage() {
   const renderVirtualList = (immersiveClassName: string) => {
     if (!isMobile) {
       return (
-        <div className="flex flex-col">
-          {listHintHeader(immersiveClassName)}
-          {virtualRows.map((row) => renderListRow(row))}
-          {listFooter}
-          <div ref={loadMoreSentinelRef} className="h-4 w-full" aria-hidden />
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {listHintHeader(immersiveClassName)}
+            {virtualRows.map((row) => renderListRow(row))}
+            {result.totalPages <= 1 && listFooter}
+          </div>
+          <div className="shrink-0 pt-2">
+            <PrepPager
+              currentPage={result.page}
+              totalPages={Math.max(1, result.totalPages)}
+              totalItems={result.total}
+              onPageChange={(page) => { void goToListPage(page) }}
+            />
+          </div>
         </div>
       )
     }
@@ -1040,7 +1077,11 @@ export function ExpressionLibraryPage() {
   }
 
   const page = (
-    <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pt-3 md:h-auto' : 'w-full pt-0', isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0', selectionMode ? 'md:pb-28' : 'md:pb-10')}>
+    <div className={cn(
+      isMobile ? 'mx-auto max-w-2xl px-4 pt-3 md:h-auto' : 'flex h-full min-h-0 flex-col pt-0',
+      isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0',
+      selectionMode ? 'md:pb-28' : isMobile ? 'md:pb-10' : 'pb-0',
+    )}>
       <header className="mb-4 flex shrink-0 items-center gap-3">
         <button
           type="button"
@@ -1066,14 +1107,14 @@ export function ExpressionLibraryPage() {
           <button type="button" onClick={() => { setSelectionMode((value) => !value); setSelectedIds(new Set()) }} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', selectionMode ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')} aria-label={selectionMode ? t('expressionLib.cancelSelection') : t('expressionLib.batchEdit')}><CheckSquare className="size-4" /></button>
         </div>
       </header>
-      <Tabs value={libraryTab} onValueChange={handleLibraryTabChange} className="flex min-h-0 flex-1 flex-col">
-        <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
+      <Tabs value={libraryTab} onValueChange={handleLibraryTabChange} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <TabsList className="mb-3 w-full shrink-0 rounded-full bg-background/54 backdrop-blur-2xl">
           <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
           <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
           <TabsTrigger value="pattern" className="flex-1 rounded-full">{t('expressionLib.patterns')}</TabsTrigger>
         </TabsList>
 
-        <div className={cn('mb-3 flex items-center gap-2 transition-all duration-200', isMobile && headerCondensed && 'hidden')}>
+        <div className={cn('mb-3 flex shrink-0 items-center gap-2 transition-all duration-200', isMobile && headerCondensed && 'hidden')}>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-0 bg-muted/45 pl-9 text-sm shadow-none focus-visible:bg-background" placeholder={t('expressionLib.searchPlaceholder')} />
@@ -1104,7 +1145,7 @@ export function ExpressionLibraryPage() {
         </div>
 
         {/* ---- 二级状态过滤 ---- */}
-        <div className="mb-4 flex gap-2 overflow-x-auto">
+        <div className="mb-4 flex shrink-0 gap-2 overflow-x-auto">
           {filterPills.map((item) => (
             <button
               key={item.value}
@@ -1125,8 +1166,8 @@ export function ExpressionLibraryPage() {
           ))}
         </div>
 
-        {/* 移动端 forceMount 保滑动切 tab；桌面只挂载当前 tab，避免哨兵 ref 落到隐藏列表 */}
-        <TabsContent value="words" forceMount={isMobile} className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
+        {/* 移动端 forceMount 保滑动切 tab；桌面只挂载当前 tab，列表区单独滚动 */}
+        <TabsContent value="words" forceMount={isMobile} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1136,7 +1177,7 @@ export function ExpressionLibraryPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="chunk" forceMount={isMobile} className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
+        <TabsContent value="chunk" forceMount={isMobile} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1146,7 +1187,7 @@ export function ExpressionLibraryPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="pattern" forceMount={isMobile} className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
+        <TabsContent value="pattern" forceMount={isMobile} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1382,20 +1423,45 @@ export function ExpressionLibraryPage() {
         )
       })()}
 
-      <LearningInsightDialog
-        items={insightPlaylist.displayItems}
-        index={insightPlaylist.index}
-        open={insightPlaylist.open}
-        onOpenChange={(open) => {
-          if (!open) insightPlaylist.reset()
-          else insightPlaylist.setOpen(true)
-        }}
-        onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
-        total={insightPlaylist.total}
-        windowOffset={insightPlaylist.windowOffset}
-        onLoadMore={() => { void insightPlaylist.loadMore() }}
-        hideSaveActions
-      />
+      {isMobile ? (
+        <LearningInsightDialog
+          items={insightPlaylist.displayItems}
+          index={insightPlaylist.index}
+          open={insightPlaylist.open}
+          onOpenChange={(open) => {
+            if (!open) insightPlaylist.reset()
+            else insightPlaylist.setOpen(true)
+          }}
+          onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
+          total={insightPlaylist.total}
+          windowOffset={insightPlaylist.windowOffset}
+          onLoadMore={() => { void insightPlaylist.loadMore() }}
+          hideSaveActions
+        />
+      ) : asideSlot ? createPortal(
+        insightPlaylist.open ? (
+          <div className="flex h-full min-h-0 flex-col px-3 py-3">
+            <LearningInsightDialog
+              items={insightPlaylist.displayItems}
+              index={insightPlaylist.index}
+              open={insightPlaylist.open}
+              onOpenChange={(open) => {
+                if (!open) insightPlaylist.reset()
+                else insightPlaylist.setOpen(true)
+              }}
+              onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
+              total={insightPlaylist.total}
+              windowOffset={insightPlaylist.windowOffset}
+              onLoadMore={() => { void insightPlaylist.loadMore() }}
+              hideSaveActions
+              presentation="rail"
+            />
+          </div>
+        ) : (
+          <LearningStatsRail />
+        ),
+        asideSlot,
+      ) : null}
       {isMobile && (
         <ImmersivePlayerDialog
           items={immersivePlaylist.immersiveItems}
@@ -1414,14 +1480,6 @@ export function ExpressionLibraryPage() {
       {membershipDrawer}
     </div>
   )
-
-  if (!isMobile) {
-    return (
-      <DesktopLearningShell section="expressions">
-        {page}
-      </DesktopLearningShell>
-    )
-  }
 
   return page
 }

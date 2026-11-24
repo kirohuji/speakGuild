@@ -1385,6 +1385,7 @@ const ja = {
       showInProfile: 'プロフィールと練習記録に表示されます',
       passwordStrength: { weak: '弱', medium: '中', strong: '強' },
       otpSent: '認証コードをメールに送信しました',
+      otpSentPhone: '認証コードをスマホに送信しました',
       otpSentTitle: '認証コード送信済み',
       otpSentHint: 'メールの6桁コードを入力し、新しいパスワードを設定してください。届かない場合は迷惑メールも確認してください。',
       otpPlaceholder: '6桁の認証コード',

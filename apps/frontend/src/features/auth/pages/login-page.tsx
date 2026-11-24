@@ -133,7 +133,7 @@ export function LoginPage() {
     if (!phoneNumber) { setMessage(t('auth.enterPhone')); return }
     await runAction(
       () => sendPhoneOtp(`${MAINLAND_PHONE_PREFIX}${phoneNumber}`),
-      t('auth.otpSent'),
+      t('auth.otpSentPhone'),
       () => { startCountdown(); setOtpSent(true) },
     )
   }

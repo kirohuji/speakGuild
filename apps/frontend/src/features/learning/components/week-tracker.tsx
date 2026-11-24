@@ -191,10 +191,13 @@ export function CheckInCalendarDrawer({
   const activeCalendar = calendarMatches && (!data?.offlineOnly || data.dates.includes(selectedKey)) ? data : null
   const makeupState = makeupAvailability(selectedKey, activeCalendar, online, todayKey)
   const canOfferMakeup = view === 'day' && selectedKey < todayKey && !activeCalendar?.dates.includes(selectedKey)
+  const canCheckInToday = view === 'day' && selectedKey === todayKey && Boolean(activeCalendar && !activeCalendar.dates.includes(selectedKey))
   const makeupReason = makeupState === 'insufficient'
     ? t('learning.dayDetails.insufficient', { cost: activeCalendar?.makeup?.cost, balance: activeCalendar?.makeup?.pointsBalance })
     : t(`learning.dayDetails.${makeupState}`)
   const invalidateCalendar = useLearningStore(state => state.invalidateCheckInCalendar)
+  const storeCheckIn = useHomeStore((s) => s.checkIn)
+  const checkInLoading = useHomeStore((s) => s.checkInLoading)
   const selectDay = useCallback((day?: Date) => {
     if (!day || isAfter(day, today)) return
     setSelectedDay(day)
@@ -233,6 +236,27 @@ export function CheckInCalendarDrawer({
     } catch (error) {
       if (epoch === requestEpoch.current && getCurrentSessionSnapshot()?.user?.id === owner) showMakeupError(error)
     } finally { if (epoch === requestEpoch.current) setMakeupBusy(false) }
+  }
+  const doCheckIn = async () => {
+    if (checkInLoading || submittingRef.current) return
+    submittingRef.current = true
+    try {
+      const message = await storeCheckIn()
+      toast.success(message || t('home.checkInSaved'))
+      await invalidateCalendar(useHomeStore.getState().checkInStatus ?? undefined)
+      await fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? '')
+      if (message.includes('已经签到') || /already\s*checked\s*in/i.test(message)) {
+        toast.success(t('home.checkInSaved'))
+        await invalidateCalendar(useHomeStore.getState().checkInStatus ?? undefined)
+        await fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
+      } else {
+        toast.error(message || t('home.checkInFailed'))
+      }
+    } finally {
+      submittingRef.current = false
+    }
   }
   const confirmMakeup = async () => {
     const owner = getCurrentSessionSnapshot()?.user?.id
@@ -290,10 +314,19 @@ export function CheckInCalendarDrawer({
                 <CalendarCheck className="size-3.5" />
                 {view==='day'?t('learning.dayChart.checkInStatus'):t('learning.activeDays', { defaultValue: '练习天数' })}
               </div>
-              {canOfferMakeup ? <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={!['ready', 'insufficient'].includes(makeupState) || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { if (makeupState === 'insufficient') { toast.error(makeupReason); return } void prepareMakeup() }}>
-                {makeupBusy && <Spinner data-icon="inline-start" />}
-                {t('learning.dayDetails.makeup')}
-              </Button> : <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>}
+              {canOfferMakeup ? (
+                <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={!['ready', 'insufficient'].includes(makeupState) || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { if (makeupState === 'insufficient') { toast.error(makeupReason); return } void prepareMakeup() }}>
+                  {makeupBusy && <Spinner data-icon="inline-start" />}
+                  {t('learning.dayDetails.makeup')}
+                </Button>
+              ) : canCheckInToday ? (
+                <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={checkInLoading} data-spotlight="home-checkin" onClick={() => void doCheckIn()}>
+                  {checkInLoading && <Spinner data-icon="inline-start" />}
+                  {checkInLoading ? t('home.checkingIn') : t('home.checkIn')}
+                </Button>
+              ) : (
+                <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>
+              )}
             </div>
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

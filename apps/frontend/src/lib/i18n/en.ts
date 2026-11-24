@@ -1385,6 +1385,7 @@ const en = {
       showInProfile: 'This will appear on your profile and practice records',
       passwordStrength: { weak: 'Weak', medium: 'Medium', strong: 'Strong' },
       otpSent: 'Verification code sent to your email',
+      otpSentPhone: 'Verification code sent to your phone',
       otpSentTitle: 'Code Sent',
       otpSentHint: 'Check your inbox for the 6-digit code, then set a new password. Look in spam if it does not arrive.',
       otpPlaceholder: '6-digit code',

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Ban, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, Pause, Play, RotateCcw, Trash2, X } from 'lucide-react'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
 import { useLearningStore, type DownloadTask } from '@/stores/learning.store'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
@@ -171,6 +173,7 @@ export function LearningPackDownloadDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const globalTasks = useGlobalTaskStore((state) => state.tasks)
   const removeGlobalTask = useGlobalTaskStore((state) => state.removeTask)
@@ -199,172 +202,200 @@ export function LearningPackDownloadDrawer({
     return () => { alive = false }
   }, [open, t])
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-0 bg-background shadow-none ring-0 app-surface drawer-surface">
-        <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
-          <DrawerTitle className="flex items-center gap-2 text-base font-semibold">
-            <ListChecks className="size-4 text-primary" />
-            {t('learning.taskCenter')}
-          </DrawerTitle>
-          <p className="text-xs text-muted-foreground">
-            {totalTaskCount > 0 ? t('learning.tasksRunningCount', { count: runningCount }) : t('learning.noRunningTasks')}
-          </p>
-        </DrawerHeader>
+  const header = (
+    <>
+      <div className="flex items-center gap-2 text-base font-semibold text-foreground">
+        <ListChecks className="size-4 text-primary" />
+        {t('learning.taskCenter')}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {totalTaskCount > 0 ? t('learning.tasksRunningCount', { count: runningCount }) : t('learning.noRunningTasks')}
+      </p>
+    </>
+  )
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-          {totalTaskCount === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
-              <PackageOpen className="mb-3 size-8 opacity-45" />
-              {t('learning.noDownloadOrVideoTasks')}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {visibleGlobalTasks.map((task) => (
-                <div key={task.id} className="rounded-lg bg-muted/30 p-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-[44px] shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      {task.status === 'error'
-                        ? <AlertCircle className="size-4 text-destructive" />
-                        : <Film className="size-4" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-medium">{task.title}</p>
-                        <span className="text-xs font-semibold tabular-nums">{Math.round(task.progress)}%</span>
-                      </div>
-                      <p className={cn('mt-1 truncate text-[11px]', task.status === 'error' ? 'text-destructive' : 'text-muted-foreground')}>
-                        {t('learning.videoGeneration')} / {task.error || task.stepLabel}
-                      </p>
-                      <Progress value={task.progress} className="mt-2 h-1" />
-                    </div>
-                    {task.status === 'error' && (
-                      <button type="button" onClick={() => removeGlobalTask(task.id)} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted" aria-label={t('learning.removeFailedTask')}>
-                        <X className="size-3.5" />
-                      </button>
-                    )}
-                  </div>
+  const list = (
+    totalTaskCount === 0 ? (
+      <div className="flex h-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
+        <PackageOpen className="mb-3 size-8 opacity-45" />
+        {t('learning.noDownloadOrVideoTasks')}
+      </div>
+    ) : (
+      <div className="space-y-2">
+        {visibleGlobalTasks.map((task) => (
+          <div key={task.id} className="rounded-lg bg-muted/30 p-3.5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-[44px] shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                {task.status === 'error'
+                  ? <AlertCircle className="size-4 text-destructive" />
+                  : <Film className="size-4" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium">{task.title}</p>
+                  <span className="text-xs font-semibold tabular-nums">{Math.round(task.progress)}%</span>
                 </div>
-              ))}
-              {tasks.map((task) => {
-                const secondaryCount = taskSecondaryCount(task, t)
-                return (
-                <details
-                  key={task.packId}
-                  open={isRunning(task) || task.status === 'error'}
-                  className="group overflow-hidden rounded-lg bg-muted/30"
-                >
-                  <summary className="flex cursor-pointer list-none items-center gap-3 p-3.5">
-                    <PackTaskCover task={task} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                        <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">{taskPercent(task)}%</span>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                        <span className="truncate">{taskTitle(task, t)} / {statusLabel(task, t)}</span>
-                        {secondaryCount && (
-                          <span className="shrink-0 tabular-nums">{secondaryCount}</span>
-                        )}
-                      </div>
-                      <Progress value={taskPercent(task)} className="mt-2 h-1" />
-                    </div>
-                    <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-                  </summary>
-
-                  <div className="px-3.5 pb-3.5 text-xs">
-                    {task.status === 'error' ? (
-                      <div className="space-y-2 rounded-md bg-destructive/10 p-2 text-destructive">
-                        <p className="truncate px-0.5">
-                          {task.error ?? (task.kind === 'uninstall' ? t('learning.packTaskUninstallFailedRetry') : t('learning.packTaskDownloadFailedRetry'))}
-                        </p>
-                        {task.kind !== 'uninstall' && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="h-8 gap-1.5 border-0 text-xs shadow-none"
-                              onClick={() => void downloadUnitPack(task.packId)}
-                            >
-                              <RotateCcw className="size-3.5" />
-                              {t('common.retry', { defaultValue: '重试' })}
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive"
-                              onClick={() => cancelPackTask(task.packId)}
-                            >
-                              <Trash2 className="size-3.5" />
-                              {t('learning.removeFailedTask')}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-3 text-muted-foreground">
-                          <span>{task.kind === 'uninstall' ? t('learning.packTaskCurrentStep') : t('learning.packTaskCurrentResource')}</span>
-                          {secondaryCount ? (
-                            <span className="tabular-nums">{secondaryCount}</span>
-                          ) : null}
-                        </div>
-                        <code
-                          title={task.kind === 'uninstall' ? undefined : (task.currentItem ?? undefined)}
-                          className="block truncate rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground"
-                        >
-                          {task.kind === 'uninstall'
-                            ? [
-                                task.stepLabel || task.step || t('learning.packTaskWaiting'),
-                                secondaryCount,
-                              ].filter(Boolean).join(' · ')
-                            : task.step === 'downloading' && secondaryCount
-                              ? secondaryCount
-                              : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}
-                        </code>
-                        {task.kind === 'uninstall' && task.status === 'paused' && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="mt-1 h-8 w-full rounded-full border-0 text-xs shadow-none"
-                            onClick={() => void resumePackTask(task.packId)}
-                          >
-                            {t('learning.resumeUninstall')}
-                          </Button>
-                        )}
-                        {task.kind !== 'uninstall' && (task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting') && (
-                          <div className="grid grid-cols-2 gap-2 pt-1">
-                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 text-xs shadow-none" onClick={() => pausePackTask(task.packId)}>
-                              <Pause className="size-3.5" />{t('learning.pause')}
-                            </Button>
-                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
-                              <Ban className="size-3.5" />{t('learning.terminateDownload')}
-                            </Button>
-                          </div>
-                        )}
-                        {task.kind !== 'uninstall' && task.status === 'paused' && (
-                          <div className="grid grid-cols-2 gap-2 pt-1">
-                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 text-xs shadow-none" onClick={() => void resumePackTask(task.packId)}>
-                              <Play className="size-3.5" />{t('learning.resumeDownload')}
-                            </Button>
-                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
-                              <Ban className="size-3.5" />{t('learning.terminateDownload')}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </details>
-                )
-              })}
+                <p className={cn('mt-1 truncate text-[11px]', task.status === 'error' ? 'text-destructive' : 'text-muted-foreground')}>
+                  {t('learning.videoGeneration')} / {task.error || task.stepLabel}
+                </p>
+                <Progress value={task.progress} className="mt-2 h-1" />
+              </div>
+              {task.status === 'error' && (
+                <button type="button" onClick={() => removeGlobalTask(task.id)} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted" aria-label={t('learning.removeFailedTask')}>
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
-          )}
+          </div>
+        ))}
+        {tasks.map((task) => {
+          const secondaryCount = taskSecondaryCount(task, t)
+          return (
+          <details
+            key={task.packId}
+            open={isRunning(task) || task.status === 'error'}
+            className="group overflow-hidden rounded-lg bg-muted/30"
+          >
+            <summary className="flex cursor-pointer list-none items-center gap-3 p-3.5">
+              <PackTaskCover task={task} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">{taskPercent(task)}%</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span className="truncate">{taskTitle(task, t)} / {statusLabel(task, t)}</span>
+                  {secondaryCount && (
+                    <span className="shrink-0 tabular-nums">{secondaryCount}</span>
+                  )}
+                </div>
+                <Progress value={taskPercent(task)} className="mt-2 h-1" />
+              </div>
+              <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+            </summary>
+
+            <div className="px-3.5 pb-3.5 text-xs">
+              {task.status === 'error' ? (
+                <div className="space-y-2 rounded-md bg-destructive/10 p-2 text-destructive">
+                  <p className="truncate px-0.5">
+                    {task.error ?? (task.kind === 'uninstall' ? t('learning.packTaskUninstallFailedRetry') : t('learning.packTaskDownloadFailedRetry'))}
+                  </p>
+                  {task.kind !== 'uninstall' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 gap-1.5 border-0 text-xs shadow-none"
+                        onClick={() => void downloadUnitPack(task.packId)}
+                      >
+                        <RotateCcw className="size-3.5" />
+                        {t('common.retry', { defaultValue: '重试' })}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive"
+                        onClick={() => cancelPackTask(task.packId)}
+                      >
+                        <Trash2 className="size-3.5" />
+                        {t('learning.removeFailedTask')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3 text-muted-foreground">
+                    <span>{task.kind === 'uninstall' ? t('learning.packTaskCurrentStep') : t('learning.packTaskCurrentResource')}</span>
+                    {secondaryCount ? (
+                      <span className="tabular-nums">{secondaryCount}</span>
+                    ) : null}
+                  </div>
+                  <code
+                    title={task.kind === 'uninstall' ? undefined : (task.currentItem ?? undefined)}
+                    className="block truncate rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground"
+                  >
+                    {task.kind === 'uninstall'
+                      ? [
+                          task.stepLabel || task.step || t('learning.packTaskWaiting'),
+                          secondaryCount,
+                        ].filter(Boolean).join(' · ')
+                      : task.step === 'downloading' && secondaryCount
+                        ? secondaryCount
+                        : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}
+                  </code>
+                  {task.kind === 'uninstall' && task.status === 'paused' && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="mt-1 h-8 w-full rounded-full border-0 text-xs shadow-none"
+                      onClick={() => void resumePackTask(task.packId)}
+                    >
+                      {t('learning.resumeUninstall')}
+                    </Button>
+                  )}
+                  {task.kind !== 'uninstall' && (task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting') && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 text-xs shadow-none" onClick={() => pausePackTask(task.packId)}>
+                        <Pause className="size-3.5" />{t('learning.pause')}
+                      </Button>
+                      <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                        <Ban className="size-3.5" />{t('learning.terminateDownload')}
+                      </Button>
+                    </div>
+                  )}
+                  {task.kind !== 'uninstall' && task.status === 'paused' && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 text-xs shadow-none" onClick={() => void resumePackTask(task.packId)}>
+                        <Play className="size-3.5" />{t('learning.resumeDownload')}
+                      </Button>
+                      <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                        <Ban className="size-3.5" />{t('learning.terminateDownload')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </details>
+          )
+        })}
+      </div>
+    )
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-0 bg-background shadow-none ring-0 app-surface drawer-surface">
+          <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="sr-only">{t('learning.taskCenter')}</DrawerTitle>
+            {header}
+          </DrawerHeader>
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            {list}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[min(88vh,720px)] w-[90vw] min-h-0 min-w-0 flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-md">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/50 px-5 py-4 pr-12">
+          <div className="min-w-0">
+            <DialogTitle className="sr-only">{t('learning.taskCenter')}</DialogTitle>
+            {header}
+          </div>
         </div>
-      </DrawerContent>
-    </Drawer>
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+          {list}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

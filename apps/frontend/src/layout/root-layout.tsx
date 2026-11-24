@@ -56,6 +56,7 @@ export function RootLayout() {
   const isDesktopLearningShell = !isMobile && (
     pathname === '/'
     || pathname.startsWith('/learning/units/')
+    || pathname.startsWith('/practice/session/')
     || /^\/expressions\/[^/]+$/.test(pathname)
   )
   const isLearningSubPage =

@@ -1385,6 +1385,7 @@ const zhCN = {
       showInProfile: '将显示在你的个人中心和练习记录中',
       passwordStrength: { weak: '弱', medium: '中', strong: '强' },
       otpSent: '验证码已发送到你的邮箱',
+      otpSentPhone: '验证码已发送到你的手机',
       otpSentTitle: '验证码已发送',
       otpSentHint: '请查收邮件中的 6 位验证码，然后设置新密码。若未收到，请查看垃圾邮件。',
       otpPlaceholder: '6位验证码',

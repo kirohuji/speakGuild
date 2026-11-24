@@ -18,16 +18,18 @@ export function DesktopShopSection() {
   }, [refreshShop, fetchTags])
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold tracking-tight">{t('learning.shopTitle')}</h1>
-      <ShopView
-        isOpen
-        onMemberOpen={() => setMemberOpen(true)}
-        onEnrollUnit={storeEnrollUnit}
-        onRefreshShop={refreshShop}
-        onLoadMore={loadMoreShop}
-        excludePackageType="story"
-      />
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <h1 className="shrink-0 text-lg font-semibold tracking-tight">{t('learning.shopTitle')}</h1>
+      <div className="min-h-0 flex-1">
+        <ShopView
+          isOpen
+          onMemberOpen={() => setMemberOpen(true)}
+          onEnrollUnit={storeEnrollUnit}
+          onRefreshShop={refreshShop}
+          onLoadMore={loadMoreShop}
+          excludePackageType="story"
+        />
+      </div>
       <MembershipPurchaseDrawer open={memberOpen} onOpenChange={setMemberOpen} />
     </div>
   )

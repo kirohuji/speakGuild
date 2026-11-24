@@ -32,8 +32,14 @@ export function DesktopLearningPage() {
   )
 
   return (
-    <DesktopLearningShell section={section}>
-      <SectionContent section={section} />
+    <DesktopLearningShell section={section} asideMode={section === 'shop' ? 'slot' : undefined}>
+      {section === 'shop' ? (
+        <SectionContent section={section} />
+      ) : (
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <SectionContent section={section} />
+        </div>
+      )}
     </DesktopLearningShell>
   )
 }

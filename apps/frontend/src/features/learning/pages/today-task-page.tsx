@@ -1595,24 +1595,29 @@ export function TodayTaskPage() {
         })}
       </div>
 
-      {/* ── 今日话题快捷入口（按当前模式过滤）── */}
-      {filteredTopics.length > 0 && (() => {
+      {/* ── 今日话题：中栏展示；桌面右栏改为签到 ── */}
+      {(() => {
         const isReviewMode = plan.mode === 'review'
-        const displayedTopics = topicsExpanded ? topicPageItems.items : filteredTopics.slice(0, 3)
+        const showExpanded = !isMobile || topicsExpanded
+        const displayedTopics = showExpanded ? topicPageItems.items : filteredTopics.slice(0, 3)
 
-        return (
-          <>
-            <Separator className="my-6" />
-            <section>
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
-                  </h2>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
-                  </span>
-                </div>
+        const topicsBody = filteredTopics.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-2 py-10 text-center">
+            <Target className="size-9 text-muted-foreground/35" />
+            <p className="mt-3 text-sm text-muted-foreground">{t('todayTask.noTopics', { defaultValue: '暂无学习话题' })}</p>
+          </div>
+        ) : (
+          <section>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
+                </h2>
+                <span className="truncate text-xs text-muted-foreground">
+                  {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
+                </span>
+              </div>
+              {isMobile && (
                 <button
                   type="button"
                   onClick={() => {
@@ -1624,41 +1629,42 @@ export function TodayTaskPage() {
                 >
                   <ChevronDown className={cn('size-4 transition-transform duration-200', !topicsExpanded && '-rotate-90')} />
                 </button>
-              </div>
-              <div className="space-y-1.5">
-                {displayedTopics.map((topic, index) => {
-                  const absoluteIndex = topicsExpanded ? topicPageItems.startIndex + index : index
-                  const detail = isReviewMode
-                    ? [
-                        topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
-                        topic.todayReviewCount > 0 ? `${t('todayTask.statusReview')} ${topic.todayReviewCount}` : null,
-                        topic.todayNewCount > 0 ? `${t('todayTask.statusNew')} ${topic.todayNewCount}` : null,
-                      ].filter(Boolean).join(' · ')
-                    : null
-                  const unPracticed = topic.totalCount - topic.practicedCount
-                  const assetSummary = [
-                    topic.vocabCount > 0 ? `${topic.vocabCount} ${t('learning.vocab')}` : null,
-                    topic.chunkCount > 0 ? `${topic.chunkCount} ${t('learning.chunks')}` : null,
-                    topic.patternCount > 0 ? `${topic.patternCount} ${t('learning.patterns')}` : null,
-                  ].filter(Boolean).join(' · ')
-                  return (
-                    <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-accent/[0.06] transition-colors hover:bg-accent/[0.1]">
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => { void openTopicTeaching(topic.topicId, topic.packId) }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            void openTopicTeaching(topic.topicId, topic.packId)
-                          }
-                        }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-3 active:scale-[0.99]"
-                      >
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
-                          {absoluteIndex + 1}
-                        </div>
-                        <div className="min-w-0 flex-1">
+              )}
+            </div>
+            <div className="space-y-1.5">
+              {displayedTopics.map((topic, index) => {
+                const absoluteIndex = showExpanded ? topicPageItems.startIndex + index : index
+                const detail = isReviewMode
+                  ? [
+                      topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
+                      topic.todayReviewCount > 0 ? `${t('todayTask.statusReview')} ${topic.todayReviewCount}` : null,
+                      topic.todayNewCount > 0 ? `${t('todayTask.statusNew')} ${topic.todayNewCount}` : null,
+                    ].filter(Boolean).join(' · ')
+                  : null
+                const unPracticed = topic.totalCount - topic.practicedCount
+                const assetSummary = [
+                  topic.vocabCount > 0 ? `${topic.vocabCount} ${t('learning.vocab')}` : null,
+                  topic.chunkCount > 0 ? `${topic.chunkCount} ${t('learning.chunks')}` : null,
+                  topic.patternCount > 0 ? `${topic.patternCount} ${t('learning.patterns')}` : null,
+                ].filter(Boolean).join(' · ')
+                return (
+                  <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-accent/[0.06] transition-colors hover:bg-accent/[0.1]">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { void openTopicTeaching(topic.topicId, topic.packId) }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          void openTopicTeaching(topic.topicId, topic.packId)
+                        }
+                      }}
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-3 active:scale-[0.99]"
+                    >
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
+                        {absoluteIndex + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-2">
                           <p className="line-clamp-1 flex-1 text-sm font-medium text-foreground">{topic.topicTitle}</p>
                         </div>
@@ -1687,50 +1693,58 @@ export function TodayTaskPage() {
                             }
                           </span>
                         </div>
-                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => openTopicPractice(topic.topicId)}
-                        className="flex w-10 shrink-0 items-center justify-center text-muted-foreground/60 transition-colors hover:text-foreground"
-                        aria-label={`${topic.topicTitle} ${t('todayTask.practice')}`}
-                      >
-                        <ChevronRight className="size-4" />
-                      </button>
                     </div>
-                  )
-                })}
-              </div>
-              {filteredTopics.length > 3 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTopicsExpanded((expanded) => !expanded)
-                    setTopicPage(1)
-                  }}
-                  className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                >
-                  <ChevronDown className={cn('size-3.5 transition-transform duration-200', topicsExpanded && 'rotate-180')} />
-                  {topicsExpanded ? t('common.collapse') : t('common.expand')}
-                </button>
-              )}
-              {topicsExpanded && topicPageItems.totalPages > 1 && (
-                <div className="mt-1 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
-                  <span className="text-[11px] text-muted-foreground">
-                    {t('common.total')} {filteredTopics.length} {t('learning.items')}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
-                      {t('common.prevPage')}
-                    </Button>
-                    <span className="min-w-10 text-center text-[11px] text-muted-foreground">{topicPage}/{topicPageItems.totalPages}</span>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
-                      {t('common.nextPage')}
-                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => openTopicPractice(topic.topicId)}
+                      className="flex w-10 shrink-0 items-center justify-center text-muted-foreground/60 transition-colors hover:text-foreground"
+                      aria-label={`${topic.topicTitle} ${t('todayTask.practice')}`}
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
                   </div>
+                )
+              })}
+            </div>
+            {isMobile && filteredTopics.length > 3 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTopicsExpanded((expanded) => !expanded)
+                  setTopicPage(1)
+                }}
+                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              >
+                <ChevronDown className={cn('size-3.5 transition-transform duration-200', topicsExpanded && 'rotate-180')} />
+                {topicsExpanded ? t('common.collapse') : t('common.expand')}
+              </button>
+            )}
+            {showExpanded && topicPageItems.totalPages > 1 && (
+              <div className="mt-2 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {t('common.total')} {filteredTopics.length} {t('learning.items')}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
+                    {t('common.prevPage')}
+                  </Button>
+                  <span className="min-w-10 text-center text-[11px] text-muted-foreground">{topicPage}/{topicPageItems.totalPages}</span>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
+                    {t('common.nextPage')}
+                  </Button>
                 </div>
-              )}
-            </section>
+              </div>
+            )}
+          </section>
+        )
+
+        if (filteredTopics.length === 0 && isMobile) return null
+
+        return (
+          <>
+            <Separator className="my-6" />
+            {topicsBody}
           </>
         )
       })()}
@@ -1908,7 +1922,10 @@ export function TodayTaskPage() {
         }
         return (
           <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
-            <DialogContent className="flex h-[min(80vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl">
+            <DialogContent
+              overlayClassName="!z-[10001]"
+              className="!z-[10001] flex h-[min(80vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl"
+            >
               <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
                 <DialogTitle className="text-lg">{playlistTitle}</DialogTitle>
               </div>

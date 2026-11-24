@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
 import { BookOpen, Search } from 'lucide-react'
@@ -7,10 +8,15 @@ import { Spinner } from '@/components/ui/spinner'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { LearningStatsRail } from '@/features/home/components/learning-stats-rail'
+import { useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
 import { useLearningStore } from '@/stores/learning.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { ShopCard } from './shop-card'
+import { PrepPager } from '@/features/practice/components/prep-pager'
+import { ShopCard, ShopUnitDetailPanel, type ShopUnitCardUnit } from './shop-card'
 import type { LearningPackageType } from '../api/learning-api'
+
+const SHOP_PAGE_SIZE = 20
 
 interface Props {
   isOpen?: boolean
@@ -33,27 +39,52 @@ type PackageTypeFilter = LearningPackageType | 'all'
 export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore, excludePackageType }: Props) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const asideSlot = useDesktopAsideSlot()
   const tags = useLearningStore((s) => s.tags)
   const fetchTags = useLearningStore((s) => s.fetchTags)
   const units = useLearningStore((s) => s.shopUnits)
   const loading = useLearningStore((s) => s.shopLoading)
   const shopTotal = useLearningStore((s) => s.shopTotal)
+  const shopPage = useLearningStore((s) => s.shopPage)
   const shopHasMore = useLearningStore((s) => s.shopHasMore)
   const onboardingCompletedSegments = useOnboardingStore((s) => s.completedSegments)
   const [activeType, setActiveType] = useState<PackageTypeFilter>('all')
   const [activeTag, setActiveTag] = useState('all')
   const [keyword, setKeyword] = useState('')
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
+  const selectedUnit = useMemo(
+    () => (selectedUnitId ? units.find((unit) => unit.id === selectedUnitId) ?? null : null),
+    [selectedUnitId, units],
+  )
 
-  const doSearch = useCallback((kw: string, tag: string, packageType: PackageTypeFilter) => {
-    const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string } = {}
+  useEffect(() => {
+    if (!selectedUnitId) return
+    if (!units.some((unit) => unit.id === selectedUnitId)) setSelectedUnitId(null)
+  }, [selectedUnitId, units])
+
+  useEffect(() => {
+    if (!isOpen) setSelectedUnitId(null)
+  }, [isOpen])
+
+  const buildShopParams = useCallback((kw: string, tag: string, packageType: PackageTypeFilter) => {
+    const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number } = {}
     if (packageType !== 'all') params.packageType = packageType
     if (excludePackageType) params.excludePackageType = excludePackageType
     if (tag !== 'all') params.tag = tag
     if (kw.trim()) params.search = kw.trim()
-    onRefreshShop(params)
-  }, [excludePackageType, onRefreshShop])
+    return params
+  }, [excludePackageType])
+
+  const doSearch = useCallback((kw: string, tag: string, packageType: PackageTypeFilter) => {
+    onRefreshShop(buildShopParams(kw, tag, packageType))
+  }, [buildShopParams, onRefreshShop])
+
+  const shopTotalPages = Math.max(1, Math.ceil(shopTotal / SHOP_PAGE_SIZE) || 1)
+
+  const goToShopPage = useCallback((page: number) => {
+    void onRefreshShop({ ...buildShopParams(keyword, activeTag, activeType), page })
+  }, [activeTag, activeType, buildShopParams, keyword, onRefreshShop])
 
   useEffect(() => {
     if (!isOpen) return
@@ -99,26 +130,9 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
 
   const handleEndReached = useCallback(() => {
     if (shopHasMore && !loading) {
-      const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string } = {}
-      if (activeType !== 'all') params.packageType = activeType
-      if (excludePackageType) params.excludePackageType = excludePackageType
-      if (activeTag !== 'all') params.tag = activeTag
-      if (keyword.trim()) params.search = keyword.trim()
-      void onLoadMore(params)
+      void onLoadMore(buildShopParams(keyword, activeTag, activeType))
     }
-  }, [activeTag, activeType, excludePackageType, keyword, loading, onLoadMore, shopHasMore])
-
-  // 桌面中栏是外层滚动，Virtuoso 的 height:100% 会塌成空白；用哨兵触发加载更多
-  useEffect(() => {
-    if (isMobile) return
-    const node = loadMoreSentinelRef.current
-    if (!node) return
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) handleEndReached()
-    }, { root: null, rootMargin: '200px 0px' })
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [handleEndReached, isMobile, units.length])
+  }, [activeTag, activeType, buildShopParams, keyword, loading, onLoadMore, shopHasMore])
 
   const categoryTabs = useMemo(
     () => [
@@ -191,11 +205,35 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
     return null
   }, [loading, units.length, shopHasMore, shopTotal, t])
 
+  const desktopAsidePortal = !isMobile && asideSlot
+    ? createPortal(
+      selectedUnit ? (
+        <div className="flex h-full min-h-0 flex-col px-3 py-3">
+          <ShopUnitDetailPanel
+            key={selectedUnit.id}
+            unit={selectedUnit}
+            onEnroll={onEnrollUnit}
+            onClose={() => setSelectedUnitId(null)}
+            variant="rail"
+          />
+        </div>
+      ) : (
+        <LearningStatsRail />
+      ),
+      asideSlot,
+    )
+    : null
+
   if (loading && units.length === 0) {
     return (
       <>
-        {headerEl}
-        <MobilePageLoading rows={4} minHeightClassName="min-h-[40vh]" />
+        {desktopAsidePortal}
+        <div className={cn(!isMobile && 'flex h-full min-h-0 flex-col')}>
+          <div className="shrink-0">{headerEl}</div>
+          <div className={cn(!isMobile && 'min-h-0 flex-1 overflow-y-auto')}>
+            <MobilePageLoading rows={4} minHeightClassName="min-h-[40vh]" />
+          </div>
+        </div>
       </>
     )
   }
@@ -203,10 +241,13 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
   if (!loading && units.length === 0) {
     return (
       <>
-        {headerEl}
-        <div className="flex flex-col items-center py-16 text-center">
-          <BookOpen className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">{t('learning.noMatch')}</p>
+        {desktopAsidePortal}
+        <div className={cn(!isMobile && 'flex h-full min-h-0 flex-col')}>
+          <div className="shrink-0">{headerEl}</div>
+          <div className="flex flex-col items-center py-16 text-center">
+            <BookOpen className="size-12 text-muted-foreground/40" />
+            <p className="mt-4 text-muted-foreground">{t('learning.noMatch')}</p>
+          </div>
         </div>
       </>
     )
@@ -218,24 +259,38 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
         unit={unit}
         onMemberOpen={onMemberOpen}
         onEnroll={onEnrollUnit}
+        onSelect={!isMobile ? ((next: ShopUnitCardUnit) => setSelectedUnitId(next.id)) : undefined}
+        selected={!isMobile && selectedUnitId === unit.id}
         {...(index === 0 ? { 'data-spotlight': 'first-shop-unit' } : {})}
       />
     </div>
   )
 
-  // 桌面：跟随中栏自然滚动，避免 Virtuoso 在无固定高度容器中高度为 0
+  // 桌面：筛选固定，仅列表区滚动；分页钉在列表下方
   if (!isMobile) {
     return (
-      <div className="flex flex-col">
-        {headerEl}
-        <div className="space-y-0">
-          {units.map((unit, index) => (
-            <div key={unit.id}>{renderCard(unit, index)}</div>
-          ))}
+      <>
+        {desktopAsidePortal}
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="shrink-0">{headerEl}</div>
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="space-y-0">
+              {units.map((unit, index) => (
+                <div key={unit.id}>{renderCard(unit, index)}</div>
+              ))}
+            </div>
+            {shopTotalPages <= 1 && Footer}
+          </div>
+          <div className="shrink-0 pt-2">
+            <PrepPager
+              currentPage={shopPage}
+              totalPages={shopTotalPages}
+              totalItems={shopTotal}
+              onPageChange={goToShopPage}
+            />
+          </div>
         </div>
-        {Footer}
-        <div ref={loadMoreSentinelRef} className="h-4 w-full" aria-hidden />
-      </div>
+      </>
     )
   }
 
