@@ -77,6 +77,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'members', label: t('admin.memberManagement', { defaultValue: '会员管理' }), icon: CreditCard, path: '/admin/members' },
       { key: 'billing', label: t('admin.billingManagement', { defaultValue: '账单管理' }), icon: Receipt, path: '/admin/billing' },
       { key: 'feedbacks', label: t('admin.feedbackManagement', { defaultValue: '反馈管理' }), icon: MessageSquare, path: '/admin/feedbacks' },
+      { key: 'testflight', label: 'TestFlight 申请', icon: Smartphone, path: '/admin/testflight' },
       { key: 'notifications', label: t('admin.notificationPush', { defaultValue: '消息推送' }), icon: Bell, path: '/admin/notifications' },
     ]},
     { key: 'content', label: t('admin.contentManagement', { defaultValue: '内容管理' }), icon: FileText, items: [

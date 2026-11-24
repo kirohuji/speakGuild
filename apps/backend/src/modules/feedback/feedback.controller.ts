@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Req, ForbiddenException } from '@nestjs/common'
+import { BadRequestException, Controller, Get, Post, Patch, Body, Param, Query, Req, ForbiddenException } from '@nestjs/common'
 import type { Request } from 'express'
 import { FeedbackService } from './feedback.service'
 import { requireAuthSession } from '../auth/session.util'
@@ -11,6 +11,19 @@ export class FeedbackController {
   @Post('anonymous')
   async submitAnonymous(@Body() body: { email: string; content: string }) {
     return this.feedbackService.createAnonymous({ email: body.email, content: body.content })
+  }
+
+  /** TestFlight 内测申请（无需登录）：提交 Apple ID */
+  @Post('testflight')
+  async submitTestflight(@Body() body: { appleId: string; note?: string }) {
+    try {
+      return await this.feedbackService.createTestflightRequest({
+        appleId: body.appleId,
+        note: body.note,
+      })
+    } catch (error: any) {
+      throw new BadRequestException(error?.message || '提交失败')
+    }
   }
 
   @Post()
@@ -43,6 +56,7 @@ export class FeedbackController {
   async list(
     @Req() req: Request,
     @Query('status') status?: string,
+    @Query('type') type?: string,
     @Query('isCritical') isCritical?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -51,6 +65,7 @@ export class FeedbackController {
     if ((session.user as any)?.role !== 'admin') throw new ForbiddenException('仅管理员可查看所有反馈')
     return this.feedbackService.findAll({
       status,
+      type,
       isCritical: isCritical === undefined ? undefined : isCritical === 'true',
       page: Number(page) || 1,
       pageSize: Number(pageSize) || 20,

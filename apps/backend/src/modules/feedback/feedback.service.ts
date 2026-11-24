@@ -27,6 +27,21 @@ export class FeedbackService {
     })
   }
 
+  /** TestFlight 内测申请：Apple ID（邮箱）写入 contact，便于后台筛选 */
+  async createTestflightRequest(data: { appleId: string; note?: string }) {
+    const appleId = data.appleId.trim().toLowerCase()
+    if (!appleId || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(appleId)) {
+      throw new Error('请填写有效的 Apple ID 邮箱')
+    }
+    return this.prisma.feedback.create({
+      data: {
+        type: 'testflight',
+        content: data.note?.trim() || '申请加入漫语町 iOS TestFlight 内测',
+        contact: appleId,
+      },
+    })
+  }
+
   async findByUser(userId: string, page = 1, pageSize = 20) {
     const skip = (page - 1) * pageSize
     const [items, total] = await Promise.all([
@@ -45,10 +60,11 @@ export class FeedbackService {
     return this.prisma.feedback.count({ where: { status: 'pending' } })
   }
 
-  async findAll(params: { status?: string; isCritical?: boolean; page?: number; pageSize?: number }) {
-    const { status, isCritical, page = 1, pageSize = 20 } = params
+  async findAll(params: { status?: string; type?: string; isCritical?: boolean; page?: number; pageSize?: number }) {
+    const { status, type, isCritical, page = 1, pageSize = 20 } = params
     const where: Prisma.FeedbackWhereInput = {}
     if (status) where.status = status as any
+    if (type) where.type = type
     if (typeof isCritical === 'boolean') where.isCritical = isCritical
     const skip = (page - 1) * pageSize
     const [items, total] = await Promise.all([

@@ -50,6 +50,7 @@ const PortalPage = lazy(() => import('@/features/portal/pages/portal-page').then
 const CompanyPage = lazy(() => import('@/features/company/pages/company-page').then(m => ({ default: m.CompanyPage })))
 const MarketingPage = lazy(() => import('@/features/system/pages/marketing-page').then(m => ({ default: m.MarketingPage })))
 const SupportPage = lazy(() => import('@/features/system/pages/support-page').then(m => ({ default: m.SupportPage })))
+const TestflightPage = lazy(() => import('@/features/system/pages/testflight-page').then(m => ({ default: m.TestflightPage })))
 const SystemTermsPage = lazy(() => import('@/features/system/pages/system-terms-page').then(m => ({ default: m.SystemTermsPage })))
 const SystemPrivacyPage = lazy(() => import('@/features/system/pages/system-privacy-page').then(m => ({ default: m.SystemPrivacyPage })))
 const SystemChildrenPrivacyPage = lazy(() => import('@/features/system/pages/system-children-page').then(m => ({ default: m.SystemChildrenPrivacyPage })))
@@ -176,6 +177,7 @@ export default function App() {
               {!isNative() && <Route path="/company" element={<CompanyPage />} />}
               {!isNative() && <Route path="/marketing" element={<MarketingPage />} />}
               <Route path="/support" element={<SupportPage />} />
+              <Route path="/testflight" element={<TestflightPage />} />
               {/* 隐私政策 / 服务条款 — 与 Marketing、Support 共用官网 Header */}
               <Route path="/system/privacy" element={<SystemPrivacyPage />} />
               <Route path="/system/terms" element={<SystemTermsPage />} />

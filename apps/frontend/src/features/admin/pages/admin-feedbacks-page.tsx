@@ -26,7 +26,7 @@ const STATUS_OPTIONS = [
 ]
 
 const TYPE_MAP: Record<string, string> = {
-  bug: '问题反馈', suggestion: '功能建议', other: '其他',
+  bug: '问题反馈', suggestion: '功能建议', other: '其他', testflight: 'TestFlight 申请',
 }
 
 const PAGE_SIZES = [10, 20, 50]
