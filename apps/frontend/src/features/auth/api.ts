@@ -26,7 +26,43 @@ export async function sendEmailOtp(email: string) {
 }
 
 export async function verifyEmailOtp(email: string, otp: string) {
-  return authClient.emailOtp.verifyEmail({ email, otp })
+  const result = await authClient.emailOtp.verifyEmail({ email, otp })
+  return throwIfAuthError(result, '邮箱验证失败')
+}
+
+/** 已登录用户：向新邮箱发送改邮验证码 */
+export async function requestEmailChange(newEmail: string) {
+  const result = await authClient.emailOtp.requestEmailChange({ newEmail })
+  return throwIfAuthError(result, '验证码发送失败')
+}
+
+/** 已登录用户：用新邮箱验证码确认改邮 */
+export async function confirmEmailChange(newEmail: string, otp: string) {
+  const result = await authClient.emailOtp.changeEmail({ newEmail, otp })
+  return throwIfAuthError(result, '修改邮箱失败')
+}
+
+export function mapEmailChangeError(message: string | undefined, t: (key: string) => string): string {
+  const raw = (message || '').toLowerCase()
+  if (raw.includes('already in use') || raw.includes('email already')) {
+    return t('profile.emailAlreadyInUse')
+  }
+  if (raw.includes('email is the same') || raw.includes('same')) {
+    return t('profile.emailSameAsCurrent')
+  }
+  if (raw.includes('invalid email') || raw.includes('invalid_email')) {
+    return t('auth.enterEmail')
+  }
+  if (raw.includes('expired') || raw.includes('otp_expired')) {
+    return t('auth.otpExpired')
+  }
+  if (raw.includes('too many') || raw.includes('too_many')) {
+    return t('auth.otpTooManyAttempts')
+  }
+  if (raw.includes('otp') || raw.includes('verification code') || raw.includes('invalid')) {
+    return t('auth.invalidOtp')
+  }
+  return message || t('profile.changeEmailFailed')
 }
 
 export async function signInWithEmailOtp(email: string, otp: string) {

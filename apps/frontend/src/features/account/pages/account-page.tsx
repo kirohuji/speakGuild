@@ -20,7 +20,15 @@ import { useUserStore } from '@/stores/user.store'
 import { useLearningStore } from '@/stores/learning.store'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { useAccountBindingActions } from '@/features/account/use-account-binding-actions'
-import { changePassword, sendEmailOtp } from '@/features/auth/api'
+import {
+  changePassword,
+  sendEmailOtp,
+  verifyEmailOtp,
+  requestEmailChange,
+  confirmEmailChange,
+  mapEmailChangeError,
+} from '@/features/auth/api'
+import { useCountdown } from '@/hooks/use-countdown'
 
 // ─── 第三方登录图标（与登录页一致）────────────────────────────────────────
 
@@ -303,6 +311,317 @@ function ChangePasswordDrawer({
   )
 }
 
+// ─── 修改邮箱 Drawer ──────────────────────────────────────────────────────
+
+function ChangeEmailDrawer({
+  open,
+  onOpenChange,
+  currentEmail,
+  onDone,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  currentEmail: string | null | undefined
+  onDone?: (email: string) => void
+}) {
+  const { t } = useTranslation()
+  const [newEmail, setNewEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageOk, setMessageOk] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [countdown, startCountdown, resetCountdown] = useCountdown(60)
+  const normalizedNewEmail = newEmail.trim().toLowerCase()
+
+  useEffect(() => {
+    if (!open) return
+    setNewEmail('')
+    setOtp('')
+    setOtpSent(false)
+    setMessage('')
+    setMessageOk(false)
+    setSuccess(false)
+    resetCountdown()
+  }, [open, resetCountdown])
+
+  const handleSendOtp = async () => {
+    if (!normalizedNewEmail) {
+      setMessageOk(false)
+      setMessage(t('auth.enterEmail'))
+      return
+    }
+    if (currentEmail && normalizedNewEmail === currentEmail.trim().toLowerCase()) {
+      setMessageOk(false)
+      setMessage(t('profile.emailSameAsCurrent'))
+      return
+    }
+    setLoading(true)
+    setMessage('')
+    try {
+      await requestEmailChange(normalizedNewEmail)
+      setOtpSent(true)
+      startCountdown()
+      setMessageOk(true)
+      setMessage(t('auth.otpSent'))
+    } catch (error: any) {
+      setMessageOk(false)
+      setMessage(mapEmailChangeError(error?.message, t))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (!normalizedNewEmail) {
+      setMessageOk(false)
+      setMessage(t('auth.enterEmail'))
+      return
+    }
+    if (otp.length !== 6) {
+      setMessageOk(false)
+      setMessage(t('auth.enterOtp'))
+      return
+    }
+    setLoading(true)
+    setMessage('')
+    try {
+      await confirmEmailChange(normalizedNewEmail, otp)
+      setSuccess(true)
+      setMessage(t('profile.changeEmailSuccess'))
+      setTimeout(() => {
+        onOpenChange(false)
+        onDone?.(normalizedNewEmail)
+      }, 1500)
+    } catch (error: any) {
+      setMessageOk(false)
+      setMessage(mapEmailChangeError(error?.message, t))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (success) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="rounded-t-3xl">
+          <div className="flex flex-col items-center px-4 py-10">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="text-lg font-semibold">{t('profile.changeEmailSuccess')}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{normalizedNewEmail}</p>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="rounded-t-3xl">
+        <DrawerHeader>
+          <DrawerTitle className="text-base">{t('profile.changeEmail')}</DrawerTitle>
+        </DrawerHeader>
+        <div className="space-y-3 px-4 pb-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t('profile.newEmail')}</Label>
+            <Input
+              value={newEmail}
+              onChange={(e) => {
+                setNewEmail(e.target.value)
+                setOtpSent(false)
+                resetCountdown()
+              }}
+              type="email"
+              placeholder={t('profile.newEmailPlaceholder')}
+              autoComplete="email"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t('auth.verificationCode')}</Label>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <Input
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                placeholder={t('auth.otpPlaceholder')}
+                autoComplete="one-time-code"
+                maxLength={6}
+              />
+              <Button
+                variant="outline"
+                className="h-11 shrink-0"
+                disabled={loading || countdown > 0 || !normalizedNewEmail}
+                onClick={handleSendOtp}
+              >
+                {countdown > 0 ? `${countdown}s` : otpSent ? t('common.sent') : t('auth.getOtp')}
+              </Button>
+            </div>
+          </div>
+          {message && (
+            <p className={cn(
+              'rounded-lg px-3 py-2 text-center text-sm',
+              messageOk
+                ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400'
+                : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+            )}>
+              {message}
+            </p>
+          )}
+        </div>
+        <DrawerFooter>
+          <Button onClick={handleConfirm} disabled={loading || !otpSent || otp.length !== 6}>
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {t('common.confirm')}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
+// ─── 验证当前邮箱 Drawer ──────────────────────────────────────────────────
+
+function VerifyEmailDrawer({
+  open,
+  onOpenChange,
+  email,
+  onDone,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  email: string
+  onDone?: () => void
+}) {
+  const { t } = useTranslation()
+  const [otp, setOtp] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageOk, setMessageOk] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [countdown, startCountdown, resetCountdown] = useCountdown(60)
+
+  useEffect(() => {
+    if (!open) return
+    setOtp('')
+    setOtpSent(false)
+    setMessage('')
+    setMessageOk(false)
+    setSuccess(false)
+    resetCountdown()
+  }, [open, resetCountdown])
+
+  const handleSendOtp = async () => {
+    setLoading(true)
+    setMessage('')
+    try {
+      await sendEmailOtp(email)
+      setOtpSent(true)
+      startCountdown()
+      setMessageOk(true)
+      setMessage(t('auth.otpSent'))
+    } catch (error: any) {
+      setMessageOk(false)
+      setMessage(error?.message || t('auth.sendFailed'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      setMessageOk(false)
+      setMessage(t('auth.enterOtp'))
+      return
+    }
+    setLoading(true)
+    setMessage('')
+    try {
+      await verifyEmailOtp(email, otp)
+      setSuccess(true)
+      setTimeout(() => {
+        onOpenChange(false)
+        onDone?.()
+      }, 1200)
+    } catch (error: any) {
+      setMessageOk(false)
+      setMessage(error?.message || t('auth.invalidOtp'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (success) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="rounded-t-3xl">
+          <div className="flex flex-col items-center px-4 py-10">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="text-lg font-semibold">{t('profile.verified')}</p>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="rounded-t-3xl">
+        <DrawerHeader>
+          <DrawerTitle className="text-base">{t('profile.verify')}</DrawerTitle>
+        </DrawerHeader>
+        <div className="space-y-3 px-4 pb-4">
+          <p className="text-sm text-muted-foreground">{email}</p>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t('auth.verificationCode')}</Label>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <Input
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                placeholder={t('auth.otpPlaceholder')}
+                autoComplete="one-time-code"
+                maxLength={6}
+              />
+              <Button
+                variant="outline"
+                className="h-11 shrink-0"
+                disabled={loading || countdown > 0}
+                onClick={handleSendOtp}
+              >
+                {countdown > 0 ? `${countdown}s` : otpSent ? t('common.sent') : t('auth.getOtp')}
+              </Button>
+            </div>
+          </div>
+          {message && (
+            <p className={cn(
+              'rounded-lg px-3 py-2 text-center text-sm',
+              messageOk
+                ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400'
+                : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+            )}>
+              {message}
+            </p>
+          )}
+        </div>
+        <DrawerFooter>
+          <Button onClick={handleVerify} disabled={loading || otp.length !== 6}>
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {t('common.confirm')}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
 // ─── 主页面 ────────────────────────────────────────────────────────────────
 
 export function AccountPage() {
@@ -321,6 +640,7 @@ export function AccountPage() {
   const unlinkingId = useUserStore((s) => s.unlinkingId)
   const ensureLoaded = useUserStore((s) => s.ensureLoaded)
   const storeUpdateProfile = useUserStore((s) => s.updateProfile)
+  const patchCachedProfile = useUserStore((s) => s.patchProfile)
   const uploadAvatar = useUserStore((s) => s.uploadAvatar)
   const refreshLinkedAccounts = useUserStore((s) => s.refreshLinkedAccounts)
   const { handleLinkSocial, handleUnlink } = useAccountBindingActions()
@@ -329,21 +649,8 @@ export function AccountPage() {
   // UI-only state
   const [nicknameDrawerOpen, setNicknameDrawerOpen] = useState(false)
   const [passwordDrawerOpen, setPasswordDrawerOpen] = useState(false)
-  const [sendingVerification, setSendingVerification] = useState(false)
-  const [verificationSent, setVerificationSent] = useState(false)
-
-  const handleSendVerification = async () => {
-    if (!sessionUser?.email) return
-    setSendingVerification(true)
-    try {
-      await sendEmailOtp(sessionUser.email)
-      setVerificationSent(true)
-    } catch {
-      // ignore
-    } finally {
-      setSendingVerification(false)
-    }
-  }
+  const [emailDrawerOpen, setEmailDrawerOpen] = useState(false)
+  const [verifyDrawerOpen, setVerifyDrawerOpen] = useState(false)
 
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -472,15 +779,31 @@ export function AccountPage() {
               subtitle={sessionUser?.emailVerified ? t('profile.verified') : t('profile.unverified')}
               iconBg="bg-blue-500"
               icon={Mail}
-              right={!sessionUser?.emailVerified && sessionUser?.email ? (
-                <button
-                  type="button"
-                  disabled={sendingVerification || verificationSent}
-                  onClick={handleSendVerification}
-                  className="text-xs font-medium text-primary"
-                >
-                  {verificationSent ? t('common.sent') : sendingVerification ? t('common.sending') : t('profile.verify')}
-                </button>
+              right={sessionUser?.email ? (
+                <div className="flex items-center gap-2">
+                  {!sessionUser.emailVerified && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setVerifyDrawerOpen(true)
+                      }}
+                      className="text-xs font-medium text-primary"
+                    >
+                      {t('profile.verify')}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEmailDrawerOpen(true)
+                    }}
+                    className="text-xs font-medium text-primary"
+                  >
+                    {t('profile.editEmail')}
+                  </button>
+                </div>
               ) : undefined}
             />
             <IosRow
@@ -658,6 +981,30 @@ export function AccountPage() {
         open={passwordDrawerOpen}
         onOpenChange={setPasswordDrawerOpen}
       />
+
+      {/* 修改邮箱抽屉 */}
+      <ChangeEmailDrawer
+        open={emailDrawerOpen}
+        onOpenChange={setEmailDrawerOpen}
+        currentEmail={sessionUser?.email}
+        onDone={(email) => {
+          void ensureLoaded(sessionUser?.id, { force: true })
+          patchCachedProfile({ email, emailVerified: true })
+        }}
+      />
+
+      {/* 验证当前邮箱抽屉 */}
+      {sessionUser?.email && (
+        <VerifyEmailDrawer
+          open={verifyDrawerOpen}
+          onOpenChange={setVerifyDrawerOpen}
+          email={sessionUser.email}
+          onDone={() => {
+            void ensureLoaded(sessionUser?.id, { force: true })
+            patchCachedProfile({ emailVerified: true })
+          }}
+        />
+      )}
     </div>
   )
 }

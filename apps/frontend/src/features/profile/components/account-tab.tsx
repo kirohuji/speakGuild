@@ -1,11 +1,10 @@
 import { showRequestError } from '@/lib/request-feedback'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   Camera, Loader2, PencilLine, Mail, Phone, ExternalLink,
-  KeyRound, ChevronRight,
+  KeyRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,9 +19,17 @@ import { useUserStore } from '@/stores/user.store'
 import { NicknameEditDialog } from '@/features/profile/components/nickname-edit-dialog'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { useAccountBindingActions } from '@/features/account/use-account-binding-actions'
-import { changePassword, sendEmailOtp, verifyEmailOtp, sendBindPhoneOtp, bindPhoneNumber } from '@/features/auth/api'
+import {
+  changePassword,
+  sendEmailOtp,
+  verifyEmailOtp,
+  sendBindPhoneOtp,
+  bindPhoneNumber,
+  requestEmailChange,
+  confirmEmailChange,
+  mapEmailChangeError,
+} from '@/features/auth/api'
 import { useCountdown } from '@/hooks/use-countdown'
-import { Select, SelectItem } from '@/components/ui/select'
 
 // ─── 第三方登录图标（与登录页一致）────────────────────────────────────────
 
@@ -44,7 +51,6 @@ function AppleIcon({ className }: { className?: string }) {
 
 export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { session } = useAuth()
   const sessionUser = session?.user ?? null
   const profile = useUserStore((s) => s.profile)
@@ -80,6 +86,14 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordError, setPasswordError] = useState('')
+  // 修改邮箱
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailOtp, setEmailOtp] = useState('')
+  const [emailOtpSent, setEmailOtpSent] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [emailCountdown, startEmailCountdown, resetEmailCountdown] = useCountdown(60)
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
 
   const loadData = useCallback(async () => {
@@ -167,6 +181,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
       void ensureLoaded(sessionUser?.id, { force: true })
       patchCachedProfile({ emailVerified: true })
       setVerificationDialogOpen(false)
+      toast.success(t('profile.verified'))
     } catch (error: any) {
       setVerificationError(error?.response?.data?.message || error?.message || t('auth.invalidOtp'))
     } finally {
@@ -184,10 +199,60 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
     try {
       await changePassword(currentPassword, newPassword)
       setPasswordDialogOpen(false)
+      toast.success(t('auth.passwordChanged', { defaultValue: '密码修改成功' }))
     } catch (error: any) {
       setPasswordError(error?.response?.data?.message || error?.message || t('account.changeFailed'))
     } finally {
       setPasswordLoading(false)
+    }
+  }
+
+  const normalizedNewEmail = newEmail.trim().toLowerCase()
+
+  const handleSendEmailChangeOtp = async () => {
+    if (!normalizedNewEmail) {
+      setEmailError(t('auth.enterEmail'))
+      return
+    }
+    if (email && normalizedNewEmail === email.trim().toLowerCase()) {
+      setEmailError(t('profile.emailSameAsCurrent'))
+      return
+    }
+    setEmailLoading(true)
+    setEmailError('')
+    try {
+      await requestEmailChange(normalizedNewEmail)
+      setEmailOtpSent(true)
+      startEmailCountdown()
+      toast.success(t('auth.otpSent'))
+    } catch (error: any) {
+      setEmailError(mapEmailChangeError(error?.message, t))
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
+  const handleConfirmEmailChange = async () => {
+    if (!normalizedNewEmail) {
+      setEmailError(t('auth.enterEmail'))
+      return
+    }
+    if (emailOtp.length !== 6) {
+      setEmailError(t('auth.enterOtp'))
+      return
+    }
+    setEmailLoading(true)
+    setEmailError('')
+    try {
+      await confirmEmailChange(normalizedNewEmail, emailOtp)
+      void ensureLoaded(sessionUser?.id, { force: true })
+      patchCachedProfile({ email: normalizedNewEmail, emailVerified: true })
+      setEmailDialogOpen(false)
+      toast.success(t('profile.changeEmailSuccess'))
+    } catch (error: any) {
+      setEmailError(mapEmailChangeError(error?.message, t))
+    } finally {
+      setEmailLoading(false)
     }
   }
 
@@ -205,6 +270,15 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
     setVerificationError('')
     setVerificationSent(false)
   }, [verificationDialogOpen])
+
+  useEffect(() => {
+    if (!emailDialogOpen) return
+    setNewEmail('')
+    setEmailOtp('')
+    setEmailOtpSent(false)
+    setEmailError('')
+    resetEmailCountdown()
+  }, [emailDialogOpen, resetEmailCountdown])
 
   if (isLoading) {
     return (
@@ -298,25 +372,36 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
               {t('profile.editNickname')}
             </Button>
           </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-2 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
                 <Mail className="size-4 text-purple-500" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm">{t('profile.email')}</p>
-                <p className="text-xs text-muted-foreground truncate">{email || t('profile.notBound')}</p>
+                <p className="truncate text-xs text-muted-foreground">{email || t('profile.notBound')}</p>
               </div>
             </div>
-            {desktop && !profile?.emailVerified && email && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setVerificationDialogOpen(true)}
-              >
-                {t('profile.verify')}
-              </Button>
-            )}
+            <div className="flex shrink-0 items-center gap-1">
+              {!profile?.emailVerified && email && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVerificationDialogOpen(true)}
+                >
+                  {t('profile.verify')}
+                </Button>
+              )}
+              {email && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEmailDialogOpen(true)}
+                >
+                  {t('profile.editEmail')}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -406,7 +491,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
       )}
 
       {/* 账号安全 */}
-      {desktop && <div className="overflow-hidden rounded-xl bg-muted/30">
+      <div className="overflow-hidden rounded-xl bg-muted/30">
         <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('profile.dangerZone')}</p>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -418,41 +503,98 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
               <p className="text-xs text-muted-foreground">{t('profile.auth.passwordSecurity')}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setPasswordDialogOpen(true)}>
+          <Button variant="ghost" size="sm" onClick={() => setPasswordDialogOpen(true)}>
             {t('profile.auth.changePassword')}
           </Button>
         </div>
-      </div>}
+      </div>
 
-      {desktop && (
-        <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>{t('profile.verify')}</DialogTitle>
-              <DialogDescription>{email}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
+      <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('profile.verify')}</DialogTitle>
+            <DialogDescription>{email}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={verificationOtp}
+              onChange={(e) => setVerificationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              placeholder={t('auth.otpPlaceholder')}
+              autoComplete="one-time-code"
+            />
+            {verificationError && <p className="text-sm text-destructive">{verificationError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleSendVerification} disabled={sendingVerification || verificationSent}>
+              {verificationSent ? t('common.sent') : sendingVerification ? t('common.sending') : t('auth.getOtp')}
+            </Button>
+            <Button onClick={handleVerifyEmail} disabled={sendingVerification || verificationOtp.length !== 6}>
+              {sendingVerification && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('profile.changeEmail')}</DialogTitle>
+            <DialogDescription>{t('profile.changeEmailDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('profile.newEmail')}</Label>
               <Input
-                value={verificationOtp}
-                onChange={(e) => setVerificationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                inputMode="numeric"
-                placeholder={t('auth.otpPlaceholder')}
-                autoComplete="one-time-code"
+                value={newEmail}
+                onChange={(e) => {
+                  setNewEmail(e.target.value)
+                  setEmailOtpSent(false)
+                  resetEmailCountdown()
+                }}
+                type="email"
+                placeholder={t('profile.newEmailPlaceholder')}
+                autoComplete="email"
               />
-              {verificationError && <p className="text-sm text-destructive">{verificationError}</p>}
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleSendVerification} disabled={sendingVerification || verificationSent}>
-                {verificationSent ? t('common.sent') : sendingVerification ? t('common.sending') : t('auth.getOtp')}
-              </Button>
-              <Button onClick={handleVerifyEmail} disabled={sendingVerification || verificationOtp.length !== 6}>
-                {sendingVerification && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {t('common.confirm')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('auth.verificationCode')}</Label>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <Input
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  inputMode="numeric"
+                  placeholder={t('auth.otpPlaceholder')}
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                />
+                <Button
+                  variant="outline"
+                  className="h-11 shrink-0"
+                  disabled={emailLoading || emailCountdown > 0 || !normalizedNewEmail}
+                  onClick={handleSendEmailChangeOtp}
+                >
+                  {emailCountdown > 0 ? `${emailCountdown}s` : emailOtpSent ? t('common.sent') : t('auth.getOtp')}
+                </Button>
+              </div>
+            </div>
+            {emailError && <p className="text-sm text-destructive">{emailError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)} disabled={emailLoading}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleConfirmEmailChange}
+              disabled={emailLoading || !emailOtpSent || emailOtp.length !== 6}
+            >
+              {emailLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 手机号绑定弹窗 */}
       <Dialog open={phoneBindOpen} onOpenChange={(v) => { setPhoneBindOpen(v); if (!v) { setBindPhone(''); setBindOtp(''); setBindError(''); setBindOtpSent(false); resetBindCountdown() } }}>
@@ -542,56 +684,54 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
         </DialogContent>
       </Dialog>
 
-      {desktop && (
-        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>{t('profile.auth.changePassword')}</DialogTitle>
-              <DialogDescription>{t('profile.auth.changePasswordDesc')}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">{t('profile.auth.currentPassword')}</Label>
-                <Input
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  type="password"
-                  placeholder={t('profile.auth.currentPasswordPlaceholder')}
-                  autoComplete="current-password"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">{t('profile.auth.newPassword')}</Label>
-                <Input
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  type="password"
-                  placeholder={t('profile.auth.newPasswordPlaceholder')}
-                  autoComplete="new-password"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">{t('profile.auth.confirmPassword')}</Label>
-                <Input
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  type="password"
-                  placeholder={t('profile.auth.confirmPasswordPlaceholder')}
-                  autoComplete="new-password"
-                />
-              </div>
-              {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('profile.auth.changePassword')}</DialogTitle>
+            <DialogDescription>{t('profile.auth.changePasswordDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.currentPassword')}</Label>
+              <Input
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                type="password"
+                placeholder={t('profile.auth.currentPasswordPlaceholder')}
+                autoComplete="current-password"
+              />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>{t('common.cancel')}</Button>
-              <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                {passwordLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {t('common.confirm')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.newPassword')}</Label>
+              <Input
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                type="password"
+                placeholder={t('profile.auth.newPasswordPlaceholder')}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t('profile.auth.confirmPassword')}</Label>
+              <Input
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                type="password"
+                placeholder={t('profile.auth.confirmPasswordPlaceholder')}
+                autoComplete="new-password"
+              />
+            </div>
+            {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleChangePassword} disabled={passwordLoading}>
+              {passwordLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
