@@ -1170,7 +1170,7 @@ function ExpressionLibraryPageContent() {
         </div>
 
         {/* 移动端 forceMount 保滑动切 tab；桌面只挂载当前 tab，列表区单独滚动 */}
-        <TabsContent value="words" forceMount={isMobile} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <TabsContent value="words" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1180,7 +1180,7 @@ function ExpressionLibraryPageContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="chunk" forceMount={isMobile} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <TabsContent value="chunk" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1190,7 +1190,7 @@ function ExpressionLibraryPageContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="pattern" forceMount={isMobile} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <TabsContent value="pattern" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
