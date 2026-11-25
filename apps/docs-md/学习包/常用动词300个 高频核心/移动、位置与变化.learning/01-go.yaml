@@ -1,0 +1,485 @@
+learning:
+  exercises:
+    pipeline:
+      - key: go-to-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说去上班
+        chunk: go to work
+        chunkMeaning: 去上班
+        direction: zh_to_en
+        items:
+          - zh: 我通常八点去上班。
+            answer: I usually go to work at eight.
+            hint: usually；at eight
+          - zh: 我今天不用去上班。
+            answer: I don't need to go to work today.
+            hint: don't need to；today
+          - zh: 堵成这样，我们今天没法去上班了。
+            answer: With all this traffic, we can't go to work today.
+            hint: With all this traffic；can't
+      - key: go-market
+        kind: chunk
+        type: chunk_substitution
+        title: 说下班去超市
+        chunk: go to the supermarket after work
+        chunkMeaning: 下班后去超市
+        direction: zh_to_en
+        items:
+          - zh: 我下班后要去超市。
+            answer: I'm going to the supermarket after work.
+            hint: 用进行时表示将来的安排；after work
+          - zh: 你下班后去超市吗？
+            answer: Are you going to the supermarket after work?
+            hint: 疑问句；after work
+          - zh: 我们下班后一起去超市吧。
+            answer: Let's go to the supermarket after work.
+            hint: Let's；together 可省
+      - key: go-work-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说去上班
+        chunk: go to work
+        chunkMeaning: 去上班
+        direction: en_to_zh
+        items:
+          - en: What time do you usually go to work?
+            answer: 你通常几点去上班？
+            hint: What time；usually
+          - en: She went to work by bike this morning.
+            answer: 她今天早上骑车去上班了。
+            hint: by bike；this morning
+          - en: I'm not going to work tomorrow because I'm sick.
+            answer: 我明天不去上班，因为我生病了。
+            hint: not…tomorrow；because I'm sick
+      - key: go-state
+        type: vocab_sentence_building
+        title: 说计划没有按预期进行
+        vocabWord: go
+        vocabMeaning: 进行；进展
+        direction: zh_to_en
+        patterns:
+          - chunk: go as expected
+            items:
+              - zh: 计划没有像预期那样进行。
+                answer: The plan didn't go as expected.
+                hint: didn't；as expected
+              - zh: 一切都像我们计划的那样顺利。
+                answer: Everything went as smoothly as we planned.
+                hint: went；as we planned
+              - zh: 会议进行得比我预想的要好。
+                answer: The meeting went better than I expected.
+                hint: went better；than I expected
+          - chunk: go wrong
+            items:
+              - zh: 肯定是哪里出问题了。
+                answer: Something must have gone wrong.
+                hint: must have；gone wrong
+              - zh: 如果出了问题，马上给我打电话。
+                answer: Call me right away if anything goes wrong.
+                hint: right away；if；anything
+              - zh: 第一步就出错了。
+                answer: Things went wrong at the very first step.
+                hint: went wrong；the very first step
+          - chunk: go well
+            items:
+              - zh: 面试进行得很顺利。
+                answer: The interview went well.
+                hint: went well
+              - zh: 希望一切顺利。
+                answer: I hope everything goes well.
+                hint: I hope；everything
+              - zh: 第一天的效果比我们想的要好。
+                answer: The first day went better than we thought.
+                hint: went better；than we thought
+      - key: go-home
+        kind: chunk
+        type: chunk_substitution
+        title: 说回家
+        chunk: go home
+        chunkMeaning: 回家
+        direction: zh_to_en
+        items:
+          - zh: 我现在要回家了。
+            answer: I'm going home now.
+            hint: 现在进行时；now
+          - zh: 我想早点回家。
+            answer: I want to go home early.
+            hint: want to；early
+          - zh: 你什么时候回家？
+            answer: When are you going home?
+            hint: When；进行时表将来
+      - key: go-back-check
+        kind: chunk
+        type: chunk_substitution
+        title: 说回去检查一下
+        chunk: go back and check
+        chunkMeaning: 回去检查一下
+        direction: zh_to_en
+        items:
+          - zh: 我们应该回去检查一下。
+            answer: We should go back and check.
+            hint: should
+          - zh: 我觉得我们最好回去。
+            answer: I think we'd better go back.
+            hint: I think；we'd better
+          - zh: 我们回去之前先把灯关了。
+            answer: Let's turn off the lights before we go back.
+            hint: turn off the lights；before
+      - key: go-swimming
+        kind: chunk
+        type: chunk_substitution
+        title: 说去游泳
+        chunk: go swimming
+        chunkMeaning: 去游泳
+        direction: zh_to_en
+        items:
+          - zh: 下班后我们去游泳了。
+            answer: We went swimming after work.
+            hint: went；after work
+          - zh: 你周末想去游泳吗？
+            answer: Do you want to go swimming this weekend?
+            hint: Do you want to；this weekend
+          - zh: 天气太冷了，我们今天不去游泳了。
+            answer: It's too cold, so we're not going swimming today.
+            hint: too cold；not going
+      - key: go-ahead
+        kind: chunk
+        type: chunk_substitution
+        title: 让对方先走
+        chunk: go ahead
+        chunkMeaning: 你先走；你继续
+        direction: zh_to_en
+        items:
+          - zh: 你先走，我之后跟上。
+            answer: Go ahead. I'll catch up with you later.
+            hint: catch up with you；later
+          - zh: 你继续说，我在听。
+            answer: Go ahead, I'm listening.
+            hint: I'm listening
+          - zh: 请先开始，我马上就到。
+            answer: Please go ahead. I'll be there soon.
+            hint: Please；soon
+      - key: go-through-report
+        kind: chunk
+        type: chunk_substitution
+        title: 说再检查一遍报告
+        chunk: go through the report
+        chunkMeaning: 把报告检查一遍
+        direction: zh_to_en
+        items:
+          - zh: 我又把报告检查了一遍。
+            answer: I went through the report again.
+            hint: went；again
+          - zh: 开会前我们得把报告过一遍。
+            answer: We need to go through the report before the meeting.
+            hint: before the meeting
+          - zh: 你能帮我把报告看一遍吗？
+            answer: Can you go through the report for me?
+            hint: for me
+      - key: go-with-shoes
+        kind: chunk
+        type: chunk_substitution
+        title: 说衣服和鞋很搭
+        chunk: go well with those shoes
+        chunkMeaning: 和那双鞋很搭
+        direction: zh_to_en
+        items:
+          - zh: 这件夹克和那双鞋很搭。
+            answer: This jacket goes well with those shoes.
+            hint: goes；well with
+          - zh: 这条裙子配那双鞋显得有点怪。
+            answer: This dress doesn't go well with those shoes.
+            hint: doesn't；well with
+          - zh: 你觉得这条围巾和我的外套搭吗？
+            answer: Do you think this scarf goes well with my coat?
+            hint: this scarf；my coat
+      - key: go-on
+        kind: chunk
+        type: chunk_substitution
+        title: 问这里发生什么事了
+        chunk: What's going on?
+        chunkMeaning: 发生什么事了？
+        direction: zh_to_en
+        items:
+          - zh: 这里发生什么事了？
+            answer: What's going on here?
+            hint: here
+          - zh: 外面怎么这么吵？
+            answer: What's going on outside?
+            hint: outside
+          - zh: 我不知道那边发生什么事了。
+            answer: I don't know what's going on over there.
+            hint: over there
+      - key: go-without-coffee
+        kind: chunk
+        type: chunk_substitution
+        title: 说几天不喝咖啡没问题
+        chunk: go without coffee
+        chunkMeaning: 不喝咖啡
+        direction: zh_to_en
+        items:
+          - zh: 我几天不喝咖啡也没问题。
+            answer: I can go without coffee for a few days.
+            hint: can；for a few days
+          - zh: 没手机我一天都过不下去。
+            answer: I can't go without my phone for a whole day.
+            hint: can't；for a whole day
+          - zh: 我们今晚没网络也能过，先聊聊天吧。
+            answer: We can go without the internet tonight, so let's just talk.
+            hint: the internet；let's just talk
+      - key: go-through-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说经历了一段时期
+        chunk: go through
+        chunkMeaning: 经历；检查
+        direction: en_to_zh
+        items:
+          - en: We went through a hard time last year.
+            answer: 我们去年经历了一段很难的时期。
+            hint: a hard time；last year
+          - en: I went through the report again before sending it.
+            answer: 我在发出去之前又把报告检查了一遍。
+            hint: before sending it
+          - en: She has gone through a lot this year.
+            answer: 她今年经历了很多。
+            hint: has gone through；a lot
+      - key: go-plan-build
+        type: sentence_decomposition
+        title: 把计划没按预期说完整
+        sourceKind: vocab
+        sourceText: go
+        fullSentence: The plan didn't go as expected, so we had to start over.
+        fullSentenceZh: 计划没有像预期那样进行，所以我们只好重新开始。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The plan didn't go as expected.
+            zh: 计划没有像预期那样进行。
+            highlight: ''
+            hint: 先说计划没按预期
+          - level: 2
+            label: 加问题
+            en: The plan didn't go as expected, and we found a problem.
+            zh: 计划没有像预期那样进行，我们还发现了一个问题。
+            highlight: we found a problem
+            hint: 补上发现了一个问题
+          - level: 3
+            label: 完整句
+            en: The plan didn't go as expected, so we had to start over.
+            zh: 计划没有像预期那样进行，所以我们只好重新开始。
+            highlight: so we had to start over
+            hint: 补上只好重新开始
+      - key: go-to-place
+        type: pattern_drill
+        title: 换个地点说去哪儿
+        pattern: go to [place]
+        patternMeaning: 去某地
+        direction: zh_to_en
+        items:
+          - zh: 我明天要去医院。
+            answer: I'm going to the hospital tomorrow.
+            hint: 进行时表将来；tomorrow
+          - zh: 他们去公园散步了。
+            answer: They went to the park for a walk.
+            hint: went；for a walk
+          - zh: 请你现在去一趟银行。
+            answer: Please go to the bank now.
+            hint: the bank；now
+      - key: go-home-there
+        type: pattern_drill
+        title: 说回家和去别的方向
+        pattern: go [home/there/abroad]
+        patternMeaning: 去家里、那里或不加 to 的地点
+        direction: zh_to_en
+        items:
+          - zh: 我要回家了。
+            answer: I'm going home.
+            hint: home 前不加 to
+          - zh: 我们明天一起去那里。
+            answer: We're going there together tomorrow.
+            hint: there 前不加 to；together
+          - zh: 她明年要出国留学。
+            answer: She's going abroad to study next year.
+            hint: abroad；next year
+      - key: go-back-other
+        type: pattern_drill
+        title: 说回到别的地方
+        pattern: go back
+        patternMeaning: 回去
+        direction: zh_to_en
+        items:
+          - zh: 明天我还得回办公室。
+            answer: I have to go back to the office tomorrow.
+            hint: have to；tomorrow
+          - zh: 我们回去把灯关掉吧。
+            answer: Let's go back and turn off the lights.
+            hint: turn off
+          - zh: 他忘了东西，又回去了。
+            answer: He forgot something and went back.
+            hint: forgot something；went
+      - key: go-adjective
+        type: pattern_drill
+        title: 说别的东西出了状况
+        pattern: go [adjective]
+        patternMeaning: 发生问题或进入某种状态
+        direction: zh_to_en
+        items:
+          - zh: 牛奶坏了，别喝了。
+            answer: The milk has gone bad, so don't drink it.
+            hint: has gone；don't drink it
+          - zh: 我的手机好像坏了。
+            answer: Something has gone wrong with my phone.
+            hint: gone wrong；with my phone
+          - zh: 这里一到晚上就很安静。
+            answer: It goes quiet here at night.
+            hint: goes quiet；at night
+      - key: go-doing
+        type: pattern_drill
+        title: 说去做别的休闲活动
+        pattern: go [doing]
+        patternMeaning: 去做某项活动
+        direction: zh_to_en
+        items:
+          - zh: 我们周末去爬山吧。
+            answer: Let's go hiking this weekend.
+            hint: hiking；this weekend
+          - zh: 我陪爸妈去逛街了。
+            answer: I went shopping with my parents.
+            hint: went；with my parents
+          - zh: 你想去跑步吗？
+            answer: Do you want to go running?
+            hint: Do you want to
+      - key: go-ahead-other
+        type: pattern_drill
+        title: 说让对方先做别的事
+        pattern: go ahead
+        patternMeaning: 先进行或继续
+        direction: zh_to_en
+        items:
+          - zh: 你先开始吧，我一会儿就加入。
+            answer: Go ahead and start; I'll join you in a minute.
+            hint: start；join you in a minute
+          - zh: 你们先吃吧，我马上就来。
+            answer: Go ahead and eat; I'll be right there.
+            hint: eat；right there
+          - zh: 要不要先订车票？好，那就先订吧。
+            answer: Should we book the tickets first? Yes, go ahead.
+            hint: book the tickets；Yes
+      - key: go-through-other
+        type: pattern_drill
+        title: 说检查别的东西
+        pattern: go through [something]
+        patternMeaning: 检查或经历某事
+        direction: zh_to_en
+        items:
+          - zh: 面试前我查了一遍我的笔记。
+            answer: I went through my notes before the interview.
+            hint: went；my notes；before the interview
+          - zh: 请你在签字前仔细看一遍合同。
+            answer: Please go through the contract carefully before signing.
+            hint: carefully；before signing
+          - zh: 我们去年经历了一段很不容易的时期。
+            answer: We went through a very difficult time last year.
+            hint: went；a very difficult time；last year
+      - key: go-well-with-other
+        type: pattern_drill
+        title: 说东西和别的东西搭不搭
+        pattern: go well with [something]
+        patternMeaning: 与某物相配
+        direction: zh_to_en
+        items:
+          - zh: 这条领带配不配这件衬衫？
+            answer: Does this tie go well with this shirt?
+            hint: 疑问句；go well with
+          - zh: 我觉得红酒配牛排挺不错。
+            answer: I think red wine goes well with steak.
+            hint: red wine；steak
+          - zh: 这种颜色和我们的标志不搭。
+            answer: This color doesn't go well with our logo.
+            hint: doesn't；our logo
+      - key: go-on-other
+        type: pattern_drill
+        title: 问别的地方怎么了
+        pattern: go on
+        patternMeaning: 继续或发生
+        direction: zh_to_en
+        items:
+          - zh: 你那边在干什么？
+            answer: What's going on there?
+            hint: there
+          - zh: 会议一直开到很晚。
+            answer: The meeting went on until late.
+            hint: went on；until late
+          - zh: 请继续，不用管我。
+            answer: Please go on; don't worry about me.
+            hint: go on；don't worry about me
+      - key: go-without-other
+        type: pattern_drill
+        title: 说没有别的东西也能过
+        pattern: go without [something]
+        patternMeaning: 在没有某物的情况下度过
+        direction: zh_to_en
+        items:
+          - zh: 你一个月不喝奶茶行吗？
+            answer: Can you go without milk tea for a month?
+            hint: Can you；for a month
+          - zh: 停电的时候我们一晚上都没有电，只能聊天。
+            answer: We had to go without electricity all evening, so we just talked.
+            hint: had to；all evening
+          - zh: 这个星期我没怎么睡好。
+            answer: I've gone without much sleep this week.
+            hint: gone without；much sleep
+      - key: go-to-bed-build
+        type: sentence_decomposition
+        title: 把下班去超市这件事说完整
+        sourceKind: chunk
+        sourceText: go to the supermarket after work
+        fullSentence: I'm going to the supermarket after work because we need milk and bread.
+        fullSentenceZh: 我下班后要去超市，因为我们需要牛奶和面包。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I'm going to the supermarket.
+            zh: 我要去超市。
+            highlight: ''
+            hint: 先说要去超市
+          - level: 2
+            label: 加时间
+            en: I'm going to the supermarket after work.
+            zh: 我下班后要去超市。
+            highlight: after work
+            hint: 补上下班后
+          - level: 3
+            label: 完整句
+            en: I'm going to the supermarket after work because we need milk and bread.
+            zh: 我下班后要去超市，因为我们需要牛奶和面包。
+            highlight: because we need milk and bread
+            hint: 补上因为我们需要牛奶和面包
+      - key: go-weekend-build
+        type: sentence_decomposition
+        title: 把回老家这件事说完整
+        sourceKind: vocab
+        sourceText: go
+        fullSentence: I'm going back to my hometown this weekend to visit my parents.
+        fullSentenceZh: 我这周末回老家看父母。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I'm going back to my hometown.
+            zh: 我要回老家。
+            highlight: ''
+            hint: 先说回老家
+          - level: 2
+            label: 加时间
+            en: I'm going back to my hometown this weekend.
+            zh: 我这周末回老家。
+            highlight: this weekend
+            hint: 补上这周末
+          - level: 3
+            label: 完整句
+            en: I'm going back to my hometown this weekend to visit my parents.
+            zh: 我这周末回老家看父母。
+            highlight: to visit my parents
+            hint: 补上为了看父母

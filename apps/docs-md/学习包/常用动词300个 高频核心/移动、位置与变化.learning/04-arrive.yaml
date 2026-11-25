@@ -1,0 +1,462 @@
+learning:
+  exercises:
+    pipeline:
+      - key: arrive-at-station
+        kind: chunk
+        type: chunk_substitution
+        title: 说刚好赶到车站
+        chunk: arrive at the station
+        chunkMeaning: 到达车站
+        direction: zh_to_en
+        items:
+          - zh: 我们刚好及时赶到车站。
+            answer: We arrived at the station just in time.
+            hint: just in time
+          - zh: 火车到站的时候，他们已经到车站了。
+            answer: They had already arrived at the station when the train arrived.
+            hint: had already；when
+          - zh: 你能到车站的时候给我打电话吗？
+            answer: Can you call me when you arrive at the station?
+            hint: call me；when
+      - key: arrive-hotel
+        kind: chunk
+        type: chunk_substitution
+        title: 说半夜到达酒店
+        chunk: arrive at the hotel
+        chunkMeaning: 到达酒店
+        direction: zh_to_en
+        items:
+          - zh: 我们大约半夜到达酒店。
+            answer: We arrived at the hotel around midnight.
+            hint: around midnight
+          - zh: 他们比我们早到酒店。
+            answer: They arrived at the hotel earlier than us.
+            hint: earlier than us
+          - zh: 我们到酒店的时候已经没房间了。
+            answer: When we arrived at the hotel, there were no rooms left.
+            hint: there were no rooms left
+      - key: arrive-at-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说到站了
+        chunk: arrive at the station
+        chunkMeaning: 到达车站
+        direction: en_to_zh
+        items:
+          - en: We arrived at the station just in time.
+            answer: 我们刚好及时赶到车站。
+            hint: just in time
+          - en: My train arrives at the station at nine.
+            answer: 我的火车九点到站。
+            hint: My train；at nine
+          - en: We arrived at the station late because of the traffic.
+            answer: 因为堵车，我们到车站晚了。
+            hint: because of the traffic
+      - key: arrive-home
+        kind: chunk
+        type: chunk_substitution
+        title: 问对方几点到家
+        chunk: arrive home
+        chunkMeaning: 到家
+        direction: zh_to_en
+        items:
+          - zh: 你几点到家的？
+            answer: What time did you arrive home?
+            hint: What time
+          - zh: 你到家后给我发个信息。
+            answer: Text me when you arrive home.
+            hint: Text me；when
+          - zh: 我到家的时候已经很晚了。
+            answer: It was already late when I arrived home.
+            hint: It was already late
+      - key: arrive-state
+        type: vocab_sentence_building
+        title: 说到得早、到得晚、安全到达
+        vocabWord: arrive
+        vocabMeaning: 到达；达成
+        direction: zh_to_en
+        patterns:
+          - chunk: arrive on time
+            items:
+              - zh: 希望我们能准时到。
+                answer: I hope we arrive on time.
+                hint: I hope
+              - zh: 飞机准时到了。
+                answer: The plane arrived on time.
+                hint: The plane
+              - zh: 我们必须准时到。
+                answer: We have to arrive on time.
+                hint: have to
+          - chunk: arrive late
+            items:
+              - zh: 抱歉我来晚了。
+                answer: Sorry I arrived late.
+                hint: Sorry
+              - zh: 他来的比谁都晚。
+                answer: He arrived later than everyone else.
+                hint: later than everyone else
+              - zh: 因为下雨，我们到得晚了。
+                answer: We arrived late because of the rain.
+                hint: because of the rain
+          - chunk: arrive safely
+            items:
+              - zh: 你安全到了告诉我一声。
+                answer: Let me know when you arrive safely.
+                hint: Let me know；when
+              - zh: 她很安全地到了。
+                answer: She arrived safely.
+                hint: safely
+              - zh: 我们很安全地到了，一切都好。
+                answer: We arrived safely, and everything is fine.
+                hint: everything is fine
+      - key: arrive-in-london
+        kind: chunk
+        type: chunk_substitution
+        title: 说抵达伦敦
+        chunk: arrive in London
+        chunkMeaning: 抵达伦敦
+        direction: zh_to_en
+        items:
+          - zh: 她昨天抵达伦敦。
+            answer: She arrived in London yesterday.
+            hint: arrived in；yesterday
+          - zh: 我们周三到达伦敦。
+            answer: We're arriving in London on Wednesday.
+            hint: 进行时表将来；on Wednesday
+          - zh: 他们到达伦敦的时候正下着雨。
+            answer: It was raining when they arrived in London.
+            hint: It was raining
+      - key: arrive-from
+        kind: chunk
+        type: chunk_substitution
+        title: 说火车刚从北京开来
+        chunk: arrive from Beijing
+        chunkMeaning: 从北京抵达
+        direction: zh_to_en
+        items:
+          - zh: 这趟火车刚从北京开来。
+            answer: The train has just arrived from Beijing.
+            hint: has just；from Beijing
+          - zh: 从北京来的航班晚点了两个小时。
+            answer: The flight from Beijing arrived two hours late.
+            hint: The flight；two hours late
+          - zh: 刚从北京来的那批货到了吗？
+            answer: Has the shipment from Beijing arrived yet?
+            hint: the shipment；yet
+      - key: arrive-decision
+        kind: chunk
+        type: chunk_substitution
+        title: 说最终作出了决定
+        chunk: arrive at a decision
+        chunkMeaning: 作出决定
+        direction: zh_to_en
+        items:
+          - zh: 我们最终作出了决定。
+            answer: We finally arrived at a decision.
+            hint: finally；arrived at
+          - zh: 我们还没作出最终决定。
+            answer: We haven't arrived at a final decision yet.
+            hint: haven't；final decision；yet
+          - zh: 他们昨天作出了决定。
+            answer: They arrived at a decision yesterday.
+            hint: arrived at；yesterday
+      - key: arrive-agreement
+        kind: chunk
+        type: chunk_substitution
+        title: 说讨论几个小时后达成协议
+        chunk: arrive at an agreement
+        chunkMeaning: 达成协议
+        direction: zh_to_en
+        items:
+          - zh: 他们讨论了几个小时后达成了协议。
+            answer: They arrived at an agreement after hours of discussion.
+            hint: after hours of discussion
+          - zh: 双方最终达成了协议。
+            answer: The two sides finally arrived at an agreement.
+            hint: The two sides；finally
+          - zh: 因为还有分歧，我们没能达成协议。
+            answer: We couldn't arrive at an agreement because we still had differences.
+            hint: couldn't；differences
+      - key: arrive-conclusion
+        kind: chunk
+        type: chunk_substitution
+        title: 问对方怎么得出结论
+        chunk: arrive at a conclusion
+        chunkMeaning: 得出结论
+        direction: zh_to_en
+        items:
+          - zh: 你是怎么得出那个结论的？
+            answer: How did you arrive at that conclusion?
+            hint: How did
+          - zh: 我们还没有得出结论。
+            answer: We haven't arrived at a conclusion yet.
+            hint: haven't；yet
+          - zh: 看完数据后我们得出了不同的结论。
+            answer: After looking at the data, we arrived at different conclusions.
+            hint: After looking at the data
+      - key: arrive-in-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说到城市了
+        chunk: arrive in London
+        chunkMeaning: 抵达伦敦
+        direction: en_to_zh
+        items:
+          - en: She arrived in London yesterday morning.
+            answer: 她昨天上午抵达伦敦。
+            hint: yesterday morning
+          - en: We're arriving in Tokyo on Friday.
+            answer: 我们周五到达东京。
+            hint: 进行时表将来；on Friday
+          - en: When did they arrive in Paris?
+            answer: 他们什么时到巴黎的？
+            hint: When did
+      - key: arrive-from-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说从某地抵达
+        chunk: arrive from Beijing
+        chunkMeaning: 从北京抵达
+        direction: en_to_zh
+        items:
+          - en: The train has just arrived from Beijing.
+            answer: 这趟火车刚从北京开来。
+            hint: has just
+          - en: The flight from Guangzhou arrived two hours late.
+            answer: 从广州来的航班晚点了两个小时。
+            hint: two hours late
+          - en: Is the package arriving from Shanghai today?
+            answer: 从上海来的包裹今天到吗？
+            hint: the package；today
+      - key: arrive-safe-build
+        type: sentence_decomposition
+        title: 把安全到达报平安说完整
+        sourceKind: vocab
+        sourceText: arrive
+        fullSentence: Let me know when you arrive safely at the hotel.
+        fullSentenceZh: 你安全到达酒店后告诉我一声。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let me know when you arrive.
+            zh: 你到了告诉我一声。
+            highlight: ''
+            hint: 先说到了告诉一声
+          - level: 2
+            label: 加地点
+            en: Let me know when you arrive at the hotel.
+            zh: 你到酒店后告诉我一声。
+            highlight: at the hotel
+            hint: 补上到酒店
+          - level: 3
+            label: 完整句
+            en: Let me know when you arrive safely at the hotel.
+            zh: 你安全到达酒店后告诉我一声。
+            highlight: safely
+            hint: 补上安全
+      - key: arrive-place-build
+        type: sentence_decomposition
+        title: 把刚好赶到车站说完整
+        sourceKind: chunk
+        sourceText: arrive at the station
+        fullSentence: We arrived at the station just in time to catch the last train.
+        fullSentenceZh: 我们刚好及时赶到车站，赶上了最后一班火车。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We arrived at the station.
+            zh: 我们到了车站。
+            highlight: ''
+            hint: 先说到车站
+          - level: 2
+            label: 加时间
+            en: We arrived at the station just in time.
+            zh: 我们刚好及时赶到车站。
+            highlight: just in time
+            hint: 补上刚好及时
+          - level: 3
+            label: 完整句
+            en: We arrived at the station just in time to catch the last train.
+            zh: 我们刚好及时赶到车站，赶上了最后一班火车。
+            highlight: to catch the last train
+            hint: 补上赶上最后一班火车
+      - key: arrive-at-place
+        type: pattern_drill
+        title: 换个地点说到达
+        pattern: arrive at [place]
+        patternMeaning: 到达具体地点
+        direction: zh_to_en
+        items:
+          - zh: 我们八点到了机场。
+            answer: We arrived at the airport at eight.
+            hint: at eight
+          - zh: 你们到会场了吗？
+            answer: Have you arrived at the venue yet?
+            hint: Have you；yet
+          - zh: 因为下雨，我们到会场晚了。
+            answer: We arrived at the venue late because of the rain.
+            hint: late；because of the rain
+      - key: arrive-in-city
+        type: pattern_drill
+        title: 说到达城市或国家
+        pattern: arrive in [city/country]
+        patternMeaning: 到达城市或国家
+        direction: zh_to_en
+        items:
+          - zh: 我们下午到达东京。
+            answer: We're arriving in Tokyo in the afternoon.
+            hint: 进行时表将来；Tokyo
+          - zh: 他第一次到中国的时候是二十岁。
+            answer: He arrived in China for the first time when he was twenty.
+            hint: for the first time；when he was twenty
+          - zh: 他们什么时候到巴黎？
+            answer: When did they arrive in Paris?
+            hint: When did
+      - key: home-safely
+        type: pattern_drill
+        title: 说到家和安全到达
+        pattern: arrive home / arrive safely
+        patternMeaning: 到家、安全抵达；home 前不加 to
+        direction: zh_to_en
+        items:
+          - zh: 她昨晚很晚才到家。
+            answer: She arrived home late last night.
+            hint: home 前不加介词
+          - zh: 你安全到了就告诉我。
+            answer: Let me know as soon as you arrive safely.
+            hint: as soon as
+          - zh: 我们半夜才到家。
+            answer: We didn't arrive home until midnight.
+            hint: not...until midnight
+      - key: arrive-on-time-other
+        type: pattern_drill
+        title: 说准时、迟到
+        pattern: arrive on time / arrive late
+        patternMeaning: 准时到达 / 迟到
+        direction: zh_to_en
+        items:
+          - zh: 火车又是准时到的。
+            answer: The train arrived on time again.
+            hint: on time；again
+          - zh: 对不起，我迟到了五分钟。
+            answer: Sorry, I arrived five minutes late.
+            hint: five minutes late
+          - zh: 他从来不迟到。
+            answer: He never arrives late.
+            hint: never；arrives
+      - key: arrive-home-other
+        type: pattern_drill
+        title: 换个说法聊到家
+        pattern: arrive home
+        patternMeaning: 到家；home 前不加介词
+        direction: zh_to_en
+        items:
+          - zh: 你昨天几点到家的？
+            answer: What time did you arrive home yesterday?
+            hint: What time；yesterday
+          - zh: 我到家的时他们已经在吃了。
+            answer: When I arrived home, they were already eating.
+            hint: When I arrived home；were already eating
+          - zh: 我们终于到家了。
+            answer: We finally arrived home.
+            hint: finally
+      - key: arrive-from-other
+        type: pattern_drill
+        title: 说从别的地方抵达
+        pattern: arrive from [place]
+        patternMeaning: 从某地抵达
+        direction: zh_to_en
+        items:
+          - zh: 从广州来的火车晚点了。
+            answer: The train from Guangzhou arrived late.
+            hint: The train；arrived late
+          - zh: 他们刚从国外回来。
+            answer: They have just arrived from abroad.
+            hint: have just；from abroad
+          - zh: 从北京来的航班几点到？
+            answer: What time does the flight from Beijing arrive?
+            hint: What time；does
+      - key: arrive-result-other
+        type: pattern_drill
+        title: 说经过讨论得出结论
+        pattern: arrive at [decision/agreement/conclusion]
+        patternMeaning: 经过考虑或讨论得出决定、协议或结论
+        direction: zh_to_en
+        items:
+          - zh: 董事会昨天作出了决定。
+            answer: The board arrived at a decision yesterday.
+            hint: The board；yesterday
+          - zh: 谈判双方还没达成协议。
+            answer: The two sides haven't arrived at an agreement yet.
+            hint: haven't；yet
+          - zh: 我们从数据里得出了同样的结论。
+            answer: We arrived at the same conclusion from the data.
+            hint: the same conclusion；from the data
+      - key: arrive-late-listen
+        type: pattern_drill
+        title: 听懂对方说到得早晚
+        pattern: arrive on time / arrive late / arrive home
+        patternMeaning: 准时到、迟到、到家
+        direction: en_to_zh
+        items:
+          - en: Sorry I arrived late. The traffic was bad.
+            answer: 抱歉我来晚了，路上堵得厉害。
+            hint: The traffic was bad
+          - en: She arrived home late last night.
+            answer: 她昨晚很晚才到家。
+            hint: arrive home；late last night
+          - en: The guests started arriving early.
+            answer: 客人很早就开始到了。
+            hint: started arriving
+      - key: arrive-midnight-build
+        type: sentence_decomposition
+        title: 把半夜到酒店这件事说完整
+        sourceKind: chunk
+        sourceText: arrive at the hotel
+        fullSentence: We arrived at the hotel around midnight and went straight to bed.
+        fullSentenceZh: 我们大约半夜到达酒店，然后就直接睡了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We arrived at the hotel.
+            zh: 我们到达酒店。
+            highlight: ''
+            hint: 先说到酒店
+          - level: 2
+            label: 加时间
+            en: We arrived at the hotel around midnight.
+            zh: 我们大约半夜到达酒店。
+            highlight: around midnight
+            hint: 补上大约半夜
+          - level: 3
+            label: 完整句
+            en: We arrived at the hotel around midnight and went straight to bed.
+            zh: 我们大约半夜到达酒店，然后就直接睡了。
+            highlight: and went straight to bed
+            hint: 补上然后就直接睡了
+      - key: arrive-decision-build
+        type: sentence_decomposition
+        title: 把还没作决定说完整
+        sourceKind: vocab
+        sourceText: arrive
+        fullSentence: We haven't arrived at a final decision yet, so we'll meet again next week.
+        fullSentenceZh: 我们还没有作出最终决定，所以下周再开一次会。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We haven't arrived at a final decision.
+            zh: 我们还没有作出最终决定。
+            highlight: ''
+            hint: 先说还没决定
+          - level: 2
+            label: 加时间
+            en: We haven't arrived at a final decision yet.
+            zh: 我们到现在还没有作出最终决定。
+            highlight: yet
+            hint: 补上到现在还没有
+          - level: 3
+            label: 完整句
+            en: We haven't arrived at a final decision yet, so we'll meet again next week.
+            zh: 我们还没有作出最终决定，所以下周再开一次会。
+            highlight: so we'll meet again next week
+            hint: 补上下周再开一次会

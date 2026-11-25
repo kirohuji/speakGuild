@@ -1,0 +1,379 @@
+learning:
+  exercises:
+    pipeline:
+      - key: shift-to-main-issue
+        kind: chunk
+        type: chunk_substitution
+        title: 说重点转向了主要问题
+        chunk: shift to the main issue
+        chunkMeaning: 转向主要问题
+        direction: zh_to_en
+        items:
+          - zh: 重点转向了主要问题。
+            answer: The focus shifted to the main issue.
+            hint: The focus；shifted
+          - zh: 谈话突然转到了政治上。
+            answer: The conversation suddenly shifted to politics.
+            hint: suddenly
+          - zh: 大家的注意力转向了屏幕。
+            answer: Everyone's attention shifted to the screen.
+            hint: Everyone's attention
+      - key: shift-cost-quality
+        kind: chunk
+        type: chunk_substitution
+        title: 说讨论从成本转向质量
+        chunk: shift from cost to quality
+        chunkMeaning: 从成本转向质量
+        direction: zh_to_en
+        items:
+          - zh: 讨论从成本转向了质量。
+            answer: The discussion shifted from cost to quality.
+            hint: from cost to quality
+          - zh: 公司把重心从国内转到了海外。
+            answer: The company shifted from domestic to overseas markets.
+            hint: domestic；overseas markets
+          - zh: 我们的讨论从计划转到了钱。
+            answer: Our discussion shifted from the plan to the money.
+            hint: from the plan
+      - key: shift-focus-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说重点转移
+        chunk: shift the focus to
+        chunkMeaning: 把重点转向
+        direction: en_to_zh
+        items:
+          - en: We need to shift the focus to long-term results.
+            answer: 我们需要把重点转向长期结果。
+            hint: long-term results
+          - en: The focus has shifted to long-term growth.
+            answer: 重点已经转向长期增长。
+            hint: long-term growth
+          - en: Let's shift the focus to the main issue.
+            answer: 我们把重点转向主要问题吧。
+            hint: Let's
+      - key: shift-state
+        type: vocab_sentence_building
+        title: 说换挡、移动重心
+        vocabWord: shift
+        vocabMeaning: 挪动；转移
+        direction: zh_to_en
+        patterns:
+          - chunk: shift gears
+            items:
+              - zh: 我们需要换个方式，尝试另一种办法。
+                answer: We need to shift gears and try a different approach.
+                hint: try a different approach
+              - zh: 跑了一段以后，节奏就该变一变。
+                answer: After a while, it's time to shift gears.
+                hint: After a while
+              - zh: 这个季度我们要调整节奏。
+                answer: This quarter we need to shift gears.
+                hint: This quarter
+          - chunk: shift your weight
+            items:
+              - zh: 她把重心从一只脚移到另一只脚。
+                answer: She shifted her weight from one foot to the other.
+                hint: from one foot to the other
+              - zh: 站久了就换换重心。
+                answer: Shift your weight if you've been standing a long time.
+                hint: a long time
+              - zh: 司机一刹车，他重心往前冲。
+                answer: He shifted his weight forward when the driver braked.
+                hint: forward
+          - chunk: shift attention to
+            items:
+              - zh: 他把注意力转向了屏幕。
+                answer: He shifted his attention to the screen.
+                hint: his attention
+              - zh: 请把注意力转到这件事上。
+                answer: Please shift your attention to this matter.
+                hint: this matter
+              - zh: 大家渐渐把注意力放到了价格上。
+                answer: Everyone gradually shifted their attention to the price.
+                hint: gradually
+      - key: shift-chair
+        kind: chunk
+        type: chunk_substitution
+        title: 说她把椅子挪近桌子
+        chunk: shift the chair closer to the desk
+        chunkMeaning: 把椅子往桌子挪近
+        direction: zh_to_en
+        items:
+          - zh: 她把椅子往桌子旁边挪了挪。
+            answer: She shifted the chair closer to the desk.
+            hint: closer to the desk
+          - zh: 我挪了挪椅子，好更清楚地看到屏幕。
+            answer: I shifted my chair so I could see the screen better.
+            hint: so I could
+          - zh: 我们把桌子挪到窗边吧。
+            answer: Let's shift the table over to the window.
+            hint: over to the window
+      - key: shift-focus-long
+        kind: chunk
+        type: chunk_substitution
+        title: 说把重点转向长期结果
+        chunk: shift the focus to long-term results
+        chunkMeaning: 把重点转向长期结果
+        direction: zh_to_en
+        items:
+          - zh: 我们需要把重点转向长期结果。
+            answer: We need to shift the focus to long-term results.
+            hint: long-term results
+          - zh: 这次改革把重点放到了质量上。
+            answer: The reform shifted the focus to quality.
+            hint: The reform
+          - zh: 我们应该更关注顾客体验。
+            answer: We should shift the focus to customer experience.
+            hint: customer experience
+      - key: shift-blame
+        kind: chunk
+        type: chunk_substitution
+        title: 说他们把责任推给别人
+        chunk: shift the blame onto someone else
+        chunkMeaning: 把责任推给别人
+        direction: zh_to_en
+        items:
+          - zh: 他们试图把责任推给别人。
+            answer: They tried to shift the blame onto someone else.
+            hint: shift the blame
+          - zh: 别把错都推到新同事身上。
+            answer: Don't shift the blame onto the new colleague.
+            hint: the new colleague
+          - zh: 他一直想把责任推给团队。
+            answer: He kept trying to shift the blame onto the team.
+            hint: kept trying to
+      - key: shift-attention-screen
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意力转了方向
+        chunk: shift attention to
+        chunkMeaning: 把注意力转向
+        direction: zh_to_en
+        items:
+          - zh: 一听到声音，他就转过了头。
+            answer: He shifted his attention to the sound.
+            hint: the sound
+          - zh: 老师把大家的注意力引到黑板上。
+            answer: The teacher shifted our attention to the board.
+            hint: the board
+          - zh: 别老把注意力放在手机上。
+            answer: Don't keep shifting your attention to your phone.
+            hint: keep shifting
+      - key: shift-gears
+        kind: chunk
+        type: chunk_substitution
+        title: 说换个节奏
+        chunk: shift gears
+        chunkMeaning: 改变方式或节奏
+        direction: zh_to_en
+        items:
+          - zh: 到了下午，他就得换个节奏。
+            answer: By the afternoon, he needs to shift gears.
+            hint: By the afternoon
+          - zh: 这个项目该换个做法了。
+            answer: It's time to shift gears on this project.
+            hint: on this project
+          - zh: 一开始慢慢来，后来就加快速度。
+            answer: Start slowly, then shift gears later.
+            hint: then
+      - key: shift-weight
+        kind: chunk
+        type: chunk_substitution
+        title: 说站着时换重心
+        chunk: shift your weight
+        chunkMeaning: 转移身体重心
+        direction: zh_to_en
+        items:
+          - zh: 他站累了，换了个重心。
+            answer: He was tired of standing, so he shifted his weight.
+            hint: tired of standing
+          - zh: 别一直用一条腿站着。
+            answer: Don't keep your weight on one leg.
+            hint: one leg
+          - zh: 等车的时候她不停换着脚站。
+            answer: She kept shifting her weight while waiting for the bus.
+            hint: while waiting
+      - key: shift-slightly
+        kind: chunk
+        type: chunk_substitution
+        title: 说箱子稍微挪动了一下
+        chunk: shift slightly
+        chunkMeaning: 稍微移动
+        direction: zh_to_en
+        items:
+          - zh: 卡车转弯时，箱子稍微挪动了一下。
+            answer: The box shifted slightly as the truck turned.
+            hint: as the truck turned
+          - zh: 座位有点松，坐上去会晃。
+            answer: The seat shifted slightly when I sat down.
+            hint: when I sat down
+          - zh: 风向稍微变了一点。
+            answer: The wind shifted slightly.
+            hint: The wind
+      - key: shift-gears-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说要换个方式
+        chunk: shift gears
+        chunkMeaning: 改变方式或节奏
+        direction: en_to_zh
+        items:
+          - en: We need to shift gears and try a different approach.
+            answer: 我们需要换个方式，尝试另一种办法。
+            hint: a different approach
+          - en: After a while, it's time to shift gears.
+            answer: 过一阵子以后，就该变一变节奏了。
+            hint: After a while
+          - en: This quarter we need to shift gears.
+            answer: 这个季度我们要调整节奏。
+            hint: This quarter
+      - key: shift-slightly-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 说某物轻轻移动
+        chunk: shift slightly
+        chunkMeaning: 稍微移动
+        direction: zh_to_en
+        items:
+          - zh: 桌子好像轻微挪了一下。
+            answer: The table seemed to shift slightly.
+            hint: seemed to
+          - zh: 脚下的地板微微晃了一下。
+            answer: The floor shifted slightly under my feet.
+            hint: under my feet
+          - zh: 他的目光稍微动了动。
+            answer: His eyes shifted slightly.
+            hint: His eyes
+      - key: shift-to-target
+        type: pattern_drill
+        title: 说转向某个方向或重点
+        pattern: shift to [something]
+        patternMeaning: 转向某个方向或重点
+        direction: zh_to_en
+        items:
+          - zh: 话题转到了假期计划。
+            answer: The topic shifted to holiday plans.
+            hint: holiday plans
+          - zh: 公司把重点转向了线上。
+            answer: The company shifted to online sales.
+            hint: online sales
+          - zh: 大家的谈资转到了房价。
+            answer: The conversation shifted to house prices.
+            hint: house prices
+      - key: shift-from-to
+        type: pattern_drill
+        title: 说从一个方向转到另一个
+        pattern: shift from [A] to [B]
+        patternMeaning: 从一方向转到另一方向
+        direction: zh_to_en
+        items:
+          - zh: 我们的重点从数量转向了质量。
+            answer: Our focus shifted from quantity to quality.
+            hint: quantity；quality
+          - zh: 他从一份工作换到了另一份。
+            answer: He shifted from one job to another.
+            hint: one job to another
+          - zh: 讨论从计划转到了钱。
+            answer: The discussion shifted from the plan to the money.
+            hint: from the plan
+      - key: shift-object
+        type: pattern_drill
+        title: 说挪动某物
+        pattern: shift [something]
+        patternMeaning: 挪动某物
+        direction: zh_to_en
+        items:
+          - zh: 别挪这个架子，后面有电线。
+            answer: Don't shift this shelf; there are wires behind it.
+            hint: wires behind it
+          - zh: 他把箱子往门边挪了挪。
+            answer: He shifted the box towards the door.
+            hint: towards the door
+          - zh: 能帮我把这张桌子挪一下吗？
+            answer: Could you shift this table for me?
+            hint: for me
+      - key: shift-focus-other
+        type: pattern_drill
+        title: 说转移关注重点
+        pattern: shift the focus to [something]
+        patternMeaning: 转移关注重点
+        direction: zh_to_en
+        items:
+          - zh: 公司把重点从扩张转向了盈利。
+            answer: The company shifted the focus from growth to profit.
+            hint: from growth to profit
+          - zh: 这次调整把重点放到了成本上。
+            answer: This change shifted the focus to cost.
+            hint: cost
+          - zh: 我们应该把重点放在安全上。
+            answer: We should shift the focus to safety.
+            hint: safety
+      - key: shift-listen
+        type: pattern_drill
+        title: 听懂对方说转移和挪动
+        pattern: shift to [something] / shift [something]
+        patternMeaning: 转向 / 挪动
+        direction: en_to_zh
+        items:
+          - en: The conversation suddenly shifted to politics.
+            answer: 谈话突然转到了政治上。
+            hint: suddenly
+          - en: He shifted the box towards the door.
+            answer: 他把箱子往门边挪了挪。
+            hint: towards the door
+          - en: The company shifted the focus from growth to profit.
+            answer: 公司把重点从扩张转向了盈利。
+            hint: from growth to profit
+      - key: shift-blame-build
+        type: sentence_decomposition
+        title: 把推责任说完整
+        sourceKind: chunk
+        sourceText: shift the blame onto someone else
+        fullSentence: When the project failed, they tried to shift the blame onto someone else.
+        fullSentenceZh: 项目失败时，他们想把责任推给别人。
+        levels:
+          - level: 1
+            label: 核心句
+            en: They tried to shift the blame.
+            zh: 他们想把责任推出去。
+            highlight: ''
+            hint: 先说想推责任
+          - level: 2
+            label: 加对象
+            en: They tried to shift the blame onto someone else.
+            zh: 他们想把责任推给别人。
+            highlight: onto someone else
+            hint: 补上推给别人
+          - level: 3
+            label: 完整句
+            en: When the project failed, they tried to shift the blame onto someone else.
+            zh: 项目失败时，他们想把责任推给别人。
+            highlight: When the project failed
+            hint: 补上项目失败时
+      - key: shift-focus-build
+        type: sentence_decomposition
+        title: 把重点转向长期说完整
+        sourceKind: vocab
+        sourceText: shift
+        fullSentence: We need to shift the focus to long-term results instead of quick wins.
+        fullSentenceZh: 我们需要把重点转向长期结果，而不是短期成绩。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We need to shift the focus to long-term results.
+            zh: 我们需要把重点转向长期结果。
+            highlight: ''
+            hint: 先说转向长期结果
+          - level: 2
+            label: 加强调
+            en: We really need to shift the focus to long-term results.
+            zh: 我们确实需要把重点转向长期结果。
+            highlight: really
+            hint: 补上确实
+          - level: 3
+            label: 完整句
+            en: We need to shift the focus to long-term results instead of quick wins.
+            zh: 我们需要把重点转向长期结果，而不是短期成绩。
+            highlight: instead of quick wins
+            hint: 补上而不是短期成绩

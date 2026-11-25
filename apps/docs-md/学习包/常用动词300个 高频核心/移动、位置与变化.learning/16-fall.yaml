@@ -1,0 +1,343 @@
+learning:
+  exercises:
+    pipeline:
+      - key: fall-down
+        kind: chunk
+        type: chunk_substitution
+        title: 说他在楼梯上摔倒了
+        chunk: fall down
+        chunkMeaning: 摔倒
+        direction: zh_to_en
+        items:
+          - zh: 他在楼梯上摔倒了。
+            answer: He fell down on the stairs.
+            hint: fell down
+          - zh: 地上有水，小心别滑倒。
+            answer: There's water on the floor, so be careful not to fall down.
+            hint: be careful not to
+          - zh: 她跑太快，摔了一跤。
+            answer: She ran too fast and fell down.
+            hint: ran too fast
+      - key: fall-off-shelf
+        kind: chunk
+        type: chunk_substitution
+        title: 说书从架子上掉了下来
+        chunk: fall off the shelf
+        chunkMeaning: 从架子上掉下来
+        direction: zh_to_en
+        items:
+          - zh: 书从架子上掉了下来。
+            answer: The book fell off the shelf.
+            hint: fell off
+          - zh: 我差点从椅子上摔下来。
+            answer: I almost fell off my chair.
+            hint: almost
+          - zh: 墙上的照片掉下来摔碎了。
+            answer: The picture fell off the wall and broke.
+            hint: the wall；broke
+      - key: fall-down-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说摔倒和掉落
+        chunk: fall down
+        chunkMeaning: 摔倒
+        direction: en_to_zh
+        items:
+          - en: He fell down on the stairs.
+            answer: 他在楼梯上摔倒了。
+            hint: on the stairs
+          - en: The book fell off the shelf.
+            answer: 书从架子上掉了下来。
+            hint: the shelf
+          - en: I almost fell off my chair.
+            answer: 我差点从椅子上摔下来。
+            hint: almost
+      - key: fall-state
+        type: vocab_sentence_building
+        title: 说进入某种状态、数值下降
+        vocabWord: fall
+        vocabMeaning: 落下；下降；进入某状态
+        direction: zh_to_en
+        patterns:
+          - chunk: fall asleep
+            items:
+              - zh: 电影还没结束我就睡着了。
+                answer: I fell asleep before the movie ended.
+                hint: before the movie ended
+              - zh: 他一躺下就睡着了。
+                answer: He fell asleep as soon as he lay down.
+                hint: as soon as
+              - zh: 太累了，我差点在车上睡着。
+                answer: I was so tired that I almost fell asleep on the bus.
+                hint: so tired that
+          - chunk: fall ill
+            items:
+              - zh: 他旅行期间病倒了。
+                answer: He fell ill while traveling.
+                hint: while traveling
+              - zh: 奶奶上个月生病住院了。
+                answer: My grandmother fell ill last month and went to hospital.
+                hint: went to hospital
+              - zh: 因为太累，她突然病倒了。
+                answer: She suddenly fell ill because she was too tired.
+                hint: suddenly
+          - chunk: fall behind
+            items:
+              - zh: 我的工作开始落后了。
+                answer: I'm falling behind with my work.
+                hint: falling behind
+              - zh: 我们进度已经落后了一个月。
+                answer: We're a month behind schedule.
+                hint: a month
+              - zh: 上课不听就很容易掉队。
+                answer: If you don't listen in class, it's easy to fall behind.
+                hint: it's easy to
+      - key: fall-into-water
+        kind: chunk
+        type: chunk_substitution
+        title: 说树叶掉进了水里
+        chunk: fall into the water
+        chunkMeaning: 掉进水里
+        direction: zh_to_en
+        items:
+          - zh: 树叶掉进了水里。
+            answer: The leaves fell into the water.
+            hint: The leaves
+          - zh: 小孩差点掉进池塘。
+            answer: The child nearly fell into the pond.
+            hint: nearly；the pond
+          - zh: 手机从口袋里掉进了水里。
+            answer: The phone fell into the water from my pocket.
+            hint: from my pocket
+      - key: fall-silent
+        kind: chunk
+        type: chunk_substitution
+        title: 说她一时沉默了
+        chunk: fall silent
+        chunkMeaning: 沉默下来
+        direction: zh_to_en
+        items:
+          - zh: 她一时沉默了。
+            answer: She fell silent for a moment.
+            hint: for a moment
+          - zh: 听到这个消息，大家都安静了下来。
+            answer: Everyone fell silent when they heard the news.
+            hint: heard the news
+          - zh: 整个房间突然安静了。
+            answer: The whole room suddenly fell silent.
+            hint: suddenly
+      - key: fall-apart
+        kind: chunk
+        type: chunk_substitution
+        title: 说那把旧椅子快散架了
+        chunk: fall apart
+        chunkMeaning: 散架；崩溃
+        direction: zh_to_en
+        items:
+          - zh: 那把旧椅子快散架了。
+            answer: The old chair is falling apart.
+            hint: 进行时
+          - zh: 这段感情已经维持不下去了。
+            answer: The relationship is falling apart.
+            hint: The relationship
+          - zh: 没人维护的话，这栋房子迟早会塌。
+            answer: Without care, this house will fall apart.
+            hint: Without care
+      - key: fall-love
+        kind: chunk
+        type: chunk_substitution
+        title: 说他们大学时相爱了
+        chunk: fall in love
+        chunkMeaning: 爱上
+        direction: zh_to_en
+        items:
+          - zh: 他们在大学时相爱了。
+            answer: They fell in love at university.
+            hint: fell in love；at university
+          - zh: 我第一次看到那幅画就喜欢上了它。
+            answer: I fell in love with that painting the first time I saw it.
+            hint: with；the first time I saw it
+          - zh: 他们相识三个月就相爱了。
+            answer: They fell in love three months after they met.
+            hint: three months after they met
+      - key: fall-love-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说爱上和散架
+        chunk: fall in love with
+        chunkMeaning: 爱上
+        direction: en_to_zh
+        items:
+          - en: They fell in love at university.
+            answer: 他们在大学时相爱了。
+            hint: at university
+          - en: I fell in love with that painting the first time I saw it.
+            answer: 我第一次看到那幅画就喜欢上了它。
+            hint: the first time I saw it
+          - en: The old chair is falling apart.
+            answer: 那把旧椅子快散架了。
+            hint: falling apart
+      - key: fall-down-pattern
+        type: pattern_drill
+        title: 说摔倒的其他情形
+        pattern: fall down
+        patternMeaning: 摔倒
+        direction: zh_to_en
+        items:
+          - zh: 他在冰上滑倒了。
+            answer: He slipped and fell down on the ice.
+            hint: slipped；on the ice
+          - zh: 下雨路滑，千万别摔倒。
+            answer: The road is wet, so be careful not to fall down.
+            hint: The road is wet
+          - zh: 那个箱子从车上掉下来了。
+            answer: The box fell down from the truck.
+            hint: from the truck
+      - key: fall-off-other
+        type: pattern_drill
+        title: 说从别的东西上掉下来
+        pattern: fall off [something]
+        patternMeaning: 从某物上跌落
+        direction: zh_to_en
+        items:
+          - zh: 他从自行车上摔了下来。
+            answer: He fell off his bike.
+            hint: his bike
+          - zh: 一片叶子从树上落下来。
+            answer: A leaf fell off the tree.
+            hint: A leaf
+          - zh: 别站在边缘，小心掉下去。
+            answer: Don't stand at the edge; you might fall off.
+            hint: the edge
+      - key: fall-into-other
+        type: pattern_drill
+        title: 说掉进别的地方
+        pattern: fall into [place]
+        patternMeaning: 掉进某处
+        direction: zh_to_en
+        items:
+          - zh: 他一不小心掉进了坑里。
+            answer: He accidentally fell into a hole.
+            hint: accidentally；a hole
+          - zh: 球掉进了池塘。
+            answer: The ball fell into the pond.
+            hint: The ball
+          - zh: 别靠着那边的栏杆，会掉下去的。
+            answer: Don't lean on that railing; you'll fall into the water.
+            hint: lean on
+      - key: fall-asleep-other
+        type: pattern_drill
+        title: 说进入别的状态
+        pattern: fall [adjective]
+        patternMeaning: 进入某种状态
+        direction: zh_to_en
+        items:
+          - zh: 他听着音乐就睡着了。
+            answer: He fell asleep while listening to music.
+            hint: while listening
+          - zh: 那次很累，她回家就病倒了。
+            answer: She was so tired that she fell ill right after getting home.
+            hint: right after getting home
+          - zh: 会议室一下子安静了。
+            answer: The meeting room fell silent all at once.
+            hint: all at once
+      - key: fall-numbers-other
+        type: pattern_drill
+        title: 说数值下降
+        pattern: fall to / fall by [number]
+        patternMeaning: 降到某数值 / 下降某幅度
+        direction: zh_to_en
+        items:
+          - zh: 上个月销量下降了10%。
+            answer: Sales fell by ten percent last month.
+            hint: fell by
+          - zh: 气温一夜之间大幅下降。
+            answer: The temperature fell sharply overnight.
+            hint: sharply；overnight
+          - zh: 股价跌到了两年来最低。
+            answer: The share price fell to a two-year low.
+            hint: a two-year low
+      - key: fall-behind-other
+        type: pattern_drill
+        title: 说进度落后
+        pattern: fall behind / fall behind schedule
+        patternMeaning: 落后；进度落后
+        direction: zh_to_en
+        items:
+          - zh: 我们项目进度落后了两周。
+            answer: We're two weeks behind schedule.
+            hint: behind schedule
+          - zh: 他生病以后功课落下了不少。
+            answer: He fell behind in his studies after getting sick.
+            hint: in his studies
+          - zh: 要是现在不赶，后期会跟不上。
+            answer: If we don't catch up now, we'll fall behind later.
+            hint: catch up now
+      - key: fall-listen
+        type: pattern_drill
+        title: 听懂对方说摔倒和状态变化
+        pattern: fall down / fall asleep / fall behind
+        patternMeaning: 摔倒 / 入睡 / 落后
+        direction: en_to_zh
+        items:
+          - en: I fell asleep before the movie ended.
+            answer: 电影还没结束我就睡着了。
+            hint: before the movie ended
+          - en: I'm falling behind with my work.
+            answer: 我的工作开始落后了。
+            hint: with my work
+          - en: He fell off his bike.
+            answer: 他从自行车上摔了下来。
+            hint: his bike
+      - key: fall-asleep-build
+        type: sentence_decomposition
+        title: 把睡着这件事说完整
+        sourceKind: chunk
+        sourceText: fall asleep
+        fullSentence: I fell asleep on the sofa before the movie ended.
+        fullSentenceZh: 电影还没演完，我就在沙发上睡着了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I fell asleep.
+            zh: 我睡着了。
+            highlight: ''
+            hint: 先说睡着了
+          - level: 2
+            label: 加地点
+            en: I fell asleep on the sofa.
+            zh: 我在沙发上睡着了。
+            highlight: on the sofa
+            hint: 补上在沙发上
+          - level: 3
+            label: 完整句
+            en: I fell asleep on the sofa before the movie ended.
+            zh: 电影还没演完，我就在沙发上睡着了。
+            highlight: before the movie ended
+            hint: 补上电影还没演完
+      - key: fall-behind-build
+        type: sentence_decomposition
+        title: 把工作落后说完整
+        sourceKind: vocab
+        sourceText: fall
+        fullSentence: I'm falling behind with my work because I've been sick for a week.
+        fullSentenceZh: 因为病了一个星期，我的工作开始落后了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I'm falling behind with my work.
+            zh: 我的工作开始落后了。
+            highlight: ''
+            hint: 先说工作落后
+          - level: 2
+            label: 加程度
+            en: I'm really falling behind with my work.
+            zh: 我的工作真的落后了。
+            highlight: really
+            hint: 补上真的
+          - level: 3
+            label: 完整句
+            en: I'm falling behind with my work because I've been sick for a week.
+            zh: 因为病了一个星期，我的工作开始落后了。
+            highlight: because I've been sick for a week
+            hint: 补上因为病了一个星期

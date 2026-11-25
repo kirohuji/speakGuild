@@ -1,0 +1,360 @@
+learning:
+  exercises:
+    pipeline:
+      - key: return-to-office
+        kind: chunk
+        type: chunk_substitution
+        title: 说午饭后回办公室
+        chunk: return to the office
+        chunkMeaning: 回到办公室
+        direction: zh_to_en
+        items:
+          - zh: 她午饭后回到了办公室。
+            answer: She returned to the office after lunch.
+            hint: returned；after lunch
+          - zh: 你什么时候回办公室？
+            answer: When are you returning to the office?
+            hint: When；进行时表将来
+          - zh: 我先回办公室拿一下文件。
+            answer: I'll return to the office first to get the files.
+            hint: first；to get the files
+      - key: return-home
+        kind: chunk
+        type: chunk_substitution
+        title: 说他那天晚上很晚才回家
+        chunk: return home
+        chunkMeaning: 回家
+        direction: zh_to_en
+        items:
+          - zh: 那天晚上他很晚才回家。
+            answer: He returned home late that night.
+            hint: returned；late that night
+          - zh: 她在外地待了一周才回家。
+            answer: She was away for a week before she returned home.
+            hint: away for a week；before
+          - zh: 你什么时候回家？
+            answer: When are you returning home?
+            hint: When；进行时表将来
+      - key: return-office-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说回办公室
+        chunk: return to the office
+        chunkMeaning: 回到办公室
+        direction: en_to_zh
+        items:
+          - en: I'll return to the office after lunch.
+            answer: 我午饭后会回办公室。
+            hint: after lunch
+          - en: She returned to the office only to find it closed.
+            answer: 她回到办公室，却发现已经关门了。
+            hint: only to find
+          - en: We're returning to the office next Monday.
+            answer: 我们下周一回办公室。
+            hint: next Monday
+      - key: return-state
+        type: vocab_sentence_building
+        title: 说恢复正常、回到工作
+        vocabWord: return
+        vocabMeaning: 返回；归还；恢复
+        direction: zh_to_en
+        patterns:
+          - chunk: return to normal
+            items:
+              - zh: 系统恢复正常了。
+                answer: The system returned to normal.
+                hint: returned to normal
+              - zh: 事情慢慢恢复了正常。
+                answer: Things slowly returned to normal.
+                hint: slowly
+              - zh: 事情终于恢复正常了。
+                answer: Things have finally returned to normal.
+                hint: have finally
+          - chunk: return to work
+            items:
+              - zh: 她周一回去上班了。
+                answer: She returned to work on Monday.
+                hint: returned；on Monday
+              - zh: 生完孩子之后，她三个月就回去上班了。
+                answer: After having a baby, she returned to work in three months.
+                hint: in three months
+              - zh: 你什么时候回去上班？
+                answer: When are you returning to work?
+                hint: When；进行时表将来
+          - chunk: return to a normal life
+            items:
+              - zh: 一切恢复正常之后，我们又能正常生活了。
+                answer: After everything returned to normal, we could live a normal life again.
+                hint: After everything
+              - zh: 情况慢慢好了，生活也回到了正轨。
+                answer: Things got better, and life returned to normal.
+                hint: got better
+              - zh: 这座城市的日常已经完全恢复了。
+                answer: Daily life in this city has returned to normal.
+                hint: Daily life
+      - key: return-books
+        kind: chunk
+        type: chunk_substitution
+        title: 说需要还这些书
+        chunk: return these books
+        chunkMeaning: 归还这些书
+        direction: zh_to_en
+        items:
+          - zh: 我需要归还这些书。
+            answer: I need to return these books.
+            hint: need to
+          - zh: 书明天到期，你得去还了。
+            answer: The books are due tomorrow, so you need to return them.
+            hint: are due；return them
+          - zh: 我借的书已经还了。
+            answer: I've already returned the books I borrowed.
+            hint: already returned；I borrowed
+      - key: return-key
+        kind: chunk
+        type: chunk_substitution
+        title: 说把钥匙还给她
+        chunk: return the key to her
+        chunkMeaning: 把钥匙还给她
+        direction: zh_to_en
+        items:
+          - zh: 你用完后能把钥匙还回来吗？
+            answer: Could you return the key when you're done?
+            hint: Could you；when you're done
+          - zh: 我明天把钥匙还给她。
+            answer: I'll return the key to her tomorrow.
+            hint: to her；tomorrow
+          - zh: 记得把借的钥匙还回去。
+            answer: Remember to return the key you borrowed.
+            hint: Remember to；you borrowed
+      - key: return-topic
+        kind: chunk
+        type: chunk_substitution
+        title: 说回到主要问题
+        chunk: return to the main question
+        chunkMeaning: 回到主要问题
+        direction: zh_to_en
+        items:
+          - zh: 我们回到主要问题上来。
+            answer: Let's return to the main question.
+            hint: Let's
+          - zh: 我们先说别的，之后再回到主要问题。
+            answer: Let's talk about something else and return to the main question later.
+            hint: later
+          - zh: 我们花点时间回到一开始的问题。
+            answer: Let's take a moment to return to the first question.
+            hint: take a moment
+      - key: return-favor
+        kind: chunk
+        type: chunk_substitution
+        title: 说以后会回报
+        chunk: return the favor
+        chunkMeaning: 回报帮助
+        direction: zh_to_en
+        items:
+          - zh: 以后我会回报你的。
+            answer: I'll return the favor someday.
+            hint: someday
+          - zh: 他帮过我很多，我想回报他。
+            answer: He helped me a lot, and I want to return the favor.
+            hint: helped me a lot
+          - zh: 下次我一定回报你。
+            answer: I'll definitely return the favor next time.
+            hint: definitely；next time
+      - key: return-call
+        kind: chunk
+        type: chunk_substitution
+        title: 说晚点回电话
+        chunk: return your call
+        chunkMeaning: 给你回电话
+        direction: zh_to_en
+        items:
+          - zh: 我晚点给你回电话。
+            answer: I'll return your call later.
+            hint: later
+          - zh: 他还没给我回电话。
+            answer: He hasn't returned my call yet.
+            hint: hasn't；yet
+          - zh: 抱歉刚刚没接到，我现在回你电话。
+            answer: Sorry I missed your call; I'm returning it now.
+            hint: missed your call
+      - key: return-item
+        kind: chunk
+        type: chunk_substitution
+        title: 说可以在三十天内退货
+        chunk: return the item
+        chunkMeaning: 退货
+        direction: zh_to_en
+        items:
+          - zh: 你可以在三十天内退货。
+            answer: You can return the item within thirty days.
+            hint: within thirty days
+          - zh: 这个我能退货吗？
+            answer: Can I return this item?
+            hint: Can I
+          - zh: 我把买错的尺码退掉了。
+            answer: I returned the item because I bought the wrong size.
+            hint: the wrong size
+      - key: return-to-place
+        type: pattern_drill
+        title: 换个地点说回到
+        pattern: return to [place]
+        patternMeaning: 返回某地
+        direction: zh_to_en
+        items:
+          - zh: 我们下周回国。
+            answer: We're returning to our home country next week.
+            hint: 进行时表将来；next week
+          - zh: 他下个月回国工作。
+            answer: He's returning to his country to work next month.
+            hint: to work；next month
+          - zh: 他把书还回了图书馆。
+            answer: He returned the book to the library.
+            hint: returned；to the library
+      - key: return-home-other
+        type: pattern_drill
+        title: 说回家
+        pattern: return home
+        patternMeaning: 回家；home 前不加 to
+        direction: zh_to_en
+        items:
+          - zh: 我们很晚才回家。
+            answer: We returned home very late.
+            hint: home 前不加 to
+          - zh: 他出国两年后回家了。
+            answer: He returned home after two years abroad.
+            hint: after two years abroad
+          - zh: 你什么时候回家？
+            answer: When will you return home?
+            hint: When will
+      - key: return-to-state-other
+        type: pattern_drill
+        title: 说恢复到别的状态
+        pattern: return to [state]
+        patternMeaning: 恢复到某状态
+        direction: zh_to_en
+        items:
+          - zh: 网络恢复正常了。
+            answer: The network returned to normal.
+            hint: The network
+          - zh: 他慢慢恢复了平时的状态。
+            answer: He slowly returned to his usual self.
+            hint: his usual self
+          - zh: 一切都会恢复正常的。
+            answer: Everything will return to normal.
+            hint: will
+      - key: return-object-other
+        type: pattern_drill
+        title: 说归还别的东西
+        pattern: return [something] (to [someone])
+        patternMeaning: 归还某物
+        direction: zh_to_en
+        items:
+          - zh: 你能把这支笔还给我吗？
+            answer: Can you return this pen to me?
+            hint: to me
+          - zh: 我明天把伞还给你。
+            answer: I'll return the umbrella to you tomorrow.
+            hint: to you；tomorrow
+          - zh: 我把多找的钱还给了收银员。
+            answer: I returned the extra change to the cashier.
+            hint: the extra change；the cashier
+      - key: return-topic-other
+        type: pattern_drill
+        title: 说回到别的话题
+        pattern: return to [topic]
+        patternMeaning: 回到话题
+        direction: zh_to_en
+        items:
+          - zh: 我们回到刚才那个话题吧。
+            answer: Let's return to what we were talking about.
+            hint: what we were talking about
+          - zh: 先回到价格问题上来。
+            answer: Let's return to the question of price first.
+            hint: the question of price
+          - zh: 我们过一会儿再回到这个话题。
+            answer: We'll return to this topic in a moment.
+            hint: in a moment
+      - key: return-favor-other
+        type: pattern_drill
+        title: 说回报别人的帮助
+        pattern: return the favor
+        patternMeaning: 回报帮助
+        direction: zh_to_en
+        items:
+          - zh: 总有一天我会回报你的。
+            answer: I'll return the favor one day.
+            hint: one day
+          - zh: 她把这份好心传给了别人。
+            answer: She returned the favor to someone else.
+            hint: someone else
+          - zh: 你帮了我这么多，我怎么也得回报你。
+            answer: You've helped me so much that I have to return the favor.
+            hint: so much that
+      - key: return-item-listen
+        type: pattern_drill
+        title: 听懂对方说退货和回电话
+        pattern: return [item] / return [someone's] call
+        patternMeaning: 退货 / 回电话
+        direction: en_to_zh
+        items:
+          - en: You can return the item within thirty days.
+            answer: 你可以在三十天内退货。
+            hint: within thirty days
+          - en: I'll return your call later.
+            answer: 我晚点给你回电话。
+            hint: later
+          - en: She returned the shoes because they didn't fit.
+            answer: 她把鞋子退了，因为不合脚。
+            hint: didn't fit
+      - key: return-normal-build
+        type: sentence_decomposition
+        title: 把一切恢复正常说完整
+        sourceKind: chunk
+        sourceText: return to normal
+        fullSentence: After the power came back, everything slowly returned to normal.
+        fullSentenceZh: 来电之后，一切都慢慢恢复了正常。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Everything returned to normal.
+            zh: 一切都恢复了正常。
+            highlight: ''
+            hint: 先说恢复正常
+          - level: 2
+            label: 加程度
+            en: Everything slowly returned to normal.
+            zh: 一切都慢慢恢复了正常。
+            highlight: slowly
+            hint: 补上慢慢
+          - level: 3
+            label: 完整句
+            en: After the power came back, everything slowly returned to normal.
+            zh: 来电之后，一切都慢慢恢复了正常。
+            highlight: After the power came back
+            hint: 补上来电之后
+      - key: return-key-build
+        type: sentence_decomposition
+        title: 把还钥匙说完整
+        sourceKind: vocab
+        sourceText: return
+        fullSentence: Could you return the key to her when you're done with it?
+        fullSentenceZh: 你用完之后能把钥匙还给她吗？
+        levels:
+          - level: 1
+            label: 核心句
+            en: Could you return the key?
+            zh: 你能把钥匙还回来吗？
+            highlight: ''
+            hint: 先请对方还钥匙
+          - level: 2
+            label: 加对象
+            en: Could you return the key to her?
+            zh: 你能把钥匙还给她吗？
+            highlight: to her
+            hint: 补上还给她
+          - level: 3
+            label: 完整句
+            en: Could you return the key to her when you're done with it?
+            zh: 你用完之后能把钥匙还给她吗？
+            highlight: when you're done with it
+            hint: 补上用完以后

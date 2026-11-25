@@ -1,0 +1,225 @@
+learning:
+  exercises:
+    pipeline:
+      - key: dlg-arrived-not-found
+        kind: chunk
+        type: chunk_substitution
+        title: 说到站了但找不到咖啡馆
+        chunk: I've arrived at the station
+        chunkMeaning: 我已经到车站了
+        direction: zh_to_en
+        items:
+          - zh: 你到车站了吗？
+            answer: Have you arrived at the station yet?
+            hint: Have you；yet
+          - zh: 到了，但我找不到那家咖啡馆。
+            answer: Yes, I've arrived, but I can't find the café.
+            hint: can't find
+          - zh: 手机上的消息我还没看清就消失了。
+            answer: The message on my phone disappeared before I could read it.
+            hint: before I could read it
+      - key: dlg-stay-where
+        kind: chunk
+        type: chunk_substitution
+        title: 让对方待在原地
+        chunk: Stay where you are
+        chunkMeaning: 待在原地
+        direction: zh_to_en
+        items:
+          - zh: 你先待在原地，我过去找你。
+            answer: Stay where you are. I'll come and meet you.
+            hint: come and meet you
+          - zh: 你在正门附近吗？
+            answer: Are you near the main entrance?
+            hint: the main entrance
+          - zh: 你别动，我这就过去。
+            answer: Don't move; I'm on my way.
+            hint: on my way
+      - key: dlg-exit-cross
+        kind: chunk
+        type: chunk_substitution
+        title: 说走出大楼再过马路
+        chunk: cross the road
+        chunkMeaning: 过马路
+        direction: zh_to_en
+        items:
+          - zh: 我要走出大楼吗？
+            answer: Should I exit the building?
+            hint: exit the building
+          - zh: 对，过马路，沿着河边的小路走。
+            answer: Yes. Cross the road and follow the path along the river.
+            hint: follow the path along the river
+          - zh: 那条路通向一座小桥。
+            answer: It leads to a small bridge.
+            hint: leads to
+      - key: dlg-exit-cross-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方的路线指示
+        chunk: cross the road and follow the path
+        chunkMeaning: 过马路沿小路走
+        direction: en_to_zh
+        items:
+          - en: Should I exit the building?
+            answer: 我要走出大楼吗？
+            hint: exit the building
+          - en: Yes. Cross the road and follow the path along the river.
+            answer: 对。过马路，沿着河边的小路走。
+            hint: along the river
+          - en: It leads to a small bridge.
+            answer: 那条路通向一座小桥。
+            hint: a small bridge
+      - key: dlg-passed-bookshop
+        kind: chunk
+        type: chunk_substitution
+        title: 说我刚经过一家书店
+        chunk: I've just passed a bookshop
+        chunkMeaning: 我刚经过一家书店
+        direction: zh_to_en
+        items:
+          - zh: 我刚经过一家书店。
+            answer: I've just passed a bookshop.
+            hint: have just passed
+          - zh: 那我走对了吗？
+            answer: Am I going the right way?
+            hint: the right way
+          - zh: 能在到桥之前先给我打个电话吗？
+            answer: Could you call me before you reach the bridge?
+            hint: before you reach
+      - key: dlg-approaching-bridge
+        kind: chunk
+        type: chunk_substitution
+        title: 说我快走到桥边了
+        chunk: I'm approaching the bridge
+        chunkMeaning: 我正接近桥
+        direction: zh_to_en
+        items:
+          - zh: 能看到桥吗？
+            answer: Can you see the bridge?
+            hint: Can you see
+          - zh: 能，我现在快走到桥边了。
+            answer: Yes, I'm approaching it now.
+            hint: approaching
+          - zh: 我看到你了。
+            answer: There you are!
+            hint: There you are
+      - key: dlg-cafe-moved
+        kind: chunk
+        type: chunk_substitution
+        title: 说咖啡馆搬到桥那头了
+        chunk: The café has moved to the other side
+        chunkMeaning: 咖啡馆搬到另一边了
+        direction: zh_to_en
+        items:
+          - zh: 咖啡馆搬到桥那头了。
+            answer: The café has moved to the other side of the bridge.
+            hint: the other side of the bridge
+          - zh: 跟我来。
+            answer: Come with me.
+            hint: Come with me
+          - zh: 难怪，我刚才都开始不耐烦了。
+            answer: That explains it. I was beginning to grow impatient.
+            hint: That explains it
+      - key: dlg-cafe-moved-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说咖啡馆搬走了
+        chunk: The café has moved
+        chunkMeaning: 咖啡馆搬走了
+        direction: en_to_zh
+        items:
+          - en: The café has moved to the other side of the bridge.
+            answer: 咖啡馆搬到桥那头了。
+            hint: the other side
+          - en: That explains it. I was beginning to grow impatient.
+            answer: 难怪，我刚才都开始不耐烦了。
+            hint: grow impatient
+          - en: Come with me; it's not far.
+            answer: 跟我来，不远。
+            hint: not far
+      - key: dlg-stay-return
+        kind: chunk
+        type: chunk_substitution
+        title: 说待一会儿再回办公室
+        chunk: return to the office after lunch
+        chunkMeaning: 午饭后回办公室
+        direction: zh_to_en
+        items:
+          - zh: 这里安静多了。
+            answer: It's much quieter here.
+            hint: much quieter
+          - zh: 我们可以待一会儿，午饭后再回办公室。
+            answer: We can stay for a while and return to the office after lunch.
+            hint: stay for a while；after lunch
+          - zh: 我得先把这本书还给你，免得又忘了。
+            answer: I just need to return this book to you before I forget again.
+            hint: before I forget again
+      - key: dlg-stay-return-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说再待一会儿
+        chunk: stay for a while and return to the office
+        chunkMeaning: 待一会儿再回办公室
+        direction: en_to_zh
+        items:
+          - en: It's much quieter here.
+            answer: 这里安静多了。
+            hint: much quieter
+          - en: We can stay for a while and return to the office after lunch.
+            answer: 我们可以待一会儿，午饭后再回办公室。
+            hint: after lunch
+          - en: I just need to return this book to you before I forget again.
+            answer: 我得先把这本书还给你，免得又忘了。
+            hint: return this book to you
+      - key: dlg-full-route
+        type: sentence_decomposition
+        title: 把见面路线说完整
+        sourceKind: chunk
+        sourceText: Cross the road and follow the path
+        fullSentence: Cross the road and follow the path along the river; it leads to a small bridge.
+        fullSentenceZh: 过马路，沿着河边的小路走，那条路通向一座小桥。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Cross the road.
+            zh: 过马路。
+            highlight: ''
+            hint: 先说过马路
+          - level: 2
+            label: 加路线
+            en: Cross the road and follow the path along the river.
+            zh: 过马路，沿着河边的小路走。
+            highlight: follow the path along the river
+            hint: 补上沿河边小路走
+          - level: 3
+            label: 完整句
+            en: Cross the road and follow the path along the river; it leads to a small bridge.
+            zh: 过马路，沿着河边的小路走，那条路通向一座小桥。
+            highlight: it leads to a small bridge
+            hint: 补上通向小桥
+      - key: dlg-full-plan
+        type: sentence_decomposition
+        title: 把待一会儿再说完整
+        sourceKind: vocab
+        sourceText: stay / return
+        fullSentence: We can stay here for a while, and then return to the office after lunch.
+        fullSentenceZh: 我们可以在这儿待一会儿，然后午饭后再回办公室。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We can stay here for a while.
+            zh: 我们可以在这儿待一会儿。
+            highlight: ''
+            hint: 先说待一会儿
+          - level: 2
+            label: 加顺序
+            en: We can stay here for a while, and then go back.
+            zh: 我们可以在这儿待一会儿，然后再回去。
+            highlight: and then go back
+            hint: 补上再回去
+          - level: 3
+            label: 完整句
+            en: We can stay here for a while, and then return to the office after lunch.
+            zh: 我们可以在这儿待一会儿，然后午饭后再回办公室。
+            highlight: return to the office after lunch
+            hint: 补上午饭后回办公室

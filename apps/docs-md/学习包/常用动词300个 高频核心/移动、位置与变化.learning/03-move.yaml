@@ -1,0 +1,459 @@
+learning:
+  exercises:
+    pipeline:
+      - key: move-to-hangzhou
+        kind: chunk
+        type: chunk_substitution
+        title: 说搬到杭州
+        chunk: move to Hangzhou
+        chunkMeaning: 搬到杭州
+        direction: zh_to_en
+        items:
+          - zh: 她去年搬到了杭州。
+            answer: She moved to Hangzhou last year.
+            hint: moved；last year
+          - zh: 他明年要搬到杭州了吗？
+            answer: Is he moving to Hangzhou next year?
+            hint: 进行时表将来；next year
+          - zh: 我们正在考虑搬到杭州。
+            answer: We're thinking about moving to Hangzhou.
+            hint: thinking about；moving
+      - key: move-chair
+        kind: chunk
+        type: chunk_substitution
+        title: 请对方挪一下椅子
+        chunk: move the chair
+        chunkMeaning: 把椅子挪一下
+        direction: zh_to_en
+        items:
+          - zh: 你能把椅子挪一下吗？
+            answer: Can you move the chair a little?
+            hint: a little
+          - zh: 我把椅子搬到窗边了。
+            answer: I moved the chair over to the window.
+            hint: moved；over to the window
+          - zh: 这把椅子别动，它有点坏了。
+            answer: Don't move this chair; it's a little broken.
+            hint: Don't；a little broken
+      - key: move-chair-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方叫挪东西
+        chunk: move your bag
+        chunkMeaning: 把你的包挪一下
+        direction: en_to_zh
+        items:
+          - en: Could you move your bag?
+            answer: 你能把你的包挪一下吗？
+            hint: Could you
+          - en: Let's move the table closer to the window.
+            answer: 我们把桌子挪近窗户一点吧。
+            hint: closer to the window
+          - en: Someone moved my books while I was out.
+            answer: 我出去的时候有人动了我的书。
+            hint: while I was out
+      - key: move-state
+        type: vocab_sentence_building
+        title: 说搬家之后的变化
+        vocabWord: move
+        vocabMeaning: 移动；搬家；转移
+        direction: zh_to_en
+        patterns:
+          - chunk: move house
+            items:
+              - zh: 我们下个月搬家。
+                answer: We're moving house next month.
+                hint: 进行时表将来；next month
+              - zh: 搬家真是一件累人的事。
+                answer: Moving house is really tiring.
+                hint: really tiring
+              - zh: 他们上个月刚搬过家。
+                answer: They moved house just last month.
+                hint: just last month
+          - chunk: move away
+            items:
+              - zh: 他毕业后搬走了。
+                answer: He moved away after graduation.
+                hint: after graduation
+              - zh: 我不想搬到那么远的地方去。
+                answer: I don't want to move away so far.
+                hint: so far
+              - zh: 她的朋友去年搬走了。
+                answer: Her friend moved away last year.
+                hint: Her friend；last year
+          - chunk: move in
+            items:
+              - zh: 我上周末搬进了新家。
+                answer: I moved in last weekend.
+                hint: moved in；last weekend
+              - zh: 我们下周搬进新家。
+                answer: We're moving into our new place next week.
+                hint: moving into；next week
+              - zh: 搬进来之前先把房间打扫一下。
+                answer: Let's clean the room before we move in.
+                hint: before we move in
+      - key: move-city-suburbs
+        kind: chunk
+        type: chunk_substitution
+        title: 说从市区搬到郊区
+        chunk: move from the city to the suburbs
+        chunkMeaning: 从市区搬到郊区
+        direction: zh_to_en
+        items:
+          - zh: 我们从市区搬到了郊区。
+            answer: We moved from the city to the suburbs.
+            hint: moved from；to the suburbs
+          - zh: 他们为什么从市区搬到郊区？
+            answer: Why did they move from the city to the suburbs?
+            hint: Why did；move from
+          - zh: 为了孩子上学，我们打算从市区搬到郊区。
+            answer: We're planning to move from the city to the suburbs for the kids' school.
+            hint: planning to；for the kids' school
+      - key: move-on-next
+        kind: chunk
+        type: chunk_substitution
+        title: 说继续下一个问题
+        chunk: move on to the next question
+        chunkMeaning: 进入下一个问题
+        direction: zh_to_en
+        items:
+          - zh: 我们继续下一个问题吧。
+            answer: Let's move on to the next question.
+            hint: Let's
+          - zh: 这个我们先放一放，进入下一项吧。
+            answer: Let's leave this for now and move on to the next item.
+            hint: leave this for now
+          - zh: 时间不多，我们直接进入下一个话题吧。
+            answer: We don't have much time, so let's move on to the next topic.
+            hint: We don't have much time
+      - key: move-forward-plan
+        kind: chunk
+        type: chunk_substitution
+        title: 说推进这个计划
+        chunk: move forward with the plan
+        chunkMeaning: 继续推进这个计划
+        direction: zh_to_en
+        items:
+          - zh: 我们需要继续推进这个计划。
+            answer: We need to move forward with the plan.
+            hint: need to
+          - zh: 老板同意推进这个计划吗？
+            answer: Did the boss agree to move forward with the plan?
+            hint: agree to
+          - zh: 资金到账之前，我们先没法推进这个计划。
+            answer: We can't move forward with the plan until we get the money.
+            hint: can't；until we get the money
+      - key: move-towards-decision
+        kind: chunk
+        type: chunk_substitution
+        title: 说讨论逐渐走向决定
+        chunk: move towards a decision
+        chunkMeaning: 逐渐走向一个决定
+        direction: zh_to_en
+        items:
+          - zh: 讨论正逐渐走向一个决定。
+            answer: The discussion is moving towards a decision.
+            hint: 进行时；towards
+          - zh: 这次会议让我们更接近决定了。
+            answer: The meeting moved us towards a decision.
+            hint: moved us
+          - zh: 大家的看法正在慢慢靠拢。
+            answer: Everyone's views are moving towards the same point.
+            hint: views；the same point
+      - key: move-meeting-up
+        kind: chunk
+        type: chunk_substitution
+        title: 说会议被提前
+        chunk: move the meeting up to Monday
+        chunkMeaning: 把会议提前到周一
+        direction: zh_to_en
+        items:
+          - zh: 会议被提前到周一了。
+            answer: The meeting has been moved up to Monday.
+            hint: has been moved up
+          - zh: 能不能把会议提前到周一？
+            answer: Can we move the meeting up to Monday?
+            hint: Can we
+          - zh: 他们把它提前到了本周早些时候。
+            answer: They moved it up to earlier this week.
+            hint: moved it up；earlier this week
+      - key: move-furniture
+        kind: chunk
+        type: chunk_substitution
+        title: 请人帮忙挪家具
+        chunk: move the sofa
+        chunkMeaning: 把沙发挪一下
+        direction: zh_to_en
+        items:
+          - zh: 能帮我挪一下沙发吗？
+            answer: Can you help me move the sofa?
+            hint: help me
+          - zh: 我们把沙发挪到墙边吧。
+            answer: Let's move the sofa against the wall.
+            hint: against the wall
+          - zh: 沙发太重了，我们两个人才能挪动。
+            answer: The sofa is so heavy that it takes two of us to move it.
+            hint: so heavy that；two of us
+      - key: move-in-out
+        kind: chunk
+        type: chunk_substitution
+        title: 说搬进来和搬出去
+        chunk: move in
+        chunkMeaning: 搬进来
+        direction: zh_to_en
+        items:
+          - zh: 他们上周末搬进来了。
+            answer: They moved in last weekend.
+            hint: moved in；last weekend
+          - zh: 我们下个月搬进新房子。
+            answer: We're moving into a new place next month.
+            hint: moving into；next month
+          - zh: 搬进来之前得先把网络装好。
+            answer: We need to get the internet set up before we move in.
+            hint: get the internet set up；before
+      - key: move-away-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说搬走了
+        chunk: move away
+        chunkMeaning: 搬走
+        direction: en_to_zh
+        items:
+          - en: Her best friend moved away last year.
+            answer: 她最好的朋友去年搬走了。
+            hint: Her best friend；last year
+          - en: I don't want to move away from this city.
+            answer: 我不想搬离这座城市。
+            hint: from this city
+          - en: They moved away because of the rent.
+            answer: 他们因为房租搬走了。
+            hint: because of the rent
+      - key: move-from-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说从哪搬到哪
+        chunk: move from the city to the suburbs
+        chunkMeaning: 从市区搬到郊区
+        direction: en_to_zh
+        items:
+          - en: We moved from the city to the suburbs last year.
+            answer: 我们去年从市区搬到了郊区。
+            hint: last year
+          - en: They moved from a small office to a bigger one.
+            answer: 他们从小办公室搬到了大一点的地方。
+            hint: a bigger one
+          - en: Why did you move from Shanghai to Chengdu?
+            answer: 你们为什么从上海搬到了成都？
+            hint: Why did
+      - key: move-to-place
+        type: pattern_drill
+        title: 换个地点说搬到哪里
+        pattern: move to [place]
+        patternMeaning: 搬到某地
+        direction: zh_to_en
+        items:
+          - zh: 我们下个月要搬到新办公室。
+            answer: We're moving to a new office next month.
+            hint: 进行时表将来；a new office
+          - zh: 我三年前搬到了这个城市。
+            answer: I moved to this city three years ago.
+            hint: moved to；three years ago
+          - zh: 她打算搬到国外去吗？
+            answer: Is she planning to move to another country?
+            hint: planning to；another country
+      - key: move-something-other
+        type: pattern_drill
+        title: 说挪别的东西
+        pattern: move [something]
+        patternMeaning: 移动某物
+        direction: zh_to_en
+        items:
+          - zh: 别动那个箱子，里面有玻璃。
+            answer: Don't move that box; there's glass inside.
+            hint: there's glass inside
+          - zh: 你能帮我抬一下这张桌子吗？
+            answer: Can you help me move this table?
+            hint: help me
+          - zh: 把这盆花挪到阳台上吧。
+            answer: Let's move this plant to the balcony.
+            hint: the balcony
+      - key: move-from-to-other
+        type: pattern_drill
+        title: 说从一个地方转到另一个地方
+        pattern: move from [place] to [place]
+        patternMeaning: 从一地搬到另一地
+        direction: zh_to_en
+        items:
+          - zh: 我们从小公寓搬到了大一点的房子。
+            answer: We moved from a small apartment to a bigger place.
+            hint: a small apartment；a bigger place
+          - zh: 他换到了另一个部门。
+            answer: He moved from one department to another.
+            hint: one department；another
+          - zh: 公司把总部从北京搬到了上海。
+            answer: The company moved its headquarters from Beijing to Shanghai.
+            hint: its headquarters；Beijing；Shanghai
+      - key: move-on-other
+        type: pattern_drill
+        title: 说进入下一件事
+        pattern: move on to [something]
+        patternMeaning: 继续下一项
+        direction: zh_to_en
+        items:
+          - zh: 我们进入下一个话题吧。
+            answer: Let's move on to the next topic.
+            hint: Let's；the next topic
+          - zh: 他没有回答，就接着做别的事了。
+            answer: He didn't answer and moved on to something else.
+            hint: didn't answer；something else
+          - zh: 现在我们把这件事说完，再谈下一项。
+            answer: Let's finish this, then move on to the next item.
+            hint: then；the next item
+      - key: move-forward-other
+        type: pattern_drill
+        title: 说推进别的事
+        pattern: move forward with [something]
+        patternMeaning: 推进某事
+        direction: zh_to_en
+        items:
+          - zh: 我们要尽快推进这个项目。
+            answer: We need to move forward with the project as soon as possible.
+            hint: as soon as possible
+          - zh: 没有预算，我们就没法推进这个想法。
+            answer: Without the budget, we can't move forward with the idea.
+            hint: Without the budget；can't
+          - zh: 你准备好推进下一步了吗？
+            answer: Are you ready to move forward with the next step?
+            hint: Are you ready
+      - key: move-house-other
+        type: pattern_drill
+        title: 说搬家的安排
+        pattern: move house
+        patternMeaning: 搬家
+        direction: zh_to_en
+        items:
+          - zh: 我们下个周末搬家。
+            answer: We're moving house next weekend.
+            hint: 进行时表将来；next weekend
+          - zh: 搬家花了我们一整天。
+            answer: Moving house took us a whole day.
+            hint: took us a whole day
+          - zh: 搬家之前得先打包。
+            answer: We need to pack before we move house.
+            hint: pack；before
+      - key: move-in-out-other
+        type: pattern_drill
+        title: 说搬进来和搬出去
+        pattern: move in / move out
+        patternMeaning: 搬进来 / 搬出去
+        direction: zh_to_en
+        items:
+          - zh: 我们下周五搬进来。
+            answer: We're moving in next Friday.
+            hint: 进行时表将来；next Friday
+          - zh: 他们上个月搬出去了。
+            answer: They moved out last month.
+            hint: moved out；last month
+          - zh: 租客什么时候搬出去？
+            answer: When is the tenant moving out?
+            hint: the tenant；进行时
+      - key: move-out-other
+        type: pattern_drill
+        title: 说搬走之后的安排
+        pattern: move out
+        patternMeaning: 搬出去
+        direction: zh_to_en
+        items:
+          - zh: 他们打算月底搬出去。
+            answer: They're planning to move out at the end of the month.
+            hint: planning to；at the end of the month
+          - zh: 合同到期后我们就搬出去。
+            answer: We'll move out when the lease ends.
+            hint: when the lease ends
+          - zh: 他去年从家里搬了出去。
+            answer: He moved out of his parents' place last year.
+            hint: out of；last year
+      - key: move-up-other
+        type: pattern_drill
+        title: 把别的事提前到某个时间
+        pattern: move [something] up to [time]
+        patternMeaning: 将某事提前到某时
+        direction: zh_to_en
+        items:
+          - zh: 我们把出发时间提前到了七点。
+            answer: We moved our start time up to seven.
+            hint: our start time；up to seven
+          - zh: 面试能提前到周五吗？
+            answer: Can the interview be moved up to Friday?
+            hint: be moved up
+          - zh: 他们把这个活动提前到了本月早些时候。
+            answer: They moved the event up to earlier this month.
+            hint: moved the event up；earlier this month
+      - key: move-towards-other
+        type: pattern_drill
+        title: 说事情朝某个方向发展
+        pattern: move towards [something]
+        patternMeaning: 朝某方向发展
+        direction: zh_to_en
+        items:
+          - zh: 谈判正逐渐走向一致。
+            answer: The talks are moving towards an agreement.
+            hint: The talks；an agreement
+          - zh: 公司正朝着更环保的方向发展。
+            answer: The company is moving towards being greener.
+            hint: being greener
+          - zh: 事情正朝着好的方向发展。
+            answer: Things are moving towards something better.
+            hint: something better
+      - key: move-desk-build
+        type: sentence_decomposition
+        title: 把挪桌子这件事说完整
+        sourceKind: chunk
+        sourceText: move the chair
+        fullSentence: Can you move the chair closer to the window so I can see better?
+        fullSentenceZh: 你能把椅子挪近窗户一点吗？这样我看得更清楚。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Can you move the chair?
+            zh: 你能挪一下椅子吗？
+            highlight: ''
+            hint: 先请对方挪椅子
+          - level: 2
+            label: 加位置
+            en: Can you move the chair closer to the window?
+            zh: 你能把椅子挪近窗户一点吗？
+            highlight: closer to the window
+            hint: 补上挪近窗户
+          - level: 3
+            label: 完整句
+            en: Can you move the chair closer to the window so I can see better?
+            zh: 你能把椅子挪近窗户一点吗？这样我看得更清楚。
+            highlight: so I can see better
+            hint: 补上这样看得更清楚
+      - key: move-next-build
+        type: sentence_decomposition
+        title: 把进入下一项的理由说完整
+        sourceKind: vocab
+        sourceText: move
+        fullSentence: I think we've covered this point, so let's move on to the next one.
+        fullSentenceZh: 我觉得这一点我们已经讲过了，所以进入下一点吧。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let's move on.
+            zh: 我们继续吧。
+            highlight: ''
+            hint: 先说继续
+          - level: 2
+            label: 加对象
+            en: Let's move on to the next point.
+            zh: 我们进入下一点吧。
+            highlight: to the next point
+            hint: 补上下一点
+          - level: 3
+            label: 完整句
+            en: I think we've covered this point, so let's move on to the next one.
+            zh: 我觉得这一点我们已经讲过了，所以进入下一点吧。
+            highlight: I think we've covered this point
+            hint: 补上这一点已经讲过

@@ -1,0 +1,362 @@
+learning:
+  exercises:
+    pipeline:
+      - key: rise-from-chimney
+        kind: chunk
+        type: chunk_substitution
+        title: 说烟从烟囱里升起
+        chunk: rise from the chimney
+        chunkMeaning: 从烟囱里升起
+        direction: zh_to_en
+        items:
+          - zh: 烟从烟囱里升起。
+            answer: Smoke rose from the chimney.
+            hint: Smoke；rose
+          - zh: 早上屋顶上冒出了热气。
+            answer: Steam rose from the roof in the morning.
+            hint: Steam；in the morning
+          - zh: 烟从窗户里冒了出来。
+            answer: Smoke was rising from the window.
+            hint: 进行时
+      - key: rise-to-price
+        kind: chunk
+        type: chunk_substitution
+        title: 说价格涨到100美元
+        chunk: rise to 30 degrees
+        chunkMeaning: 升到30度
+        direction: zh_to_en
+        items:
+          - zh: 价格涨到了100美元。
+            answer: The price rose to a hundred dollars.
+            hint: rose to
+          - zh: 今天气温升到了三十度。
+            answer: The temperature rose to thirty degrees today.
+            hint: thirty degrees；today
+          - zh: 下个月票价会涨到两百。
+            answer: Ticket prices will rise to two hundred next month.
+            hint: will rise to
+      - key: rise-price-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说价格上涨
+        chunk: rise sharply
+        chunkMeaning: 急剧上升
+        direction: en_to_zh
+        items:
+          - en: Prices rose sharply last month.
+            answer: 上个月价格大幅上涨。
+            hint: last month
+          - en: Costs have risen sharply this year.
+            answer: 今年成本大幅上涨。
+            hint: Costs；this year
+          - en: The price rose to a hundred dollars.
+            answer: 价格涨到了100美元。
+            hint: to a hundred dollars
+      - key: rise-state
+        type: vocab_sentence_building
+        title: 说升到某水平、上升幅度
+        vocabWord: rise
+        vocabMeaning: 升起；上升；起身
+        direction: zh_to_en
+        patterns:
+          - chunk: rise by ten percent
+            items:
+              - zh: 今年房租涨了两成。
+                answer: Rents rose by twenty percent this year.
+                hint: this year
+              - zh: 去年游客人数增加了两成。
+                answer: The number of tourists rose by twenty percent last year.
+                hint: last year
+              - zh: 工资涨得没物价快。
+                answer: Wages haven't risen as fast as prices.
+                hint: haven't risen；as fast as
+          - chunk: rise sharply
+            items:
+              - zh: 上个月价格大幅上涨。
+                answer: Prices rose sharply last month.
+                hint: sharply
+              - zh: 今年成本上涨得很快。
+                answer: Costs have risen sharply this year.
+                hint: have risen
+              - zh: 天一冷，用电量就猛增。
+                answer: Electricity use rises sharply when it gets cold.
+                hint: when it gets cold
+          - chunk: prices continue to rise
+            items:
+              - zh: 物价还在继续上涨。
+                answer: Prices continue to rise.
+                hint: continue to
+              - zh: 这两年工资涨得不多。
+                answer: Wages haven't risen much in two years.
+                hint: haven't risen much
+              - zh: 大家都在担心物价还会涨。
+                answer: Everyone is worried that prices will keep rising.
+                hint: keep rising
+      - key: rise-above-clouds
+        kind: chunk
+        type: chunk_substitution
+        title: 说飞机升到云层之上
+        chunk: rise above the hills
+        chunkMeaning: 升到小山之上
+        direction: zh_to_en
+        items:
+          - zh: 飞机升到了云层之上。
+            answer: The plane rose above the clouds.
+            hint: rose above
+          - zh: 太阳升到了山那边。
+            answer: The sun rose above the hills.
+            hint: above the hills
+          - zh: 水位涨到了警戒线以上。
+            answer: The water level rose above the warning line.
+            hint: the warning line
+      - key: rise-above-30
+        kind: chunk
+        type: chunk_substitution
+        title: 说气温升到30度以上
+        chunk: rise above 30 degrees
+        chunkMeaning: 升到30度以上
+        direction: zh_to_en
+        items:
+          - zh: 气温升到了30度以上。
+            answer: The temperature rose above thirty degrees.
+            hint: rose above
+          - zh: 下午气温超过了35度。
+            answer: In the afternoon, the temperature rose above thirty-five.
+            hint: In the afternoon
+          - zh: 如果气温超过40度，我们就停工。
+            answer: If the temperature rises above forty degrees, we stop working.
+            hint: If；we stop working
+      - key: rise-occasion
+        kind: chunk
+        type: chunk_substitution
+        title: 说她在关键时刻顶住了
+        chunk: rise to the occasion
+        chunkMeaning: 关键时刻挺身而出
+        direction: zh_to_en
+        items:
+          - zh: 她在关键时刻顶住了压力，做了一场精彩的演示。
+            answer: She rose to the occasion and gave an excellent presentation.
+            hint: rose to the occasion
+          - zh: 越是困难的时候，他越能顶上。
+            answer: The harder it gets, the more he rises to the occasion.
+            hint: The harder it gets
+          - zh: 这一次，全队都站了出来。
+            answer: This time, the whole team rose to the occasion.
+            hint: the whole team
+      - key: rise-above-criticism
+        kind: chunk
+        type: chunk_substitution
+        title: 说她努力不受批评影响
+        chunk: rise above criticism
+        chunkMeaning: 不受批评影响
+        direction: zh_to_en
+        items:
+          - zh: 她努力不受批评影响，专注于工作。
+            answer: She tried to rise above the criticism and focus on her work.
+            hint: focus on her work
+          - zh: 真正的高手不会被几句批评影响。
+            answer: Real experts can rise above criticism.
+            hint: Real experts
+          - zh: 他学会了对这些闲话不往心里去。
+            answer: He learned to rise above the criticism.
+            hint: learned to
+      - key: rise-from-seat
+        kind: chunk
+        type: chunk_substitution
+        title: 说他从座位上站起来
+        chunk: rise from his seat
+        chunkMeaning: 从他的座位上起身
+        direction: zh_to_en
+        items:
+          - zh: 他从座位上站起来迎接我们。
+            answer: He rose from his seat to greet us.
+            hint: to greet us
+          - zh: 法官站起来，宣布开庭。
+            answer: The judge rose from her seat and opened the hearing.
+            hint: The judge
+          - zh: 请各位从座位上起身。
+            answer: Please rise from your seats.
+            hint: your seats
+      - key: rise-above-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说升到某物之上
+        chunk: rise above the hills
+        chunkMeaning: 升到小山之上
+        direction: en_to_zh
+        items:
+          - en: The plane rose above the clouds.
+            answer: 飞机升到了云层之上。
+            hint: the clouds
+          - en: The sun rose above the hills.
+            answer: 太阳升到了山那边。
+            hint: above the hills
+          - en: The water level rose above the warning line.
+            answer: 水位涨到了警戒线以上。
+            hint: the warning line
+      - key: rise-percent
+        kind: chunk
+        type: chunk_substitution
+        title: 说房租涨了百分之十
+        chunk: rise by ten percent
+        chunkMeaning: 上升10%
+        direction: zh_to_en
+        items:
+          - zh: 房租涨了10%。
+            answer: Rents rose by ten percent.
+            hint: rose by
+          - zh: 今年的成本增加了两成。
+            answer: Costs rose by twenty percent this year.
+            hint: Costs；this year
+          - zh: 去年游客人数增加了大约一倍。
+            answer: The number of tourists nearly doubled last year.
+            hint: nearly doubled
+      - key: rise-occasion-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说关键时刻挺身而出
+        chunk: rise to the occasion
+        chunkMeaning: 关键时刻挺身而出
+        direction: en_to_zh
+        items:
+          - en: She rose to the occasion and gave an excellent presentation.
+            answer: 她在关键时刻顶住了压力，做了一场精彩的演示。
+            hint: an excellent presentation
+          - en: This time, the whole team rose to the occasion.
+            answer: 这一次，全队都站了出来。
+            hint: the whole team
+          - en: You really rose to the occasion.
+            answer: 你真是关键时刻顶上了。
+            hint: really
+      - key: rise-to-level
+        type: pattern_drill
+        title: 说升到某个水平
+        pattern: rise to [level]
+        patternMeaning: 升高到某个水平
+        direction: zh_to_en
+        items:
+          - zh: 销售额升到了今年的最高点。
+            answer: Sales rose to their highest point this year.
+            hint: their highest point
+          - zh: 租金涨到了我们承担不起的水平。
+            answer: The rent rose to a level we can't afford.
+            hint: a level we can't afford
+          - zh: 明天温度会升到二十度。
+            answer: The temperature will rise to twenty degrees tomorrow.
+            hint: will rise to
+      - key: rise-by-amount
+        type: pattern_drill
+        title: 说上升某个幅度
+        pattern: rise by [amount]
+        patternMeaning: 上升某幅度
+        direction: zh_to_en
+        items:
+          - zh: 油价上涨了8%。
+            answer: Oil prices rose by eight percent.
+            hint: Oil prices
+          - zh: 今年报名人数增加了大约三分之一。
+            answer: The number of applicants rose by about a third this year.
+            hint: about a third
+          - zh: 房价一年涨了将近两成。
+            answer: House prices rose by nearly twenty percent in a year.
+            hint: in a year
+      - key: rise-above-other
+        type: pattern_drill
+        title: 说升到某物之上
+        pattern: rise above [something/place]
+        patternMeaning: 升到某处上方；不受某事影响
+        direction: zh_to_en
+        items:
+          - zh: 太阳升到了山顶之上。
+            answer: The sun rose above the mountains.
+            hint: the mountains
+          - zh: 水面已经涨过了桥面。
+            answer: The water rose above the bridge.
+            hint: The water；the bridge
+          - zh: 他一直试着不被这些抱怨影响。
+            answer: He kept trying to rise above the complaints.
+            hint: kept trying to
+      - key: rise-from-other
+        type: pattern_drill
+        title: 说从某处升起
+        pattern: rise from [place/level]
+        patternMeaning: 从某处升起
+        direction: zh_to_en
+        items:
+          - zh: 烟从厨房里冒出来。
+            answer: Smoke rose from the kitchen.
+            hint: Smoke
+          - zh: 那个声音从人群后面传来。
+            answer: The voice rose from the back of the crowd.
+            hint: the back of the crowd
+          - zh: 他一进门，大家都站了起来。
+            answer: Everyone rose from their seats when he came in.
+            hint: came in
+      - key: rise-listen
+        type: pattern_drill
+        title: 听懂对方说上涨和起身
+        pattern: rise sharply / rise from your seat
+        patternMeaning: 急剧上升 / 起身
+        direction: en_to_zh
+        items:
+          - en: He rose from his seat to greet us.
+            answer: 他从座位上站起来迎接我们。
+            hint: to greet us
+          - en: The sun rises early in summer.
+            answer: 夏天太阳升得很早。
+            hint: in summer
+          - en: Rents rose by ten percent this year.
+            answer: 今年房租涨了百分之十。
+            hint: by ten percent
+      - key: rise-price-build
+        type: sentence_decomposition
+        title: 把价格上涨说完整
+        sourceKind: chunk
+        sourceText: rise sharply
+        fullSentence: Prices rose sharply last month because of the bad weather.
+        fullSentenceZh: 因为天气恶劣，上个月价格大幅上涨。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Prices rose.
+            zh: 价格上涨了。
+            highlight: ''
+            hint: 先说价格上涨
+          - level: 2
+            label: 加程度
+            en: Prices rose sharply.
+            zh: 价格大幅上涨。
+            highlight: sharply
+            hint: 补上大幅
+          - level: 3
+            label: 完整句
+            en: Prices rose sharply last month because of the bad weather.
+            zh: 因为天气恶劣，上个月价格大幅上涨。
+            highlight: because of the bad weather
+            hint: 补上因为天气恶劣
+      - key: rise-sun-build
+        type: sentence_decomposition
+        title: 把太阳升起说完整
+        sourceKind: vocab
+        sourceText: rise
+        fullSentence: The sun was already rising above the hills when we left.
+        fullSentenceZh: 我们离开时，太阳已经升到小山之上了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The sun was rising.
+            zh: 太阳正在升起。
+            highlight: ''
+            hint: 先说太阳升起
+          - level: 2
+            label: 加方向
+            en: The sun was rising above the hills.
+            zh: 太阳正升到小山之上。
+            highlight: above the hills
+            hint: 补上在小山之上
+          - level: 3
+            label: 完整句
+            en: The sun was already rising above the hills when we left.
+            zh: 我们离开时，太阳已经升到小山之上了。
+            highlight: when we left
+            hint: 补上我们离开时

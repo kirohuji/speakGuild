@@ -1,6 +1,7 @@
 import { sentenceBuildingPrompts } from '@/features/practice/lib/warmup-reference'
 import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -40,6 +41,7 @@ import { offlineSyncService, practiceRepository } from '@/lib/offline'
 import { syncOutbox } from '@/lib/offline/sync-outbox'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { localDateKey } from '@/lib/date/calendar-date'
@@ -199,6 +201,7 @@ export function TodayTaskPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
   const isMobile = useIsMobile()
+  const todayAsideSlot = useDesktopAsideSlot()
   const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
   const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
@@ -1595,20 +1598,21 @@ export function TodayTaskPage() {
         })}
       </div>
 
-      {/* ── 今日话题：中栏展示；桌面右栏改为签到 ── */}
+      {/* ── 今日话题：移动端中栏；桌面挂右栏 ── */}
       {(() => {
         const isReviewMode = plan.mode === 'review'
-        const showExpanded = !isMobile || topicsExpanded
+        const useDesktopRail = !isMobile
+        const showExpanded = useDesktopRail || topicsExpanded
         const displayedTopics = showExpanded ? topicPageItems.items : filteredTopics.slice(0, 3)
 
         const topicsBody = filteredTopics.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-2 py-10 text-center">
+          <div className={cn('flex flex-col items-center justify-center px-2 py-10 text-center', useDesktopRail && 'flex-1')}>
             <Target className="size-9 text-muted-foreground/35" />
             <p className="mt-3 text-sm text-muted-foreground">{t('todayTask.noTopics', { defaultValue: '暂无学习话题' })}</p>
           </div>
         ) : (
-          <section>
-            <div className="mb-3 flex items-center justify-between gap-3">
+          <section className={cn(useDesktopRail && 'flex min-h-0 flex-1 flex-col')}>
+            <div className={cn('mb-3 flex items-center justify-between gap-3', useDesktopRail && 'shrink-0')}>
               <div className="flex min-w-0 items-center gap-2">
                 <h2 className="text-sm font-semibold text-foreground">
                   {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
@@ -1617,7 +1621,7 @@ export function TodayTaskPage() {
                   {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
                 </span>
               </div>
-              {isMobile && (
+              {!useDesktopRail && (
                 <button
                   type="button"
                   onClick={() => {
@@ -1631,7 +1635,7 @@ export function TodayTaskPage() {
                 </button>
               )}
             </div>
-            <div className="space-y-1.5">
+            <div className={cn('space-y-1.5', useDesktopRail && 'min-h-0 flex-1 overflow-y-auto overscroll-contain')}>
               {displayedTopics.map((topic, index) => {
                 const absoluteIndex = showExpanded ? topicPageItems.startIndex + index : index
                 const detail = isReviewMode
@@ -1707,7 +1711,7 @@ export function TodayTaskPage() {
                 )
               })}
             </div>
-            {isMobile && filteredTopics.length > 3 && (
+            {!useDesktopRail && filteredTopics.length > 3 && (
               <button
                 type="button"
                 onClick={() => {
@@ -1721,7 +1725,7 @@ export function TodayTaskPage() {
               </button>
             )}
             {showExpanded && topicPageItems.totalPages > 1 && (
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
+              <div className={cn('mt-2 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2', useDesktopRail && 'shrink-0')}>
                 <span className="text-[11px] text-muted-foreground">
                   {t('common.total')} {filteredTopics.length} {t('learning.items')}
                 </span>
@@ -1739,7 +1743,18 @@ export function TodayTaskPage() {
           </section>
         )
 
-        if (filteredTopics.length === 0 && isMobile) return null
+        if (useDesktopRail) {
+          return todayAsideSlot
+            ? createPortal(
+              <div className="scrollbar-hide flex h-full min-h-0 flex-col overflow-hidden px-4 py-4">
+                {topicsBody}
+              </div>,
+              todayAsideSlot,
+            )
+            : null
+        }
+
+        if (filteredTopics.length === 0) return null
 
         return (
           <>

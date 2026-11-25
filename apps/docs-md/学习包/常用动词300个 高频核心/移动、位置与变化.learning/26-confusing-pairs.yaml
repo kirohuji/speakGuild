@@ -1,0 +1,324 @@
+learning:
+  exercises:
+    pipeline:
+      - key: conf-go-come
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 go 和 come
+        chunk: come to your office
+        chunkMeaning: 去你办公室（朝对方）
+        direction: zh_to_en
+        items:
+          - zh: 我三点去你的办公室。
+            answer: I'll come to your office at three.
+            hint: 朝对方的方向用 come；at three
+          - zh: 我明天去你那边一趟。
+            answer: I'll come over to your place tomorrow.
+            hint: 朝对方
+          - zh: 我明天得去公司，你过来吧。
+            answer: I have to go to the office tomorrow; you can come over.
+            hint: 离开说话人用 go；过来用 come
+      - key: conf-arrive-reach
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 arrive at 和 reach
+        chunk: reach the station
+        chunkMeaning: 到达车站（不加介词）
+        direction: zh_to_en
+        items:
+          - zh: 我们六点到达了车站。
+            answer: We reached the station at six.
+            hint: reach 直接接宾语
+          - zh: 我们六点到了车站。
+            answer: We arrived at the station at six.
+            hint: arrive 需要 at
+          - zh: 她已经到伦敦了。
+            answer: She has arrived in London.
+            hint: 城市用 in
+      - key: conf-approach-arrive
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 approach 和 arrive
+        chunk: approach the station
+        chunkMeaning: 接近车站（还没到）
+        direction: zh_to_en
+        items:
+          - zh: 我们快到车站时开始下雨了。
+            answer: We were approaching the station when it started raining.
+            hint: approach 表示接近，不是到达
+          - zh: 我们已经到车站了。
+            answer: We have already arrived at the station.
+            hint: 已到达用 arrive
+          - zh: 火车正在慢慢进站。
+            answer: The train is slowly approaching the station.
+            hint: 进站过程用 approach
+      - key: conf-enter-into
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 enter 和 go into
+        chunk: enter the room
+        chunkMeaning: 走进房间
+        direction: zh_to_en
+        items:
+          - zh: 她一言不发地走进会议室。
+            answer: She entered the meeting room without saying a word.
+            hint: enter 直接接地点
+          - zh: 她走进了房间，然后关上了门。
+            answer: She went into the room and closed the door.
+            hint: go into 的说法
+          - zh: 他慢慢走进房间，什么都没说。
+            answer: He walked into the room slowly and said nothing.
+            hint: walk into
+      - key: conf-return-restore
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 return to 和 return something
+        chunk: return the key to her
+        chunkMeaning: 把钥匙还给她
+        direction: zh_to_en
+        items:
+          - zh: 我回到图书馆去还书。
+            answer: I returned to the library to return a book.
+            hint: 回去用 return to，还书用 return + 宾语
+          - zh: 请你把钥匙还给她。
+            answer: Please return the key to her.
+            hint: return + 物 + to + 人
+          - zh: 她下午回到了公司。
+            answer: She returned to the company in the afternoon.
+            hint: return to + 地点
+      - key: conf-lead-follow
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 lead 和 follow
+        chunk: lead the way
+        chunkMeaning: 带路
+        direction: zh_to_en
+        items:
+          - zh: 她带我们穿过人群，我们紧紧跟着她。
+            answer: She led us through the crowd, and we followed her closely.
+            hint: lead 带领 / follow 跟随
+          - zh: 你带路，我跟着。
+            answer: You lead the way, and I'll follow.
+            hint: lead the way
+          - zh: 大家跟着我走，别掉队。
+            answer: Follow me and don't fall behind.
+            hint: follow；fall behind
+      - key: conf-cross-pass
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 cross 和 pass
+        chunk: cross the bridge
+        chunkMeaning: 过桥
+        direction: zh_to_en
+        items:
+          - zh: 我们过了桥，经过了一家咖啡馆。
+            answer: We crossed the bridge and passed a café.
+            hint: cross 穿过 / pass 经过
+          - zh: 我们只是路过那家店，没有进去。
+            answer: We just passed the shop without going in.
+            hint: pass 经过
+          - zh: 过桥以后往右走。
+            answer: Cross the bridge and then turn right.
+            hint: cross 穿过
+      - key: conf-fall-drop
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 fall 和 drop
+        chunk: drop my phone
+        chunkMeaning: 我把手机弄掉了
+        direction: zh_to_en
+        items:
+          - zh: 手机从我口袋里掉了出来。
+            answer: My phone fell out of my pocket.
+            hint: fall 自己掉落，不带宾语
+          - zh: 我把手机弄掉了。
+            answer: I dropped my phone.
+            hint: drop 是某人弄掉，带宾语
+          - zh: 杯子掉在地上摔碎了。
+            answer: The glass fell and broke on the floor.
+            hint: fall 不带宾语
+      - key: conf-rise-raise
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 rise 和 raise
+        chunk: rise sharply
+        chunkMeaning: 急剧上升（自己上升）
+        direction: zh_to_en
+        items:
+          - zh: 公司提高收费后，价格上涨了。
+            answer: Prices rose after the company raised its fees.
+            hint: rise 自己上升 / raise 提高某物
+          - zh: 他们涨了价格。
+            answer: They raised the prices.
+            hint: raise 带宾语
+          - zh: 今年价格上涨了很多。
+            answer: Prices have risen a lot this year.
+            hint: rise 不带宾语
+      - key: conf-become-grow
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 become 和 grow
+        chunk: grow colder
+        chunkMeaning: 逐渐变冷
+        direction: zh_to_en
+        items:
+          - zh: 事情清楚了。
+            answer: It became clear.
+            hint: become 表示变化
+          - zh: 事情逐渐更清楚了。
+            answer: It gradually grew clearer.
+            hint: grow 强调逐渐
+          - zh: 天气一天比一天冷。
+            answer: It's growing colder day by day.
+            hint: 用 grow 更自然
+      - key: conf-remain-stay
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 remain 和 stay
+        chunk: remain open
+        chunkMeaning: 保持开着（较正式）
+        direction: zh_to_en
+        items:
+          - zh: 门一直开着。
+            answer: The door remained open.
+            hint: remain 更正式
+          - zh: 这一整晚窗户都开着。
+            answer: The window stayed open all night.
+            hint: stay 更口语
+          - zh: 请大家保持安静。
+            answer: Please remain quiet.
+            hint: 正式告示常用 remain
+      - key: conf-appear-disappear
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 appear 和 disappear
+        chunk: disappear from the screen
+        chunkMeaning: 从屏幕上消失
+        direction: zh_to_en
+        items:
+          - zh: 一条消息出现后又消失了。
+            answer: A message appeared and then disappeared.
+            hint: appear 出现 / disappear 消失
+          - zh: 那条广告从网站上消失了。
+            answer: The ad disappeared from the website.
+            hint: from the website
+          - zh: 屏幕上突然出现了一个图标。
+            answer: An icon suddenly appeared on the screen.
+            hint: on the screen
+      - key: conf-move-shift
+        kind: chunk
+        type: chunk_substitution
+        title: 分清 move 和 shift
+        chunk: shift the focus
+        chunkMeaning: 转移重点
+        direction: zh_to_en
+        items:
+          - zh: 我们把椅子挪一下。
+            answer: Let's move the chairs.
+            hint: move 位置移动
+          - zh: 我们把重点转向了质量。
+            answer: We shifted the focus to quality.
+            hint: shift 重点转移
+          - zh: 我们挪好椅子，然后把注意力转向地图。
+            answer: We moved the chairs and then shifted our attention to the map.
+            hint: move / shift
+      - key: conf-arrive-listen
+        type: pattern_drill
+        title: 听懂 arrive、reach、approach
+        pattern: arrive at/in / reach / approach
+        patternMeaning: 到达（需介词）/ 到达（不加介词）/ 接近（尚未到达）
+        direction: en_to_zh
+        items:
+          - en: We reached the station at six.
+            answer: 我们六点到达了车站。
+            hint: reached
+          - en: We arrived at the station at six.
+            answer: 我们六点抵达了车站。
+            hint: arrived at
+          - en: We were approaching the station when it started raining.
+            answer: 我们快到车站时开始下雨了。
+            hint: approaching
+      - key: conf-fall-drop-listen
+        type: pattern_drill
+        title: 听懂 fall 和 drop 的区别
+        pattern: fall / drop something
+        patternMeaning: 自己掉落 / 把某物弄掉
+        direction: en_to_zh
+        items:
+          - en: My phone fell out of my pocket.
+            answer: 手机从我口袋里掉了出来。
+            hint: fell out of
+          - en: I dropped my phone.
+            answer: 我把手机弄掉了。
+            hint: dropped
+          - en: The glass fell and broke on the floor.
+            answer: 杯子掉在地上摔碎了。
+            hint: fell and broke
+      - key: conf-rise-raise-listen
+        type: pattern_drill
+        title: 听懂 rise 和 raise 的区别
+        pattern: rise / raise [something]
+        patternMeaning: 自己上升 / 提高某物
+        direction: en_to_zh
+        items:
+          - en: Prices rose after the company raised its fees.
+            answer: 公司提高收费后，价格上涨了。
+            hint: rose / raised
+          - en: They raised the prices.
+            answer: 他们涨了价格。
+            hint: raised
+          - en: Prices have risen a lot this year.
+            answer: 今年价格上涨了很多。
+            hint: risen
+      - key: conf-say-build
+        type: sentence_decomposition
+        title: 把一串移动动作说完整
+        sourceKind: chunk
+        sourceText: move / shift / spread
+        fullSentence: We moved the chairs, shifted our attention to the map, and spread it out.
+        fullSentenceZh: 我们挪好椅子，把注意力转向地图，然后把它展开。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We moved the chairs.
+            zh: 我们挪了椅子。
+            highlight: ''
+            hint: 先说挪椅子
+          - level: 2
+            label: 加动作
+            en: We moved the chairs and shifted our attention to the map.
+            zh: 我们挪好椅子，把注意力转向地图。
+            highlight: shifted our attention to the map
+            hint: 补上转向地图
+          - level: 3
+            label: 完整句
+            en: We moved the chairs, shifted our attention to the map, and spread it out.
+            zh: 我们挪好椅子，把注意力转向地图，然后把它展开。
+            highlight: spread it out
+            hint: 补上把地图展开
+      - key: conf-arrive-build
+        type: sentence_decomposition
+        title: 把到达和接近说完整
+        sourceKind: vocab
+        sourceText: arrive / reach / approach
+        fullSentence: We were approaching the station when the driver said we had reached it.
+        fullSentenceZh: 我们快走到车站时，司机说我们已经到了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We were approaching the station.
+            zh: 我们正接近车站。
+            highlight: ''
+            hint: 先说接近车站
+          - level: 2
+            label: 加时间
+            en: We were approaching the station when the driver spoke.
+            zh: 我们接近车站时，司机开口了。
+            highlight: when the driver spoke
+            hint: 补上司机开口
+          - level: 3
+            label: 完整句
+            en: We were approaching the station when the driver said we had reached it.
+            zh: 我们快走到车站时，司机说我们已经到了。
+            highlight: we had reached it
+            hint: 补上已经到达

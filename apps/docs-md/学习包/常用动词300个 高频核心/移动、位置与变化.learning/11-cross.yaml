@@ -1,0 +1,360 @@
+learning:
+  exercises:
+    pipeline:
+      - key: cross-street
+        kind: chunk
+        type: chunk_substitution
+        title: 说过马路前先看两边
+        chunk: cross the street
+        chunkMeaning: 过马路
+        direction: zh_to_en
+        items:
+          - zh: 过马路前先看看两边。
+            answer: Look both ways before you cross the street.
+            hint: Look both ways；before
+          - zh: 我们过了马路，在外面等着。
+            answer: We crossed the street and waited outside.
+            hint: crossed；waited outside
+          - zh: 别在这儿过马路，这边没有红绿灯。
+            answer: Don't cross the street here; there's no light.
+            hint: there's no light
+      - key: cross-river
+        kind: chunk
+        type: chunk_substitution
+        title: 说坐船渡过了河
+        chunk: cross the river
+        chunkMeaning: 渡过河
+        direction: zh_to_en
+        items:
+          - zh: 我们坐船渡过了河。
+            answer: We crossed the river by boat.
+            hint: by boat
+          - zh: 桥修好以前，大家都得坐船过河。
+            answer: Before the bridge was built, everyone had to cross the river by boat.
+            hint: Before the bridge was built
+          - zh: 夏天水位太高，根本过不了河。
+            answer: The water is too high in summer to cross the river.
+            hint: too high；in summer
+      - key: cross-street-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说过马路
+        chunk: cross the street
+        chunkMeaning: 过马路
+        direction: en_to_zh
+        items:
+          - en: Look both ways before you cross the street.
+            answer: 过马路前先看看两边。
+            hint: Look both ways
+          - en: We crossed the street and waited outside.
+            answer: 我们过了马路，在外面等着。
+            hint: waited outside
+          - en: Be careful when you cross the street with the kids.
+            answer: 和孩子一起过马路时要小心。
+            hint: with the kids
+      - key: cross-state
+        type: vocab_sentence_building
+        title: 说越过边境、想法闪过脑海
+        vocabWord: cross
+        vocabMeaning: 穿过；越过
+        direction: zh_to_en
+        patterns:
+          - chunk: cross the border
+            items:
+              - zh: 我们是走小路过的边境。
+                answer: We crossed the border on a small road.
+                hint: on a small road
+              - zh: 过境的时候要检查护照。
+                answer: You need to show your passport when you cross the border.
+                hint: your passport
+              - zh: 这个国家不让随便越过边境。
+                answer: You can't just cross the border in this country.
+                hint: just
+          - chunk: cross my mind
+            items:
+              - zh: 我从来没想过这个办法。
+                answer: That solution never crossed my mind.
+                hint: That solution
+              - zh: 我从来没想到过这一点。
+                answer: That thought never crossed my mind.
+                hint: That thought
+              - zh: 有没有想过干脆辞职？
+                answer: Has it ever crossed your mind to just quit?
+                hint: Has it ever；to just quit
+          - chunk: cross the line
+            items:
+              - zh: 那句话确实越界了。
+                answer: That comment really crossed the line.
+                hint: That comment
+              - zh: 他再这样就要越界了。
+                answer: He's about to cross the line.
+                hint: about to
+              - zh: 开玩笑可以，但不能太过分。
+                answer: Joking is fine, but don't cross the line.
+                hint: Joking is fine
+      - key: cross-border
+        kind: chunk
+        type: chunk_substitution
+        title: 说夜里越过边境
+        chunk: cross the border
+        chunkMeaning: 越过边境
+        direction: zh_to_en
+        items:
+          - zh: 他们在夜里越过了边境。
+            answer: They crossed the border at night.
+            hint: at night
+          - zh: 过了边境就是另一个国家了。
+            answer: Once you cross the border, you're in another country.
+            hint: Once you
+          - zh: 我们是在天亮之前过的边境。
+            answer: We crossed the border before sunrise.
+            hint: before sunrise
+      - key: cross-over-road
+        kind: chunk
+        type: chunk_substitution
+        title: 说过马路时要小心
+        chunk: cross over the road
+        chunkMeaning: 过到马路对面
+        direction: zh_to_en
+        items:
+          - zh: 过马路时要小心。
+            answer: Be careful when you cross over the road.
+            hint: Be careful；when
+          - zh: 从这里过到马路对面比较安全。
+            answer: It's safer to cross over the road here.
+            hint: safer；here
+          - zh: 我们过了马路去了对面的咖啡馆。
+            answer: We crossed over the road to the cafe opposite.
+            hint: the cafe opposite
+      - key: cross-mind
+        kind: chunk
+        type: chunk_substitution
+        title: 说从没想过这个念头
+        chunk: cross my mind
+        chunkMeaning: 闪过我的脑海
+        direction: zh_to_en
+        items:
+          - zh: 这个想法从没在我脑海里出现过。
+            answer: The idea never crossed my mind.
+            hint: never crossed
+          - zh: 你有没有想过不去？
+            answer: Did it cross your mind not to go?
+            hint: Did it；not to go
+          - zh: 当时我压根没想过要放弃。
+            answer: Giving up never crossed my mind at the time.
+            hint: Giving up；at the time
+      - key: cross-line
+        kind: chunk
+        type: chunk_substitution
+        title: 说别越界
+        chunk: cross the line
+        chunkMeaning: 越界
+        direction: zh_to_en
+        items:
+          - zh: 别越界。
+            answer: Don't cross the line.
+            hint: line
+          - zh: 他这次真的越界了。
+            answer: He really crossed the line this time.
+            hint: this time
+          - zh: 我开玩笑，但没想越界。
+            answer: I was joking, but I didn't mean to cross the line.
+            hint: didn't mean to
+      - key: cross-paths
+        kind: chunk
+        type: chunk_substitution
+        title: 说多年后偶然相遇
+        chunk: cross paths
+        chunkMeaning: 偶然相遇
+        direction: zh_to_en
+        items:
+          - zh: 多年后我们又偶然遇见了。
+            answer: We crossed paths again years later.
+            hint: again；years later
+          - zh: 我们大学时经常碰见。
+            answer: We often crossed paths in college.
+            hint: in college
+          - zh: 希望我们以后还能再遇到。
+            answer: I hope our paths cross again someday.
+            hint: someday
+      - key: cross-border-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说越境和碰面
+        chunk: cross the border
+        chunkMeaning: 越过边境
+        direction: en_to_zh
+        items:
+          - en: They crossed the border at night.
+            answer: 他们在夜里越过了边境。
+            hint: at night
+          - en: You need a visa to cross the border.
+            answer: 过境需要签证。
+            hint: a visa
+          - en: We crossed paths again years later.
+            answer: 多年后我们又偶然遇见了。
+            hint: years later
+      - key: cross-street-pattern
+        type: pattern_drill
+        title: 换条路说过马路
+        pattern: cross [road/street]
+        patternMeaning: 穿过道路
+        direction: zh_to_en
+        items:
+          - zh: 先看看两边，再过这条马路。
+            answer: Look both ways before you cross this road.
+            hint: this road
+          - zh: 我们过了一条很宽的马路。
+            answer: We crossed a very wide road.
+            hint: a very wide road
+          - zh: 老人过马路的时候，司机停下来等他。
+            answer: When the old man crossed the road, the driver stopped and waited.
+            hint: the driver stopped
+      - key: cross-river-other
+        type: pattern_drill
+        title: 说跨过别的河或桥
+        pattern: cross [river/bridge]
+        patternMeaning: 跨过河流或桥梁
+        direction: zh_to_en
+        items:
+          - zh: 队伍花了两个小时才过完桥。
+            answer: It took the group two hours to cross the bridge.
+            hint: It took
+          - zh: 我们沿着这座桥过了河。
+            answer: We crossed the river over this bridge.
+            hint: over this bridge
+          - zh: 别在结冰的河上过河，太危险。
+            answer: Don't cross the river on the ice; it's too dangerous.
+            hint: on the ice
+      - key: cross-over-other
+        type: pattern_drill
+        title: 说穿过别的地方
+        pattern: cross over [place]
+        patternMeaning: 穿过某处
+        direction: zh_to_en
+        items:
+          - zh: 我们穿过马路去了公园。
+            answer: We crossed over the road to the park.
+            hint: to the park
+          - zh: 走到路口再过去。
+            answer: Cross over at the corner.
+            hint: at the corner
+          - zh: 别在车中间穿来穿去。
+            answer: Don't cross over between the cars.
+            hint: between the cars
+      - key: cross-border-other
+        type: pattern_drill
+        title: 说越过别的边界
+        pattern: cross [border]
+        patternMeaning: 越过边界
+        direction: zh_to_en
+        items:
+          - zh: 过境需要签证。
+            answer: You need a visa to cross the border.
+            hint: a visa
+          - zh: 他们天亮后越过了边界。
+            answer: They crossed the border at dawn.
+            hint: at dawn
+          - zh: 这条河就是两国的边界。
+            answer: This river is the border between the two countries.
+            hint: between the two countries
+      - key: cross-line-other
+        type: pattern_drill
+        title: 说在别的事情上越界
+        pattern: cross the line
+        patternMeaning: 越界
+        direction: zh_to_en
+        items:
+          - zh: 骂人这件事上，他就越界了。
+            answer: When he started yelling, he crossed the line.
+            hint: started yelling
+          - zh: 玩笑可以开，但别说过头的话。
+            answer: You can joke, but don't cross the line with your words.
+            hint: with your words
+          - zh: 这次他的要求真的过分了。
+            answer: His request this time really crossed the line.
+            hint: His request
+      - key: cross-paths-other
+        type: pattern_drill
+        title: 说偶然相遇的其他情形
+        pattern: cross paths [with someone]
+        patternMeaning: 偶然相遇
+        direction: zh_to_en
+        items:
+          - zh: 我们上个星期在超市碰上了。
+            answer: We crossed paths at the supermarket last week.
+            hint: at the supermarket；last week
+          - zh: 我和他在同一家公司待过。
+            answer: He and I crossed paths at the same company.
+            hint: the same company
+          - zh: 没想到会在这儿遇上你。
+            answer: I didn't expect to cross paths with you here.
+            hint: didn't expect to
+      - key: cross-mind-listen
+        type: pattern_drill
+        title: 听懂对方说越界和没想过
+        pattern: cross [someone's] mind / cross the line
+        patternMeaning: 闪过脑海 / 越界
+        direction: en_to_zh
+        items:
+          - en: That thought never crossed my mind.
+            answer: 我从来没想过这一点。
+            hint: never crossed my mind
+          - en: That comment really crossed the line.
+            answer: 那句话确实越界了。
+            hint: That comment
+          - en: Has it ever crossed your mind to move abroad?
+            answer: 你有没有想过搬到国外去？
+            hint: to move abroad
+      - key: cross-street-build
+        type: sentence_decomposition
+        title: 把过马路说完整
+        sourceKind: chunk
+        sourceText: cross the street
+        fullSentence: Look both ways before you cross the street, and wait for the green light.
+        fullSentenceZh: 过马路前先看看两边，然后等绿灯。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Look both ways before you cross the street.
+            zh: 过马路前先看看两边。
+            highlight: ''
+            hint: 先说过马路看两边
+          - level: 2
+            label: 加顺序
+            en: Look both ways before you cross the street, and wait a moment.
+            zh: 过马路前先看看两边，再等一下。
+            highlight: and wait a moment
+            hint: 补上等一下
+          - level: 3
+            label: 完整句
+            en: Look both ways before you cross the street, and wait for the green light.
+            zh: 过马路前先看看两边，然后等绿灯。
+            highlight: wait for the green light
+            hint: 补上等绿灯
+      - key: cross-border-build
+        type: sentence_decomposition
+        title: 把越境说完整
+        sourceKind: vocab
+        sourceText: cross
+        fullSentence: They crossed the border at night without any problems.
+        fullSentenceZh: 他们在夜里越过了边境，一路上没有任何问题。
+        levels:
+          - level: 1
+            label: 核心句
+            en: They crossed the border.
+            zh: 他们越过了边境。
+            highlight: ''
+            hint: 先说越过边境
+          - level: 2
+            label: 加时间
+            en: They crossed the border at night.
+            zh: 他们在夜里越过了边境。
+            highlight: at night
+            hint: 补上夜里
+          - level: 3
+            label: 完整句
+            en: They crossed the border at night without any problems.
+            zh: 他们在夜里越过了边境，一路上没有任何问题。
+            highlight: without any problems
+            hint: 补上没有任何问题

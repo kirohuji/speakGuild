@@ -32,7 +32,7 @@ export function DesktopLearningPage() {
   )
 
   return (
-    <DesktopLearningShell section={section} asideMode={section === 'shop' ? 'slot' : undefined}>
+    <DesktopLearningShell section={section} asideMode={section === 'shop' || section === 'today' ? 'slot' : undefined}>
       {section === 'shop' ? (
         <SectionContent section={section} />
       ) : (

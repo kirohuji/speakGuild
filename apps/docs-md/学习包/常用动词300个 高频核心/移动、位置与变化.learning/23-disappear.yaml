@@ -1,0 +1,362 @@
+learning:
+  exercises:
+    pipeline:
+      - key: disappear-from-desk
+        kind: chunk
+        type: chunk_substitution
+        title: 说东西丢了
+        chunk: disappear from my desk
+        chunkMeaning: 从我的桌上不见了
+        direction: zh_to_en
+        items:
+          - zh: 我的笔又不见了。
+            answer: My pen has disappeared again.
+            hint: again
+          - zh: 那份合同不知道去哪了。
+            answer: That contract has disappeared from my desk.
+            hint: That contract
+          - zh: 桌上的零食全没了。
+            answer: All the snacks disappeared from the desk.
+            hint: All the snacks
+
+      - key: disappear-into-crowd
+        kind: chunk
+        type: chunk_substitution
+        title: 说他消失在人群中
+        chunk: disappear into the crowd
+        chunkMeaning: 消失在人群中
+        direction: zh_to_en
+        items:
+          - zh: 他消失在人群中。
+            answer: He disappeared into the crowd.
+            hint: into the crowd
+          - zh: 我还没追上他，他就消失在人群中了。
+            answer: He disappeared into the crowd before I could catch up.
+            hint: before I could catch up
+          - zh: 猫钻到床底下不见了。
+            answer: The cat disappeared under the bed.
+            hint: under the bed
+      - key: disappear-screen-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说东西不见了
+        chunk: disappear from
+        chunkMeaning: 从某处消失
+        direction: en_to_zh
+        items:
+          - en: The keys have disappeared from my desk.
+            answer: 钥匙从我的桌上不见了。
+            hint: my desk
+          - en: The message disappeared from the screen.
+            answer: 消息从屏幕上消失了。
+            hint: the screen
+          - en: That file disappeared from the system this morning.
+            answer: 那个文件今天早上从系统里不见了。
+            hint: this morning
+      - key: disappear-state
+        type: vocab_sentence_building
+        title: 说完全消失、逐渐消失
+        vocabWord: disappear
+        vocabMeaning: 消失；不见
+        direction: zh_to_en
+        patterns:
+          - chunk: disappear completely
+            items:
+              - zh: 疼痛最终完全消失了。
+                answer: The pain eventually disappeared completely.
+                hint: eventually
+              - zh: 那些问题并没有完全消失。
+                answer: Those problems haven't disappeared completely.
+                hint: haven't
+              - zh: 一年之后，那些痕迹完全不见了。
+                answer: A year later, the marks had disappeared completely.
+                hint: had disappeared
+          - chunk: disappear gradually
+            items:
+              - zh: 这种感觉逐渐消失了。
+                answer: The feeling gradually disappeared.
+                hint: gradually
+              - zh: 随着年龄增长，这种担心慢慢淡了。
+                answer: The worry gradually disappeared as he got older.
+                hint: as he got older
+              - zh: 他的口音一年年变淡了。
+                answer: His accent gradually disappeared over the years.
+                hint: over the years
+          - chunk: disappear overnight
+            items:
+              - zh: 旧招牌一夜之间消失了。
+                answer: The old signs disappeared overnight.
+                hint: overnight
+              - zh: 那些店不可能一夜之间都没了。
+                answer: Those shops can't have disappeared overnight.
+                hint: can't have
+              - zh: 这个习惯不是一天就能改掉的。
+                answer: This habit won't disappear overnight.
+                hint: won't
+      - key: disappear-completely
+        kind: chunk
+        type: chunk_substitution
+        title: 说完全不见了
+        chunk: disappear completely
+        chunkMeaning: 完全消失
+        direction: zh_to_en
+        items:
+          - zh: 那些担心很快就没了。
+            answer: The worries disappeared completely.
+            hint: The worries
+          - zh: 太阳出来后雾完全散了。
+            answer: The fog disappeared completely after the sun came out.
+            hint: after the sun came out
+          - zh: 他的笑容一下子消失了。
+            answer: His smile disappeared completely.
+            hint: His smile
+      - key: disappear-without-trace
+        kind: chunk
+        type: chunk_substitution
+        title: 说钱不见了毫无踪迹
+        chunk: disappear without a trace
+        chunkMeaning: 无影无踪地消失
+        direction: zh_to_en
+        items:
+          - zh: 钱不见了，毫无踪迹。
+            answer: The money disappeared without a trace.
+            hint: without a trace
+          - zh: 那艘船从此毫无音讯。
+            answer: The ship disappeared without a trace.
+            hint: The ship
+          - zh: 他走后什么都没留下，毫无踪迹。
+            answer: He left and disappeared without a trace.
+            hint: without a trace
+      - key: disappear-from-view
+        kind: chunk
+        type: chunk_substitution
+        title: 说船很快消失在视野中
+        chunk: disappear from view
+        chunkMeaning: 从视野中消失
+        direction: zh_to_en
+        items:
+          - zh: 船很快消失在视野中。
+            answer: The boat soon disappeared from view.
+            hint: soon
+          - zh: 飞机在云里看不见了。
+            answer: The plane disappeared from view in the clouds.
+            hint: in the clouds
+          - zh: 他一转弯就看不见了。
+            answer: He disappeared from view as soon as he turned the corner.
+            hint: as soon as he turned the corner
+      - key: disappear-distance
+        kind: chunk
+        type: chunk_substitution
+        title: 说汽车消失在远方
+        chunk: disappear into the distance
+        chunkMeaning: 消失在远方
+        direction: zh_to_en
+        items:
+          - zh: 汽车消失在远方。
+            answer: The car disappeared into the distance.
+            hint: into the distance
+          - zh: 火车慢慢消失在远方。
+            answer: The train slowly disappeared into the distance.
+            hint: slowly
+          - zh: 他沿着路走远，最后看不见了。
+            answer: He walked down the road and disappeared into the distance.
+            hint: down the road
+      - key: disappear-memory
+        kind: chunk
+        type: chunk_substitution
+        title: 说细节会从记忆中淡去
+        chunk: disappear from memory
+        chunkMeaning: 从记忆中淡去
+        direction: zh_to_en
+        items:
+          - zh: 一些细节会随着时间从记忆中淡去。
+            answer: Some details disappear from memory over time.
+            hint: over time
+          - zh: 那段经历慢慢从他的记忆里消失了。
+            answer: The experience slowly disappeared from his memory.
+            hint: his memory
+          - zh: 名字我记住了，但脸已经忘了。
+            answer: I remember the name, but the face has disappeared from memory.
+            hint: disappeared from memory
+      - key: disappear-trace-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说无影无踪地消失
+        chunk: disappear without a trace
+        chunkMeaning: 无影无踪地消失
+        direction: en_to_zh
+        items:
+          - en: The money disappeared without a trace.
+            answer: 钱不见了，毫无踪迹。
+            hint: The money
+          - en: The ship disappeared without a trace.
+            answer: 那艘船从此毫无音讯。
+            hint: The ship
+          - en: He left and disappeared without a trace.
+            answer: 他走后什么都没留下，毫无踪迹。
+            hint: disappeared
+      - key: disappear-overnight-listen
+        type: pattern_drill
+        title: 说不可能一夜之间消失
+        pattern: disappear overnight
+        patternMeaning: 一夜之间消失
+        direction: zh_to_en
+        items:
+          - zh: 这个问题不是一天就能解决的。
+            answer: This problem won't disappear overnight.
+            hint: won't
+          - zh: 这些担心不会一夜之间就没了。
+            answer: These worries won't disappear overnight.
+            hint: These worries
+          - zh: 一个坏习惯不可能一夜之间消失。
+            answer: A bad habit can't disappear overnight.
+            hint: A bad habit
+      - key: disappear-memory-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说从记忆中淡去
+        chunk: disappear from memory
+        chunkMeaning: 从记忆中淡去
+        direction: en_to_zh
+        items:
+          - en: Some details disappear from memory over time.
+            answer: 一些细节会随着时间从记忆中淡去。
+            hint: over time
+          - en: The experience slowly disappeared from his memory.
+            answer: 那段经历慢慢从他的记忆里消失了。
+            hint: his memory
+          - en: The face has disappeared from memory.
+            answer: 那张脸已经从记忆中淡去了。
+            hint: the face
+      - key: disappear-from-place
+        type: pattern_drill
+        title: 说从某处消失
+        pattern: disappear from [place]
+        patternMeaning: 从某处消失
+        direction: zh_to_en
+        items:
+          - zh: 我的钥匙从包里不见了。
+            answer: My keys disappeared from my bag.
+            hint: my bag
+          - zh: 那家店从这条街上消失了。
+            answer: That shop disappeared from this street.
+            hint: this street
+          - zh: 这个问题从议程上消失了。
+            answer: The issue disappeared from the agenda.
+            hint: the agenda
+      - key: disappear-into-place
+        type: pattern_drill
+        title: 说消失到某处
+        pattern: disappear into [place]
+        patternMeaning: 消失到某处
+        direction: zh_to_en
+        items:
+          - zh: 他转身消失在黑暗里。
+            answer: He turned and disappeared into the dark.
+            hint: the dark
+          - zh: 孩子们跑进了树林，不见了。
+            answer: The kids ran and disappeared into the trees.
+            hint: the trees
+          - zh: 她上楼就没再下来。
+            answer: She disappeared upstairs and didn't come back down.
+            hint: didn't come back down
+      - key: disappear-other
+        type: pattern_drill
+        title: 说完全消失或渐渐消失
+        pattern: disappear completely / disappear gradually
+        patternMeaning: 完全消失 / 逐渐消失
+        direction: zh_to_en
+        items:
+          - zh: 那些担心后来完全消失了。
+            answer: The worries disappeared completely later.
+            hint: The worries
+          - zh: 他的希望一点点消失了。
+            answer: His hope gradually disappeared.
+            hint: His hope
+          - zh: 雾在太阳出来后慢慢散了。
+            answer: The fog gradually disappeared after the sun came out.
+            hint: after the sun came out
+      - key: disappear-view-other
+        type: pattern_drill
+        title: 说从视野中消失
+        pattern: disappear from view / disappear into the distance
+        patternMeaning: 从视野中消失 / 消失在远处
+        direction: zh_to_en
+        items:
+          - zh: 船在雾里看不见了。
+            answer: The ship disappeared from view in the fog.
+            hint: in the fog
+          - zh: 他们走远，消失在山那边。
+            answer: They walked away and disappeared into the distance.
+            hint: walked away
+          - zh: 飞机一起飞就看不见了。
+            answer: The plane disappeared from view as soon as it took off.
+            hint: as soon as it took off
+      - key: disappear-listen
+        type: pattern_drill
+        title: 听懂对方说什么不见了
+        pattern: disappear from [place] / disappear completely
+        patternMeaning: 从某处消失 / 完全消失
+        direction: en_to_zh
+        items:
+          - en: The pain eventually disappeared completely.
+            answer: 疼痛最终完全消失了。
+            hint: eventually
+          - en: He disappeared into the crowd before I could catch up.
+            answer: 我还没追上他，他就消失在人群中了。
+            hint: before I could catch up
+          - en: The old signs disappeared overnight.
+            answer: 旧招牌一夜之间消失了。
+            hint: overnight
+      - key: disappear-crowd-build
+        type: sentence_decomposition
+        title: 把消失在人海说完整
+        sourceKind: chunk
+        sourceText: disappear into the crowd
+        fullSentence: He disappeared into the crowd before I could say goodbye.
+        fullSentenceZh: 我还没来得及道别，他就消失在人群中了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: He disappeared into the crowd.
+            zh: 他消失在人群中。
+            highlight: ''
+            hint: 先说消失在人群里
+          - level: 2
+            label: 加时间
+            en: He quickly disappeared into the crowd.
+            zh: 他很快就消失在人群中。
+            highlight: quickly
+            hint: 补上很快
+          - level: 3
+            label: 完整句
+            en: He disappeared into the crowd before I could say goodbye.
+            zh: 我还没来得及道别，他就消失在人群中了。
+            highlight: before I could say goodbye
+            hint: 补上还没来得及道别
+      - key: disappear-view-build
+        type: sentence_decomposition
+        title: 把从视野中消失说完整
+        sourceKind: vocab
+        sourceText: disappear
+        fullSentence: The boat sailed away and soon disappeared from view.
+        fullSentenceZh: 船开走了，很快就消失在视野中。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The boat disappeared from view.
+            zh: 船消失在视野中。
+            highlight: ''
+            hint: 先说船看不见了
+          - level: 2
+            label: 加动作
+            en: The boat sailed away and disappeared from view.
+            zh: 船开走了，消失在视野中。
+            highlight: sailed away
+            hint: 补上开走
+          - level: 3
+            label: 完整句
+            en: The boat sailed away and soon disappeared from view.
+            zh: 船开走了，很快就消失在视野中。
+            highlight: soon
+            hint: 补上很快

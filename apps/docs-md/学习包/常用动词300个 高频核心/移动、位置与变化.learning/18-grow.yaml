@@ -1,0 +1,361 @@
+learning:
+  exercises:
+    pipeline:
+      - key: grow-up-town
+        kind: chunk
+        type: chunk_substitution
+        title: 说在一个小镇长大
+        chunk: grow up in a small town
+        chunkMeaning: 在一个小镇长大
+        direction: zh_to_en
+        items:
+          - zh: 我在一个小镇长大。
+            answer: I grew up in a small town.
+            hint: grew up
+          - zh: 你在哪里长大的？
+            answer: Where did you grow up?
+            hint: Where did
+          - zh: 孩子们是在乡下长大的。
+            answer: The kids grew up in the countryside.
+            hint: The kids；the countryside
+      - key: grow-colder
+        kind: chunk
+        type: chunk_substitution
+        title: 说天气越来越冷了
+        chunk: grow colder
+        chunkMeaning: 变冷了
+        direction: zh_to_en
+        items:
+          - zh: 天气越来越冷了。
+            answer: It's growing colder.
+            hint: 进行时
+          - zh: 天黑下来，风也变强了。
+            answer: It got dark and the wind grew stronger.
+            hint: grew stronger
+          - zh: 他一急说话就越来越快。
+            answer: He speaks faster and faster as he grows impatient.
+            hint: grows impatient
+      - key: grow-up-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说成长和变冷
+        chunk: grow up in a small town
+        chunkMeaning: 在一个小镇长大
+        direction: en_to_zh
+        items:
+          - en: I grew up in a small town.
+            answer: 我在一个小镇长大。
+            hint: in a small town
+          - en: Where did you grow up?
+            answer: 你在哪里长大的？
+            hint: Where did
+          - en: It's growing colder.
+            answer: 天气越来越冷了。
+            hint: 进行时
+      - key: grow-state
+        type: vocab_sentence_building
+        title: 说逐渐变得怎样、植物生长
+        vocabWord: grow
+        vocabMeaning: 生长；逐渐变得
+        direction: zh_to_en
+        patterns:
+          - chunk: grow vegetables
+            items:
+              - zh: 他们在花园里种蔬菜。
+                answer: They grow vegetables in the garden.
+                hint: in the garden
+              - zh: 我家在阳台上种了点香草。
+                answer: We grow some herbs on our balcony.
+                hint: some herbs；on our balcony
+              - zh: 这里很适合种水稻。
+                answer: This place is good for growing rice.
+                hint: good for
+          - chunk: grow in importance
+            items:
+              - zh: 这个问题的重要性提高了。
+                answer: The problem has grown in importance.
+                hint: has grown in
+              - zh: 数据的重要性与日俱增。
+                answer: Data has grown in importance over the years.
+                hint: over the years
+              - zh: 这个城市在经济上的地位越来越重要。
+                answer: This city has grown in importance economically.
+                hint: economically
+          - chunk: grow increasingly difficult
+            items:
+              - zh: 这个问题越来越不好处理。
+                answer: The problem is growing increasingly difficult to handle.
+                hint: to handle
+              - zh: 找工作越来越难了。
+                answer: It's growing increasingly difficult to find a job.
+                hint: to find a job
+              - zh: 想跟上节奏，难度越来越大。
+                answer: Keeping up is growing increasingly difficult.
+                hint: Keeping up
+      - key: grow-into-speaker
+        kind: chunk
+        type: chunk_substitution
+        title: 说她成长为一个自信的演讲者
+        chunk: grow into a confident speaker
+        chunkMeaning: 成长为自信的演讲者
+        direction: zh_to_en
+        items:
+          - zh: 她逐渐成长为一个自信的演讲者。
+            answer: She grew into a confident speaker.
+            hint: grew into
+          - zh: 孩子慢慢长成了一个大人。
+            answer: The boy slowly grew into a man.
+            hint: slowly；a man
+          - zh: 我每次开口都会变得更有信心。
+            answer: I'm growing more confident every time I speak.
+            hint: more confident；every time I speak
+      - key: grow-apart
+        kind: chunk
+        type: chunk_substitution
+        title: 说离开学校后渐渐疏远
+        chunk: grow apart
+        chunkMeaning: 逐渐疏远
+        direction: zh_to_en
+        items:
+          - zh: 离开学校后我们渐渐疏远了。
+            answer: We grew apart after leaving school.
+            hint: after leaving school
+          - zh: 我们渐渐疏远了。
+            answer: We gradually grew apart.
+            hint: gradually
+          - zh: 距离太远，他们慢慢就疏远了。
+            answer: Living so far apart, they slowly grew apart.
+            hint: Living so far apart
+      - key: grow-out-of-habit
+        kind: chunk
+        type: chunk_substitution
+        title: 说他改掉了那个习惯
+        chunk: grow out of that habit
+        chunkMeaning: 长大后改掉了那个习惯
+        direction: zh_to_en
+        items:
+          - zh: 他长大后已经改掉了那个习惯。
+            answer: He has grown out of that habit.
+            hint: has grown out of
+          - zh: 孩子很快就穿不下这双鞋了。
+            answer: The child will soon grow out of these shoes.
+            hint: grow out of
+          - zh: 我早就不玩这种游戏了。
+            answer: I've grown out of this kind of game.
+            hint: grown out of
+      - key: grow-on-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说我渐渐喜欢上了这首歌
+        chunk: grow on me
+        chunkMeaning: 让我渐渐喜欢上
+        direction: zh_to_en
+        items:
+          - zh: 我渐渐喜欢上了这首歌。
+            answer: The song grew on me.
+            hint: grew on me
+          - zh: 这个味道一开始不习惯，后来越来越喜欢。
+            answer: I didn't like the taste at first, but it grew on me.
+            hint: at first；grew on me
+          - zh: 这个城市慢慢让我喜欢上了。
+            answer: This city is growing on me.
+            hint: 进行时
+      - key: grow-tired-waiting
+        kind: chunk
+        type: chunk_substitution
+        title: 说她渐渐等得不耐烦了
+        chunk: grow tired of waiting
+        chunkMeaning: 渐渐等得不耐烦
+        direction: zh_to_en
+        items:
+          - zh: 她渐渐等得不耐烦了。
+            answer: She grew tired of waiting.
+            hint: grew tired of
+          - zh: 我越来越受不了每天加班了。
+            answer: I'm growing tired of working late every day.
+            hint: working late every day
+          - zh: 孩子们对这款游戏腻了。
+            answer: The kids have grown tired of this game.
+            hint: have grown tired of
+      - key: grow-out-of-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说长大后不再需要
+        chunk: grow out of
+        chunkMeaning: 长大后不再需要；逐渐摆脱
+        direction: en_to_zh
+        items:
+          - en: He has grown out of that habit.
+            answer: 他长大后已经改掉了那个习惯。
+            hint: that habit
+          - en: The child will soon grow out of these shoes.
+            answer: 孩子很快就穿不下这双鞋了。
+            hint: these shoes
+          - en: I've grown out of this kind of game.
+            answer: 我早就不玩这种游戏了。
+            hint: this kind of game
+      - key: grow-increasingly-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 说情况越来越困难
+        chunk: grow increasingly difficult
+        chunkMeaning: 变得越来越困难
+        direction: zh_to_en
+        items:
+          - zh: 情况变得越来越困难。
+            answer: The situation is growing increasingly difficult.
+            hint: increasingly
+          - zh: 找车位越来越难了。
+            answer: It's growing increasingly difficult to find parking.
+            hint: to find parking
+          - zh: 跟上学习进度越来越难。
+            answer: Keeping up with the course is growing increasingly difficult.
+            hint: Keeping up with
+      - key: grow-adjective
+        type: pattern_drill
+        title: 说逐渐变得怎样
+        pattern: grow [adjective]
+        patternMeaning: 逐渐变得怎样
+        direction: zh_to_en
+        items:
+          - zh: 天一黑就凉了。
+            answer: It grows cooler as evening comes.
+            hint: as evening comes
+          - zh: 随着时间推移，他越来越有耐心。
+            answer: He grew more patient over time.
+            hint: more patient；over time
+          - zh: 城市越来越吵了。
+            answer: The city is growing noisier.
+            hint: noisier
+      - key: grow-into-other
+        type: pattern_drill
+        title: 说成长为别的身份
+        pattern: grow into [noun]
+        patternMeaning: 逐渐成长为某身份
+        direction: zh_to_en
+        items:
+          - zh: 他长大了，成了一个可靠的人。
+            answer: He grew into a reliable person.
+            hint: a reliable person
+          - zh: 这家小公司发展成了一家大企业。
+            answer: The small company grew into a big business.
+            hint: a big business
+          - zh: 这件夹克你两年后就能穿了。
+            answer: You'll grow into this jacket in two years.
+            hint: grow into this jacket
+      - key: grow-plant-other
+        type: pattern_drill
+        title: 说种植别的东西
+        pattern: grow [plant/crop]
+        patternMeaning: 种植作物
+        direction: zh_to_en
+        items:
+          - zh: 爷爷在院子里种了很多花。
+            answer: Grandpa grows a lot of flowers in the yard.
+            hint: a lot of flowers
+          - zh: 我们在这儿种不了咖啡。
+            answer: We can't grow coffee here.
+            hint: can't
+          - zh: 他们自己种菜自己吃。
+            answer: They grow their own vegetables and eat them.
+            hint: their own vegetables
+      - key: grow-apart-other
+        type: pattern_drill
+        title: 说关系疏远
+        pattern: grow apart
+        patternMeaning: 逐渐疏远
+        direction: zh_to_en
+        items:
+          - zh: 多年的朋友也会慢慢疏远。
+            answer: Old friends can grow apart over time.
+            hint: Old friends；over time
+          - zh: 他们搬家后就渐渐疏远了。
+            answer: They grew apart after moving away.
+            hint: after moving away
+          - zh: 我不想我们就这么疏远。
+            answer: I don't want us to grow apart.
+            hint: don't want us to
+      - key: grow-tired-other
+        type: pattern_drill
+        title: 说渐渐厌倦别的事
+        pattern: grow tired of [something/doing]
+        patternMeaning: 逐渐厌烦某事
+        direction: zh_to_en
+        items:
+          - zh: 我厌倦了每天都做同样的事。
+            answer: I've grown tired of doing the same thing every day.
+            hint: doing the same thing
+          - zh: 她开始烦这没完没了的会议。
+            answer: She's growing tired of these endless meetings.
+            hint: endless meetings
+          - zh: 等了一个小时，大家都烦了。
+            answer: After an hour of waiting, everyone grew tired of it.
+            hint: After an hour of waiting
+      - key: grow-listen
+        type: pattern_drill
+        title: 听懂对方说成长和厌倦
+        pattern: grow up / grow tired of / grow on [someone]
+        patternMeaning: 成长 / 厌倦 / 渐渐喜欢
+        direction: en_to_zh
+        items:
+          - en: She grew tired of waiting.
+            answer: 她渐渐等得不耐烦了。
+            hint: waiting
+          - en: The song grew on me.
+            answer: 我渐渐喜欢上了这首歌。
+            hint: grew on me
+          - en: We gradually grew apart.
+            answer: 我们渐渐疏远了。
+            hint: gradually
+      - key: grow-up-build
+        type: sentence_decomposition
+        title: 把在小镇长大说完整
+        sourceKind: chunk
+        sourceText: grow up in a small town
+        fullSentence: I grew up in a small town, and I still go back every summer.
+        fullSentenceZh: 我在一个小镇长大，现在每年夏天还回去。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I grew up in a small town.
+            zh: 我在一个小镇长大。
+            highlight: ''
+            hint: 先说在小镇长大
+          - level: 2
+            label: 加时间
+            en: I grew up in a small town near the sea.
+            zh: 我在海边的一个小镇长大。
+            highlight: near the sea
+            hint: 补上靠海
+          - level: 3
+            label: 完整句
+            en: I grew up in a small town, and I still go back every summer.
+            zh: 我在一个小镇长大，现在每年夏天还回去。
+            highlight: and I still go back every summer
+            hint: 补上每年夏天还回去
+      - key: grow-apart-build
+        type: sentence_decomposition
+        title: 把渐渐疏远说完整
+        sourceKind: vocab
+        sourceText: grow
+        fullSentence: We were close in college, but we gradually grew apart after graduation.
+        fullSentenceZh: 我们大学时很要好，但毕业后渐渐疏远了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We grew apart.
+            zh: 我们疏远了。
+            highlight: ''
+            hint: 先说疏远了
+          - level: 2
+            label: 加程度
+            en: We gradually grew apart.
+            zh: 我们渐渐疏远了。
+            highlight: gradually
+            hint: 补上渐渐
+          - level: 3
+            label: 完整句
+            en: We were close in college, but we gradually grew apart after graduation.
+            zh: 我们大学时很要好，但毕业后渐渐疏远了。
+            highlight: after graduation
+            hint: 补上毕业后

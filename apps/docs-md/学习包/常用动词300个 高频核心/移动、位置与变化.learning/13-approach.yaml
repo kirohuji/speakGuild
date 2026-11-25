@@ -1,0 +1,361 @@
+learning:
+  exercises:
+    pipeline:
+      - key: approach-station
+        kind: chunk
+        type: chunk_substitution
+        title: 说接近车站时火车开动了
+        chunk: approach the station
+        chunkMeaning: 接近车站
+        direction: zh_to_en
+        items:
+          - zh: 我们接近车站时，火车开始移动了。
+            answer: As we approached the station, the train started moving.
+            hint: As we approached；started moving
+          - zh: 列车正在减速进站。
+            answer: The train is slowing down as it approaches the station.
+            hint: slowing down；as it
+          - zh: 快到车站时，我给他打了个电话。
+            answer: I called him as we approached the station.
+            hint: called him
+      - key: approach-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说一个男人走近问路
+        chunk: approach me
+        chunkMeaning: 走近我
+        direction: zh_to_en
+        items:
+          - zh: 一个男人走近我问路。
+            answer: A man approached me and asked for directions.
+            hint: asked for directions
+          - zh: 有个陌生人走过来问我是不是迷路了。
+            answer: A stranger approached me and asked if I was lost.
+            hint: A stranger；if I was lost
+          - zh: 别让他们靠近我。
+            answer: Don't let them approach me.
+            hint: let them
+      - key: approach-station-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说接近某处
+        chunk: approach the station
+        chunkMeaning: 接近车站
+        direction: en_to_zh
+        items:
+          - en: As we approached the station, it started to rain.
+            answer: 我们接近车站时开始下雨了。
+            hint: started to rain
+          - en: The bus is approaching the station now.
+            answer: 公交车现在正接近车站。
+            hint: now
+          - en: Slow down as you approach the station.
+            answer: 接近车站时请减速。
+            hint: Slow down
+      - key: approach-state
+        type: vocab_sentence_building
+        title: 说处理问题、时间临近
+        vocabWord: approach
+        vocabMeaning: 接近；着手处理
+        direction: zh_to_en
+        patterns:
+          - chunk: approach the problem carefully
+            items:
+              - zh: 我们需要谨慎处理这个问题。
+                answer: We need to approach this problem carefully.
+                hint: carefully
+              - zh: 我换了个思路来处理这件事。
+                answer: I approached the problem in a different way.
+                hint: in a different way
+              - zh: 这个问题你怎么看？
+                answer: How would you approach this problem?
+                hint: How would you
+          - chunk: the deadline is approaching
+            items:
+              - zh: 截止日期很快就到了。
+                answer: The deadline is approaching fast.
+                hint: fast
+              - zh: 截止日期很快就到了，我们得抓紧。
+                answer: The deadline is approaching quickly, so we need to hurry.
+                hint: need to hurry
+              - zh: 进度没跟上，截止日期又越来越近。
+                answer: We're behind schedule, and the deadline is approaching.
+                hint: behind schedule
+          - chunk: approach something with caution
+            items:
+              - zh: 对方很谨慎地处理了这份报价。
+                answer: They approached the offer with caution.
+                hint: They
+              - zh: 对这件事要小心处理。
+                answer: You should approach this with caution.
+                hint: this
+              - zh: 我们一直谨慎应对这个风险。
+                answer: We've been approaching this risk with caution.
+                hint: this risk
+      - key: approach-deadline
+        kind: chunk
+        type: chunk_substitution
+        title: 说截止日期临近
+        chunk: the deadline is approaching
+        chunkMeaning: 截止日期临近
+        direction: zh_to_en
+        items:
+          - zh: 截止日期很快就要到了。
+            answer: The deadline is approaching quickly.
+            hint: quickly
+          - zh: 假期快到了，大家都在订票。
+            answer: The holiday is approaching, and everyone is booking tickets.
+            hint: everyone is booking tickets
+          - zh: 随着面试临近，我越来越紧张。
+            answer: As the interview approaches, I get more and more nervous.
+            hint: As；more and more nervous
+      - key: approach-for-help
+        kind: chunk
+        type: chunk_substitution
+        title: 说她就问题找了经理
+        chunk: approach someone for help
+        chunkMeaning: 找某人寻求帮助
+        direction: zh_to_en
+        items:
+          - zh: 她就这个问题找经理谈了。
+            answer: She approached the manager about the problem.
+            hint: about the problem
+          - zh: 你可以直接找老师寻求帮助。
+            answer: You can approach the teacher for help.
+            hint: for help
+          - zh: 我没敢直接去找老板谈。
+            answer: I didn't dare to approach the boss about it.
+            hint: didn't dare to
+      - key: approach-caution
+        kind: chunk
+        type: chunk_substitution
+        title: 说谨慎对待这个提议
+        chunk: approach the offer with caution
+        chunkMeaning: 谨慎对待这个提议
+        direction: zh_to_en
+        items:
+          - zh: 我们应该谨慎对待这个提议。
+            answer: We should approach the offer with caution.
+            hint: with caution
+          - zh: 这份合同要小心处理。
+            answer: You should approach this contract with caution.
+            hint: this contract
+          - zh: 他们把这个方案处理得很谨慎。
+            answer: They approached the proposal with caution.
+            hint: approached
+      - key: approach-zero
+        kind: chunk
+        type: chunk_substitution
+        title: 说误差正在接近零
+        chunk: approaching zero
+        chunkMeaning: 接近零
+        direction: zh_to_en
+        items:
+          - zh: 误差正在接近零。
+            answer: The error is approaching zero.
+            hint: The error
+          - zh: 概率正在接近零。
+            answer: The probability is approaching zero.
+            hint: The probability
+          - zh: 我们的库存快见底了。
+            answer: Our stock is approaching zero.
+            hint: Our stock
+      - key: approach-caution-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说谨慎对待
+        chunk: approach something with caution
+        chunkMeaning: 谨慎处理某事
+        direction: en_to_zh
+        items:
+          - en: We should approach the offer with caution.
+            answer: 我们应该谨慎对待这个提议。
+            hint: the offer
+          - en: You should approach this with caution.
+            answer: 对这件事要小心处理。
+            hint: this
+          - en: They approached the proposal with caution.
+            answer: 他们很谨慎地处理了这个方案。
+            hint: the proposal
+      - key: approach-problem
+        kind: chunk
+        type: chunk_substitution
+        title: 说我们要换个方式处理
+        chunk: approach the problem differently
+        chunkMeaning: 换一种方式处理这个问题
+        direction: zh_to_en
+        items:
+          - zh: 我们需要换一种方式处理这个问题。
+            answer: We need to approach the problem differently.
+            hint: differently
+          - zh: 这次我们换个思路来做。
+            answer: Let's approach it in a new way this time.
+            hint: in a new way
+          - zh: 同一个问题，他用完全不同的方式处理。
+            answer: He approached the same problem in a completely different way.
+            hint: in a completely different way
+      - key: approach-goal
+        kind: chunk
+        type: chunk_substitution
+        title: 说我们正接近最后阶段
+        chunk: approach the final stage
+        chunkMeaning: 接近最后阶段
+        direction: zh_to_en
+        items:
+          - zh: 我们正接近最后阶段。
+            answer: We're approaching the final stage.
+            hint: 进行时
+          - zh: 这项工作已经接近尾声了。
+            answer: The work is approaching its end.
+            hint: its end
+          - zh: 比赛进到了最关键的几天。
+            answer: The competition is approaching its most important days.
+            hint: its most important days
+      - key: approach-place
+        type: pattern_drill
+        title: 换个地点说接近
+        pattern: approach [place]
+        patternMeaning: 接近某处
+        direction: zh_to_en
+        items:
+          - zh: 我们接近小镇时开始下雨了。
+            answer: As we approached the town, it started to rain.
+            hint: As we approached
+          - zh: 飞机正在接近机场。
+            answer: The plane is approaching the airport.
+            hint: The plane
+          - zh: 快到学校的时候我碰到了他。
+            answer: I met him as I approached the school.
+            hint: as I approached
+      - key: approach-person
+        type: pattern_drill
+        title: 说走近某人
+        pattern: approach [someone]
+        patternMeaning: 走近某人；接近某人
+        direction: zh_to_en
+        items:
+          - zh: 一个陌生人走近我，问我要不要帮忙。
+            answer: A stranger approached me and offered to help.
+            hint: offered to help
+          - zh: 别突然靠近那只狗。
+            answer: Don't approach that dog suddenly.
+            hint: that dog；suddenly
+          - zh: 他走过来问她叫什么名字。
+            answer: He approached her and asked for her name.
+            hint: asked for her name
+      - key: approach-problem-other
+        type: pattern_drill
+        title: 说处理别的问题
+        pattern: approach [problem] [manner]
+        patternMeaning: 以某方式处理问题
+        direction: zh_to_en
+        items:
+          - zh: 我们得从另一个角度处理这个问题。
+            answer: We need to approach this problem from another angle.
+            hint: from another angle
+          - zh: 他处理客户投诉的方式很冷静。
+            answer: He approached the complaint calmly.
+            hint: the complaint；calmly
+          - zh: 这件事不能太急，要慢慢处理。
+            answer: We shouldn't rush this; we need to approach it slowly.
+            hint: shouldn't rush
+      - key: approach-time-other
+        type: pattern_drill
+        title: 说别的期限临近
+        pattern: approach [time/event]
+        patternMeaning: 接近某个时间或事件
+        direction: zh_to_en
+        items:
+          - zh: 期末考试快到了。
+            answer: The final exams are approaching.
+            hint: final exams
+          - zh: 随着夏天临近，白天越来越长。
+            answer: As summer approaches, the days get longer.
+            hint: As summer approaches
+          - zh: 搬家日期越来越近了。
+            answer: The moving date is approaching.
+            hint: the moving date
+      - key: approach-subject-other
+        type: pattern_drill
+        title: 说从某个角度谈主题
+        pattern: approach [subject] [manner]
+        patternMeaning: 以某方式处理某主题
+        direction: zh_to_en
+        items:
+          - zh: 这本书从不同角度处理这个主题。
+            answer: The book approaches the subject from a different angle.
+            hint: from a different angle
+          - zh: 这部电影用很轻松的方式讲死亡。
+            answer: The film approaches death in a light way.
+            hint: in a light way
+          - zh: 我们该换个角度讨论这个问题。
+            answer: We should approach this topic from another side.
+            hint: another side
+      - key: approach-listen
+        type: pattern_drill
+        title: 听懂对方说临近和处理
+        pattern: the deadline is approaching / approach [problem]
+        patternMeaning: 临近 / 处理
+        direction: en_to_zh
+        items:
+          - en: The deadline is approaching fast.
+            answer: 截止日期很快就到了。
+            hint: fast
+          - en: We need to approach this problem carefully.
+            answer: 我们需要谨慎处理这个问题。
+            hint: carefully
+          - en: As the exam approaches, I study more.
+            answer: 考试越临近，我学得越多。
+            hint: As the exam approaches
+      - key: approach-town-build
+        type: sentence_decomposition
+        title: 把接近小镇下雨说完整
+        sourceKind: chunk
+        sourceText: approach the station
+        fullSentence: As we approached the small town, it started to rain heavily.
+        fullSentenceZh: 我们接近那个小镇时，开始下起了大雨。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We approached the small town.
+            zh: 我们接近了那个小镇。
+            highlight: ''
+            hint: 先说接近小镇
+          - level: 2
+            label: 加时间
+            en: As we approached the small town, it started to rain.
+            zh: 我们接近那个小镇时开始下雨了。
+            highlight: As we approached
+            hint: 补上接近的时候
+          - level: 3
+            label: 完整句
+            en: As we approached the small town, it started to rain heavily.
+            zh: 我们接近那个小镇时，开始下起了大雨。
+            highlight: heavily
+            hint: 补上大雨
+      - key: approach-deadline-build
+        type: sentence_decomposition
+        title: 把截止日期临近说完整
+        sourceKind: vocab
+        sourceText: approach
+        fullSentence: The deadline is approaching fast, but we still haven't finished the report.
+        fullSentenceZh: 截止日期很快就要到了，可我们的报告还没写完。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The deadline is approaching.
+            zh: 截止日期临近了。
+            highlight: ''
+            hint: 先说临近
+          - level: 2
+            label: 加程度
+            en: The deadline is approaching fast.
+            zh: 截止日期很快就要到了。
+            highlight: fast
+            hint: 补上很快
+          - level: 3
+            label: 完整句
+            en: The deadline is approaching fast, but we still haven't finished the report.
+            zh: 截止日期很快就要到了，可我们的报告还没写完。
+            highlight: but we still haven't finished the report
+            hint: 补上报告还没写完

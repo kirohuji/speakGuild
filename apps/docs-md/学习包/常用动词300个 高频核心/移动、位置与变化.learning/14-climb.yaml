@@ -1,0 +1,344 @@
+learning:
+  exercises:
+    pipeline:
+      - key: climb-stairs
+        kind: chunk
+        type: chunk_substitution
+        title: 说爬楼梯到顶层
+        chunk: climb the stairs
+        chunkMeaning: 爬楼梯
+        direction: zh_to_en
+        items:
+          - zh: 我们爬楼梯到了顶层。
+            answer: We climbed the stairs to the top floor.
+            hint: climbed；to the top floor
+          - zh: 楼梯很陡，但我们能爬上去。
+            answer: The stairs are steep, but we can climb them.
+            hint: steep；climb them
+          - zh: 电梯坏了，我们只好爬楼梯。
+            answer: The elevator broke, so we had to climb the stairs.
+            hint: broke；had to
+      - key: climb-mountain
+        kind: chunk
+        type: chunk_substitution
+        title: 说花一上午爬山
+        chunk: climb a mountain
+        chunkMeaning: 爬山
+        direction: zh_to_en
+        items:
+          - zh: 我们花了一上午爬那座山。
+            answer: We spent the morning climbing the hill.
+            hint: spent the morning
+          - zh: 他们今年夏天去山上徒步了。
+            answer: They climbed the mountain this summer.
+            hint: this summer
+          - zh: 这座山很难爬，要准备好装备。
+            answer: This mountain is hard to climb, so bring the right gear.
+            hint: hard to climb；the right gear
+      - key: climb-stairs-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说爬楼梯和爬山
+        chunk: climb the stairs
+        chunkMeaning: 爬楼梯
+        direction: en_to_zh
+        items:
+          - en: We climbed the stairs to the top floor.
+            answer: 我们爬楼梯到了顶层。
+            hint: to the top floor
+          - en: The elevator broke, so we had to climb the stairs.
+            answer: 电梯坏了，我们只好爬楼梯。
+            hint: had to
+          - en: We spent the morning climbing the hill.
+            answer: 我们花了一上午爬那座山。
+            hint: spent the morning
+      - key: climb-state
+        type: vocab_sentence_building
+        title: 说往上爬、数值上升
+        vocabWord: climb
+        vocabMeaning: 攀爬；上升
+        direction: zh_to_en
+        patterns:
+          - chunk: climb up the ladder
+            items:
+              - zh: 他小心地爬上了梯子。
+                answer: He climbed up the ladder carefully.
+                hint: climbed up；carefully
+              - zh: 她爬上去够最高那层架子。
+                answer: She climbed up to reach the top shelf.
+                hint: to reach the top shelf
+              - zh: 别爬那么高，危险。
+                answer: Don't climb up that high; it's dangerous.
+                hint: that high
+          - chunk: climb to the top
+            items:
+              - zh: 我们在日落前爬到了山顶。
+                answer: We climbed to the top before sunset.
+                hint: before sunset
+              - zh: 他们花了五个小时才登上山顶。
+                answer: It took them five hours to climb to the top.
+                hint: It took them
+              - zh: 只要往上爬，就能看到整座城。
+                answer: Once you climb to the top, you can see the whole city.
+                hint: Once you
+          - chunk: prices continue to climb
+            items:
+              - zh: 物价还在继续上涨。
+                answer: Prices continue to climb.
+                hint: continue to
+              - zh: 今年价格大幅上涨。
+                answer: Prices have climbed sharply this year.
+                hint: sharply
+              - zh: 房租每年都在涨。
+                answer: Rents climb every year.
+                hint: every year
+      - key: climb-ladder
+        kind: chunk
+        type: chunk_substitution
+        title: 说他很快升了职
+        chunk: climb the ladder
+        chunkMeaning: 爬梯子；晋升
+        direction: zh_to_en
+        items:
+          - zh: 他很快在公司里晋升。
+            answer: He climbed the corporate ladder quickly.
+            hint: the corporate ladder
+          - zh: 想升职，光靠加班没用。
+            answer: Working late isn't enough to climb the ladder.
+            hint: isn't enough
+          - zh: 她在这家公司一步一步往上走。
+            answer: She's been climbing the ladder at this company step by step.
+            hint: step by step
+      - key: climb-down
+        kind: chunk
+        type: chunk_substitution
+        title: 说他小心地爬下梯子
+        chunk: climb down the tree
+        chunkMeaning: 从树上爬下来
+        direction: zh_to_en
+        items:
+          - zh: 他小心地爬下梯子。
+            answer: He climbed down the ladder carefully.
+            hint: climbed down；carefully
+          - zh: 那只猫一直爬不下来。
+            answer: The cat couldn't climb down from the tree.
+            hint: couldn't；from the tree
+          - zh: 他坚持自己的立场，不肯让步。
+            answer: He refused to climb down from his position.
+            hint: refused to；his position
+      - key: climb-over
+        kind: chunk
+        type: chunk_substitution
+        title: 说我们不得不翻过墙
+        chunk: climb over the fence
+        chunkMeaning: 翻过篱笆
+        direction: zh_to_en
+        items:
+          - zh: 我们不得不翻过墙。
+            answer: We had to climb over the wall.
+            hint: had to
+          - zh: 狗从篱笆上翻了过去。
+            answer: The dog climbed over the fence.
+            hint: The dog
+          - zh: 别翻那道墙，上面有铁丝网。
+            answer: Don't climb over that wall; there's wire on top.
+            hint: wire on top
+      - key: climb-steadily
+        kind: chunk
+        type: chunk_substitution
+        title: 说温度正在稳步上升
+        chunk: climb steadily
+        chunkMeaning: 稳步上升
+        direction: zh_to_en
+        items:
+          - zh: 温度正在稳步上升。
+            answer: The temperature is climbing steadily.
+            hint: 进行时
+          - zh: 销量已经连续三个月稳定增长。
+            answer: Sales have been climbing steadily for three months.
+            hint: for three months
+          - zh: 这几年房价一直在缓慢上升。
+            answer: House prices have climbed slowly over the years.
+            hint: over the years
+      - key: climb-aboard
+        kind: chunk
+        type: chunk_substitution
+        title: 说乘客开始登车
+        chunk: climb aboard
+        chunkMeaning: 登上交通工具
+        direction: zh_to_en
+        items:
+          - zh: 乘客开始登车。
+            answer: Passengers began to climb aboard.
+            hint: Passengers；began to
+          - zh: 我们登上火车，找到座位坐下。
+            answer: We climbed aboard and found our seats.
+            hint: found our seats
+          - zh: 请排队上车。
+            answer: Please climb aboard in an orderly line.
+            hint: in an orderly line
+      - key: climb-down-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说爬下来和让步
+        chunk: climb down
+        chunkMeaning: 爬下来；让步
+        direction: en_to_zh
+        items:
+          - en: He climbed down the ladder carefully.
+            answer: 他小心地爬下梯子。
+            hint: the ladder；carefully
+          - en: The cat couldn't climb down from the tree.
+            answer: 那只猫一直爬不下来。
+            hint: couldn't；from the tree
+          - en: He refused to climb down from his position.
+            answer: 他拒绍在自己的立场上让步。
+            hint: refused to；his position
+      - key: climb-place
+        type: pattern_drill
+        title: 换个对象说爬
+        pattern: climb [mountain/stairs]
+        patternMeaning: 爬上某物
+        direction: zh_to_en
+        items:
+          - zh: 我们昨天爬了那座小山。
+            answer: We climbed that small hill yesterday.
+            hint: that small hill；yesterday
+          - zh: 爷爷爬楼梯有点吃力。
+            answer: Grandpa has trouble climbing the stairs.
+            hint: has trouble
+          - zh: 孩子们在爬树。
+            answer: The children are climbing a tree.
+            hint: The children
+      - key: climb-up-other
+        type: pattern_drill
+        title: 说向上爬别的东西
+        pattern: climb up [something]
+        patternMeaning: 向上攀爬
+        direction: zh_to_en
+        items:
+          - zh: 他们爬上了山顶。
+            answer: They climbed up to the top of the mountain.
+            hint: to the top
+          - zh: 他爬上梯子换了个灯泡。
+            answer: He climbed up the ladder to change a bulb.
+            hint: to change a bulb
+          - zh: 猫爬上了那棵树。
+            answer: The cat climbed up that tree.
+            hint: The cat
+      - key: climb-down-other
+        type: pattern_drill
+        title: 说往下爬
+        pattern: climb down [something]
+        patternMeaning: 往下爬
+        direction: zh_to_en
+        items:
+          - zh: 慢慢爬下来，别着急。
+            answer: Climb down slowly; there's no rush.
+            hint: there's no rush
+          - zh: 他从树上爬了下来。
+            answer: He climbed down from the tree.
+            hint: from the tree
+          - zh: 她抓住绳子一点点爬了下来。
+            answer: She held the rope and climbed down little by little.
+            hint: held the rope；little by little
+      - key: climb-to-other
+        type: pattern_drill
+        title: 说升到某个高度或水平
+        pattern: climb to [place/level]
+        patternMeaning: 爬到高处；升至某水平
+        direction: zh_to_en
+        items:
+          - zh: 价格已经升至历史高位。
+            answer: Prices have climbed to record levels.
+            hint: record levels
+          - zh: 他们一直爬到那块大石头。
+            answer: They climbed to that big rock.
+            hint: that big rock
+          - zh: 气温已经升到三十度了。
+            answer: The temperature has climbed to thirty degrees.
+            hint: thirty degrees
+      - key: climb-over-other
+        type: pattern_drill
+        title: 说翻越别的障碍
+        pattern: climb over [obstacle]
+        patternMeaning: 翻越障碍
+        direction: zh_to_en
+        items:
+          - zh: 我们翻过了那道围栏。
+            answer: We climbed over the fence.
+            hint: the fence
+          - zh: 小孩总想翻过栏杆。
+            answer: The kids always want to climb over the railing.
+            hint: the railing
+          - zh: 他们翻过山脊继续往前走。
+            answer: They climbed over the ridge and kept going.
+            hint: the ridge；kept going
+      - key: climb-listen
+        type: pattern_drill
+        title: 听懂对方说爬和上涨
+        pattern: climb [mountain/stairs] / prices continue to climb
+        patternMeaning: 爬 / 上涨
+        direction: en_to_zh
+        items:
+          - en: Prices continue to climb.
+            answer: 物价还在继续上涨。
+            hint: continue to
+          - en: We climbed to the top before sunset.
+            answer: 我们在日落前爬到了山顶。
+            hint: before sunset
+          - en: The cat climbed up that tree.
+            answer: 猫爬上了那棵树。
+            hint: that tree
+      - key: climb-top-build
+        type: sentence_decomposition
+        title: 把爬到山顶说完整
+        sourceKind: chunk
+        sourceText: climb to the top
+        fullSentence: It took us four hours to climb to the top of the mountain.
+        fullSentenceZh: 我们花了四个小时才爬到山顶。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We climbed to the top.
+            zh: 我们爬到了山顶。
+            highlight: ''
+            hint: 先说到顶
+          - level: 2
+            label: 加对象
+            en: We climbed to the top of the mountain.
+            zh: 我们爬到了山顶。
+            highlight: of the mountain
+            hint: 补上是哪座山
+          - level: 3
+            label: 完整句
+            en: It took us four hours to climb to the top of the mountain.
+            zh: 我们花了四个小时才爬到山顶。
+            highlight: It took us four hours
+            hint: 补上花了四个小时
+      - key: climb-price-build
+        type: sentence_decomposition
+        title: 把价格上涨说完整
+        sourceKind: vocab
+        sourceText: climb
+        fullSentence: Prices have been climbing since last year, and people are worried.
+        fullSentenceZh: 价格从去年开始一直在涨，大家都很担心。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Prices are climbing.
+            zh: 价格在涨。
+            highlight: ''
+            hint: 先说价格在涨
+          - level: 2
+            label: 加时间
+            en: Prices have been climbing since last year.
+            zh: 价格从去年开始一直在涨。
+            highlight: since last year
+            hint: 补上从去年开始
+          - level: 3
+            label: 完整句
+            en: Prices have been climbing since last year, and people are worried.
+            zh: 价格从去年开始一直在涨，大家都很担心。
+            highlight: and people are worried
+            hint: 补上大家很担心
