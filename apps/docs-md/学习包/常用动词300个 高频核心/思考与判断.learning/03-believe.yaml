@@ -1,0 +1,402 @@
+learning:
+  exercises:
+    pipeline:
+      - key: believe-you
+        kind: chunk
+        type: chunk_substitution
+        title: 说相信对方
+        chunk: believe you
+        chunkMeaning: 相信你
+        direction: zh_to_en
+        items:
+          - zh: 我相信你。
+            answer: I believe you.
+            hint: I believe you
+          - zh: 他真的相信你吗？
+            answer: Does he really believe you?
+            hint: Does he really
+          - zh: 她当时并不相信你。
+            answer: She didn't believe you at that time.
+            hint: didn't；at that time
+      - key: believe-that-things-will-improve
+        kind: chunk
+        type: chunk_substitution
+        title: 说相信情况会变好
+        chunk: believe that things will improve
+        chunkMeaning: 相信情况会好转
+        direction: zh_to_en
+        items:
+          - zh: 我相信情况会慢慢好转。
+            answer: I believe that things will improve over time.
+            hint: over time
+          - zh: 我们都相信事情会好起来。
+            answer: We all believe that things will improve.
+            hint: We all
+          - zh: 他仍然相信前景会变好。
+            answer: He still believes that things will improve.
+            hint: still believes
+      - key: believe-in-what-she-is-doing
+        kind: chunk
+        type: chunk_substitution
+        title: 说相信她正在做的事
+        chunk: believe in what she is doing
+        chunkMeaning: 相信她正在做的事
+        direction: zh_to_en
+        items:
+          - zh: 我完全相信她正在做的事。
+            answer: I fully believe in what she is doing.
+            hint: fully
+          - zh: 团队都很认同她现在的方向。
+            answer: The team believes in what she is doing.
+            hint: The team
+          - zh: 如果你相信她在做的事，就支持她吧。
+            answer: If you believe in what she is doing, support her.
+            hint: If；support her
+      - key: cant-believe-you-remembered
+        kind: chunk
+        type: chunk_substitution
+        title: 说真没想到对方还记得
+        chunk: can't believe you remembered
+        chunkMeaning: 真想不到你还记得
+        direction: zh_to_en
+        items:
+          - zh: 真没想到你还记得我的生日。
+            answer: I can't believe you remembered my birthday.
+            hint: my birthday
+          - zh: 你居然还记得那首歌，我都不敢相信。
+            answer: I can't believe you remembered that song.
+            hint: that song
+          - zh: 她居然还记得我们第一次见面——太意外了。
+            answer: I can't believe she remembered our first meeting.
+            hint: she；our first meeting
+      - key: believed-to-be-over-200-years-old
+        kind: chunk
+        type: chunk_substitution
+        title: 说据信已有两百多年历史
+        chunk: believed to be over 200 years old
+        chunkMeaning: 据信已有两百多岁
+        direction: zh_to_en
+        items:
+          - zh: 这棵树据信已有两百多年了。
+            answer: This tree is believed to be over 200 years old.
+            hint: This tree is；is believed
+          - zh: 那座建筑据信建于两百多年前。
+            answer: The building is believed to be over 200 years old.
+            hint: The building is
+          - zh: 专家认为这件文物据信已有两百多年历史。
+            answer: Experts say it is believed to be over 200 years old.
+            hint: Experts say；it is
+      - key: believe-in-yourself
+        kind: chunk
+        type: chunk_substitution
+        title: 说要相信自己
+        chunk: believe in yourself
+        chunkMeaning: 相信自己
+        direction: zh_to_en
+        items:
+          - zh: 你要学会相信自己。
+            answer: You need to believe in yourself.
+            hint: need to
+          - zh: 输过一次不代表你不能相信自己了。
+            answer: Losing once doesn't mean you can't believe in yourself.
+            hint: doesn't mean；can't
+          - zh: 她总跟我说，一定要相信自己。
+            answer: She always tells me, "Believe in yourself."
+            hint: always tells me
+      - key: firmly-believe
+        kind: chunk
+        type: chunk_substitution
+        title: 说坚信
+        chunk: firmly believe
+        chunkMeaning: 坚信
+        direction: zh_to_en
+        items:
+          - zh: 我坚信我们能做成这件事。
+            answer: I firmly believe we can pull this off.
+            hint: we can pull this off
+          - zh: 她坚信这个决定是对的。
+            answer: She firmly believes this decision is right.
+            hint: this decision is right
+          - zh: 他们坚信合作比单打独斗更好。
+            answer: They firmly believe cooperation works better than going it alone.
+            hint: cooperation；going it alone
+      - key: believe-every-word
+        kind: chunk
+        type: chunk_substitution
+        title: 说一字一句都信
+        chunk: believe every word
+        chunkMeaning: 字字都相信
+        direction: zh_to_en
+        items:
+          - zh: 孩子们对他讲的故事字字都信。
+            answer: The kids believe every word of his story.
+            hint: The kids；of his story
+          - zh: 别什么都信，要自己判断。
+            answer: Don't believe every word you hear.
+            hint: Don't；you hear
+          - zh: 我当时真的信了他说的每一个字。
+            answer: I really believed every word he said.
+            hint: believed；he said
+      - key: believe-it-or-not
+        kind: chunk
+        type: chunk_substitution
+        title: 说信不信由你
+        chunk: believe it or not
+        chunkMeaning: 信不信由你
+        direction: zh_to_en
+        items:
+          - zh: 信不信由你，他其实从没出过国。
+            answer: Believe it or not, he's never actually been abroad.
+            hint: he's never；been abroad
+          - zh: 你猜怎么着——他居然是老板的儿子。
+            answer: Believe it or not, he's the boss's son.
+            hint: the boss's son
+          - zh: 说来你可能不信，那是我第一次坐飞机。
+            answer: Believe it or not, that was my first time on a plane.
+            hint: that was；first time on a plane
+      - key: hard-to-believe
+        kind: chunk
+        type: chunk_substitution
+        title: 说难以置信
+        chunk: hard to believe
+        chunkMeaning: 很难相信
+        direction: zh_to_en
+        items:
+          - zh: 才过去一周，真难以想象。
+            answer: It's only been a week—hard to believe.
+            hint: It's only been
+          - zh: 这个故事听起来让人难以置信。
+            answer: The story is hard to believe.
+            hint: The story is
+          - zh: 变化这么大，我自己都觉得不太真实。
+            answer: The change is so big that it's hard to believe.
+            hint: so big that
+      - key: believe-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方表达相信
+        chunk: I believe that
+        chunkMeaning: 我相信……
+        direction: en_to_zh
+        items:
+          - en: I believe that we'll figure it out together.
+            answer: 我相信我们能一起想出办法。
+            hint: figure it out；together
+          - en: She believes that honesty matters more than speed.
+            answer: 她认为诚实比速度更重要。
+            hint: honesty；more than speed
+          - en: Do you believe that he's telling the truth?
+            answer: 你相信他说的是实话吗？
+            hint: telling the truth
+      - key: believe-in-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂相信某人或某理念
+        chunk: believe in
+        chunkMeaning: 相信；信奉
+        direction: en_to_zh
+        items:
+          - en: I believe in giving people a second chance.
+            answer: 我相信应该给人第二次机会。
+            hint: second chance
+          - en: They don't believe in shortcuts.
+            answer: 他们不信走捷径。
+            hint: shortcuts
+          - en: You have to believe in the process.
+            answer: 你得相信这个过程。
+            hint: the process
+      - key: believe-state
+        type: vocab_sentence_building
+        title: 说相信和难以置信
+        vocabWord: believe
+        vocabMeaning: 相信；认为
+        direction: zh_to_en
+        patterns:
+          - chunk: I believe
+            items:
+              - zh: 我相信我们会按时完成。
+                answer: I believe we'll finish on time.
+                hint: we'll finish on time
+              - zh: 我不相信那是巧合。
+                answer: I don't believe that was a coincidence.
+                hint: I don't believe；coincidence
+          - chunk: believe in
+            items:
+              - zh: 我相信团队里的每一个人。
+                answer: I believe in everyone on the team.
+                hint: everyone on the team
+              - zh: 她还相信这个项目能成功。
+                answer: She still believes in this project.
+                hint: still；this project
+          - chunk: can't believe
+            items:
+              - zh: 真不敢相信我居然忘了带钥匙。
+                answer: I can't believe I forgot my keys.
+                hint: I forgot my keys
+              - zh: 他居然赢了，我到现在都不敢信。
+                answer: I still can't believe he won.
+                hint: still can't believe
+      - key: believe-that-other
+        type: pattern_drill
+        title: 说相信别的情况
+        pattern: believe that [clause]
+        patternMeaning: 相信……
+        direction: zh_to_en
+        items:
+          - zh: 我相信明天会下雨。
+            answer: I believe that it will rain tomorrow.
+            hint: it will rain tomorrow
+          - zh: 她相信他已经改了。
+            answer: She believes that he has changed.
+            hint: has changed
+          - zh: 我不相信他刚才说的是真的。
+            answer: I don't believe that what he said just now is true.
+            hint: I don't believe；just now
+      - key: believe-in-other
+        type: pattern_drill
+        title: 说相信别的人或原则
+        pattern: believe in [someone/something]
+        patternMeaning: 信任；信奉
+        direction: zh_to_en
+        items:
+          - zh: 父母一直相信她的选择。
+            answer: Her parents have always believed in her choices.
+            hint: have always；her choices
+          - zh: 我信公平，也信努力有用。
+            answer: I believe in fairness and hard work.
+            hint: fairness；hard work
+          - zh: 投资者还相信这家初创公司。
+            answer: Investors still believe in this startup.
+            hint: Investors；this startup
+      - key: cant-believe-other
+        type: pattern_drill
+        title: 说别的难以置信的事
+        pattern: can't believe [clause]
+        patternMeaning: 简直不敢相信……
+        direction: zh_to_en
+        items:
+          - zh: 真不敢相信我竟然睡着了。
+            answer: I can't believe I fell asleep.
+            hint: fell asleep
+          - zh: 你居然真的来了，我没想到。
+            answer: I can't believe you actually showed up.
+            hint: actually showed up
+          - zh: 他们居然没告诉你？太离谱了。
+            answer: I can't believe they didn't tell you.
+            hint: they didn't tell you
+      - key: hard-to-believe-other
+        type: pattern_drill
+        title: 说别的事难以置信
+        pattern: hard to believe (that) [clause]
+        patternMeaning: 难以相信……
+        direction: zh_to_en
+        items:
+          - zh: 他当时才二十岁，很难想象。
+            answer: He was only twenty then—hard to believe.
+            hint: He was only twenty
+          - zh: 那座桥建了不到一年就通了，真让人觉得不真实。
+            answer: It's hard to believe the bridge opened less than a year after construction started.
+            hint: less than a year
+          - zh: 她一句话都没说就走了，谁都觉得奇怪。
+            answer: It's hard to believe she left without saying a word.
+            hint: without saying a word
+      - key: firmly-believe-other
+        type: pattern_drill
+        title: 说坚信别的主张
+        pattern: firmly believe [clause]
+        patternMeaning: 坚信……
+        direction: zh_to_en
+        items:
+          - zh: 我坚信教育能改变命运。
+            answer: I firmly believe education can change lives.
+            hint: can change lives
+          - zh: 医生坚信这种疗法有效。
+            answer: The doctor firmly believes this treatment works.
+            hint: this treatment works
+          - zh: 我们坚信坚持就会有结果。
+            answer: We firmly believe persistence pays off.
+            hint: persistence pays off
+      - key: believe-someone-other
+        type: pattern_drill
+        title: 说相信或不相信别人
+        pattern: believe [someone]
+        patternMeaning: 相信某人
+        direction: zh_to_en
+        items:
+          - zh: 我不信他，他老撒谎。
+            answer: I don't believe him—he lies all the time.
+            hint: lies all the time
+          - zh: 你应该相信她，她是专家。
+            answer: You should believe her—she's the expert.
+            hint: should believe；she's the expert
+          - zh: 没人相信那个目击者。
+            answer: Nobody believed the witness.
+            hint: Nobody；the witness
+      - key: believe-it-or-not-other
+        type: pattern_drill
+        title: 用信不信由你讲别的事
+        pattern: Believe it or not, [clause]
+        patternMeaning: 信不信由你……
+        direction: zh_to_en
+        items:
+          - zh: 你猜怎么着，我们居然是邻居。
+            answer: Believe it or not, we're actually neighbors.
+            hint: we're actually neighbors
+          - zh: 说起来你可能不信，我从来没学过游泳。
+            answer: Believe it or not, I've never learned to swim.
+            hint: I've never learned to swim
+          - zh: 真没想到，那家公司一年前几乎要倒闭了。
+            answer: Believe it or not, that company was nearly bankrupt a year ago.
+            hint: nearly bankrupt；a year ago
+      - key: believe-improve-build
+        type: sentence_decomposition
+        title: 把相信会好转说完整
+        sourceKind: chunk
+        sourceText: believe that things will improve
+        fullSentence: I still believe that things will improve if we keep trying and talk openly.
+        fullSentenceZh: 我仍然相信只要继续努力、坦诚沟通，情况会变好。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I still believe that things will improve.
+            zh: 我仍然相信情况会变好。
+            highlight: ''
+            hint: 先说我仍然相信会变好
+          - level: 2
+            label: 加条件开头
+            en: I still believe that things will improve if we keep trying.
+            zh: 我仍然相信只要我们继续努力，情况会变好。
+            highlight: if we keep trying
+            hint: 补上只要我们继续努力
+          - level: 3
+            label: 完整句
+            en: I still believe that things will improve if we keep trying and talk openly.
+            zh: 我仍然相信只要继续努力、坦诚沟通，情况会变好。
+            highlight: and talk openly
+            hint: 补上并坦诚沟通
+      - key: believe-yourself-build
+        type: sentence_decomposition
+        title: 把相信自己说完整
+        sourceKind: chunk
+        sourceText: believe in yourself
+        fullSentence: Even when others doubt you, you have to believe in yourself and keep going.
+        fullSentenceZh: 即使别人怀疑你，你也得相信自己并坚持下去。
+        levels:
+          - level: 1
+            label: 核心句
+            en: You have to believe in yourself.
+            zh: 你得相信自己。
+            highlight: ''
+            hint: 先说你得相信自己
+          - level: 2
+            label: 加让步
+            en: Even when others doubt you, you have to believe in yourself.
+            zh: 即使别人怀疑你，你也得相信自己。
+            highlight: Even when others doubt you
+            hint: 补上即使别人怀疑你
+          - level: 3
+            label: 完整句
+            en: Even when others doubt you, you have to believe in yourself and keep going.
+            zh: 即使别人怀疑你，你也得相信自己并坚持下去。
+            highlight: and keep going
+            hint: 补上并坚持下去

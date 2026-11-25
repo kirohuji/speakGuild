@@ -1,0 +1,386 @@
+learning:
+  exercises:
+    pipeline:
+      - key: review-my-notes
+        kind: chunk
+        type: chunk_substitution
+        title: 说复习笔记
+        chunk: review my notes
+        chunkMeaning: 复习我的笔记
+        direction: zh_to_en
+        items:
+          - zh: 睡前我会过一遍笔记。
+            answer: I review my notes before bed.
+            hint: before bed
+          - zh: 考试前她把笔记又看了一遍。
+            answer: She reviewed her notes before the test.
+            hint: before the test
+          - zh: 你复习笔记时标出重点了吗？
+            answer: Did you review your notes and mark the key points?
+            hint: mark the key points
+      - key: review-this-document
+        kind: chunk
+        type: chunk_substitution
+        title: 说审阅这份文件
+        chunk: review this document
+        chunkMeaning: 审阅这份文件
+        direction: zh_to_en
+        items:
+          - zh: 请抽空审阅这份文件。
+            answer: Please review this document when you have time.
+            hint: when you have time
+          - zh: 法务正在审阅这份文件。
+            answer: Legal is reviewing this document.
+            hint: Legal is
+          - zh: 你审过这份文件了吗？
+            answer: Have you reviewed this document?
+            hint: Have you
+      - key: review-the-plan
+        kind: chunk
+        type: chunk_substitution
+        title: 说审查计划
+        chunk: review the plan
+        chunkMeaning: 审查计划
+        direction: zh_to_en
+        items:
+          - zh: 下周董事会要审查计划。
+            answer: The board will review the plan next week.
+            hint: next week
+          - zh: 执行前我们再审查一遍计划。
+            answer: Let's review the plan once more before we execute it.
+            hint: once more；before we execute it
+          - zh: 经理已经审查过年度计划了。
+            answer: The manager has already reviewed the plan.
+            hint: has already
+      - key: review-what-happened-yesterday
+        kind: chunk
+        type: chunk_substitution
+        title: 说复盘昨天的事
+        chunk: review what happened yesterday
+        chunkMeaning: 回顾昨天发生了什么
+        direction: zh_to_en
+        items:
+          - zh: 晨会我们先复盘昨天的情况。
+            answer: In the morning meeting, we review what happened yesterday.
+            hint: In the morning meeting
+          - zh: 教练让球队复盘昨天的比赛。
+            answer: The coach asked the team to review what happened yesterday.
+            hint: The coach asked
+          - zh: 写日记有助于回顾昨天发生的事。
+            answer: Journaling helps you review what happened yesterday.
+            hint: Journaling helps
+      - key: review-new-laptops
+        kind: chunk
+        type: chunk_substitution
+        title: 说评测新笔记本
+        chunk: review new laptops
+        chunkMeaning: 评测新款笔记本电脑
+        direction: zh_to_en
+        items:
+          - zh: 他的频道专门评测新笔记本。
+            answer: His channel reviews new laptops.
+            hint: His channel
+          - zh: 我买电脑前会先看新笔记本的评测。
+            answer: I review new laptops online before I buy a computer.
+            hint: online；before I buy
+          - zh: 杂志这期评测了几款新笔记本。
+            answer: The magazine reviewed new laptops in this issue.
+            hint: in this issue
+      - key: review-regularly
+        kind: chunk
+        type: chunk_substitution
+        title: 说定期回顾
+        chunk: review regularly
+        chunkMeaning: 定期复查/回顾
+        direction: zh_to_en
+        items:
+          - zh: 安全策略要定期复查。
+            answer: Security policies should be reviewed regularly.
+            hint: Security policies；should be reviewed
+          - zh: 我们每月定期复盘指标。
+            answer: We review our metrics regularly every month.
+            hint: our metrics；every month
+          - zh: 记得定期回顾学习目标。
+            answer: Remember to review your goals regularly.
+            hint: your goals
+      - key: review-progress
+        kind: chunk
+        type: chunk_substitution
+        title: 说回顾进展
+        chunk: review progress
+        chunkMeaning: 回顾进展
+        direction: zh_to_en
+        items:
+          - zh: 周五例会我们会回顾进展。
+            answer: On Friday we review progress in our stand-up.
+            hint: in our stand-up
+          - zh: 导师每月跟学生过一遍进度。
+            answer: The mentor reviews progress with students each month.
+            hint: with students；each month
+          - zh: 项目经理向客户汇报并回顾进展。
+            answer: The PM updates the client and reviews progress.
+            hint: updates the client
+      - key: review-performance
+        kind: chunk
+        type: chunk_substitution
+        title: 说评估绩效
+        chunk: review performance
+        chunkMeaning: 评估表现
+        direction: zh_to_en
+        items:
+          - zh: 年底老板会评估员工表现。
+            answer: At year end, managers review performance.
+            hint: At year end；managers
+          - zh: HR 协助团队做绩效评估。
+            answer: HR helps teams review performance.
+            hint: HR helps
+          - zh: 我们每季度回顾一次业绩。
+            answer: We review performance every quarter.
+            hint: every quarter
+      - key: review-a-draft
+        kind: chunk
+        type: chunk_substitution
+        title: 说审阅草稿
+        chunk: review a draft
+        chunkMeaning: 审阅草稿
+        direction: zh_to_en
+        items:
+          - zh: 能帮我看看稿子吗？
+            answer: Can you review a draft for me?
+            hint: for me
+          - zh: 编辑连夜审了草稿。
+            answer: The editor reviewed a draft overnight.
+            hint: overnight
+          - zh: 发客户前请先审阅草稿。
+            answer: Review a draft before you send it to the client.
+            hint: before you send it
+      - key: review-the-evidence
+        kind: chunk
+        type: chunk_substitution
+        title: 说审查证据
+        chunk: review the evidence
+        chunkMeaning: 审查证据
+        direction: zh_to_en
+        items:
+          - zh: 陪审团需要审查证据。
+            answer: The jury needs to review the evidence.
+            hint: The jury needs to
+          - zh: 科学家仔细审查了证据后才下结论。
+            answer: Scientists reviewed the evidence carefully before concluding.
+            hint: carefully；before concluding
+          - zh: 律师要求我们重新审查证据。
+            answer: The lawyer asked us to review the evidence again.
+            hint: again
+      - key: review-what-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说回顾什么内容
+        chunk: review what
+        chunkMeaning: 回顾……什么
+        direction: en_to_zh
+        items:
+          - en: Let's review what we agreed on in the last meeting.
+            answer: 咱们回顾一下上次会议达成了什么共识。
+            hint: agreed on；last meeting
+          - en: She reviewed what went wrong during the rollout.
+            answer: 她复盘了发布过程中哪里出了问题。
+            hint: went wrong；rollout
+          - en: Please review what changed in the new policy.
+            answer: 请看一下新政策改了什么。
+            hint: changed；new policy
+      - key: review-for-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂审阅或复查的目的
+        chunk: review for
+        chunkMeaning: 为……而审阅
+        direction: en_to_zh
+        items:
+          - en: The committee will review the budget for next year.
+            answer: 委员会将审查明年的预算。
+            hint: the budget；next year
+          - en: I reviewed the code for security issues.
+            answer: 我审了代码，查安全问题。
+            hint: the code；security issues
+          - en: Doctors review scans for signs of injury.
+            answer: 医生查看影像，寻找受伤迹象。
+            hint: scans；signs of injury
+      - key: review-state
+        type: vocab_sentence_building
+        title: 说复习与审阅
+        vocabWord: review
+        vocabMeaning: 复习；审查；评论
+        direction: zh_to_en
+        patterns:
+          - chunk: review my notes
+            items:
+              - zh: 地铁上我会翻翻笔记。
+                answer: I review my notes on the subway.
+                hint: on the subway
+              - zh: 他把笔记复习了三遍。
+                answer: He reviewed his notes three times.
+                hint: three times
+          - chunk: review the plan
+            items:
+              - zh: 演练前指挥会过一遍方案。
+                answer: Command reviews the plan before the drill.
+                hint: before the drill
+              - zh: 投资者要求再次审查商业计划。
+                answer: Investors asked to review the plan again.
+                hint: again
+          - chunk: review progress
+            items:
+              - zh: 一对一谈话时回顾项目进展。
+                answer: In one-on-ones, we review progress on projects.
+                hint: one-on-ones；on projects
+              - zh: 家长会上老师向父母汇报学习进展。
+                answer: At conferences, teachers review progress with parents.
+                hint: with parents
+      - key: review-document-other
+        type: pattern_drill
+        title: 说审阅别的材料
+        pattern: review [document/report]
+        patternMeaning: 审阅……
+        direction: zh_to_en
+        items:
+          - zh: 请审阅财务报表。
+            answer: Please review the financial report.
+            hint: financial report
+          - zh: 委员会将审查申请材料。
+            answer: The committee will review the application materials.
+            hint: application materials
+          - zh: 她熬夜审完了合同附件。
+            answer: She stayed up reviewing the contract attachments.
+            hint: contract attachments
+      - key: review-what-other
+        type: pattern_drill
+        title: 说回顾别的情况
+        pattern: review what [clause]
+        patternMeaning: 回顾……
+        direction: zh_to_en
+        items:
+          - zh: 我们一起回顾客户提了什么需求。
+            answer: Let's review what the client asked for.
+            hint: the client asked for
+          - zh: 复盘会上回顾团队哪里做得好。
+            answer: In the retro, we review what the team did well.
+            hint: what the team did well
+          - zh: 他回顾了自己今年学到了什么。
+            answer: He reviewed what he had learned this year.
+            hint: he had learned
+      - key: review-for-other
+        type: pattern_drill
+        title: 说为别的目的做审查
+        pattern: review [something] for [purpose]
+        patternMeaning: 为……审查
+        direction: zh_to_en
+        items:
+          - zh: 编辑会查稿件有无事实错误。
+            answer: Editors review articles for factual errors.
+            hint: articles；factual errors
+          - zh: 我们复查代码以防漏洞。
+            answer: We review code for vulnerabilities.
+            hint: code；vulnerabilities
+          - zh: 医生复查血液指标看有无异常。
+            answer: Doctors review blood tests for abnormalities.
+            hint: blood tests；abnormalities
+      - key: review-regularly-other
+        type: pattern_drill
+        title: 说定期复查别的事项
+        pattern: review [something] regularly
+        patternMeaning: 定期回顾
+        direction: zh_to_en
+        items:
+          - zh: 应定期复查密码权限。
+            answer: Review password access regularly.
+            hint: password access
+          - zh: 团队定期回顾 OKR 进度。
+            answer: The team reviews OKR progress regularly.
+            hint: OKR progress
+          - zh: 父母定期跟孩子聊学习状况。
+            answer: Parents review schoolwork with kids regularly.
+            hint: schoolwork with kids
+      - key: review-performance-other
+        type: pattern_drill
+        title: 说评估别的对象表现
+        pattern: review the performance of [someone/something]
+        patternMeaning: 评估……的表现
+        direction: zh_to_en
+        items:
+          - zh: 董事会评估 CEO 业绩。
+            answer: The board reviews the performance of the CEO.
+            hint: the CEO
+          - zh: 客户成功团队定期回访关键客户表现。
+            answer: Customer success reviews the performance of key accounts.
+            hint: key accounts
+          - zh: 测试后我们评估新功能表现。
+            answer: After testing, we review the performance of the new feature.
+            hint: the new feature
+      - key: review-draft-other
+        type: pattern_drill
+        title: 说审阅别的文稿
+        pattern: review a draft of [something]
+        patternMeaning: 审阅……的草稿
+        direction: zh_to_en
+        items:
+          - zh: 能帮我看看演讲稿初稿吗？
+            answer: Can you review a draft of my speech?
+            hint: my speech
+          - zh: 设计师请同事审阅提案草稿。
+            answer: The designer asked a colleague to review a draft of the proposal.
+            hint: the proposal
+          - zh: 作家把小说第三章草稿发给编辑审阅。
+            answer: The author sent a draft of chapter three for the editor to review.
+            hint: chapter three
+      - key: review-plan-build
+        type: sentence_decomposition
+        title: 把审查计划说完整
+        sourceKind: chunk
+        sourceText: review the plan
+        fullSentence: Before we launch, let's review the plan one more time and confirm everyone knows their role.
+        fullSentenceZh: 上线前我们再审查一遍计划，确认人人都清楚自己的分工。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let's review the plan before we launch.
+            zh: 上线前我们再审查一遍计划。
+            highlight: ''
+            hint: 先说上线前审查计划
+          - level: 2
+            label: 加次数
+            en: Let's review the plan one more time before we launch.
+            zh: 上线前我们再审查一遍计划。
+            highlight: one more time
+            hint: 再强调一遍
+          - level: 3
+            label: 完整句
+            en: Before we launch, let's review the plan one more time and confirm everyone knows their role.
+            zh: 上线前我们再审查一遍计划，确认人人都清楚自己的分工。
+            highlight: confirm everyone knows their role
+            hint: 补上确认分工
+      - key: review-notes-build
+        type: sentence_decomposition
+        title: 把复习笔记说完整
+        sourceKind: chunk
+        sourceText: review my notes
+        fullSentence: Every Sunday night I review my notes and list what I still don't understand.
+        fullSentenceZh: 每个周日晚上我复习笔记，列出还没弄懂的地方。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Every Sunday night I review my notes.
+            zh: 每个周日晚上我复习笔记。
+            highlight: ''
+            hint: 先说周日晚上复习笔记
+          - level: 2
+            label: 加动作
+            en: Every Sunday night I review my notes and check for gaps.
+            zh: 每个周日晚上我复习笔记并查漏。
+            highlight: and check for gaps
+            hint: 补上查漏
+          - level: 3
+            label: 完整句
+            en: Every Sunday night I review my notes and list what I still don't understand.
+            zh: 每个周日晚上我复习笔记，列出还没弄懂的地方。
+            highlight: what I still don't understand
+            hint: 具体说成列出不懂之处

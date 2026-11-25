@@ -1,0 +1,368 @@
+learning:
+  exercises:
+    pipeline:
+      - key: doubt-his-ability
+        kind: chunk
+        type: chunk_substitution
+        title: 说怀疑他的能力
+        chunk: doubt his ability
+        chunkMeaning: 怀疑他的能力
+        direction: zh_to_en
+        items:
+          - zh: 我不怀疑他的能力。
+            answer: I don't doubt his ability.
+            hint: I don't doubt
+          - zh: 老板开始怀疑他的能力了。
+            answer: The boss is starting to doubt his ability.
+            hint: is starting to
+          - zh: 没人会怀疑她处理问题的能力。
+            answer: Nobody would doubt her ability to handle problems.
+            hint: Nobody would；to handle problems
+      - key: doubt-that-hell-agree
+        kind: chunk
+        type: chunk_substitution
+        title: 说怀疑他会同意
+        chunk: doubt that he'll agree
+        chunkMeaning: 怀疑他会同意
+        direction: zh_to_en
+        items:
+          - zh: 我怀疑他会同意这个方案。
+            answer: I doubt that he'll agree to this plan.
+            hint: to this plan
+          - zh: 她怀疑他最终会同意降价。
+            answer: She doubts that he'll agree to lower the price.
+            hint: lower the price
+          - zh: 老实说，我怀疑他今天会点头。
+            answer: Honestly, I doubt that he'll agree today.
+            hint: Honestly；today
+      - key: doubt-whether-this-will-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说怀疑这能不能行
+        chunk: doubt whether this will work
+        chunkMeaning: 怀疑这是否可行
+        direction: zh_to_en
+        items:
+          - zh: 我怀疑这招管不管用。
+            answer: I doubt whether this will work.
+            hint: I doubt whether
+          - zh: 他们怀疑这个时间线能不能行。
+            answer: They doubt whether this timeline will work.
+            hint: this timeline
+          - zh: 你有没有怀疑过这套流程真的有效？
+            answer: Have you ever doubted whether this process will work?
+            hint: Have you ever；this process
+      - key: dont-doubt-that-she-tried
+        kind: chunk
+        type: chunk_substitution
+        title: 说别怀疑她已尽力
+        chunk: don't doubt that she tried her best
+        chunkMeaning: 别怀疑她已尽力
+        direction: zh_to_en
+        items:
+          - zh: 别怀疑，她已经尽力了。
+            answer: Don't doubt that she tried her best.
+            hint: Don't doubt that
+          - zh: 你可以怀疑结果，但别怀疑她尽力了。
+            answer: You can doubt the result, but don't doubt that she tried her best.
+            hint: the result；but
+          - zh: 评委说别怀疑孩子们已经全力以赴。
+            answer: The judges said don't doubt that the kids tried their best.
+            hint: the judges；their best
+      - key: seriously-doubt
+        kind: chunk
+        type: chunk_substitution
+        title: 说打从心底怀疑
+        chunk: seriously doubt
+        chunkMeaning: 深感怀疑
+        direction: zh_to_en
+        items:
+          - zh: 我严重怀疑他讲的故事。
+            answer: I seriously doubt his story.
+            hint: his story
+          - zh: 我们都很怀疑这数据准不准。
+            answer: We all seriously doubt whether the data is accurate.
+            hint: We all；whether
+          - zh: 警察严重怀疑证人的说法。
+            answer: The police seriously doubt the witness's account.
+            hint: The police；witness's account
+      - key: doubt-yourself
+        kind: chunk
+        type: chunk_substitution
+        title: 说开始怀疑自己
+        chunk: doubt yourself
+        chunkMeaning: 怀疑自己
+        direction: zh_to_en
+        items:
+          - zh: 失败的时候别轻易怀疑自己。
+            answer: Don't doubt yourself when you fail.
+            hint: when you fail
+          - zh: 她不该总怀疑自己。
+            answer: She shouldn't keep doubting herself.
+            hint: shouldn't keep；doubting herself
+          - zh: 如果你一直怀疑自己，就很难进步。
+            answer: If you keep doubting yourself, it's hard to improve.
+            hint: If you keep；hard to improve
+      - key: begin-to-doubt
+        kind: chunk
+        type: chunk_substitution
+        title: 说开始产生怀疑
+        chunk: begin to doubt
+        chunkMeaning: 开始怀疑
+        direction: zh_to_en
+        items:
+          - zh: 我开始怀疑这个决定是否正确。
+            answer: I'm beginning to doubt whether this decision is right.
+            hint: I'm beginning to；whether
+          - zh: 听完后，他们开始怀疑他的动机。
+            answer: After listening, they began to doubt his motives.
+            hint: After listening；his motives
+          - zh: 政策一变，投资者就开始怀疑前景。
+            answer: When the policy changed, investors began to doubt the outlook.
+            hint: When the policy changed；the outlook
+      - key: have-no-reason-to-doubt
+        kind: chunk
+        type: chunk_substitution
+        title: 说没有理由怀疑
+        chunk: have no reason to doubt
+        chunkMeaning: 没有理由怀疑
+        direction: zh_to_en
+        items:
+          - zh: 我们没有理由怀疑他的诚信。
+            answer: We have no reason to doubt his integrity.
+            hint: his integrity
+          - zh: 你完全有理由怀疑，但我没有。
+            answer: You have every reason to doubt, but I don't.
+            hint: every reason；but I don't
+          - zh: 鉴于她的记录，没人有理由怀疑她。
+            answer: Given her record, nobody has any reason to doubt her.
+            hint: Given her record；any reason
+      - key: doubt-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方表示怀疑
+        chunk: I doubt that
+        chunkMeaning: 我怀疑……
+        direction: en_to_zh
+        items:
+          - en: I doubt that they'll finish on time.
+            answer: 我怀疑他们能否按时完成。
+            hint: finish on time
+          - en: She doubted that anyone would notice.
+            answer: 她怀疑会不会有人注意到。
+            hint: anyone would notice
+          - en: Don't doubt that we appreciate your help.
+            answer: 别怀疑，我们非常感谢你的帮助。
+            hint: appreciate your help
+      - key: doubt-whether-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方怀疑是否可行
+        chunk: doubt whether
+        chunkMeaning: 怀疑是否
+        direction: en_to_zh
+        items:
+          - en: I doubt whether this plan can scale.
+            answer: 我怀疑这个计划能不能扩大规模。
+            hint: can scale
+          - en: He began to doubt whether she was telling the truth.
+            answer: 他开始怀疑她是不是在说真话。
+            hint: telling the truth
+          - en: We have no reason to doubt whether the numbers are correct.
+            answer: 我们没有理由怀疑这些数字对不对。
+            hint: the numbers are correct
+      - key: doubt-state
+        type: vocab_sentence_building
+        title: 说怀疑与不敢相信
+        vocabWord: doubt
+        vocabMeaning: 怀疑；疑惑
+        direction: zh_to_en
+        patterns:
+          - chunk: doubt that
+            items:
+              - zh: 我怀疑天气会好转。
+                answer: I doubt that the weather will improve.
+                hint: the weather will improve
+              - zh: 谁都不怀疑团队会全力以赴。
+                answer: Nobody doubts that the team will give it their all.
+                hint: give it their all
+          - chunk: doubt whether
+            items:
+              - zh: 我怀疑还有没有别的办法。
+                answer: I doubt whether there's any other way.
+                hint: any other way
+              - zh: 她怀疑自己是否该继续等。
+                answer: She doubts whether she should keep waiting.
+                hint: should keep waiting
+          - chunk: no reason to doubt
+            items:
+              - zh: 我没理由怀疑你告诉我的事。
+                answer: I have no reason to doubt what you told me.
+                hint: what you told me
+              - zh: 证据摆在那儿，大家没理由怀疑结论。
+                answer: With the evidence there, people have no reason to doubt the conclusion.
+                hint: With the evidence；the conclusion
+      - key: doubt-that-other
+        type: pattern_drill
+        title: 说怀疑别的情况
+        pattern: doubt that [clause]
+        patternMeaning: 怀疑……
+        direction: zh_to_en
+        items:
+          - zh: 我怀疑他记得我们约过会。
+            answer: I doubt that he remembers we had a meeting.
+            hint: he remembers
+          - zh: 她怀疑老板会不会批准预算。
+            answer: She doubts that the boss will approve the budget.
+            hint: will approve the budget
+          - zh: 别怀疑好事也会发生在自己身上。
+            answer: Don't doubt that good things can happen to you too.
+            hint: good things can happen
+      - key: doubt-whether-other
+        type: pattern_drill
+        title: 说怀疑别的事行不行
+        pattern: doubt whether [clause]
+        patternMeaning: 怀疑是否……
+        direction: zh_to_en
+        items:
+          - zh: 我怀疑这个 App 在旧手机上能不能用。
+            answer: I doubt whether this app works on older phones.
+            hint: works on older phones
+          - zh: 观众开始怀疑剧情还圆不圆得回来。
+            answer: The audience began to doubt whether the plot could still make sense.
+            hint: the plot；make sense
+          - zh: 没人怀疑这次谈判会不会破局。
+            answer: Nobody doubts whether these talks might fall apart.
+            hint: these talks；fall apart
+      - key: seriously-doubt-other
+        type: pattern_drill
+        title: 说对别的事深感怀疑
+        pattern: seriously doubt [something]
+        patternMeaning: 严重怀疑
+        direction: zh_to_en
+        items:
+          - zh: 我严重怀疑那份报告漏了关键数据。
+            answer: I seriously doubt that report included all the key data.
+            hint: included all the key data
+          - zh: 分析师严重怀疑增长能持续一整年。
+            answer: Analysts seriously doubt growth can last a full year.
+            hint: growth can last
+          - zh: 邻居严重怀疑那扇门是不是锁好了。
+            answer: The neighbors seriously doubt whether that door was locked properly.
+            hint: was locked properly
+      - key: doubt-yourself-other
+        type: pattern_drill
+        title: 说在别的事上怀疑自己
+        pattern: doubt yourself
+        patternMeaning: 怀疑自己
+        direction: zh_to_en
+        items:
+          - zh: 演讲前别怀疑自己准备够不够。
+            answer: Don't doubt yourself before the speech.
+            hint: before the speech
+          - zh: 他输了比赛后开始怀疑自己的打法。
+            answer: After losing the match, he started to doubt himself.
+            hint: After losing；started to
+          - zh: 如果你从不怀疑自己，也可能看不见盲点。
+            answer: If you never doubt yourself, you might miss blind spots too.
+            hint: never doubt；blind spots
+      - key: begin-to-doubt-other
+        type: pattern_drill
+        title: 说开始对别的事起疑
+        pattern: begin to doubt [something]
+        patternMeaning: 开始怀疑
+        direction: zh_to_en
+        items:
+          - zh: 屡次延期后，客户开始怀疑我们的承诺。
+            answer: After repeated delays, the client began to doubt our promises.
+            hint: repeated delays；our promises
+          - zh: 证据对不上，警察开始怀疑口供。
+            answer: When the evidence didn't match, police began to doubt the testimony.
+            hint: the evidence didn't match；the testimony
+          - zh: 股价跳水，股东开始怀疑管理层的判断。
+            answer: As shares plunged, shareholders began to doubt management's judgment.
+            hint: shares plunged；management's judgment
+      - key: have-no-reason-to-doubt-other
+        type: pattern_drill
+        title: 说对别的事没有理由怀疑
+        pattern: have no reason to doubt [someone/something]
+        patternMeaning: 没有理由怀疑
+        direction: zh_to_en
+        items:
+          - zh: 合作这么多年，我没理由怀疑伙伴的诚意。
+            answer: After years of working together, I have no reason to doubt my partner's sincerity.
+            hint: my partner's sincerity
+          - zh: 检测结果一致，医生没理由怀疑诊断。
+            answer: With consistent test results, the doctor has no reason to doubt the diagnosis.
+            hint: consistent test results；the diagnosis
+          - zh: 公开记录很透明，公众没理由怀疑流程。
+            answer: The public records are transparent, so people have no reason to doubt the process.
+            hint: transparent；the process
+      - key: doubt-ability-other
+        type: pattern_drill
+        title: 说怀疑别人的能力
+        pattern: doubt [someone's] ability
+        patternMeaning: 怀疑某人的能力
+        direction: zh_to_en
+        items:
+          - zh: 我不怀疑你学语言的能力。
+            answer: I don't doubt your ability to learn languages.
+            hint: to learn languages
+          - zh: 评委不该怀疑年轻选手的潜力。
+            answer: The judges shouldn't doubt young players' ability.
+            hint: young players'
+          - zh: 经历挫折后，他一度怀疑自己的领导力。
+            answer: After setbacks, he briefly doubted his ability to lead.
+            hint: briefly；to lead
+      - key: doubt-agree-build
+        type: sentence_decomposition
+        title: 把怀疑他会同意说完整
+        sourceKind: chunk
+        sourceText: doubt that he'll agree
+        fullSentence: I seriously doubt that he'll agree unless we offer a better compromise.
+        fullSentenceZh: 除非我们给出更好的折中方案，否则我严重怀疑他会同意。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I doubt that he'll agree.
+            zh: 我怀疑他会同意。
+            highlight: ''
+            hint: 先说我怀疑他会同意
+          - level: 2
+            label: 加强语气
+            en: I seriously doubt that he'll agree.
+            zh: 我严重怀疑他会同意。
+            highlight: seriously
+            hint: 补上 seriously 加重语气
+          - level: 3
+            label: 完整句
+            en: I seriously doubt that he'll agree unless we offer a better compromise.
+            zh: 除非我们给出更好的折中方案，否则我严重怀疑他会同意。
+            highlight: unless we offer a better compromise
+            hint: 补上除非有更好的折中方案
+      - key: doubt-yourself-build
+        type: sentence_decomposition
+        title: 把别怀疑自己说完整
+        sourceKind: chunk
+        sourceText: doubt yourself
+        fullSentence: When things go wrong, don't doubt yourself—learn from it and try again.
+        fullSentenceZh: 事情不顺时别怀疑自己——从中学习，再试一次。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Don't doubt yourself.
+            zh: 别怀疑自己。
+            highlight: ''
+            hint: 先说别怀疑自己
+          - level: 2
+            label: 加情境
+            en: When things go wrong, don't doubt yourself.
+            zh: 事情不顺时别怀疑自己。
+            highlight: When things go wrong
+            hint: 补上事情不顺时
+          - level: 3
+            label: 完整句
+            en: When things go wrong, don't doubt yourself—learn from it and try again.
+            zh: 事情不顺时别怀疑自己——从中学习，再试一次。
+            highlight: learn from it and try again
+            hint: 补上从中学习再试一次

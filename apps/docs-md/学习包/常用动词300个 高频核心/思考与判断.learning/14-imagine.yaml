@@ -1,0 +1,370 @@
+learning:
+  exercises:
+    pipeline:
+      - key: imagine-world-without-internet
+        kind: chunk
+        type: chunk_substitution
+        title: 说想象没有互联网的世界
+        chunk: imagine a world without the internet
+        chunkMeaning: 想象没有互联网的世界
+        direction: zh_to_en
+        items:
+          - zh: 试着想象一下没有互联网的世界。
+            answer: Try to imagine a world without the internet.
+            hint: Try to
+          - zh: 孩子很难想象没网的日子。
+            answer: Kids can hardly imagine a world without the internet.
+            hint: can hardly
+          - zh: 那部电影描绘了一个断网后的社会。
+            answer: That film imagines a world without the internet after a blackout.
+            hint: after a blackout
+      - key: imagine-living-there
+        kind: chunk
+        type: chunk_substitution
+        title: 说想象住在那里
+        chunk: imagine living there
+        chunkMeaning: 想象住在那儿
+        direction: zh_to_en
+        items:
+          - zh: 你能想象在那儿生活吗？
+            answer: Can you imagine living there?
+            hint: Can you
+          - zh: 冬天太长，我受不了长期住那儿。
+            answer: The winters are too long—I can't imagine living there year-round.
+            hint: year-round
+          - zh: 退休后他们真搬去海边了，以前别人还不信。
+            answer: They retired and actually moved to the coast—people couldn't imagine living there before.
+            hint: actually moved；before
+      - key: imagine-no-deadline
+        kind: chunk
+        type: chunk_substitution
+        title: 说想象没有时间压力
+        chunk: imagine that you had no deadline
+        chunkMeaning: 想象你没有截止日期
+        direction: zh_to_en
+        items:
+          - zh: 想象一下，要是你根本没有截止时间。
+            answer: Imagine that you had no deadline at all.
+            hint: at all
+          - zh: 没期限的话，大家都会松口气。
+            answer: If you imagine that you had no deadline, everyone would relax.
+            hint: everyone would relax
+          - zh: 闭上眼想：报告永远不用交。
+            answer: Close your eyes and imagine that you had no deadline for the report.
+            hint: Close your eyes；for the report
+      - key: imagine-him-saying-that
+        kind: chunk
+        type: chunk_substitution
+        title: 说想象他会那么说
+        chunk: imagine him saying that
+        chunkMeaning: 想象他说那种话
+        direction: zh_to_en
+        items:
+          - zh: 很难想象他会对客户说那种话。
+            answer: It's hard to imagine him saying that to a client.
+            hint: to a client
+          - zh: 她一想到他说「算了不干了」，就气得慌。
+            answer: She gets angry when she imagines him saying that he'll quit.
+            hint: when she imagines；he'll quit
+          - zh: 你能想象他在台上发表那番言论吗？
+            answer: Can you imagine him saying that on stage?
+            hint: on stage
+      - key: as-you-can-imagine
+        kind: chunk
+        type: chunk_substitution
+        title: 说可想而知
+        chunk: as you can imagine
+        chunkMeaning: 可想而知
+        direction: zh_to_en
+        items:
+          - zh: 可想而知，那一晚大家都不安生。
+            answer: As you can imagine, nobody slept well that night.
+            hint: nobody slept well
+          - zh: 缺人又缺料，可想而知项目拖延了。
+            answer: We were short on staff and supplies—as you can imagine, the project slipped.
+            hint: the project slipped
+          - zh: 他丢了钱包，心情如何你也能想到。
+            answer: He lost his wallet, and as you can imagine, he was upset.
+            hint: he was upset
+      - key: hard-to-imagine
+        kind: chunk
+        type: chunk_substitution
+        title: 说难以想象
+        chunk: hard to imagine
+        chunkMeaning: 很难想象
+        direction: zh_to_en
+        items:
+          - zh: 很难想象没有智能手机的生活。
+            answer: It's hard to imagine life without smartphones.
+            hint: life without smartphones
+          - zh: 那座城市十年前还只是个小渔村。
+            answer: Ten years ago it was just a fishing village—hard to imagine now.
+            hint: now
+          - zh: 她走了这么多年，仍让人难以置信。
+            answer: She's been gone for years, and it's still hard to imagine.
+            hint: she's been gone for years
+      - key: just-imagine
+        kind: chunk
+        type: chunk_substitution
+        title: 说你想想看
+        chunk: just imagine
+        chunkMeaning: 你想想看；想象一下
+        direction: zh_to_en
+        items:
+          - zh: 你想想看，要是人人都会编程。
+            answer: Just imagine if everyone could code.
+            hint: if everyone could code
+          - zh: 想象一下，这场演出在体育馆举行。
+            answer: Just imagine this show in a stadium.
+            hint: in a stadium
+          - zh: 只要想一秒，就会觉得值得。
+            answer: Just imagine the view at sunrise—you'll see it's worth it.
+            hint: the view at sunrise
+      - key: imagine-yourself-five-years
+        kind: chunk
+        type: chunk_substitution
+        title: 说想象五年后的自己
+        chunk: imagine yourself five years from now
+        chunkMeaning: 想象五年后的自己
+        direction: zh_to_en
+        items:
+          - zh: 闭上眼，想象五年后的你。
+            answer: Close your eyes and imagine yourself five years from now.
+            hint: Close your eyes
+          - zh: 职业规划课让学生设想五年后的生活。
+            answer: The career class asks students to imagine themselves five years from now.
+            hint: asks students
+          - zh: 要是五年后你还在这份工作上，会满意吗？
+            answer: If you imagine yourself five years from now still in this job, are you happy?
+            hint: still in this job
+      - key: imagine-the-worst
+        kind: chunk
+        type: chunk_substitution
+        title: 说往最坏的情形想
+        chunk: imagine the worst
+        chunkMeaning: 想象最坏的情况
+        direction: zh_to_en
+        items:
+          - zh: 焦虑时人总爱往最坏想。
+            answer: When we're anxious, we imagine the worst.
+            hint: When we're anxious
+          - zh: 别在体检报告出来前自己吓自己。
+            answer: Don't imagine the worst before the test results come back.
+            hint: before the test results come back
+          - zh: 教练要队员预想最坏场面，好有心理准备。
+            answer: The coach wants players to imagine the worst so they're mentally ready.
+            hint: mentally ready
+      - key: imagine-for-a-moment
+        kind: chunk
+        type: chunk_substitution
+        title: 说先想一会儿
+        chunk: imagine for a moment
+        chunkMeaning: 试想一下
+        direction: zh_to_en
+        items:
+          - zh: 试想一下，水费一夜涨十倍。
+            answer: Imagine for a moment water bills jumped tenfold overnight.
+            hint: jumped tenfold overnight
+          - zh: 先想一秒：公司没有你会怎样。
+            answer: Imagine for a moment what would happen without you at the company.
+            hint: what would happen；without you
+          - zh: 试想一下，观众都能实时打分。
+            answer: Imagine for a moment the audience could score you in real time.
+            hint: in real time
+      - key: imagine-scene-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂描绘画面
+        chunk: imagine
+        chunkMeaning: 想象
+        direction: en_to_zh
+        items:
+          - en: Imagine a quiet street after midnight with no cars.
+            answer: 想象午夜后一条没有车的安静街道。
+            hint: after midnight；no cars
+          - en: I can't imagine working in an office without windows.
+            answer: 我无法想象在没有窗户的办公室上班。
+            hint: without windows
+          - en: Imagine how different travel was twenty years ago.
+            answer: 想想二十年前旅行多么不一样。
+            hint: twenty years ago
+      - key: as-you-can-imagine-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂「可想而知」
+        chunk: as you can imagine
+        chunkMeaning: 可想而知
+        direction: en_to_zh
+        items:
+          - en: As you can imagine, the team was exhausted after the launch.
+            answer: 可想而知，发布后团队都累垮了。
+            hint: after the launch；exhausted
+          - en: We missed the last train, and as you can imagine, we were stuck.
+            answer: 我们错过了末班车，可想而知只好干等着。
+            hint: missed the last train；we were stuck
+          - en: As you can imagine, parents were worried when the school called.
+            answer: 学校打来电话时，家长担心成这样可想而知。
+            hint: when the school called；worried
+      - key: imagine-state
+        type: vocab_sentence_building
+        title: 说设想场景和难以想象
+        vocabWord: imagine
+        vocabMeaning: 想象
+        direction: zh_to_en
+        patterns:
+          - chunk: imagine (that)
+            items:
+              - zh: 想象一下，你中了大奖却不想辞工作。
+                answer: Imagine that you won the lottery but don't want to quit your job.
+                hint: but don't want to quit
+              - zh: 她常想象自己住在山里写书。
+                answer: She often imagines that she lives in the mountains and writes books.
+                hint: in the mountains；writes books
+          - chunk: hard to imagine
+            items:
+              - zh: 很难想象他们曾是对手。
+                answer: It's hard to imagine they were once rivals.
+                hint: they were once rivals
+              - zh: 没网办公？对我们这行很难想象。
+                answer: Working without internet? Hard to imagine in our field.
+                hint: in our field
+          - chunk: just imagine
+            items:
+              - zh: 想想看，婚礼在下雪那天办。
+                answer: Just imagine the wedding on a snowy day.
+                hint: on a snowy day
+              - zh: 你想想看，新车里放着你最爱的歌。
+                answer: Just imagine your favorite song playing in your new car.
+                hint: your favorite song；your new car
+      - key: imagine-living-other
+        type: pattern_drill
+        title: 想象在别处生活
+        pattern: imagine [living/doing]
+        patternMeaning: 想象做某事
+        direction: zh_to_en
+        items:
+          - zh: 你能想象在北极圈住一年吗？
+            answer: Can you imagine living in the Arctic for a year?
+            hint: in the Arctic；for a year
+          - zh: 她无法想象整天躺平不做事。
+            answer: She can't imagine lying around doing nothing all day.
+            hint: lying around；all day
+          - zh: 试着想象自己当面跟老板谈加薪。
+            answer: Try to imagine asking your boss for a raise face-to-face.
+            hint: asking your boss；face-to-face
+      - key: imagine-that-other
+        type: pattern_drill
+        title: 设想别的前提
+        pattern: imagine (that) [clause]
+        patternMeaning: 设想……
+        direction: zh_to_en
+        items:
+          - zh: 假设航班准时，我们就能赶晚宴。
+            answer: Imagine that the flight is on time—we could make the dinner.
+            hint: we could make the dinner
+          - zh: 想象一下没人再发邮件会怎样。
+            answer: Imagine that nobody sends emails anymore.
+            hint: nobody sends emails anymore
+          - zh: 他很难想象她还藏著那件事。
+            answer: He can't imagine that she's still hiding that from him.
+            hint: she's still hiding that
+      - key: just-imagine-other
+        type: pattern_drill
+        title: 用别的例子勾画面
+        pattern: just imagine [clause/noun]
+        patternMeaning: 你想想看
+        direction: zh_to_en
+        items:
+          - zh: 想想看，整个城市都会停电。
+            answer: Just imagine the whole city losing power.
+            hint: losing power
+          - zh: 想象一下孩子第一次自己骑车上路。
+            answer: Just imagine your kid riding alone on the road for the first time.
+            hint: for the first time
+          - zh: 你想想运动会那天下了冰雹。
+            answer: Just imagine hail falling on sports day.
+            hint: on sports day
+      - key: hard-imagine-other
+        type: pattern_drill
+        title: 说别的事难以想象
+        pattern: hard to imagine [clause/noun]
+        patternMeaning: 很难想象
+        direction: zh_to_en
+        items:
+          - zh: 很难想象这座古城曾是战场。
+            answer: It's hard to imagine this old town was once a battlefield.
+            hint: was once a battlefield
+          - zh: 对那代人来说，视频通话很难信。
+            answer: Video calls were hard to imagine for that generation.
+            hint: for that generation
+          - zh: 没救到那只猫，他至今仍耿耿于怀。
+            answer: It's hard to imagine he's still upset about not saving that cat.
+            hint: not saving that cat
+      - key: imagine-moment-other
+        type: pattern_drill
+        title: 用别的假想推演一下
+        pattern: imagine for a moment [clause]
+        patternMeaning: 试想一下
+        direction: zh_to_en
+        items:
+          - zh: 试想一下，所有人同一天请假。
+            answer: Imagine for a moment everyone takes the same day off.
+            hint: takes the same day off
+          - zh: 先想一秒议会解散会怎样。
+            answer: Imagine for a moment parliament was dissolved tomorrow.
+            hint: was dissolved tomorrow
+          - zh: 试想一下客户当场拍板签约。
+            answer: Imagine for a moment the client signs on the spot.
+            hint: signs on the spot
+      - key: imagine-internet-build
+        type: sentence_decomposition
+        title: 把想象无网世界说完整
+        sourceKind: chunk
+        sourceText: imagine a world without the internet
+        fullSentence: Try to imagine a world without the internet—and how we would share news and photos.
+        fullSentenceZh: 试着想象没有互联网的世界，以及我们还会怎样分享消息和照片。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Imagine a world without the internet.
+            zh: 想象没有互联网的世界。
+            highlight: ''
+            hint: 先说想象无网的世界
+          - level: 2
+            label: 加延伸
+            en: Imagine a world without the internet and no social apps.
+            zh: 想象没有互联网、也没有社交软件的世界。
+            highlight: and no social apps
+            hint: 补上也没有社交软件
+          - level: 3
+            label: 完整句
+            en: Try to imagine a world without the internet—and how we would share news and photos.
+            zh: 试着想象没有互联网的世界，以及我们还会怎样分享消息和照片。
+            highlight: how we would share news and photos
+            hint: 追问还会怎样分享信息与照片
+      - key: imagine-five-years-build
+        type: sentence_decomposition
+        title: 把想象五年后的自己说完整
+        sourceKind: chunk
+        sourceText: imagine yourself five years from now
+        fullSentence: Imagine yourself five years from now working in a role you actually enjoy every morning.
+        fullSentenceZh: 想象五年后的自己，做着一份你每天早上都真心愿意投入的工作。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Imagine yourself five years from now.
+            zh: 想象五年后的自己。
+            highlight: ''
+            hint: 先说想象五年后的自己
+          - level: 2
+            label: 加状态
+            en: Imagine yourself five years from now in a better job.
+            zh: 想象五年后的自己处在更好的工作中。
+            highlight: in a better job
+            hint: 补处在更好的工作里
+          - level: 3
+            label: 完整句
+            en: Imagine yourself five years from now working in a role you actually enjoy every morning.
+            zh: 想象五年后的自己，做着一份你每天早上都真心愿意投入的工作。
+            highlight: you actually enjoy every morning
+            hint: 把工作说具体并强调每天早上愿意投入

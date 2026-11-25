@@ -1,0 +1,369 @@
+learning:
+  exercises:
+    pipeline:
+      - key: expect-some-delays
+        kind: chunk
+        type: chunk_substitution
+        title: 说预计会有些延误
+        chunk: expect some delays
+        chunkMeaning: 预料会有一些延误
+        direction: zh_to_en
+        items:
+          - zh: 下雪的话要预料到行程会拖。
+            answer: If it snows, expect some delays.
+            hint: If it snows
+          - zh: 施工期间乘客得做好晚点准备。
+            answer: During construction, passengers should expect some delays.
+            hint: passengers should；During construction
+          - zh: 系统升级时，客服接线也可能慢一些。
+            answer: While the system upgrades, expect some delays on support calls too.
+            hint: on support calls too
+      - key: expect-finish-by-friday
+        kind: chunk
+        type: chunk_substitution
+        title: 说指望周五前完成
+        chunk: expect to finish by Friday
+        chunkMeaning: 预计周五前能完成
+        direction: zh_to_en
+        items:
+          - zh: 我们预计周五前能收尾。
+            answer: We expect to finish by Friday.
+            hint: We expect to
+          - zh: 你预计周五前能做完吗？
+            answer: Do you expect to finish by Friday?
+            hint: Do you expect to
+          - zh: 除非再出问题，我们本希望周五前交付。
+            answer: Unless something breaks again, we expect to finish by Friday.
+            hint: Unless something breaks again
+      - key: expect-him-to-call
+        kind: chunk
+        type: chunk_substitution
+        title: 说以为他会打电话
+        chunk: expect him to call
+        chunkMeaning: 指望他会来电
+        direction: zh_to_en
+        items:
+          - zh: 我本以为他会打电话解释的。
+            answer: I expected him to call and explain.
+            hint: I expected；and explain
+          - zh: 家长都盼着老师尽快来电沟通。
+            answer: Parents expect him to call soon about the issue.
+            hint: soon about the issue
+          - zh: 别再傻等他回电了，主动出击吧。
+            answer: Stop expecting him to call—reach out yourself.
+            hint: Stop expecting；reach out yourself
+      - key: expect-demand-increase
+        kind: chunk
+        type: chunk_substitution
+        title: 说预期需求会涨
+        chunk: expect that demand will increase
+        chunkMeaning: 预期需求将增加
+        direction: zh_to_en
+        items:
+          - zh: 分析师预期需求会在下半年回升。
+            answer: Analysts expect that demand will increase in the second half.
+            hint: Analysts expect；in the second half
+          - zh: 插电推广后，公司料需求会上来。
+            answer: After the campaign, the company expects that demand will increase.
+            hint: After the campaign；the company
+          - zh: 若利率下调，市场普遍看多需求。
+            answer: If rates fall, markets expect that demand will increase.
+            hint: If rates fall；markets
+      - key: expected-to-rise
+        kind: chunk
+        type: chunk_substitution
+        title: 说预计会上升
+        chunk: expected to rise
+        chunkMeaning: 预料将上涨
+        direction: zh_to_en
+        items:
+          - zh: 油价本月预计还要涨。
+            answer: Oil prices are expected to rise this month.
+            hint: Oil prices are；this month
+          - zh: 入学人数预计明年会增加。
+            answer: Enrollment is expected to rise next year.
+            hint: Enrollment is；next year
+          - zh: 气温比一开始预报的升得更高。
+            answer: Temperatures rose higher than expected.
+            hint: higher than expected
+      - key: as-expected
+        kind: chunk
+        type: chunk_substitution
+        title: 说果然如此
+        chunk: as expected
+        chunkMeaning: 不出所料；如预期
+        direction: zh_to_en
+        items:
+          - zh: 决赛打得胶着，果然如预料。
+            answer: The final was tight, as expected.
+            hint: The final was tight
+          - zh: 销量如预期般在节后反弹。
+            answer: Sales bounced back after the holiday, as expected.
+            hint: bounced back；after the holiday
+          - zh: 新功能上线，用户增长跟料想的一样。
+            answer: After the launch, user growth was strong as expected.
+            hint: user growth was strong
+      - key: longer-than-expected
+        kind: chunk
+        type: chunk_substitution
+        title: 说比想的还久
+        chunk: longer than expected
+        chunkMeaning: 比预期更久
+        direction: zh_to_en
+        items:
+          - zh: 恢复期比预想的要长。
+            answer: Recovery took longer than expected.
+            hint: Recovery took
+          - zh: 会议拖得比大家以为的久一倍。
+            answer: The meeting ran twice as long as expected.
+            hint: twice as long
+          - zh: 快递比预计晚了一天才到。
+            answer: The delivery arrived a day later than expected.
+            hint: a day later than expected
+      - key: fully-expect-him-succeed
+        kind: chunk
+        type: chunk_substitution
+        title: 说坚信他会成功
+        chunk: fully expect him to succeed
+        chunkMeaning: 完全相信他成功
+        direction: zh_to_en
+        items:
+          - zh: 导师坚信他能考上研。
+            answer: The mentor fully expects him to succeed on the exam.
+            hint: on the exam
+          - zh: 我们确信他能拿下这个客户。
+            answer: We fully expect him to succeed with this client.
+            hint: with this client
+          - zh: 父母打心底相信女儿创业会成。
+            answer: His parents fully expect her to succeed in her startup.
+            hint: in her startup
+      - key: what-did-you-expect
+        kind: chunk
+        type: chunk_substitution
+        title: 说还能指望什么
+        chunk: What did you expect?
+        chunkMeaning: 你还指望怎样？意料之中吧
+        direction: zh_to_en
+        items:
+          - zh: 他迟到了—你还能指望什么？
+            answer: He was late—what did you expect?
+            hint: He was late
+          - zh: 一分价钱一分货，你还想怎样？
+            answer: You get what you pay for—what did you expect?
+            hint: You get what you pay for
+          - zh: 淡季没人来，这不是明摆着的吗？
+            answer: Nobody came in the off-season—what did you expect?
+            hint: in the off-season
+      - key: expect-too-much
+        kind: chunk
+        type: chunk_substitution
+        title: 说期望过高
+        chunk: expect too much
+        chunkMeaning: 要求太多；期望过高
+        direction: zh_to_en
+        items:
+          - zh: 别对员工要求过高。
+            answer: Don't expect too much from your staff.
+            hint: from your staff
+          - zh: 第一天上班就指望我独当一面，太狠了。
+            answer: You expect too much if you want me alone on day one.
+            hint: on day one
+          - zh: 父母有时对孩子期望过了头。
+            answer: Sometimes parents expect too much of their kids.
+            hint: of their kids
+      - key: expect-outcome-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方的预期
+        chunk: expect
+        chunkMeaning: 预期；指望
+        direction: en_to_zh
+        items:
+          - en: We expect the package to arrive tomorrow afternoon.
+            answer: 我们预计包裹明天下午到。
+            hint: tomorrow afternoon
+          - en: I didn't expect the meeting to run this long.
+            answer: 我没料到会议会开这么久。
+            hint: to run this long
+          - en: Investors expect stronger earnings this quarter.
+            answer: 投资者预期本季度业绩更强。
+            hint: stronger earnings；this quarter
+      - key: expect-state
+        type: vocab_sentence_building
+        title: 说预料、如期和指望别人
+        vocabWord: expect
+        vocabMeaning: 预期；指望
+        direction: zh_to_en
+        patterns:
+          - chunk: expect to
+            items:
+              - zh: 我们指望月底前拿到批复。
+                answer: We expect to get approval by the end of the month.
+                hint: get approval；by the end of the month
+              - zh: 别指望一天就能学会滑雪。
+                answer: Don't expect to learn skiing in a day.
+                hint: learn skiing；in a day
+          - chunk: expect someone to
+            items:
+              - zh: 我原以为她会主动道歉。
+                answer: I expected her to apologize first.
+                hint: apologize first
+              - zh: 老板指望团队周五前交稿。
+                answer: The boss expects the team to hand in drafts by Friday.
+                hint: hand in drafts by Friday
+          - chunk: as expected
+            items:
+              - zh: 实验失败，果然跟论文说的一样。
+                answer: The experiment failed, as expected from the paper.
+                hint: from the paper
+              - zh: 票价如料涨了，大家还是买了。
+                answer: Ticket prices rose as expected, and people still bought them.
+                hint: still bought them
+      - key: expect-to-other
+        type: pattern_drill
+        title: 预期自己会怎样
+        pattern: expect to [verb]
+        patternMeaning: 预计会……
+        direction: zh_to_en
+        items:
+          - zh: 航班预计六点起飞。
+            answer: The flight is expected to take off at six.
+            hint: take off at six
+          - zh: 我没想到面试会问这么多技术细节。
+            answer: I didn't expect to get so many technical questions in the interview.
+            hint: so many technical questions
+          - zh: 实习生指望这周能旁听董事会。
+            answer: The intern expects to sit in on the board meeting this week.
+            hint: sit in on；the board meeting
+      - key: expect-someone-other
+        type: pattern_drill
+        title: 指望别人做什么
+        pattern: expect [someone] to [verb]
+        patternMeaning: 指望某人……
+        direction: zh_to_en
+        items:
+          - zh: 客户指望我们48小时内回复。
+            answer: The client expects us to reply within forty-eight hours.
+            hint: within forty-eight hours
+          - zh: 我没料到他会当众反驳我。
+            answer: I didn't expect him to contradict me in public.
+            hint: contradict me in public
+          - zh: 老师期望学生课前预习。
+            answer: Teachers expect students to prepare before class.
+            hint: prepare before class
+      - key: expect-that-other
+        type: pattern_drill
+        title: 预期别的情况
+        pattern: expect that [clause]
+        patternMeaning: 预期……
+        direction: zh_to_en
+        items:
+          - zh: 银行预计利率年内还会降。
+            answer: Banks expect that rates will fall again this year.
+            hint: will fall again this year
+          - zh: 我们没料到投诉会这么多。
+            answer: We didn't expect that complaints would pile up like this.
+            hint: would pile up like this
+          - zh: 市场普遍料下半年回暖。
+            answer: Markets expect that sales will pick up in the second half.
+            hint: sales will pick up
+      - key: longer-than-other
+        type: pattern_drill
+        title: 说别的事比想的长
+        pattern: longer than expected
+        patternMeaning: 比预期久
+        direction: zh_to_en
+        items:
+          - zh: 审批流程比料想的拖了一倍。
+            answer: Approval took twice as long as expected.
+            hint: twice as long
+          - zh: 排队比宣传说的还久。
+            answer: The queue was longer than expected from the ads.
+            hint: from the ads
+          - zh: 康复期比医生一开始预估的长。
+            answer: Recovery ran longer than expected at first.
+            hint: at first
+      - key: expect-too-much-other
+        type: pattern_drill
+        title: 说对别人要求太高
+        pattern: expect too much (from/of)
+        patternMeaning: 期望过高
+        direction: zh_to_en
+        items:
+          - zh: 别对朋友要求十全十美。
+            answer: Don't expect too much perfection from friends.
+            hint: perfection from friends
+          - zh: 这个价格还想要五星服务，想太多。
+            answer: At this price, you expect too much if you want five-star service.
+            hint: five-star service
+          - zh: 新手一上手就指望零失误不现实。
+            answer: It's unrealistic to expect too much of a beginner on day one.
+            hint: of a beginner；on day one
+      - key: as-expected-other
+        type: pattern_drill
+        title: 说别的事果然如此
+        pattern: as expected
+        patternMeaning: 不出所料
+        direction: zh_to_en
+        items:
+          - zh: 阵容一如预料地强。
+            answer: The lineup was strong as expected.
+            hint: The lineup was strong
+          - zh: 口碑爆出来后，下载量果然冲榜。
+            answer: After word spread, downloads surged as expected.
+            hint: downloads surged
+          - zh: 裁员后士气下滑，毫不意外。
+            answer: Morale dropped after the layoffs, as expected.
+            hint: after the layoffs
+      - key: expect-delays-build
+        type: sentence_decomposition
+        title: 把预料延误说完整
+        sourceKind: chunk
+        sourceText: expect some delays
+        fullSentence: With the storm moving in, passengers should expect some delays and check updates often.
+        fullSentenceZh: 暴风要来了，乘客该预料到会有些延误，并多查更新。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Expect some delays.
+            zh: 要预料到会有一些延误。
+            highlight: ''
+            hint: 先说预料有延误
+          - level: 2
+            label: 加对象
+            en: Passengers should expect some delays.
+            zh: 乘客该预料到会有一些延误。
+            highlight: Passengers should
+            hint: 加上乘客该
+          - level: 3
+            label: 完整句
+            en: With the storm moving in, passengers should expect some delays and check updates often.
+            zh: 暴风要来了，乘客该预料到会有些延误，并多查更新。
+            highlight: check updates often
+            hint: 加天气背景并提醒多查更新
+      - key: expect-friday-build
+        type: sentence_decomposition
+        title: 把指望周五前做完说完整
+        sourceKind: chunk
+        sourceText: expect to finish by Friday
+        fullSentence: We expect to finish by Friday if the vendor ships the parts on Wednesday.
+        fullSentenceZh: 只要供应商周三把零件发出，我们预计周五前能做完。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We expect to finish by Friday.
+            zh: 我们预计周五前能完成。
+            highlight: ''
+            hint: 先说预计周五前完成
+          - level: 2
+            label: 加条件
+            en: We expect to finish by Friday if nothing slips.
+            zh: 要是不再出岔子，我们预计周五前能完成。
+            highlight: if nothing slips
+            hint: 加上要是不再出岔子
+          - level: 3
+            label: 完整句
+            en: We expect to finish by Friday if the vendor ships the parts on Wednesday.
+            zh: 只要供应商周三把零件发出，我们预计周五前能做完。
+            highlight: ships the parts on Wednesday
+            hint: 把条件说成供应商周三发货

@@ -1,0 +1,450 @@
+learning:
+  exercises:
+    pipeline:
+      - key: know-the-answer
+        kind: chunk
+        type: chunk_substitution
+        title: 说知道答案
+        chunk: know the answer
+        chunkMeaning: 知道答案
+        direction: zh_to_en
+        items:
+          - zh: 你知道答案吗？
+            answer: Do you know the answer?
+            hint: Do you know
+          - zh: 不好意思，我不知道答案。
+            answer: Sorry, I don't know the answer.
+            hint: I don't know
+          - zh: 她好像知道答案，但不想说。
+            answer: She seems to know the answer, but she doesn't want to say it.
+            hint: seems to know；doesn't want to say
+      - key: know-that-you-are-busy
+        kind: chunk
+        type: chunk_substitution
+        title: 说知道对方很忙
+        chunk: know that you are busy
+        chunkMeaning: 知道你很忙
+        direction: zh_to_en
+        items:
+          - zh: 我知道你很忙。
+            answer: I know that you are busy.
+            hint: I know that；that 可省
+          - zh: 她知道我们最近都很忙。
+            answer: She knows that we've all been busy lately.
+            hint: She knows that；lately
+          - zh: 你不需要明说，我已经知道他很忙了。
+            answer: You don't need to say it out loud—I already know he's busy.
+            hint: already know；say it out loud
+      - key: know-where-he-went
+        kind: chunk
+        type: chunk_substitution
+        title: 问知道他去哪儿了吗
+        chunk: know where he went
+        chunkMeaning: 知道他去哪儿了
+        direction: zh_to_en
+        items:
+          - zh: 你知道他去哪儿了吗？
+            answer: Do you know where he went?
+            hint: 从句用陈述语序；where he went
+          - zh: 没人知道他现在在哪儿。
+            answer: Nobody knows where he is now.
+            hint: Nobody knows；where he is
+          - zh: 我想知道他昨晚去了哪里。
+            answer: I want to know where he went last night.
+            hint: I want to know；last night
+      - key: know-how-to-fix-it
+        kind: chunk
+        type: chunk_substitution
+        title: 说知道怎么修好它
+        chunk: know how to fix it
+        chunkMeaning: 知道怎么修
+        direction: zh_to_en
+        items:
+          - zh: 你知道怎么修吗？
+            answer: Do you know how to fix it?
+            hint: know how to
+          - zh: 她知道怎么修，但现在没空。
+            answer: She knows how to fix it, but she doesn't have time now.
+            hint: knows how to；doesn't have time
+          - zh: 我还不知道怎么修，你能教我吗？
+            answer: I still don't know how to fix it. Can you teach me?
+            hint: still don't know；teach me
+      - key: get-to-know-someone
+        kind: chunk
+        type: chunk_substitution
+        title: 说慢慢了解一个人
+        chunk: get to know someone
+        chunkMeaning: 逐渐了解某人
+        direction: zh_to_en
+        items:
+          - zh: 真正了解一个人需要时间。
+            answer: It takes time to get to know someone.
+            hint: It takes time to
+          - zh: 我想多了解你一点。
+            answer: I'd like to get to know you better.
+            hint: I'd like to；better
+          - zh: 我们共事几个月后，才慢慢熟了起来。
+            answer: We got to know each other better after working together for a few months.
+            hint: got to know each other；after working together
+      - key: know-for-sure
+        kind: chunk
+        type: chunk_substitution
+        title: 说还不能确定
+        chunk: know for sure
+        chunkMeaning: 确定知道
+        direction: zh_to_en
+        items:
+          - zh: 我现在还不能确定。
+            answer: I don't know for sure yet.
+            hint: don't know for sure；yet
+          - zh: 你确定他会来吗？
+            answer: Do you know for sure that he'll come?
+            hint: know for sure that
+          - zh: 等我核实一下，才能确定。
+            answer: I need to check before I can know for sure.
+            hint: before I can；check
+      - key: know-from-experience
+        kind: chunk
+        type: chunk_substitution
+        title: 说从经验里知道
+        chunk: know from experience
+        chunkMeaning: 从经验中知道
+        direction: zh_to_en
+        items:
+          - zh: 我根据经验知道，这事急不得。
+            answer: I know from experience that you can't rush this.
+            hint: know from experience that；can't rush
+          - zh: 她吃过亏，所以知道这种方案风险很大。
+            answer: She's learned the hard way, so she knows from experience how risky this approach is.
+            hint: learned the hard way；how risky
+          - zh: 从事这行久了，你自然会知道什么管用。
+            answer: After years in this field, you know from experience what actually works.
+            hint: After years；what actually works
+      - key: know-about-the-project
+        kind: chunk
+        type: chunk_substitution
+        title: 问对项目了解多少
+        chunk: know about the project
+        chunkMeaning: 了解有关项目的信息
+        direction: zh_to_en
+        items:
+          - zh: 你对这个项目了解多少？
+            answer: How much do you know about the project?
+            hint: How much do you know about
+          - zh: 我对此了解不多。
+            answer: I don't know much about it.
+            hint: don't know much about
+          - zh: 开会前，最好先了解一下背景。
+            answer: Before the meeting, you'd better find out what you can about the project.
+            hint: find out what you can；Before the meeting
+      - key: know-of-a-few-good-places
+        kind: chunk
+        type: chunk_substitution
+        title: 说知道几家不错的地方
+        chunk: know of a few good places
+        chunkMeaning: 知道有几家好地方
+        direction: zh_to_en
+        items:
+          - zh: 我知道附近有几家不错的店。
+            answer: I know of a few good places nearby.
+            hint: know of；nearby
+          - zh: 你听说过那家新开的餐厅吗？
+            answer: Have you heard of that new restaurant?
+            hint: heard of；和 know of 近义
+          - zh: 如果你需要推荐，我知道几家挺好的咖啡馆。
+            answer: If you need recommendations, I know of a few really good cafés.
+            hint: If you need；recommendations
+      - key: you-never-know
+        kind: chunk
+        type: chunk_substitution
+        title: 说世事难料
+        chunk: you never know
+        chunkMeaning: 很难说；谁知道呢
+        direction: zh_to_en
+        items:
+          - zh: 谁也说不准会发生什么。
+            answer: You never know what might happen.
+            hint: You never know what
+          - zh: 去试试吧，说不定就成了。
+            answer: Give it a try—you never know.
+            hint: Give it a try
+          - zh: 他现在很不起眼，但以后说不定会很厉害。
+            answer: He's nobody special right now, but you never know.
+            hint: right now；but
+      - key: know-wh-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方问知不知道某事
+        chunk: Do you know
+        chunkMeaning: 你知道……吗？
+        direction: en_to_zh
+        items:
+          - en: Do you know when the meeting starts?
+            answer: 你知道会议什么时候开始吗？
+            hint: when the meeting starts
+          - en: I don't know why he left so early.
+            answer: 我不知道他为什么那么早就走了。
+            hint: why he left；so early
+          - en: She wants to know if we're still on for Friday.
+            answer: 她想知道我们周五还算数吗。
+            hint: if we're still on；Friday
+      - key: know-about-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说对某事的了解
+        chunk: know about
+        chunkMeaning: 了解有关……
+        direction: en_to_zh
+        items:
+          - en: How much do you know about the new policy?
+            answer: 你对新政策了解多少？
+            hint: How much；the new policy
+          - en: I didn't know anything about it until yesterday.
+            answer: 我直到昨天才知道这件事。
+            hint: didn't know anything；until yesterday
+          - en: He knows more about this than anyone else on the team.
+            answer: 在这件事上，他比队里任何人都了解得多。
+            hint: more than anyone else；on the team
+      - key: know-state
+        type: vocab_sentence_building
+        title: 说知道和不确定
+        vocabWord: know
+        vocabMeaning: 知道；认识
+        direction: zh_to_en
+        patterns:
+          - chunk: I know
+            items:
+              - zh: 我知道你的意思。
+                answer: I know what you mean.
+                hint: what you mean
+              - zh: 我知道这不容易。
+                answer: I know this isn't easy.
+                hint: this isn't easy
+          - chunk: I don't know
+            items:
+              - zh: 我不知道该说什么。
+                answer: I don't know what to say.
+                hint: what to say
+              - zh: 我现在还说不上来。
+                answer: I don't know yet.
+                hint: yet
+          - chunk: know for a fact
+            items:
+              - zh: 我确切知道他昨晚在那儿。
+                answer: I know for a fact that he was there last night.
+                hint: know for a fact that
+              - zh: 我们都知道这事是真的。
+                answer: We all know it's true.
+                hint: We all know
+      - key: know-noun-other
+        type: pattern_drill
+        title: 说认识或知道别的人事物
+        pattern: know [noun]
+        patternMeaning: 知道；认识
+        direction: zh_to_en
+        items:
+          - zh: 你认识张经理吗？
+            answer: Do you know Manager Zhang?
+            hint: Do you know
+          - zh: 我知道这条路，我们走这边吧。
+            answer: I know this road—let's go this way.
+            hint: I know this road
+          - zh: 他刚搬来，还不认识几个邻居。
+            answer: He just moved here and doesn't know many neighbors yet.
+            hint: doesn't know many；yet
+      - key: know-that-other
+        type: pattern_drill
+        title: 说知道别的情况
+        pattern: know that [clause]
+        patternMeaning: 知道……
+        direction: zh_to_en
+        items:
+          - zh: 她知道我们会迟到。
+            answer: She knows that we'll be late.
+            hint: She knows that
+          - zh: 我现在才知道原来是你安排的。
+            answer: I only just found out that you arranged it.
+            hint: only just found out that
+          - zh: 重要的是让他们知道我们支持他们。
+            answer: What matters is that they know we support them.
+            hint: What matters is
+      - key: know-wh-other
+        type: pattern_drill
+        title: 问知不知道别的具体信息
+        pattern: know [wh-clause]
+        patternMeaning: 知道具体信息
+        direction: zh_to_en
+        items:
+          - zh: 你知道密码是多少吗？
+            answer: Do you know what the password is?
+            hint: what the password is
+          - zh: 我想知道他为什么拒绝。
+            answer: I want to know why he said no.
+            hint: why he said no
+          - zh: 没人清楚接下来会发生什么。
+            answer: Nobody knows what will happen next.
+            hint: Nobody knows；what will happen
+      - key: know-how-to-other
+        type: pattern_drill
+        title: 说会不会做别的事
+        pattern: know how to [do]
+        patternMeaning: 知道怎么做
+        direction: zh_to_en
+        items:
+          - zh: 你会游泳吗？
+            answer: Do you know how to swim?
+            hint: know how to swim
+          - zh: 他还不知道怎么说“不”。
+            answer: He still doesn't know how to say no.
+            hint: still doesn't know how to
+          - zh: 让她来教吧，她知道怎么处理客户投诉。
+            answer: Let her handle it—she knows how to deal with customer complaints.
+            hint: deal with customer complaints
+      - key: get-to-know-other
+        type: pattern_drill
+        title: 说慢慢了解别的人或环境
+        pattern: get to know [someone/something]
+        patternMeaning: 逐渐了解
+        direction: zh_to_en
+        items:
+          - zh: 搬到新城市后，我需要时间熟悉环境。
+            answer: After moving to a new city, I need time to get to know the area.
+            hint: get to know the area
+          - zh: 他们通过一起做项目逐渐熟了起来。
+            answer: They got to know each other better by working on projects together.
+            hint: got to know each other better
+          - zh: 实习结束后，我终于了解了这个行业。
+            answer: By the end of the internship, I finally got to know the industry.
+            hint: By the end；finally got to know
+      - key: know-for-sure-other
+        type: pattern_drill
+        title: 说对别的事能不能确定
+        pattern: know for sure
+        patternMeaning: 确定知道
+        direction: zh_to_en
+        items:
+          - zh: 你能确定交货日期吗？
+            answer: Do you know the delivery date for sure?
+            hint: Do you know；for sure
+          - zh: 在见到文件之前，谁都说不准。
+            answer: Nobody can know for sure until they see the documents.
+            hint: until they see the documents
+          - zh: 她没亲口说过，所以我也不能肯定。
+            answer: She never said it herself, so I can't know for sure either.
+            hint: can't know for sure either
+      - key: know-from-experience-other
+        type: pattern_drill
+        title: 用别的经验说明白道理
+        pattern: know from experience
+        patternMeaning: 从经验中知道
+        direction: zh_to_en
+        items:
+          - zh: 老教师都知道，第一次上课总会紧张。
+            answer: Experienced teachers know from experience that the first class is always nerve-racking.
+            hint: Experienced teachers；nerve-racking
+          - zh: 我吃过亏，所以知道别轻信口头承诺。
+            answer: I've been burned before, so I know from experience not to trust verbal promises.
+            hint: I've been burned before；not to trust
+          - zh: 跑过几次马拉松的人，自然知道怎么分配体力。
+            answer: Anyone who's run a few marathons knows from experience how to pace themselves.
+            hint: how to pace themselves
+      - key: know-about-other
+        type: pattern_drill
+        title: 说对别的话题了解多少
+        pattern: know about [something]
+        patternMeaning: 了解有关某事
+        direction: zh_to_en
+        items:
+          - zh: 你对人工智能了解多少？
+            answer: How much do you know about artificial intelligence?
+            hint: How much do you know about
+          - zh: 小孩不应该知道太多不该知道的事。
+            answer: Kids shouldn't know too much about things they shouldn't.
+            hint: shouldn't know too much
+          - zh: 读过这本书的人，会对历史背景更清楚。
+            answer: People who've read the book know more about the historical background.
+            hint: know more about
+      - key: know-of-other
+        type: pattern_drill
+        title: 说听没听说过别的事物
+        pattern: know of [something]
+        patternMeaning: 知道……的存在
+        direction: zh_to_en
+        items:
+          - zh: 你知道市中心那家老书店吗？
+            answer: Do you know of that old bookstore downtown?
+            hint: know of；downtown
+          - zh: 我听说过这个办法，但没亲自试过。
+            answer: I know of this method, but I've never tried it myself.
+            hint: know of；never tried it myself
+          - zh: 如果你要律师，我认识几个不错的。
+            answer: If you need a lawyer, I know of a few good ones.
+            hint: I know of a few good ones
+      - key: you-never-know-other
+        type: pattern_drill
+        title: 用别的情况说世事难料
+        pattern: you never know
+        patternMeaning: 很难说
+        direction: zh_to_en
+        items:
+          - zh: 再投一次简历吧，万一有机会呢。
+            answer: Send your résumé again—you never know.
+            hint: Send your résumé again
+          - zh: 天气说变就变，出门还是带把伞吧。
+            answer: The weather can change anytime—you never know.
+            hint: can change anytime
+          - zh: 他现在不起眼，但几年后说不定就成了专家。
+            answer: He seems average now, but in a few years, you never know.
+            hint: in a few years
+      - key: know-answer-build
+        type: sentence_decomposition
+        title: 把知道答案这件事说完整
+        sourceKind: chunk
+        sourceText: know the answer
+        fullSentence: I don't know the answer yet, but I can find out and get back to you tonight.
+        fullSentenceZh: 我还不知道答案，但我可以去查一下，今晚回复你。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I don't know the answer yet.
+            zh: 我还不知道答案。
+            highlight: ''
+            hint: 先说还不知道答案
+          - level: 2
+            label: 加能做的事
+            en: I don't know the answer yet, but I can find out.
+            zh: 我还不知道答案，但我可以去查一下。
+            highlight: but I can find out
+            hint: 补上但我可以去查
+          - level: 3
+            label: 完整句
+            en: I don't know the answer yet, but I can find out and get back to you tonight.
+            zh: 我还不知道答案，但我可以去查一下，今晚回复你。
+            highlight: get back to you tonight
+            hint: 补上今晚回复你
+      - key: know-busy-build
+        type: sentence_decomposition
+        title: 把知道对方很忙说完整
+        sourceKind: chunk
+        sourceText: know that you are busy
+        fullSentence: I know that you're busy, so I'll keep this short and send you the details by email.
+        fullSentenceZh: 我知道你很忙，所以我就长话短说，把细节用邮件发给你。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I know that you're busy.
+            zh: 我知道你很忙。
+            highlight: ''
+            hint: 先说我知道你很忙
+          - level: 2
+            label: 加因此的做法
+            en: I know that you're busy, so I'll keep this short.
+            zh: 我知道你很忙，所以我就长话短说。
+            highlight: so I'll keep this short
+            hint: 补上所以就长话短说
+          - level: 3
+            label: 完整句
+            en: I know that you're busy, so I'll keep this short and send you the details by email.
+            zh: 我知道你很忙，所以我就长话短说，把细节用邮件发给你。
+            highlight: send you the details by email
+            hint: 补上把细节用邮件发给你

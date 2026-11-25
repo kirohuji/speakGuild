@@ -1,0 +1,418 @@
+learning:
+  exercises:
+    pipeline:
+      - key: forget-his-name
+        kind: chunk
+        type: chunk_substitution
+        title: 说忘了他叫什么名字
+        chunk: forget his name
+        chunkMeaning: 忘了他的名字
+        direction: zh_to_en
+        items:
+          - zh: 抱歉，我忘了他的名字。
+            answer: Sorry, I forgot his name.
+            hint: Sorry；forgot his name
+          - zh: 见面时很尴尬，因为我忘了他的名字。
+            answer: It was awkward when we met because I forgot his name.
+            hint: It was awkward；because
+          - zh: 你能提醒我一下吗？我又忘了他的名字。
+            answer: Can you remind me? I forgot his name again.
+            hint: Can you remind me；again
+      - key: never-forget-meeting-her
+        kind: chunk
+        type: chunk_substitution
+        title: 说永远不会忘记见过她
+        chunk: never forget meeting her
+        chunkMeaning: 永远不忘遇见她（做过的事）
+        direction: zh_to_en
+        items:
+          - zh: 我永远不会忘记第一次见到她。
+            answer: I'll never forget meeting her for the first time.
+            hint: I'll never forget；for the first time
+          - zh: 他说他永远忘不了那天跟她见面。
+            answer: He says he'll never forget meeting her that day.
+            hint: He says；that day
+          - zh: 那是很特别的经历，我一辈子都忘不了遇见她。
+            answer: It was a special experience—I'll never forget meeting her.
+            hint: It was a special experience
+      - key: forget-to-reply
+        kind: chunk
+        type: chunk_substitution
+        title: 说忘记去回他消息
+        chunk: forget to reply to his message
+        chunkMeaning: 忘记去回他的消息（没做）
+        direction: zh_to_en
+        items:
+          - zh: 我忘记回他的消息了，对不起。
+            answer: I forgot to reply to his message—sorry.
+            hint: forgot to reply；sorry
+          - zh: 她太忙了，忘了给他的消息回一句。
+            answer: She was so busy that she forgot to reply to his message.
+            hint: so busy that；forgot to reply
+          - zh: 你怎么能忘记回人家消息呢？
+            answer: How could you forget to reply to his message?
+            hint: How could you；forget to reply
+      - key: forget-about-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说暂时别去想工作
+        chunk: forget about work for a while
+        chunkMeaning: 暂时把工作抛在脑后
+        direction: zh_to_en
+        items:
+          - zh: 周末就忘掉工作一会儿吧。
+            answer: Forget about work for a while this weekend.
+            hint: Forget about work；this weekend
+          - zh: 我试着忘掉工作一会儿，但还是会乱想。
+            answer: I tried to forget about work for a while, but my mind kept drifting back.
+            hint: tried to；kept drifting back
+          - zh: 去海边走走，好让你暂时忘掉工作。
+            answer: Take a walk on the beach so you can forget about work for a while.
+            hint: Take a walk；so you can
+      - key: forget-that-store-closes
+        kind: chunk
+        type: chunk_substitution
+        title: 说忘了店提早关门
+        chunk: forget that the store closes early
+        chunkMeaning: 忘了店会提早关门
+        direction: zh_to_en
+        items:
+          - zh: 我忘了这家店今天提早关门。
+            answer: I forgot that the store closes early today.
+            hint: forgot that；closes early today
+          - zh: 我们赶到时已经打烊了，因为我忘了店提早关。
+            answer: It was already closed when we got there because I forgot that the store closes early.
+            hint: because I forgot that
+          - zh: 下次我会设个提醒，免得再忘了店提早关门。
+            answer: Next time I'll set a reminder so I don't forget that the store closes early.
+            hint: set a reminder；so I don't forget
+      - key: completely-forget
+        kind: chunk
+        type: chunk_substitution
+        title: 说忘得一干二净
+        chunk: completely forget
+        chunkMeaning: 完全忘记
+        direction: zh_to_en
+        items:
+          - zh: 忙起来我就把约会忘得一干二净。
+            answer: When I get busy, I completely forget about appointments.
+            hint: When I get busy；appointments
+          - zh: 他不是故意的，是真的把密码忘干净了。
+            answer: He didn't mean to—he completely forgot the password.
+            hint: didn't mean to；the password
+          - zh: 旅行回来后，我反而把烦心事忘光了。
+            answer: After the trip, I completely forgot about the worries.
+            hint: After the trip；worries
+      - key: never-forget-that-moment
+        kind: chunk
+        type: chunk_substitution
+        title: 说永远忘不了那一刻
+        chunk: never forget that moment
+        chunkMeaning: 永远不忘那一刻
+        direction: zh_to_en
+        items:
+          - zh: 我永远不会忘记那一刻。
+            answer: I'll never forget that moment.
+            hint: I'll never forget that moment
+          - zh: 她说她会一辈子记得那个瞬间。
+            answer: She says she'll never forget that moment.
+            hint: She says she'll
+          - zh: 照片提醒我，我们谁都不会忘那一刻。
+            answer: The photo reminds us we'll never forget that moment.
+            hint: reminds us；that moment
+      - key: forget-all-about-it
+        kind: chunk
+        type: chunk_substitution
+        title: 说把这件事全忘了
+        chunk: forget all about it
+        chunkMeaning: 把这事全抛在脑后
+        direction: zh_to_en
+        items:
+          - zh: 别纠结了，把这事全忘掉吧。
+            answer: Stop worrying—forget all about it.
+            hint: Stop worrying
+          - zh: 我本以为会一直记着，结果后来全忘了。
+            answer: I thought I'd always remember, but later I forgot all about it.
+            hint: I thought；but later
+          - zh: 他答应帮忙之后，就把我的请求忘光了。
+            answer: After he agreed to help, he forgot all about my request.
+            hint: After he agreed；my request
+      - key: easy-to-forget
+        kind: chunk
+        type: chunk_substitution
+        title: 说这种事很容易忘
+        chunk: easy to forget
+        chunkMeaning: 容易忘记
+        direction: zh_to_en
+        items:
+          - zh: 小习惯很容易忘。
+            answer: Small habits are easy to forget.
+            hint: Small habits；are easy to forget
+          - zh: 没有提醒的话，截止日期很容易忘。
+            answer: Without reminders, deadlines are easy to forget.
+            hint: Without reminders；deadlines
+          - zh: 人名对我来说特别容易忘。
+            answer: Names are especially easy for me to forget.
+            hint: especially；for me to forget
+      - key: forget-your-name
+        kind: chunk
+        type: chunk_substitution
+        title: 说忘了对方叫什么
+        chunk: forget your name
+        chunkMeaning: 忘了你的名字
+        direction: zh_to_en
+        items:
+          - zh: 不好意思，我忘了你的名字。
+            answer: Sorry, I forgot your name.
+            hint: Sorry；forgot your name
+          - zh: 我们上周见过，但我把名字忘了。
+            answer: We met last week, but I forgot your name.
+            hint: We met last week；but
+          - zh: 能再说一次吗？我刚刚忘了你的名字。
+            answer: Could you say it again? I just forgot your name.
+            hint: Could you say it again；just
+      - key: forget-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂忘记去做某事
+        chunk: forget to do
+        chunkMeaning: 忘记要去做（事没做）
+        direction: en_to_zh
+        items:
+          - en: I forgot to pick up the package on my way home.
+            answer: 我回家路上忘了取包裹。
+            hint: forgot to pick up；on my way home
+          - en: Don't forget to save your work before you close the laptop.
+            answer: 合上电脑前别忘了保存。
+            hint: Don't forget to save；before you close
+          - en: She forgot to cc her manager on the email.
+            answer: 发邮件时她忘了抄送经理。
+            hint: forgot to cc
+      - key: never-forget-doing-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂永远忘不了做过的事
+        chunk: never forget doing
+        chunkMeaning: 永远不忘做过的事（-ing）
+        direction: en_to_zh
+        items:
+          - en: I'll never forget hearing that news for the first time.
+            answer: 我永远不会忘记第一次听到那条消息。
+            hint: never forget hearing；for the first time
+          - en: He says he will never forget working with that team.
+            answer: 他说他永远忘不了跟那个团队一起共事。
+            hint: never forget working with
+          - en: We will never forget seeing the northern lights that night.
+            answer: 我们永远忘不了那天晚上看到北极光。
+            hint: never forget seeing；that night
+      - key: forget-state
+        type: vocab_sentence_building
+        title: 说忘记要做和忘不了做过
+        vocabWord: forget
+        vocabMeaning: 忘记
+        direction: zh_to_en
+        patterns:
+          - chunk: forget to
+            items:
+              - zh: 别忘了带伞。
+                answer: Don't forget to bring an umbrella.
+                hint: Don't forget to bring
+              - zh: 我昨天忘记交报告了。
+                answer: I forgot to hand in the report yesterday.
+                hint: forgot to hand in
+          - chunk: never forget doing
+            items:
+              - zh: 我永远忘不了在那座城市生活过的日子。
+                answer: I'll never forget living in that city.
+                hint: never forget living
+              - zh: 她永远忘不了第一次上台演讲。
+                answer: She'll never forget giving her first speech on stage.
+                hint: never forget giving
+          - chunk: forget that
+            items:
+              - zh: 我忘了我们约在几点。
+                answer: I forgot what time we agreed to meet.
+                hint: I forgot what time
+              - zh: 别忘了火车提前发车。
+                answer: Don't forget that the train leaves early.
+                hint: Don't forget that
+      - key: forget-to-do-other
+        type: pattern_drill
+        title: 说忘记去做别的事
+        pattern: forget to [do]
+        patternMeaning: 忘记要去做
+        direction: zh_to_en
+        items:
+          - zh: 我出门时忘了关灯。
+            answer: I forgot to turn off the lights when I left.
+            hint: forgot to turn off；when I left
+          - zh: 她忘记给房东转房租了。
+            answer: She forgot to transfer the rent to the landlord.
+            hint: forgot to transfer
+          - zh: 你总忘记喝水，记得喝点。
+            answer: You always forget to drink water—remember to have some.
+            hint: always forget to；remember to have
+      - key: never-forget-doing-other
+        type: pattern_drill
+        title: 说忘不了别的事（-ing）
+        pattern: never forget [doing]
+        patternMeaning: 永远不忘做过
+        direction: zh_to_en
+        items:
+          - zh: 我永远忘不了第一次吃那家餐厅的菜。
+            answer: I'll never forget eating at that restaurant for the first time.
+            hint: never forget eating；for the first time
+          - zh: 他永远忘不了在街上迷路的那个下午。
+            answer: He'll never forget getting lost on the street that afternoon.
+            hint: never forget getting lost
+          - zh: 我们谁都不会忘记一起扛过那段日子。
+            answer: None of us will ever forget going through that period together.
+            hint: None of us；going through
+      - key: forget-about-other
+        type: pattern_drill
+        title: 说暂时忘掉别的事
+        pattern: forget about [something] for a while
+        patternMeaning: 暂时不去想
+        direction: zh_to_en
+        items:
+          - zh: 看电影吧，先把烦恼搁一会儿。
+            answer: Let's watch a movie—forget about your worries for a while.
+            hint: forget about your worries
+          - zh: 度假时就别再想账单了。
+            answer: On vacation, forget about the bills for a while.
+            hint: On vacation
+          - zh: 他需要离开办公桌，才能暂时忘掉这个项目。
+            answer: He needs to step away from his desk to forget about the project for a while.
+            hint: step away from his desk
+      - key: forget-that-other
+        type: pattern_drill
+        title: 说忘了别的情况
+        pattern: forget that [clause]
+        patternMeaning: 忘了……（事实）
+        direction: zh_to_en
+        items:
+          - zh: 我忘了会议室要预约。
+            answer: I forgot that we need to book the meeting room.
+            hint: forgot that we need to
+          - zh: 她差点忘了他不住在这座城市。
+            answer: She almost forgot that he doesn't live in this city.
+            hint: almost forgot that
+          - zh: 别忘了我跟你说过他下周出差。
+            answer: Don't forget that I told you he's traveling next week.
+            hint: Don't forget that；next week
+      - key: forget-noun-other
+        type: pattern_drill
+        title: 说忘了别的人或东西
+        pattern: forget [noun]
+        patternMeaning: 忘记……
+        direction: zh_to_en
+        items:
+          - zh: 我总是忘记她的生日。
+            answer: I always forget her birthday.
+            hint: always forget her birthday
+          - zh: 你把充电器落在酒店了吗？还是忘了？
+            answer: Did you leave the charger at the hotel, or did you just forget it?
+            hint: did you just forget it
+          - zh: 别忘带护照，去年就有人忘过。
+            answer: Don't forget your passport—someone forgot theirs last year.
+            hint: Don't forget your passport
+      - key: completely-forget-other
+        type: pattern_drill
+        title: 说把别的事忘干净
+        pattern: completely forget
+        patternMeaning: 完全忘记
+        direction: zh_to_en
+        items:
+          - zh: 换工作后，我就把旧项目的细节全忘了。
+            answer: After I changed jobs, I completely forgot the details of the old project.
+            hint: After I changed jobs；the details
+          - zh: 他忙到把朋友的生日忘得一干二净。
+            answer: He was so busy he completely forgot his friend's birthday.
+            hint: so busy he
+          - zh: 休完长假回来，我一时把密码忘光了。
+            answer: After a long break, I completely forgot my password for a moment.
+            hint: for a moment
+      - key: forget-all-about-other
+        type: pattern_drill
+        title: 说把别的事抛诸脑后
+        pattern: forget all about it
+        patternMeaning: 全忘了这事
+        direction: zh_to_en
+        items:
+          - zh: 小事一桩，忘了吧。
+            answer: It's nothing—forget all about it.
+            hint: It's nothing
+          - zh: 我本来记着要还书，后来就全忘了。
+            answer: I meant to return the book, but I forgot all about it.
+            hint: I meant to；but
+          - zh: 等你忙完那周，你可能就把这个会议忘光了。
+            answer: Once that busy week is over, you might forget all about this meeting.
+            hint: Once that busy week
+      - key: easy-to-forget-other
+        type: pattern_drill
+        title: 说别的情况也容易忘
+        pattern: easy to forget
+        patternMeaning: 容易忘记
+        direction: zh_to_en
+        items:
+          - zh: 口头交代的事特别容易忘。
+            answer: Verbal instructions are especially easy to forget.
+            hint: Verbal instructions；especially
+          - zh: 每天走的同一条路，细节反而容易忘。
+            answer: The same route every day makes the details easy to forget.
+            hint: the details
+          - zh: 没写下来的时候，预约时间很容易忘。
+            answer: Appointment times are easy to forget when you don't write them down.
+            hint: when you don't write them down
+      - key: forget-to-reply-build
+        type: sentence_decomposition
+        title: 把忘记回消息说完整
+        sourceKind: chunk
+        sourceText: forget to reply to his message
+        fullSentence: I was swamped all day and forgot to reply to his message until late at night.
+        fullSentenceZh: 我一整天忙得不可开交，直到深夜才想起回他的消息。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I forgot to reply to his message.
+            zh: 我忘记回他的消息了。
+            highlight: ''
+            hint: 先说忘记回他的消息
+          - level: 2
+            label: 加原因
+            en: I was swamped all day and forgot to reply to his message.
+            zh: 我忙了一整天，忘记回他的消息了。
+            highlight: I was swamped all day
+            hint: 补上忙了一整天
+          - level: 3
+            label: 完整句
+            en: I was swamped all day and forgot to reply to his message until late at night.
+            zh: 我一整天忙得不可开交，直到深夜才想起回他的消息。
+            highlight: until late at night
+            hint: 补上直到深夜才想起
+      - key: never-forget-meeting-build
+        type: sentence_decomposition
+        title: 把永远不忘见过她说完整
+        sourceKind: chunk
+        sourceText: never forget meeting her
+        fullSentence: I'll never forget meeting her at that little café, even though it was years ago.
+        fullSentenceZh: 就算过了好几年，我也永远忘不了在小咖啡馆遇见她的那次。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I'll never forget meeting her.
+            zh: 我永远不会忘记遇见她。
+            highlight: ''
+            hint: 先说我永远不会忘记遇见她
+          - level: 2
+            label: 加地点
+            en: I'll never forget meeting her at that little café.
+            zh: 我永远不会忘记在小咖啡馆遇见她。
+            highlight: at that little café
+            hint: 补上在小咖啡馆
+          - level: 3
+            label: 完整句
+            en: I'll never forget meeting her at that little café, even though it was years ago.
+            zh: 就算过了好几年，我也永远忘不了在小咖啡馆遇见她的那次。
+            highlight: even though it was years ago
+            hint: 补上就算过了好几年

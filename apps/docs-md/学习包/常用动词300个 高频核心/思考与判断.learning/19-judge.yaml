@@ -1,0 +1,385 @@
+learning:
+  exercises:
+    pipeline:
+      - key: judge-the-situation
+        kind: chunk
+        type: chunk_substitution
+        title: 说判断形势
+        chunk: judge the situation
+        chunkMeaning: 判断形势
+        direction: zh_to_en
+        items:
+          - zh: 得先判断形势再行动。
+            answer: Judge the situation before you act.
+            hint: before you act
+          - zh: 领导有经验，很会判断形势。
+            answer: The leader is experienced and good at judging the situation.
+            hint: good at judging
+          - zh: 记者现场判断局势后马上发了快讯。
+            answer: The reporter judged the situation on site and filed a flash report.
+            hint: on site；flash report
+      - key: judge-people-by-appearance
+        kind: chunk
+        type: chunk_substitution
+        title: 说勿以貌取人
+        chunk: judge people by their appearance
+        chunkMeaning: 以貌取人
+        direction: zh_to_en
+        items:
+          - zh: 别以貌取人。
+            answer: Don't judge people by their appearance.
+            hint: Don't judge people
+          - zh: 小时候老师教我们不要以貌取人。
+            answer: Our teacher taught us not to judge people by their appearance.
+            hint: taught us not to
+          - zh: 招聘时若以貌取人，容易错失人才。
+            answer: If you judge people by their appearance when hiring, you may miss great talent.
+            hint: when hiring；great talent
+      - key: judging-by-his-reaction
+        kind: chunk
+        type: chunk_substitution
+        title: 说从他反应来看
+        chunk: judging by his reaction
+        chunkMeaning: 从他的反应判断
+        direction: zh_to_en
+        items:
+          - zh: 从他的反应看，他不太满意。
+            answer: Judging by his reaction, he's not very satisfied.
+            hint: he's not very satisfied
+          - zh: 从她笑的样子判断，她挺喜欢这礼物。
+            answer: Judging by her reaction, she really likes the gift.
+            hint: she really likes the gift
+          - zh: 从经理沉默的反应推测，消息可能不妙。
+            answer: Judging by his reaction, the news might not be good.
+            hint: the news might not be good
+      - key: judge-plan-too-expensive
+        kind: chunk
+        type: chunk_substitution
+        title: 说认定计划太贵
+        chunk: judge the plan to be too expensive
+        chunkMeaning: 认为该计划过于昂贵
+        direction: zh_to_en
+        items:
+          - zh: 委员会认定方案成本过高。
+            answer: The committee judged the plan to be too expensive.
+            hint: The committee
+          - zh: 客户评估后觉得这个方案太贵了。
+            answer: After reviewing it, the client judged the plan to be too expensive.
+            hint: After reviewing it
+          - zh: 审计部门认定扩建计划花得太多。
+            answer: The audit team judged the expansion plan to be too expensive.
+            hint: the expansion plan
+      - key: judge-whether-it-worked
+        kind: chunk
+        type: chunk_substitution
+        title: 说判断有没有效
+        chunk: judge whether it worked
+        chunkMeaning: 判断是否奏效
+        direction: zh_to_en
+        items:
+          - zh: 数据出来前，很难判断管不管用。
+            answer: Before the data comes in, it's hard to judge whether it worked.
+            hint: Before the data comes in
+          - zh: 老师要根据作业判断学生有没有学会。
+            answer: Teachers judge whether it worked based on the homework.
+            hint: based on the homework
+          - zh: 三个月后我们再来评判疗法有效没有。
+            answer: We'll judge whether it worked three months from now.
+            hint: three months from now
+      - key: judge-fairly
+        kind: chunk
+        type: chunk_substitution
+        title: 说公正评判
+        chunk: judge fairly
+        chunkMeaning: 公正评判
+        direction: zh_to_en
+        items:
+          - zh: 裁判应该公正判罚。
+            answer: Referees should judge fairly.
+            hint: Referees should
+          - zh: 老板尽量公正地评价每位员工。
+            answer: The boss tries to judge each employee fairly.
+            hint: each employee
+          - zh: 比赛规则要求评委必须公平打分。
+            answer: The rules require judges to score and judge fairly.
+            hint: require judges to
+      - key: judge-too-quickly
+        kind: chunk
+        type: chunk_substitution
+        title: 说别草率下结论
+        chunk: judge too quickly
+        chunkMeaning: 判断得太快
+        direction: zh_to_en
+        items:
+          - zh: 别那么快就下定论。
+            answer: Don't judge too quickly.
+            hint: Don't judge
+          - zh: 了解全貌之前，她提醒自己别轻率评判。
+            answer: Before knowing the full story, she told herself not to judge too quickly.
+            hint: the full story
+          - zh: 网络舆论往往过早审判当事人。
+            answer: Online opinion often judges people too quickly.
+            hint: Online opinion
+      - key: judge-by-appearances
+        kind: chunk
+        type: chunk_substitution
+        title: 说勿凭外表判断
+        chunk: judge by appearances
+        chunkMeaning: 凭外表判断
+        direction: zh_to_en
+        items:
+          - zh: 光看外表容易误判。
+            answer: It's easy to misjudge if you judge by appearances.
+            hint: misjudge
+          - zh: 他教我学会别只凭外貌看人。
+            answer: He taught me not to judge by appearances.
+            hint: taught me not to
+          - zh: 这家小店门面朴素，可千万别以貌取店。
+            answer: This shop looks plain from the outside, but don't judge by appearances.
+            hint: looks plain from the outside
+      - key: judge-quality-of-results
+        kind: chunk
+        type: chunk_substitution
+        title: 说评判结果质量
+        chunk: judge the quality of the results
+        chunkMeaning: 评判结果质量
+        direction: zh_to_en
+        items:
+          - zh: 客户会评判交付成果的质量。
+            answer: Clients will judge the quality of the results.
+            hint: Clients will
+          - zh: 评审团要对照标准评判作品质量。
+            answer: The jury must judge the quality of the results against the criteria.
+            hint: against the criteria
+          - zh: 年底复盘时，我们会评判各项目产出质量。
+            answer: At the year-end review, we'll judge the quality of the results for each project.
+            hint: year-end review；each project
+      - key: judge-whether-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在谈成效
+        chunk: judge whether
+        chunkMeaning: 判断是否
+        direction: en_to_zh
+        items:
+          - en: It's too soon to judge whether the policy worked.
+            answer: 现在判断这项政策有没有效还太早。
+            hint: the policy worked
+          - en: Doctors judged whether the treatment reduced pain.
+            answer: 医生在判断治疗有没有减轻疼痛。
+            hint: reduced pain
+          - en: We can only judge whether it worked after we see the numbers.
+            answer: 只有看到数据后，我们才能判断它有没有用。
+            hint: see the numbers
+      - key: judging-by-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂从某迹象推断
+        chunk: judging by
+        chunkMeaning: 从……判断
+        direction: en_to_zh
+        items:
+          - en: Judging by the silence in the room, the news shocked everyone.
+            answer: 从屋里一片安静来看，这消息把大家都震住了。
+            hint: shocked everyone
+          - en: Judging by his tone, he's not joking.
+            answer: 从他语气判断，他不是开玩笑。
+            hint: he's not joking
+          - en: Judging by sales, customers like the new flavor.
+            answer: 从销量看，顾客挺喜欢新口味。
+            hint: customers like
+      - key: judge-state
+        type: vocab_sentence_building
+        title: 说评判与打量
+        vocabWord: judge
+        vocabMeaning: 判断；评判
+        direction: zh_to_en
+        patterns:
+          - chunk: judge the situation
+            items:
+              - zh: 消防员到场后迅速判断局势。
+                answer: After arriving, firefighters quickly judged the situation.
+                hint: firefighters quickly
+              - zh: 谈判代表得冷静判断形势再回应。
+                answer: Negotiators need to judge the situation calmly before responding.
+                hint: calmly before responding
+          - chunk: judge fairly
+            items:
+              - zh: 妈妈尽量公平对待每个孩子。
+                answer: Mom tries to judge each child fairly.
+                hint: each child
+              - zh: 我们承诺按统一标准公正评审作品。
+                answer: We promise to judge every entry fairly by the same standard.
+                hint: every entry；same standard
+          - chunk: judging by
+            items:
+              - zh: 从点赞数看，视频很受欢迎。
+                answer: Judging by the likes, the video is popular.
+                hint: the likes
+              - zh: 从他疲惫的样子判断，他熬了好几天夜。
+                answer: Judging by how tired he looks, he's been up for days.
+                hint: how tired he looks
+      - key: judge-situation-other
+        type: pattern_drill
+        title: 说判断别的局面
+        pattern: judge the situation
+        patternMeaning: 判断形势
+        direction: zh_to_en
+        items:
+          - zh: 船长凭经验判断海况再下令。
+            answer: The captain judged the situation at sea before giving orders.
+            hint: at sea
+          - zh: 投资前要判断市场气氛。
+            answer: Before investing, judge the mood of the market.
+            hint: mood of the market
+          - zh: 志愿者一进门就先判断现场安不安全。
+            answer: Volunteers judge the situation for safety as soon as they arrive.
+            hint: for safety
+      - key: judge-by-appearance-other
+        type: pattern_drill
+        title: 说别用别的标准以貌取人
+        pattern: judge [someone] by appearance
+        patternMeaning: 以貌取人
+        direction: zh_to_en
+        items:
+          - zh: 招聘经理被提醒不要以貌取候选人。
+            answer: Hiring managers are reminded not to judge candidates by their appearance.
+            hint: candidates
+          - zh: 别凭穿着就认定他不可靠。
+            answer: Don't judge him by his appearance and assume he's unreliable.
+            hint: assume he's unreliable
+          - zh: 她小时候因穿着朴素被同学误解。
+            answer: As a kid, she was misjudged because classmates judged her by her appearance.
+            hint: misjudged；classmates
+      - key: judging-by-other
+        type: pattern_drill
+        title: 说从别的迹象推断
+        pattern: judging by [something]
+        patternMeaning: 从……来看
+        direction: zh_to_en
+        items:
+          - zh: 从股价走势看，投资者挺乐观。
+            answer: Judging by the stock trend, investors are optimistic.
+            hint: stock trend
+          - zh: 从她的笑容判断，会议进展顺利。
+            answer: Judging by her smile, the meeting went well.
+            hint: the meeting went well
+          - zh: 从排队人数推测，这家店味道应该不错。
+            answer: Judging by the long line, this place probably tastes great.
+            hint: the long line
+      - key: judge-to-be-other
+        type: pattern_drill
+        title: 说认定别的事物如何
+        pattern: judge [something] to be [adjective]
+        patternMeaning: 认为……是……
+        direction: zh_to_en
+        items:
+          - zh: 评审认为设计过于复杂。
+            answer: The panel judged the design to be too complicated.
+            hint: too complicated
+          - zh: 观众觉得结局太仓促。
+            answer: The audience judged the ending to be too rushed.
+            hint: the ending
+          - zh: 分析员认定风险可控。
+            answer: Analysts judged the risk to be manageable.
+            hint: manageable
+      - key: judge-whether-other
+        type: pattern_drill
+        title: 说评判别的事有没有效
+        pattern: judge whether [clause]
+        patternMeaning: 判断是否……
+        direction: zh_to_en
+        items:
+          - zh: 用户调研帮我们判断功能有没有用。
+            answer: User research helps us judge whether the feature is useful.
+            hint: the feature is useful
+          - zh: 期末考用来评判学生是否掌握知识。
+            answer: Final exams judge whether students have mastered the material.
+            hint: mastered the material
+          - zh: 实验结束后才能判断假设成不成立。
+            answer: You can judge whether the hypothesis holds only after the experiment ends.
+            hint: the hypothesis holds
+      - key: judge-too-quickly-other
+        type: pattern_drill
+        title: 说在别的事上别草率
+        pattern: judge too quickly
+        patternMeaning: 过快下结论
+        direction: zh_to_en
+        items:
+          - zh: 只听一面之词就评判，容易冤枉人。
+            answer: If you judge too quickly after hearing only one side, you may wrong someone.
+            hint: hearing only one side
+          - zh: 新同事刚来，别急着给他贴标签。
+            answer: The new colleague just started—don't judge too quickly.
+            hint: just started
+          - zh: 看完预告就骂片子烂，多为时过早。
+            answer: Slating the film after only the trailer means you judged too quickly.
+            hint: after only the trailer
+      - key: judge-quality-other
+        type: pattern_drill
+        title: 说评判别的成果质量
+        pattern: judge the quality of [something]
+        patternMeaning: 评判……的质量
+        direction: zh_to_en
+        items:
+          - zh: 品控部门会抽检并评判产品质量。
+            answer: Quality control will sample and judge the quality of the products.
+            hint: sample and
+          - zh: 导师依据论文深度评判研究质量。
+            answer: Advisors judge the quality of the research based on the depth of the thesis.
+            hint: depth of the thesis
+          - zh: 用户反馈帮助我们评判更新版体验好不好。
+            answer: User feedback helps us judge the quality of the updated experience.
+            hint: updated experience
+      - key: judge-situation-build
+        type: sentence_decomposition
+        title: 把判断形势说完整
+        sourceKind: chunk
+        sourceText: judge the situation
+        fullSentence: Before we send anyone in, we need to judge the situation and check for hidden risks.
+        fullSentenceZh: 派人进去之前，我们得先判断形势，排查隐藏风险。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We need to judge the situation.
+            zh: 我们得判断形势。
+            highlight: ''
+            hint: 先说得判断形势
+          - level: 2
+            label: 加时间点
+            en: Before we send anyone in, we need to judge the situation.
+            zh: 派人进去之前，我们得判断形势。
+            highlight: Before we send anyone in
+            hint: 补上派人进去之前
+          - level: 3
+            label: 完整句
+            en: Before we send anyone in, we need to judge the situation and check for hidden risks.
+            zh: 派人进去之前，我们得先判断形势，排查隐藏风险。
+            highlight: and check for hidden risks
+            hint: 补上并排查隐藏风险
+      - key: judge-reaction-build
+        type: sentence_decomposition
+        title: 把从他的反应推断说完整
+        sourceKind: chunk
+        sourceText: judging by his reaction
+        fullSentence: Judging by his reaction, he wasn't ready for the news, so we should give him more time.
+        fullSentenceZh: 从他的反应看，他还没准备好接受这消息，我们应该多给他点时间。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Judging by his reaction, he wasn't ready.
+            zh: 从他的反应看，他还没准备好。
+            highlight: ''
+            hint: 先说从反应看他没准备好
+          - level: 2
+            label: 点明消息
+            en: Judging by his reaction, he wasn't ready for the news.
+            zh: 从他的反应看，他还没准备好接受这消息。
+            highlight: for the news
+            hint: 补上对这消息没准备好
+          - level: 3
+            label: 完整句
+            en: Judging by his reaction, he wasn't ready for the news, so we should give him more time.
+            zh: 从他的反应看，他还没准备好接受这消息，我们应该多给他点时间。
+            highlight: so we should give him more time
+            hint: 补上所以我们应多给他时间

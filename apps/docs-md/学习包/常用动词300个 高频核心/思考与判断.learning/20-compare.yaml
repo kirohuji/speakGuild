@@ -1,0 +1,386 @@
+learning:
+  exercises:
+    pipeline:
+      - key: compare-version-with-old
+        kind: chunk
+        type: chunk_substitution
+        title: 说把新版和旧版对比
+        chunk: compare this version with the old one
+        chunkMeaning: 把这版和旧版对比
+        direction: zh_to_en
+        items:
+          - zh: 请把这版和旧版对比一下。
+            answer: Compare this version with the old one.
+            hint: Compare this version
+          - zh: 我仔细对比了这版和上一版。
+            answer: I carefully compared this version with the old one.
+            hint: carefully compared
+          - zh: 你能把这版和旧版做个对比吗？
+            answer: Can you compare this version with the old one?
+            hint: Can you
+      - key: compare-city-to-new-york
+        kind: chunk
+        type: chunk_substitution
+        title: 说把城市和纽约对比
+        chunk: compare the city to New York
+        chunkMeaning: 把这座城市比作纽约
+        direction: zh_to_en
+        items:
+          - zh: 很多人会把这座城市比作纽约。
+            answer: Many people compare the city to New York.
+            hint: Many people
+          - zh: 别总把这里跟纽约比。
+            answer: Stop comparing the city to New York all the time.
+            hint: Stop comparing；all the time
+          - zh: 导游把这座城市比作「东方的纽约」。
+            answer: The guide compared the city to New York.
+            hint: The guide compared
+      - key: compare-several-options
+        kind: chunk
+        type: chunk_substitution
+        title: 说对比几个选项
+        chunk: compare several options
+        chunkMeaning: 对比几个选项
+        direction: zh_to_en
+        items:
+          - zh: 做决定前要先对比几个选项。
+            answer: Compare several options before you decide.
+            hint: before you decide
+          - zh: 我们花时间对比了几个方案。
+            answer: We spent time comparing several options.
+            hint: spent time；comparing
+          - zh: 表格里帮你对比了几个选项。
+            answer: The table compares several options for you.
+            hint: The table
+      - key: compared-with-last-year
+        kind: chunk
+        type: chunk_substitution
+        title: 说跟去年相比
+        chunk: compared with last year
+        chunkMeaning: 与去年相比
+        direction: zh_to_en
+        items:
+          - zh: 跟去年比，销售额涨了。
+            answer: Compared with last year, sales went up.
+            hint: sales went up
+          - zh: 跟去年相比，成本其实降了一点。
+            answer: Costs actually dropped a little compared with last year.
+            hint: actually dropped
+          - zh: 跟去年同期比，用户活跃多了。
+            answer: User activity is much higher compared with last year.
+            hint: User activity；much higher
+      - key: nothing-compares-good-sleep
+        kind: chunk
+        type: chunk_substitution
+        title: 说没什么比得上睡个好觉
+        chunk: nothing compares to a good night's sleep
+        chunkMeaning: 没什么比得上好好睡一觉
+        direction: zh_to_en
+        items:
+          - zh: 说真的，没什么比得上睡个好觉。
+            answer: Honestly, nothing compares to a good night's sleep.
+            hint: Honestly
+          - zh: 熬夜加班之后，我才明白睡个好觉无可替代。
+            answer: After staying up late for work, I realized nothing compares to a good night's sleep.
+            hint: After staying up late；realized
+          - zh: 再贵的床垫也比不上好好睡一觉。
+            answer: No expensive mattress compares to a good night's sleep.
+            hint: No expensive mattress
+      - key: compare-prices
+        kind: chunk
+        type: chunk_substitution
+        title: 说比价
+        chunk: compare prices
+        chunkMeaning: 比较价格
+        direction: zh_to_en
+        items:
+          - zh: 下单前记得先比一比价。
+            answer: Remember to compare prices before you order.
+            hint: before you order
+          - zh: 这个 App 可以帮你比价。
+            answer: This app can help you compare prices.
+            hint: This app can help you
+          - zh: 我们货比三家才买的。
+            answer: We compared prices at several shops before buying.
+            hint: at several shops；before buying
+      - key: compare-notes
+        kind: chunk
+        type: chunk_substitution
+        title: 说对照一下各自的情况
+        chunk: compare notes
+        chunkMeaning: 交流对照；互通情况
+        direction: zh_to_en
+        items:
+          - zh: 会后咱们对对情况吧。
+            answer: Let's compare notes after the meeting.
+            hint: after the meeting
+          - zh: 俩闺蜜见面总要聊个半天对一对近况。
+            answer: When they meet, the two friends always compare notes for hours.
+            hint: When they meet；for hours
+          - zh: 可以跟同事对照一下笔记。
+            answer: You can compare notes with your coworker.
+            hint: with your coworker
+      - key: directly-compare
+        kind: chunk
+        type: chunk_substitution
+        title: 说直接对比
+        chunk: directly compare
+        chunkMeaning: 直接对比
+        direction: zh_to_en
+        items:
+          - zh: 这两种做法不能直接拿来比。
+            answer: You can't directly compare these two approaches.
+            hint: You can't；these two approaches
+          - zh: 图表让我们能直接对比数据。
+            answer: The chart lets us directly compare the data.
+            hint: The chart lets us
+          - zh: 别硬比，语境不一样。
+            answer: Don't directly compare them—the context is different.
+            hint: Don't；the context is different
+      - key: compare-favorably-competitors
+        kind: chunk
+        type: chunk_substitution
+        title: 说比竞争对手更有优势
+        chunk: compare favorably with competitors
+        chunkMeaning: 与竞争对手相比表现更好
+        direction: zh_to_en
+        items:
+          - zh: 我们的服务跟竞争对手比毫不逊色。
+            answer: Our service compares favorably with competitors.
+            hint: Our service
+          - zh: 这款手机在电池续航上比竞品强。
+            answer: This phone compares favorably with competitors on battery life.
+            hint: on battery life
+          - zh: 报告显示我们在客户满意度上优于同行。
+            answer: The report shows we compare favorably with competitors on satisfaction.
+            hint: The report shows；on satisfaction
+      - key: comparing-yourself-with-others
+        kind: chunk
+        type: chunk_substitution
+        title: 说别总跟别人比
+        chunk: comparing yourself with others
+        chunkMeaning: 拿自己跟别人比
+        direction: zh_to_en
+        items:
+          - zh: 老拿自己跟别人比会很累。
+            answer: Comparing yourself with others can be exhausting.
+            hint: can be exhausting
+          - zh: 她说自己还在学习，少跟别人比进度。
+            answer: She said she's still learning and tries not to keep comparing herself with others.
+            hint: tries not to keep
+          - zh: 社交媒体容易让人不自觉地跟人比。
+            answer: Social media makes it easy to start comparing yourself with others.
+            hint: Social media makes it easy
+      - key: compare-with-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在对比或对照
+        chunk: compare with
+        chunkMeaning: 与……对比
+        direction: en_to_zh
+        items:
+          - en: How does this quarter compare with the previous one?
+            answer: 这个季度跟上一季度比怎么样？
+            hint: this quarter；the previous one
+          - en: The teacher compared my essay with a model answer.
+            answer: 老师把我的作文和范文做了对比。
+            hint: my essay；a model answer
+          - en: We should compare the results with our original goals.
+            answer: 我们应该把结果和最初的目标对照一下。
+            hint: the results；original goals
+      - key: compared-with-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂同比去年的说法
+        chunk: compared with
+        chunkMeaning: 与……相比
+        direction: en_to_zh
+        items:
+          - en: Profits are up twenty percent compared with last year.
+            answer: 跟去年比，利润涨了百分之二十。
+            hint: Profits are up；twenty percent
+          - en: Compared with her sister, she's more outgoing.
+            answer: 跟她姐姐比，她更外向。
+            hint: she's more outgoing
+          - en: The new model is lighter compared with the old one.
+            answer: 新型号比旧款更轻。
+            hint: is lighter；the old one
+      - key: compare-state
+        type: vocab_sentence_building
+        title: 说对比和比照
+        vocabWord: compare
+        vocabMeaning: 比较；对比
+        direction: zh_to_en
+        patterns:
+          - chunk: compare prices
+            items:
+              - zh: 网购时我习惯先比价。
+                answer: When I shop online, I usually compare prices first.
+                hint: When I shop online；first
+              - zh: 他们把几家供应商的报价都比过了。
+                answer: They compared prices from several suppliers.
+                hint: from several suppliers
+          - chunk: compare several options
+            items:
+              - zh: 表格清楚对比了几种方案。
+                answer: The table clearly compares several options.
+                hint: clearly
+              - zh: 选址前团队对比了多个地点。
+                answer: The team compared several options before choosing a location.
+                hint: before choosing a location
+          - chunk: compare notes
+            items:
+              - zh: 项目结束后我们对了一下经验。
+                answer: After the project, we compared notes on what we learned.
+                hint: on what we learned
+              - zh: 考完试同学们在走廊里对答案聊感受。
+                answer: After the exam, students compared notes in the hallway.
+                hint: in the hallway
+      - key: compare-with-other
+        type: pattern_drill
+        title: 说把别的事物和别的比
+        pattern: compare [A] with [B]
+        patternMeaning: 把 A 与 B 对比
+        direction: zh_to_en
+        items:
+          - zh: 把新产品和上一代对比一下。
+            answer: Compare the new product with the previous generation.
+            hint: the new product；the previous generation
+          - zh: 别把孩子跟别的孩子硬比。
+            answer: Don't compare your child with other children.
+            hint: Don't；your child
+          - zh: 报告里把实际支出和预算做了对比。
+            answer: The report compares actual spending with the budget.
+            hint: actual spending；the budget
+      - key: compare-to-other
+        type: pattern_drill
+        title: 说把别的事物比作什么
+        pattern: compare [A] to [B]
+        patternMeaning: 把 A 比作 B
+        direction: zh_to_en
+        items:
+          - zh: 诗人常把人生比作一场旅行。
+            answer: Poets often compare life to a journey.
+            hint: Poets often；life
+          - zh: 他把这次改革比作换引擎还在开的车。
+            answer: He compared the reform to changing an engine while the car is moving.
+            hint: the reform；changing an engine
+          - zh: 别随便把同事当竞争对手来比。
+            answer: Don't compare coworkers to rivals so casually.
+            hint: coworkers；rivals
+      - key: compared-with-other
+        type: pattern_drill
+        title: 说跟别的时间段或对象比
+        pattern: compared with [time/thing]
+        patternMeaning: 与……相比
+        direction: zh_to_en
+        items:
+          - zh: 跟上个月比，投诉少了很多。
+            answer: Complaints dropped a lot compared with last month.
+            hint: Complaints dropped
+          - zh: 跟同行比，我们响应更快。
+            answer: We respond faster compared with others in the industry.
+            hint: others in the industry
+          - zh: 跟预期比，结果算是不错。
+            answer: The results are pretty good compared with expectations.
+            hint: compared with expectations
+      - key: nothing-compares-other
+        type: pattern_drill
+        title: 说没什么能比得上别的体验
+        pattern: nothing compares to [something]
+        patternMeaning: 没什么比得上……
+        direction: zh_to_en
+        items:
+          - zh: 没什么比得上在家吃一顿妈妈做的饭。
+            answer: Nothing compares to a home-cooked meal from mom.
+            hint: a home-cooked meal
+          - zh: 他说海边日落无可替代。
+            answer: He says nothing compares to a sunset by the sea.
+            hint: a sunset by the sea
+          - zh: 对跑者来说，没什么比完成首马更爽。
+            answer: For runners, nothing compares to finishing their first marathon.
+            hint: finishing their first marathon
+      - key: compare-favorably-other
+        type: pattern_drill
+        title: 说在别的方面比对手强
+        pattern: compare favorably with [something]
+        patternMeaning: 与……相比毫不逊色
+        direction: zh_to_en
+        items:
+          - zh: 这款耳机在音质上比同类产品好。
+            answer: These headphones compare favorably with similar products on sound quality.
+            hint: on sound quality
+          - zh: 我们的入职培训在业内评价很高。
+            answer: Our onboarding compares favorably with industry standards.
+            hint: industry standards
+          - zh: 小城生活在成本上往往比大都市划算。
+            answer: Small-city living often compares favorably with big cities on cost.
+            hint: on cost；big cities
+      - key: directly-compare-other
+        type: pattern_drill
+        title: 说直接对比别的情况
+        pattern: directly compare [something]
+        patternMeaning: 直接对比
+        direction: zh_to_en
+        items:
+          - zh: 你得先统一标准才能直接比绩效。
+            answer: You need the same metrics before you can directly compare performance.
+            hint: the same metrics；performance
+          - zh: 这两组实验条件不同，不宜硬比。
+            answer: These two experiments have different conditions, so don't directly compare them.
+            hint: different conditions
+          - zh: 软件可以并排直接对比两份合同。
+            answer: The software lets you directly compare two contracts side by side.
+            hint: side by side；two contracts
+      - key: compare-version-build
+        type: sentence_decomposition
+        title: 把对比新旧版本说完整
+        sourceKind: chunk
+        sourceText: compare this version with the old one
+        fullSentence: Compare this version with the old one and note what changed in the pricing section.
+        fullSentenceZh: 请把这版和旧版对比一下，留意定价部分有什么变动。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Compare this version with the old one.
+            zh: 请把这版和旧版对比一下。
+            highlight: ''
+            hint: 先说把这版和旧版对比
+          - level: 2
+            label: 加动作
+            en: Compare this version with the old one and note what changed.
+            zh: 把这版和旧版对比，留意有什么变动。
+            highlight: and note what changed
+            hint: 补上留意有什么变动
+          - level: 3
+            label: 完整句
+            en: Compare this version with the old one and note what changed in the pricing section.
+            zh: 请把这版和旧版对比一下，留意定价部分有什么变动。
+            highlight: in the pricing section
+            hint: 点出定价部分
+      - key: compare-options-build
+        type: sentence_decomposition
+        title: 把对比几个方案说完整
+        sourceKind: chunk
+        sourceText: compare several options
+        fullSentence: Before we sign, let's compare several options and pick the one with the best long-term value.
+        fullSentenceZh: 签约前我们先对比几个方案，选长期性价比最高的那个。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let's compare several options before we sign.
+            zh: 签约前我们先对比几个方案。
+            highlight: ''
+            hint: 先说签约前对比几个方案
+          - level: 2
+            label: 加目的
+            en: Let's compare several options and pick the best one.
+            zh: 咱们对比几个方案，选最好的那个。
+            highlight: and pick the best one
+            hint: 补上选最好的那个
+          - level: 3
+            label: 完整句
+            en: Before we sign, let's compare several options and pick the one with the best long-term value.
+            zh: 签约前我们先对比几个方案，选长期性价比最高的那个。
+            highlight: with the best long-term value
+            hint: 把「最好」说成长期性价比

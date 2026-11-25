@@ -1,0 +1,418 @@
+learning:
+  exercises:
+    pipeline:
+      - key: understand-the-problem
+        kind: chunk
+        type: chunk_substitution
+        title: 说理解问题所在
+        chunk: understand the problem
+        chunkMeaning: 理解问题
+        direction: zh_to_en
+        items:
+          - zh: 你得先理解问题出在哪儿。
+            answer: You need to understand the problem first.
+            hint: need to；first
+          - zh: 他们一直没能真正理解这个问题。
+            answer: They still haven't really understood the problem.
+            hint: haven't really；the problem
+          - zh: 一旦理解了问题，解决就容易多了。
+            answer: Once you understand the problem, it's much easier to fix.
+            hint: Once；much easier to fix
+      - key: understand-under-pressure
+        kind: chunk
+        type: chunk_substitution
+        title: 说理解对方压力很大
+        chunk: understand that you're under pressure
+        chunkMeaning: 理解你压力很大
+        direction: zh_to_en
+        items:
+          - zh: 我理解你现在压力很大。
+            answer: I understand that you're under pressure right now.
+            hint: I understand that；right now
+          - zh: 老板应该理解团队一直在承压。
+            answer: The boss should understand that the team is under pressure.
+            hint: should；the team
+          - zh: 她终于明白，自己一直在给自己施压。
+            answer: She finally understood that she'd been putting herself under pressure.
+            hint: finally；putting herself
+      - key: understand-why-he-left
+        kind: chunk
+        type: chunk_substitution
+        title: 说理解他为什么离开
+        chunk: understand why he left
+        chunkMeaning: 理解他为什么离开
+        direction: zh_to_en
+        items:
+          - zh: 我慢慢理解了他当初为什么离开。
+            answer: I gradually understood why he left.
+            hint: gradually；why he left
+          - zh: 你能理解他为什么突然辞职吗？
+            answer: Can you understand why he quit so suddenly?
+            hint: Can you；quit so suddenly
+          - zh: 看完那封信，我才理解他为什么走得那么急。
+            answer: After reading the letter, I understood why he left in such a hurry.
+            hint: After reading；in such a hurry
+      - key: understand-him-better
+        kind: chunk
+        type: chunk_substitution
+        title: 说更理解某人
+        chunk: understand him better
+        chunkMeaning: 更理解他
+        direction: zh_to_en
+        items:
+          - zh: 聊了一晚上后，我更理解他了。
+            answer: After talking all evening, I understand him better.
+            hint: After talking；better
+          - zh: 多一起工作，你会更理解她的风格。
+            answer: Work with her more and you'll understand her better.
+            hint: Work with her more；you'll
+          - zh: 我读了他的回忆录，想更理解他那个人。
+            answer: I read his memoir to understand him better.
+            hint: read his memoir；to understand
+      - key: make-yourself-understood
+        kind: chunk
+        type: chunk_substitution
+        title: 说把意思说清楚
+        chunk: make yourself understood
+        chunkMeaning: 把话说清楚；让别人听懂
+        direction: zh_to_en
+        items:
+          - zh: 你得把想法说清楚，别让人误会。
+            answer: You need to make yourself understood so people don't misunderstand.
+            hint: need to；don't misunderstand
+          - zh: 他英语不太好，但还是很努力想让人听懂。
+            answer: His English isn't great, but he still tries hard to make himself understood.
+            hint: tries hard to
+          - zh: 慢一点说，大家才听得懂你的意思。
+            answer: Speak more slowly so you can make yourself understood.
+            hint: Speak more slowly；so
+      - key: fully-understand-how-it-works
+        kind: chunk
+        type: chunk_substitution
+        title: 说完全搞懂运作方式
+        chunk: fully understand how it works
+        chunkMeaning: 完全理解它是怎么运作的
+        direction: zh_to_en
+        items:
+          - zh: 我还不能完全理解这套系统怎么运作。
+            answer: I can't fully understand how it works yet.
+            hint: can't fully；yet
+          - zh: 培训结束后，你应该能完全弄懂流程。
+            answer: After training, you should fully understand how it works.
+            hint: After training；should
+          - zh: 他想亲自试一下，好彻底搞懂原理。
+            answer: He wants to try it himself so he can fully understand how it works.
+            hint: try it himself；so
+      - key: clearly-understand-the-plan
+        kind: chunk
+        type: chunk_substitution
+        title: 说清楚理解计划
+        chunk: clearly understand the plan
+        chunkMeaning: 清楚理解计划
+        direction: zh_to_en
+        items:
+          - zh: 开会前请大家都把计划看清楚。
+            answer: Make sure everyone clearly understands the plan before the meeting.
+            hint: before the meeting
+          - zh: 我还是没完全搞明白这份方案。
+            answer: I still don't clearly understand the plan.
+            hint: still don't
+          - zh: 经理确认每个人都清楚下一步要做什么。
+            answer: The manager confirmed that everyone clearly understands the plan.
+            hint: confirmed；everyone
+      - key: understand-your-point
+        kind: chunk
+        type: chunk_substitution
+        title: 说听懂对方的意思
+        chunk: understand your point
+        chunkMeaning: 理解你的观点
+        direction: zh_to_en
+        items:
+          - zh: 我理解你的意思，但我看法不一样。
+            answer: I understand your point, but I see it differently.
+            hint: I understand your point；differently
+          - zh: 你刚才是这个意思吗？
+            answer: Is that what you meant—do I understand your point?
+            hint: Is that what you meant
+          - zh: 谢谢解释，我现在明白你想说什么了。
+            answer: Thanks for explaining—I understand your point now.
+            hint: Thanks for explaining；now
+      - key: come-to-understand
+        kind: chunk
+        type: chunk_substitution
+        title: 说逐渐明白过来
+        chunk: come to understand
+        chunkMeaning: 逐渐理解；终于明白
+        direction: zh_to_en
+        items:
+          - zh: 相处久了，我才慢慢理解他的性格。
+            answer: Over time, I came to understand his personality.
+            hint: Over time；came to understand
+          - zh: 她后来才明白，选择没有绝对的对错。
+            answer: She came to understand that there is no perfect choice.
+            hint: came to understand that
+          - zh: 通过这件事，我们逐渐理解了彼此。
+            answer: Through this, we came to understand each other better.
+            hint: Through this；each other
+      - key: easy-to-understand
+        kind: chunk
+        type: chunk_substitution
+        title: 说容易听懂或看懂
+        chunk: easy to understand
+        chunkMeaning: 容易理解
+        direction: zh_to_en
+        items:
+          - zh: 这份说明写得很清楚，一看就懂。
+            answer: The instructions are written so they're easy to understand.
+            hint: written so they're
+          - zh: 他用很简单的例子，让概念更好懂。
+            answer: He used simple examples to make the idea easy to understand.
+            hint: make the idea
+          - zh: 语速慢一点，观众会更好理解。
+            answer: If you speak more slowly, it'll be easier for the audience to understand.
+            hint: easier for the audience
+      - key: understand-clause-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说理解某情况
+        chunk: understand that
+        chunkMeaning: 理解……（事实）
+        direction: en_to_zh
+        items:
+          - en: I understand that you've already made a decision.
+            answer: 我理解你已经做决定了。
+            hint: already made a decision
+          - en: She doesn't understand that the deadline can't move.
+            answer: 她不明白截止日期不能改。
+            hint: the deadline can't move
+          - en: Do you understand that this will affect everyone?
+            answer: 你明白这会影响到所有人吗？
+            hint: will affect everyone
+      - key: understand-point-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说懂了或没懂
+        chunk: I understand
+        chunkMeaning: 我理解；我明白
+        direction: en_to_zh
+        items:
+          - en: I understand—you don't have to explain again.
+            answer: 我明白了，你不用再说一遍。
+            hint: don't have to explain again
+          - en: I don't quite understand what you mean by that.
+            answer: 我不太明白你那儿是什么意思。
+            hint: don't quite；what you mean
+          - en: Please make sure everyone understands the new rules.
+            answer: 请确保每个人都理解新规定。
+            hint: make sure everyone
+      - key: understand-state
+        type: vocab_sentence_building
+        title: 说听懂和表达理解
+        vocabWord: understand
+        vocabMeaning: 理解；明白
+        direction: zh_to_en
+        patterns:
+          - chunk: I understand
+            items:
+              - zh: 我理解你的担心。
+                answer: I understand your concern.
+                hint: your concern
+              - zh: 不完全明白，能再说一次吗？
+                answer: I don't fully understand—could you say that again?
+                hint: don't fully；could you
+          - chunk: understand the situation
+            items:
+              - zh: 我们都要先摸清局面。
+                answer: We all need to understand the situation first.
+                hint: need to；first
+              - zh: 她很快搞清了现场发生了什么。
+                answer: She quickly understood what was going on.
+                hint: quickly；what was going on
+          - chunk: hard to understand
+            items:
+              - zh: 他口音重，有时候不好懂。
+                answer: His accent is strong, so he's sometimes hard to understand.
+                hint: accent is strong；sometimes
+              - zh: 这份合同术语太多，不容易看懂。
+                answer: This contract is full of jargon and hard to understand.
+                hint: full of jargon
+      - key: understand-noun-other
+        type: pattern_drill
+        title: 说理解别的事物
+        pattern: understand [noun]
+        patternMeaning: 理解（某事物）
+        direction: zh_to_en
+        items:
+          - zh: 孩子需要时间才能理解规则。
+            answer: Kids need time to understand the rules.
+            hint: need time to
+          - zh: 我们都必须理解这次改动的意义。
+            answer: We all have to understand the meaning of this change.
+            hint: have to；the meaning
+          - zh: 他还没理解这件事有多严重。
+            answer: He doesn't understand how serious this is yet.
+            hint: doesn't；how serious
+      - key: understand-that-other
+        type: pattern_drill
+        title: 说理解别的事实
+        pattern: understand that [clause]
+        patternMeaning: 理解/明白……
+        direction: zh_to_en
+        items:
+          - zh: 我明白我们不能事事都完美。
+            answer: I understand that we can't be perfect at everything.
+            hint: can't be perfect
+          - zh: 她终于懂了他当时别无选择。
+            answer: She finally understood that he had no other choice then.
+            hint: finally；no other choice
+          - zh: 你要让客户明白，价格已经是最低了。
+            answer: You need the client to understand that the price is already the lowest.
+            hint: need the client to
+      - key: understand-why-other
+        type: pattern_drill
+        title: 说理解别的原因
+        pattern: understand why [clause]
+        patternMeaning: 理解为什么……
+        direction: zh_to_en
+        items:
+          - zh: 我完全理解你为什么生气。
+            answer: I completely understand why you're angry.
+            hint: completely；you're angry
+          - zh: 没人能理解他们为什么要那么做。
+            answer: No one can understand why they did that.
+            hint: No one can
+          - zh: 读过报告后，你就会明白市场为何下滑。
+            answer: After you read the report, you'll understand why the market dropped.
+            hint: After you read；the market dropped
+      - key: understand-someone-other
+        type: pattern_drill
+        title: 说更理解别的人
+        pattern: understand [someone] better
+        patternMeaning: 更理解某人
+        direction: zh_to_en
+        items:
+          - zh: 住在一起后，我们更懂彼此了。
+            answer: After living together, we understand each other better.
+            hint: living together；each other
+          - zh: 这次冲突让我更理解老板的处境。
+            answer: This conflict helped me understand my boss better.
+            hint: helped me
+          - zh: 多去现场，你才能更理解用户需要什么。
+            answer: Go to the field more if you want to understand users better.
+            hint: Go to the field；users
+      - key: make-understood-other
+        type: pattern_drill
+        title: 说在别的场合把意思说清楚
+        pattern: make yourself understood
+        patternMeaning: 让别人听懂自己的意思
+        direction: zh_to_en
+        items:
+          - zh: 电话会议里更难把话说清楚。
+            answer: It's harder to make yourself understood on a conference call.
+            hint: It's harder；conference call
+          - zh: 她用图表帮助自己把观点讲明白。
+            answer: She used charts to help make herself understood.
+            hint: used charts to help
+          - zh: 如果术语太多，听众就听不懂你在说什么。
+            answer: If you use too much jargon, you won't make yourself understood.
+            hint: too much jargon；won't make yourself understood
+      - key: fully-how-other
+        type: pattern_drill
+        title: 说弄懂别的东西怎么运作
+        pattern: fully understand how [clause]
+        patternMeaning: 完全理解……如何……
+        direction: zh_to_en
+        items:
+          - zh: 工程师要完全弄懂代码怎么跑的。
+            answer: Engineers need to fully understand how the code runs.
+            hint: need to；the code runs
+          - zh: 我还没完全搞懂这笔钱怎么算的。
+            answer: I don't fully understand how this fee is calculated yet.
+            hint: don't fully；is calculated
+          - zh: 只有亲自操作过，你才能真懂流程。
+            answer: Only after operating it yourself can you fully understand how the process works.
+            hint: Only after；the process works
+      - key: come-to-understand-other
+        type: pattern_drill
+        title: 说在别的事上慢慢想通
+        pattern: come to understand
+        patternMeaning: 逐渐明白
+        direction: zh_to_en
+        items:
+          - zh: 多年以后，他才明白自己错过了什么。
+            answer: Years later, he came to understand what he had missed.
+            hint: Years later；what he had missed
+          - zh: 和学生打交道多了，你会渐渐懂他们的压力。
+            answer: The more you work with students, the more you come to understand their stress.
+            hint: The more you；their stress
+          - zh: 她通过失败慢慢懂得了耐心有多重要。
+            answer: Through failure, she came to understand how important patience is.
+            hint: Through failure；how important
+      - key: easy-understand-other
+        type: pattern_drill
+        title: 说别的东西好不好懂
+        pattern: easy to understand
+        patternMeaning: 容易理解
+        direction: zh_to_en
+        items:
+          - zh: 把幻灯片简化一点，会更好懂。
+            answer: Simplify the slides and they'll be easier to understand.
+            hint: Simplify；easier
+          - zh: 这个故事对孩子来说很好理解。
+            answer: This story is easy for kids to understand.
+            hint: easy for kids
+          - zh: 他的解释并不总是通俗易懂。
+            answer: His explanations aren't always easy to understand.
+            hint: aren't always
+      - key: understand-problem-build
+        type: sentence_decomposition
+        title: 把理解问题说完整
+        sourceKind: chunk
+        sourceText: understand the problem
+        fullSentence: Once we understand the problem, we can focus on the right solution.
+        fullSentenceZh: 一旦我们理解了问题，就能专注于对的解决办法。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We need to understand the problem.
+            zh: 我们需要理解问题。
+            highlight: ''
+            hint: 先说我们需要理解问题
+          - level: 2
+            label: 加时间条件
+            en: Once we understand the problem, we can focus.
+            zh: 一旦我们理解了问题，就能专注。
+            highlight: Once we understand the problem
+            hint: 补上一旦我们理解了问题
+          - level: 3
+            label: 完整句
+            en: Once we understand the problem, we can focus on the right solution.
+            zh: 一旦我们理解了问题，就能专注于对的解决办法。
+            highlight: on the right solution
+            hint: 把专注具体成对的解决办法
+      - key: understand-point-build
+        type: sentence_decomposition
+        title: 把听懂对方观点说完整
+        sourceKind: chunk
+        sourceText: understand your point
+        fullSentence: I understand your point, but I still think we should wait another week.
+        fullSentenceZh: 我理解你的观点，但我还是觉得我们应该再等一周。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I understand your point.
+            zh: 我理解你的观点。
+            highlight: ''
+            hint: 先说我理解你的观点
+          - level: 2
+            label: 加转折
+            en: I understand your point, but I disagree.
+            zh: 我理解你的观点，但我不同意。
+            highlight: but I disagree
+            hint: 补上但我不同意
+          - level: 3
+            label: 完整句
+            en: I understand your point, but I still think we should wait another week.
+            zh: 我理解你的观点，但我还是觉得我们应该再等一周。
+            highlight: wait another week
+            hint: 把不同意具体成再等一周

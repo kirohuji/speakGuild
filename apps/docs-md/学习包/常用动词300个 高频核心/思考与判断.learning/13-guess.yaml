@@ -1,0 +1,370 @@
+learning:
+  exercises:
+    pipeline:
+      - key: guess-the-answer
+        kind: chunk
+        type: chunk_substitution
+        title: 说猜答案
+        chunk: guess the answer
+        chunkMeaning: 猜答案
+        direction: zh_to_en
+        items:
+          - zh: 你先猜猜答案是什么。
+            answer: Try to guess the answer first.
+            hint: Try to
+          - zh: 我不敢猜答案，怕错得太离谱。
+            answer: I don't dare guess the answer—I'm afraid I'll be way off.
+            hint: I don't dare；way off
+          - zh: 全班都凭直觉猜了个答案。
+            answer: The whole class guessed the answer by instinct.
+            hint: by instinct
+      - key: guess-something-wrong
+        kind: chunk
+        type: chunk_substitution
+        title: 说猜出哪里不对劲
+        chunk: guess that something was wrong
+        chunkMeaning: 猜到有点不对
+        direction: zh_to_en
+        items:
+          - zh: 我一进门就猜到有事不对。
+            answer: As soon as I walked in, I guessed that something was wrong.
+            hint: As soon as I walked in
+          - zh: 她从他表情里看出不太对劲。
+            answer: She guessed that something was wrong from his face.
+            hint: from his face
+          - zh: 你能从他语气里听出问题吗？
+            answer: Can you guess that something was wrong from his tone?
+            hint: from his tone
+      - key: guess-well-have-to-wait
+        kind: chunk
+        type: chunk_substitution
+        title: 说恐怕得等等了
+        chunk: I guess we'll have to wait
+        chunkMeaning: 我想我们得等了
+        direction: zh_to_en
+        items:
+          - zh: 车坏了，恐怕得等了。
+            answer: The car broke down—I guess we'll have to wait.
+            hint: The car broke down
+          - zh: 医生还没来，咱们只能再等等。
+            answer: The doctor isn't here yet—I guess we'll have to wait.
+            hint: isn't here yet
+          - zh: 航班延误了，看样子得干等一会儿。
+            answer: The flight's delayed, so I guess we'll have to wait for a while.
+            hint: for a while
+      - key: guess-what
+        kind: chunk
+        type: chunk_substitution
+        title: 说猜猜怎么着
+        chunk: Guess what
+        chunkMeaning: 猜猜怎么着
+        direction: zh_to_en
+        items:
+          - zh: 猜猜怎么着，他升职了！
+            answer: Guess what—he got promoted!
+            hint: he got promoted
+          - zh: 跟你说个事儿，猜猜是什么？
+            answer: Guess what I found in the drawer.
+            hint: I found；in the drawer
+          - zh: 进门先别问细节，就说「你猜怎么着」。
+            answer: When you walk in, start with "Guess what!"
+            hint: When you walk in；start with
+      - key: take-a-guess
+        kind: chunk
+        type: chunk_substitution
+        title: 说随便猜一猜
+        chunk: take a guess
+        chunkMeaning: 猜一下
+        direction: zh_to_en
+        items:
+          - zh: 来来来，你猜这个数字是多少。
+            answer: Come on—take a guess at the number.
+            hint: Come on；at the number
+          - zh: 不知道就大胆猜，没惩罚。
+            answer: If you don't know, just take a guess—there's no penalty.
+            hint: If you don't know；there's no penalty
+          - zh: 总造价多少？你先估个数。
+            answer: What's the total cost? Take a guess.
+            hint: What's the total cost
+      - key: guess-wildly
+        kind: chunk
+        type: chunk_substitution
+        title: 说瞎猜一气
+        chunk: guess wildly
+        chunkMeaning: 乱猜
+        direction: zh_to_en
+        items:
+          - zh: 没线索就别乱猜。
+            answer: Don't guess wildly without clues.
+            hint: without clues
+          - zh: 紧张的时候人们爱信口胡猜。
+            answer: When people are nervous, they guess wildly.
+            hint: When people are nervous
+          - zh: 他嘴里报了个数，完全就是猜的。
+            answer: He quoted a figure by guessing wildly.
+            hint: quoted a figure；by guessing wildly
+      - key: guess-his-age
+        kind: chunk
+        type: chunk_substitution
+        title: 说猜他多大
+        chunk: guess his age
+        chunkMeaning: 猜他的年龄
+        direction: zh_to_en
+        items:
+          - zh: 你能猜出他多大吗？
+            answer: Can you guess his age?
+            hint: Can you
+          - zh: 大家总把他猜得比实际年轻十岁。
+            answer: People always guess his age ten years younger than it is.
+            hint: ten years younger
+          - zh: 光看照片很难猜年龄。
+            answer: It's hard to guess his age from the photo alone.
+            hint: from the photo alone
+      - key: your-guess-as-good-as-mine
+        kind: chunk
+        type: chunk_substitution
+        title: 说我也不晓得
+        chunk: your guess is as good as mine
+        chunkMeaning: 咱俩一样瞎猜；我也不知道
+        direction: zh_to_en
+        items:
+          - zh: 他为啥辞职？—你猜跟我猜一样，我也不知道。
+            answer: Why did he quit? — Your guess is as good as mine.
+            hint: Why did he quit
+          - zh: 下次涨价什么时候？天知道。
+            answer: When will prices rise again? Your guess is as good as mine.
+            hint: When will prices rise again
+          - zh: 包裹到哪了？我跟你也都是猜。
+            answer: Where's the package? Your guess is as good as mine.
+            hint: Where's the package
+      - key: guess-correctly
+        kind: chunk
+        type: chunk_substitution
+        title: 说猜对了
+        chunk: guess correctly
+        chunkMeaning: 猜对
+        direction: zh_to_en
+        items:
+          - zh: 谁先猜对谁赢。
+            answer: Whoever guesses correctly first wins.
+            hint: Whoever；first wins
+          - zh: 她竟然一次就把密码猜对了。
+            answer: She guessed correctly on the password on the first try.
+            hint: on the first try
+          - zh: 不靠作弊，你怎么能次次都猜中？
+            answer: How can you guess correctly every time without cheating?
+            hint: every time；without cheating
+      - key: keep-you-guessing
+        kind: chunk
+        type: chunk_substitution
+        title: 说让你一直猜不透
+        chunk: keep you guessing
+        chunkMeaning: 让你猜个不停
+        direction: zh_to_en
+        items:
+          - zh: 结局故意吊着观众胃口。
+            answer: The ending keeps you guessing on purpose.
+            hint: on purpose
+          - zh: 她说话总半真半假，让人摸不着边。
+            answer: She keeps you guessing because she only half-tells the truth.
+            hint: only half-tells the truth
+          - zh: 好悬疑片会把悬念留到最后。
+            answer: A good mystery keeps you guessing until the last minute.
+            hint: until the last minute
+      - key: guess-opinion-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂随口估计
+        chunk: I guess
+        chunkMeaning: 我想；大概
+        direction: en_to_zh
+        items:
+          - en: I guess we'll have to reschedule the call.
+            answer: 我想我们得把电话会议改期了。
+            hint: reschedule；the call
+          - en: I guess he's not coming after all.
+            answer: 我猜他到底还是不来了。
+            hint: after all
+          - en: 'Is it fixed? — I guess so, but test it again.'
+            answer: 修好了吗？我想是吧，但再测一遍。
+            hint: I guess so；test it again
+      - key: guess-what-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂吊人胃口的开头
+        chunk: Guess what
+        chunkMeaning: 猜猜怎么着
+        direction: en_to_zh
+        items:
+          - en: Guess what—they accepted our offer.
+            answer: 你猜怎么着，他们接受我们的报价了。
+            hint: accepted our offer
+          - en: Guess what happened at the meeting today.
+            answer: 猜猜今天会上发生什么事了。
+            hint: at the meeting today
+          - en: Guess what I heard about the new manager.
+            answer: 猜猜我听到关于新经理的什么事。
+            hint: the new manager
+      - key: guess-state
+        type: vocab_sentence_building
+        title: 说猜、估和吊悬念
+        vocabWord: guess
+        vocabMeaning: 猜；认为（随便）
+        direction: zh_to_en
+        patterns:
+          - chunk: take a guess
+            items:
+              - zh: 油价下周多少？你随便估一下。
+                answer: What will gas cost next week? Take a guess.
+                hint: What will gas cost next week
+              - zh: 观众可以猜歌名赢奖品。
+                answer: The audience can take a guess at the song title to win a prize.
+                hint: at the song title
+          - chunk: I guess
+            items:
+              - zh: 我想咱们还是走路去吧。
+                answer: I guess we'd better walk.
+                hint: we'd better walk
+              - zh: 大概不会下大雨吧。
+                answer: I guess it won't rain heavily.
+                hint: won't rain heavily
+          - chunk: keep you guessing
+            items:
+              - zh: 这小说chapter章都有反转。
+                answer: This novel keeps you guessing with every chapter.
+                hint: with every chapter
+              - zh: 他从不把计划说全，老爱卖关子。
+                answer: He never tells the full plan—he keeps you guessing.
+                hint: never tells the full plan
+      - key: guess-answer-other
+        type: pattern_drill
+        title: 猜别的问题
+        pattern: guess the [noun]
+        patternMeaning: 猜……
+        direction: zh_to_en
+        items:
+          - zh: 试着猜一下密码。
+            answer: Try to guess the password.
+            hint: Try to
+          - zh: 孩子们抢着猜谜语答案。
+            answer: The kids competed to guess the riddle's answer.
+            hint: the riddle's answer
+          - zh: 别急着猜结果，先看数据。
+            answer: Don't rush to guess the result—look at the data first.
+            hint: look at the data first
+      - key: guess-clause-other
+        type: pattern_drill
+        title: 猜别的情况
+        pattern: guess (that) [clause]
+        patternMeaning: 猜想……
+        direction: zh_to_en
+        items:
+          - zh: 我猜他其实在撒谎。
+            answer: I guess he's actually lying.
+            hint: he's actually lying
+          - zh: 从脚印看，熊来过这边。
+            answer: From the tracks, I guessed that a bear had been here.
+            hint: a bear had been here
+          - zh: 你能猜到她为什么生气吗？
+            answer: Can you guess why she's angry?
+            hint: why she's angry
+      - key: take-guess-other
+        type: pattern_drill
+        title: 在别处随便估一下
+        pattern: take a guess (at)
+        patternMeaning: 估一估
+        direction: zh_to_en
+        items:
+          - zh: 这箱货有多重？你掂掂看。
+            answer: How heavy is this box? Take a guess.
+            hint: How heavy is this box
+          - zh: 受众大概多少人？先拍个数。
+            answer: How big is the audience? Take a guess at the size.
+            hint: at the size
+          - zh: 修复要多久？项目经理也只能猜。
+            answer: How long will the fix take? Even the PM can only take a guess.
+            hint: Even the PM
+      - key: guess-correctly-other
+        type: pattern_drill
+        title: 说在别的事上猜中
+        pattern: guess correctly
+        patternMeaning: 猜对
+        direction: zh_to_en
+        items:
+          - zh: 他猜对了哪条路最快。
+            answer: He guessed correctly which route was fastest.
+            hint: which route was fastest
+          - zh: 前三题她都答对了。
+            answer: She guessed correctly on the first three questions.
+            hint: the first three questions
+          - zh: 不是靠运气，你是真推出来的？
+            answer: You guessed correctly—was it luck or real reasoning?
+            hint: real reasoning
+      - key: keep-guessing-other
+        type: pattern_drill
+        title: 用悬念吊着别的事
+        pattern: keep [someone] guessing
+        patternMeaning: 让人琢磨不透
+        direction: zh_to_en
+        items:
+          - zh: 投票结果故意拖到最后一刻公布。
+            answer: They kept everyone guessing by announcing the vote at the last second.
+            hint: at the last second
+          - zh: 他换头像从不说明原因，够吊人胃口。
+            answer: He keeps his friends guessing every time he changes his profile photo without explaining.
+            hint: without explaining
+          - zh: 预告片把剧情藏得很好。
+            answer: The trailer keeps you guessing about the plot.
+            hint: about the plot
+      - key: guess-what-build
+        type: sentence_decomposition
+        title: 把「猜猜怎么着」说完整
+        sourceKind: chunk
+        sourceText: Guess what
+        fullSentence: Guess what—the client signed the contract this morning.
+        fullSentenceZh: 你猜怎么着，客户今早把合同签了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Guess what!
+            zh: 你猜怎么着！
+            highlight: ''
+            hint: 先用 Guess what 勾兴趣
+          - level: 2
+            label: 加一句事
+            en: Guess what—the client called.
+            zh: 你猜怎么着，客户来电话了。
+            highlight: the client called
+            hint: 补上客户来电话
+          - level: 3
+            label: 完整句
+            en: Guess what—the client signed the contract this morning.
+            zh: 你猜怎么着，客户今早把合同签了。
+            highlight: signed the contract this morning
+            hint: 把好消息说具体并加上今早
+      - key: guess-wait-build
+        type: sentence_decomposition
+        title: 把「只好再等等」说完整
+        sourceKind: chunk
+        sourceText: I guess we'll have to wait
+        fullSentence: The bus isn't coming—I guess we'll have to wait until the next one arrives.
+        fullSentenceZh: 这趟公交不来了，我想我们只能等下一班。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I guess we'll have to wait.
+            zh: 我想我们只能等了。
+            highlight: ''
+            hint: 先说只好等
+          - level: 2
+            label: 加原因
+            en: The bus isn't coming—I guess we'll have to wait.
+            zh: 这趟公交不来了，我想只能等了。
+            highlight: The bus isn't coming
+            hint: 补上公交不来的原因
+          - level: 3
+            label: 完整句
+            en: The bus isn't coming—I guess we'll have to wait until the next one arrives.
+            zh: 这趟公交不来了，我想我们只能等下一班。
+            highlight: until the next one arrives
+            hint: 说清等到下一班来

@@ -1,0 +1,386 @@
+learning:
+  exercises:
+    pipeline:
+      - key: evaluate-the-results
+        kind: chunk
+        type: chunk_substitution
+        title: 说评估结果
+        chunk: evaluate the results
+        chunkMeaning: 评估结果
+        direction: zh_to_en
+        items:
+          - zh: 实验结束后要评估结果。
+            answer: Evaluate the results after the experiment ends.
+            hint: after the experiment ends
+          - zh: 经理正在评估上季度的结果。
+            answer: The manager is evaluating the results from last quarter.
+            hint: from last quarter
+          - zh: 我们还没认真评估这些结果。
+            answer: We haven't seriously evaluated the results yet.
+            hint: haven't seriously；yet
+      - key: evaluate-whether-change-necessary
+        kind: chunk
+        type: chunk_substitution
+        title: 说评估变更是否必要
+        chunk: evaluate whether the change is necessary
+        chunkMeaning: 评估这次改动是否有必要
+        direction: zh_to_en
+        items:
+          - zh: 得先评估一下这次改动有没有必要。
+            answer: We need to evaluate whether the change is necessary.
+            hint: We need to
+          - zh: 委员会正在评估改革是否必要。
+            answer: The committee is evaluating whether the change is necessary.
+            hint: The committee is
+          - zh: 你有没有评估过换系统是不是真的必要？
+            answer: Have you evaluated whether the change is necessary?
+            hint: Have you evaluated
+      - key: evaluate-proposals-based-on-cost
+        kind: chunk
+        type: chunk_substitution
+        title: 说按成本评估提案
+        chunk: evaluate each proposal based on cost
+        chunkMeaning: 按成本评估每项提案
+        direction: zh_to_en
+        items:
+          - zh: 我们会按成本评估每一份提案。
+            answer: We'll evaluate each proposal based on cost.
+            hint: We'll；each proposal
+          - zh: 财务要求按成本来评估各个方案。
+            answer: Finance asked us to evaluate each proposal based on cost.
+            hint: Finance asked us to
+          - zh: 他们按成本把提案过了一遍。
+            answer: They evaluated each proposal based on cost.
+            hint: They evaluated
+      - key: evaluated-on-performance
+        kind: chunk
+        type: chunk_substitution
+        title: 说按绩效评估
+        chunk: evaluated on performance
+        chunkMeaning: 按绩效来评估
+        direction: zh_to_en
+        items:
+          - zh: 员工是按绩效来评估的。
+            answer: Employees are evaluated on performance.
+            hint: Employees are
+          - zh: 这个项目也会按绩效来评。
+            answer: This project will also be evaluated on performance.
+            hint: will also be
+          - zh: 她不是只看销量，绩效评估很全面。
+            answer: She's not judged only on sales—she's evaluated on performance more broadly.
+            hint: more broadly
+      - key: evaluate-the-risk
+        kind: chunk
+        type: chunk_substitution
+        title: 说评估风险
+        chunk: evaluate the risk
+        chunkMeaning: 评估风险
+        direction: zh_to_en
+        items:
+          - zh: 投资前一定要评估风险。
+            answer: Evaluate the risk before you invest.
+            hint: before you invest
+          - zh: 律师帮我们评估了法律风险。
+            answer: The lawyer helped us evaluate the risk.
+            hint: The lawyer helped us
+          - zh: 团队还在评估安全风险。
+            answer: The team is still evaluating the risk.
+            hint: is still evaluating
+      - key: carefully-evaluate
+        kind: chunk
+        type: chunk_substitution
+        title: 说仔细评估
+        chunk: carefully evaluate
+        chunkMeaning: 仔细评估
+        direction: zh_to_en
+        items:
+          - zh: 签长约前要仔细评估。
+            answer: Carefully evaluate before signing a long contract.
+            hint: before signing a long contract
+          - zh: 董事会仔细评估了所有证据。
+            answer: The board carefully evaluated all the evidence.
+            hint: all the evidence
+          - zh: 我们需要时间仔细评估这件事。
+            answer: We need time to carefully evaluate this.
+            hint: We need time to
+      - key: evaluate-performance
+        kind: chunk
+        type: chunk_substitution
+        title: 说评估表现
+        chunk: evaluate performance
+        chunkMeaning: 评估表现
+        direction: zh_to_en
+        items:
+          - zh: 每年我们都会评估团队表现。
+            answer: Every year we evaluate performance on the team.
+            hint: on the team
+          - zh: 新系统能帮我们评估销售表现。
+            answer: The new system can help us evaluate performance in sales.
+            hint: in sales
+          - zh: 你怎么评估自己的表现？
+            answer: How do you evaluate your own performance?
+            hint: your own
+      - key: evaluate-effectiveness
+        kind: chunk
+        type: chunk_substitution
+        title: 说评估效果
+        chunk: evaluate its effectiveness
+        chunkMeaning: 评估其有效性
+        direction: zh_to_en
+        items:
+          - zh: 三个月后我们要评估这套培训的效果。
+            answer: In three months we'll evaluate its effectiveness.
+            hint: In three months
+          - zh: 研究者正在评估疗法的有效性。
+            answer: Researchers are evaluating its effectiveness.
+            hint: Researchers are
+          - zh: 上线后记得评估它的效果。
+            answer: Remember to evaluate its effectiveness after launch.
+            hint: after launch
+      - key: evaluate-objectively
+        kind: chunk
+        type: chunk_substitution
+        title: 说客观评估
+        chunk: evaluate objectively
+        chunkMeaning: 客观评估
+        direction: zh_to_en
+        items:
+          - zh: 评委要尽量客观评估作品。
+            answer: Judges should evaluate objectively.
+            hint: Judges should
+          - zh: 很难客观评估自己的进步。
+            answer: It's hard to evaluate your progress objectively.
+            hint: your progress
+          - zh: 第三方会客观评估整个流程。
+            answer: A third party will evaluate the process objectively.
+            hint: the process
+      - key: evaluate-against-criteria
+        kind: chunk
+        type: chunk_substitution
+        title: 说对照明确标准评估
+        chunk: evaluate against clear criteria
+        chunkMeaning: 按明确标准评估
+        direction: zh_to_en
+        items:
+          - zh: 所有申请都按明确标准评估。
+            answer: All applications are evaluated against clear criteria.
+            hint: All applications are
+          - zh: 我们会对照清晰标准来评方案。
+            answer: We'll evaluate proposals against clear criteria.
+            hint: proposals
+          - zh: 没有标准就没法公正评估。
+            answer: Without standards, you can't evaluate against clear criteria.
+            hint: Without standards
+      - key: evaluate-whether-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在判断是否值得做
+        chunk: evaluate whether
+        chunkMeaning: 评估是否
+        direction: en_to_zh
+        items:
+          - en: We should evaluate whether the benefits outweigh the costs.
+            answer: 我们应该评估收益是否大于成本。
+            hint: benefits outweigh；the costs
+          - en: She's evaluating whether to stay in her current role.
+            answer: 她在评估要不要继续留在现在的岗位。
+            hint: to stay；current role
+          - en: The panel will evaluate whether the data supports the claim.
+            answer: 专家组将评估数据是否支持这一说法。
+            hint: the data supports；the claim
+      - key: evaluated-on-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂按什么标准评估
+        chunk: evaluated on
+        chunkMeaning: 按……评估
+        direction: en_to_zh
+        items:
+          - en: Interns are evaluated on attitude and learning speed.
+            answer: 实习生按态度和学习速度来评估。
+            hint: attitude；learning speed
+          - en: The campaign was evaluated on reach and conversion.
+            answer: 这次活动按触达和转化率来评估。
+            hint: reach；conversion
+          - en: Projects get evaluated on ROI, not just hours spent.
+            answer: 项目看投资回报率而不只是工时。
+            hint: ROI；not just hours
+      - key: evaluate-state
+        type: vocab_sentence_building
+        title: 说评估结果与风险
+        vocabWord: evaluate
+        vocabMeaning: 评估；评价
+        direction: zh_to_en
+        patterns:
+          - chunk: evaluate the results
+            items:
+              - zh: 复盘时我们先评估结果。
+                answer: During the review, we evaluate the results first.
+                hint: During the review；first
+              - zh: 数据团队会评估实验结果。
+                answer: The data team will evaluate the results of the experiment.
+                hint: of the experiment
+          - chunk: evaluate the risk
+            items:
+              - zh: 拨款前要评估风险。
+                answer: Evaluate the risk before approving the funding.
+                hint: before approving the funding
+              - zh: 他们重新评估了市场风险。
+                answer: They re-evaluated the risk in the market.
+                hint: re-evaluated；in the market
+          - chunk: carefully evaluate
+            items:
+              - zh: 这个决定需要仔细评估。
+                answer: This decision needs to be carefully evaluated.
+                hint: needs to be
+              - zh: 请仔细评估再回复客户。
+                answer: Please carefully evaluate before you reply to the client.
+                hint: before you reply
+      - key: evaluate-whether-other
+        type: pattern_drill
+        title: 说评估别的情况是否成立
+        pattern: evaluate whether [clause]
+        patternMeaning: 评估是否……
+        direction: zh_to_en
+        items:
+          - zh: 得评估时间表是否现实。
+            answer: We need to evaluate whether the timeline is realistic.
+            hint: the timeline is realistic
+          - zh: 她在评估搬家是否划算。
+            answer: She's evaluating whether moving is worth it.
+            hint: moving is worth it
+          - zh: 医生会评估手术是否必要。
+            answer: The doctor will evaluate whether surgery is necessary.
+            hint: surgery is necessary
+      - key: evaluate-based-on-other
+        type: pattern_drill
+        title: 说按别的维度评估
+        pattern: evaluate [something] based on [criterion]
+        patternMeaning: 根据……评估
+        direction: zh_to_en
+        items:
+          - zh: 按客户反馈来评估产品。
+            answer: Evaluate the product based on customer feedback.
+            hint: customer feedback
+          - zh: 他们按质量而不是价格来评供应商。
+            answer: They evaluate suppliers based on quality, not price.
+            hint: suppliers；not price
+          - zh: 每项创意都按可行性评估。
+            answer: Each idea is evaluated based on feasibility.
+            hint: feasibility
+      - key: evaluate-on-other
+        type: pattern_drill
+        title: 说按别的指标评估
+        pattern: be evaluated on [noun]
+        patternMeaning: 按……受评估
+        direction: zh_to_en
+        items:
+          - zh: 老师按参与度评估学生。
+            answer: Teachers evaluate students on participation.
+            hint: participation
+          - zh: 政策将按公平性来评估。
+            answer: The policy will be evaluated on fairness.
+            hint: fairness
+          - zh: 软件按稳定性和易用性打分。
+            answer: The software is evaluated on stability and ease of use.
+            hint: stability；ease of use
+      - key: evaluate-against-other
+        type: pattern_drill
+        title: 说对照别的标准评估
+        pattern: evaluate against [criteria/standards]
+        patternMeaning: 对照……评估
+        direction: zh_to_en
+        items:
+          - zh: 对照行业基准评估业绩。
+            answer: Evaluate performance against industry benchmarks.
+            hint: industry benchmarks
+          - zh: 方案将对照公司目标来评。
+            answer: The plan will be evaluated against company goals.
+            hint: company goals
+          - zh: 别凭感觉，要对照标准评估。
+            answer: Don't go by gut feeling—evaluate against clear standards.
+            hint: clear standards
+      - key: evaluate-objectively-other
+        type: pattern_drill
+        title: 说客观看待别的情况
+        pattern: evaluate [something] objectively
+        patternMeaning: 客观评估
+        direction: zh_to_en
+        items:
+          - zh: 尽量客观评估双方论点。
+            answer: Try to evaluate both sides' arguments objectively.
+            hint: both sides' arguments
+          - zh: 外部顾问会客观评估流程。
+            answer: Outside consultants will evaluate the process objectively.
+            hint: Outside consultants
+          - zh: 她学会了客观看待自己的失误。
+            answer: She learned to evaluate her mistakes objectively.
+            hint: her mistakes
+      - key: evaluate-effectiveness-other
+        type: pattern_drill
+        title: 说评估别的方法有没有用
+        pattern: evaluate the effectiveness of [something]
+        patternMeaning: 评估……的有效性
+        direction: zh_to_en
+        items:
+          - zh: 我们要评估新广告的效果。
+            answer: We need to evaluate the effectiveness of the new ad.
+            hint: the new ad
+          - zh: 研究评估了远程办公政策的效果。
+            answer: The study evaluated the effectiveness of the remote-work policy.
+            hint: remote-work policy
+          - zh: 每年评估培训项目的效果。
+            answer: Each year they evaluate the effectiveness of training programs.
+            hint: training programs
+      - key: evaluate-results-build
+        type: sentence_decomposition
+        title: 把评估结果说完整
+        sourceKind: chunk
+        sourceText: evaluate the results
+        fullSentence: After the pilot ends, we'll evaluate the results and decide whether to roll it out company-wide.
+        fullSentenceZh: 试点结束后我们会评估结果，再决定要不要在全公司推广。
+        levels:
+          - level: 1
+            label: 核心句
+            en: After the pilot, we'll evaluate the results.
+            zh: 试点结束后我们会评估结果。
+            highlight: ''
+            hint: 先说试点后评估结果
+          - level: 2
+            label: 加后续动作
+            en: After the pilot, we'll evaluate the results and decide next steps.
+            zh: 试点后我们会评估结果并决定下一步。
+            highlight: and decide next steps
+            hint: 补上决定下一步
+          - level: 3
+            label: 完整句
+            en: After the pilot ends, we'll evaluate the results and decide whether to roll it out company-wide.
+            zh: 试点结束后我们会评估结果，再决定要不要在全公司推广。
+            highlight: whether to roll it out company-wide
+            hint: 点出是否全公司推广
+      - key: evaluate-risk-build
+        type: sentence_decomposition
+        title: 把评估风险说完整
+        sourceKind: chunk
+        sourceText: evaluate the risk
+        fullSentence: Before you invest more, evaluate the risk and talk it through with your advisor.
+        fullSentenceZh: 追加投资前请先评估风险，并和顾问把这事谈透。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Evaluate the risk before you invest more.
+            zh: 追加投资前请先评估风险。
+            highlight: ''
+            hint: 先说追加投资前评估风险
+          - level: 2
+            label: 加沟通
+            en: Evaluate the risk and talk with your advisor.
+            zh: 评估风险，并和顾问沟通。
+            highlight: and talk with your advisor
+            hint: 补上跟顾问沟通
+          - level: 3
+            label: 完整句
+            en: Before you invest more, evaluate the risk and talk it through with your advisor.
+            zh: 追加投资前请先评估风险，并和顾问把这事谈透。
+            highlight: talk it through
+            hint: 把沟通说成谈透

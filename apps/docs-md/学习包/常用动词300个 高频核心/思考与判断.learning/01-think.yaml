@@ -1,0 +1,435 @@
+learning:
+  exercises:
+    pipeline:
+      - key: think-about-changing-jobs
+        kind: chunk
+        type: chunk_substitution
+        title: 说考虑换工作
+        chunk: think about changing jobs
+        chunkMeaning: 考虑换工作
+        direction: zh_to_en
+        items:
+          - zh: 我最近一直在考虑换工作。
+            answer: I've been thinking about changing jobs lately.
+            hint: I've been thinking；lately
+          - zh: 你认真考虑过换工作吗？
+            answer: Have you seriously thought about changing jobs?
+            hint: Have you；seriously
+          - zh: 我现在还不想考虑换工作。
+            answer: I don't want to think about changing jobs right now.
+            hint: don't want to；right now
+      - key: think-of-a-better-way
+        kind: chunk
+        type: chunk_substitution
+        title: 说想到更好的办法
+        chunk: think of a better way
+        chunkMeaning: 想到更好的办法
+        direction: zh_to_en
+        items:
+          - zh: 我们得想出一个更好的办法。
+            answer: We need to think of a better way.
+            hint: need to
+          - zh: 你能想出更好的办法吗？
+            answer: Can you think of a better way?
+            hint: Can you
+          - zh: 我当时什么更好的办法都想不出来。
+            answer: I couldn't think of a better way at that time.
+            hint: couldn't；at that time
+      - key: think-of-the-idea
+        kind: chunk
+        type: chunk_substitution
+        title: 问对方觉得这个想法怎么样
+        chunk: What do you think of the idea?
+        chunkMeaning: 你觉得这个想法怎么样？
+        direction: zh_to_en
+        items:
+          - zh: 你觉得这个想法怎么样？
+            answer: What do you think of the idea?
+            hint: What do you think of
+          - zh: 你觉得这个计划怎么样？
+            answer: What do you think of the plan?
+            hint: the plan
+          - zh: 说实话，你怎么看这个建议？
+            answer: Honestly, what do you think of the suggestion?
+            hint: Honestly；the suggestion
+      - key: think-we-need-more-time
+        kind: chunk
+        type: chunk_substitution
+        title: 说觉得我们需要更多时间
+        chunk: I think we need more time
+        chunkMeaning: 我觉得我们需要更多时间
+        direction: zh_to_en
+        items:
+          - zh: 我觉得我们需要更多时间。
+            answer: I think we need more time.
+            hint: I think
+          - zh: 我不觉得我们需要更多时间。
+            answer: I don't think we need more time.
+            hint: I don't think
+          - zh: 你觉得我们需要更多时间吗？
+            answer: Do you think we need more time?
+            hint: Do you think
+      - key: think-of-moving-abroad
+        kind: chunk
+        type: chunk_substitution
+        title: 说考虑搬到国外
+        chunk: think of moving abroad
+        chunkMeaning: 考虑搬到国外
+        direction: zh_to_en
+        items:
+          - zh: 你有没有想过搬到国外？
+            answer: Have you ever thought of moving abroad?
+            hint: Have you ever；thought of
+          - zh: 我从来没想过搬到国外。
+            answer: I've never thought of moving abroad.
+            hint: never；thought of
+          - zh: 她正在考虑搬到国外工作。
+            answer: She's thinking of moving abroad for work.
+            hint: thinking of；for work
+      - key: think-twice
+        kind: chunk
+        type: chunk_substitution
+        title: 说做决定前要三思
+        chunk: think twice before deciding
+        chunkMeaning: 决定前三思
+        direction: zh_to_en
+        items:
+          - zh: 做那个决定之前你应该三思。
+            answer: You should think twice before making that decision.
+            hint: should；before making that decision
+          - zh: 签合同前我得再好好想想。
+            answer: I need to think twice before signing the contract.
+            hint: before signing the contract
+          - zh: 如果你真的在意她，就别急着下决定。
+            answer: If you really care about her, think twice before deciding.
+            hint: If you really care；before deciding
+      - key: think-it-over
+        kind: chunk
+        type: chunk_substitution
+        title: 说仔细考虑一下
+        chunk: think it over
+        chunkMeaning: 仔细考虑
+        direction: zh_to_en
+        items:
+          - zh: 让我仔细想想再回复你。
+            answer: Let me think it over and get back to you.
+            hint: Let me；get back to you
+          - zh: 你不用马上决定，先好好想想。
+            answer: You don't have to decide now—think it over first.
+            hint: don't have to；first
+          - zh: 我已经仔细考虑过了，还是想试试。
+            answer: I've thought it over, and I still want to try.
+            hint: I've thought；still want to try
+      - key: think-ahead
+        kind: chunk
+        type: chunk_substitution
+        title: 说要提前考虑
+        chunk: think ahead
+        chunkMeaning: 提前考虑
+        direction: zh_to_en
+        items:
+          - zh: 我们需要提前考虑并规划明年。
+            answer: We need to think ahead and plan for next year.
+            hint: need to；plan for next year
+          - zh: 如果你提前想好，就不会这么慌。
+            answer: If you think ahead, you won't panic like this.
+            hint: If；won't panic
+          - zh: 好的领导会提前想好下一步。
+            answer: Good leaders think ahead about the next step.
+            hint: Good leaders；the next step
+      - key: think-clearly
+        kind: chunk
+        type: chunk_substitution
+        title: 说脑子清楚不了
+        chunk: think clearly
+        chunkMeaning: 清楚思考
+        direction: zh_to_en
+        items:
+          - zh: 我累的时候脑子不太清楚。
+            answer: I can't think clearly when I'm tired.
+            hint: can't；when I'm tired
+          - zh: 先冷静一下，我们才能想清楚。
+            answer: Calm down first so we can think clearly.
+            hint: Calm down first；so
+          - zh: 压力太大时，她很难想清楚。
+            answer: When the pressure is too high, she finds it hard to think clearly.
+            hint: When the pressure is too high；hard to
+      - key: think-highly-of
+        kind: chunk
+        type: chunk_substitution
+        title: 说很认可某人的工作
+        chunk: think highly of her work
+        chunkMeaning: 高度评价她的工作
+        direction: zh_to_en
+        items:
+          - zh: 他们很认可她的工作。
+            answer: They think highly of her work.
+            hint: think highly of
+          - zh: 老板其实很看重你的意见。
+            answer: The boss actually thinks highly of your opinions.
+            hint: actually；your opinions
+          - zh: 我一直很认可他处理问题的方式。
+            answer: I've always thought highly of the way he handles problems.
+            hint: I've always；handles problems
+      - key: think-for-yourself
+        kind: chunk
+        type: chunk_substitution
+        title: 说要独立思考
+        chunk: think for yourself
+        chunkMeaning: 独立思考
+        direction: zh_to_en
+        items:
+          - zh: 你需要学会独立思考。
+            answer: You need to learn to think for yourself.
+            hint: need to learn to
+          - zh: 别只听别人说，自己想想。
+            answer: Don't just listen to others—think for yourself.
+            hint: Don't just；—
+          - zh: 这件事得你自己想清楚。
+            answer: You'll have to think for yourself on this one.
+            hint: You'll have to；on this one
+      - key: think-about-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说在考虑某事
+        chunk: think about
+        chunkMeaning: 思考；考虑
+        direction: en_to_zh
+        items:
+          - en: I've been thinking about what you said yesterday.
+            answer: 我一直在想你昨天说的话。
+            hint: I've been thinking；yesterday
+          - en: She's thinking about quitting her job.
+            answer: 她在考虑辞职。
+            hint: quitting her job
+          - en: Give me a minute to think about it.
+            answer: 给我一分钟想想。
+            hint: Give me a minute
+      - key: think-opinion-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方表达看法
+        chunk: I think
+        chunkMeaning: 我觉得；我认为
+        direction: en_to_zh
+        items:
+          - en: I think we should wait a little longer.
+            answer: 我觉得我们应该再等一会儿。
+            hint: should wait；a little longer
+          - en: I don't think he's right about this.
+            answer: 我觉得他在这件事上不对。
+            hint: I don't think；about this
+          - en: Do you think this will work?
+            answer: 你觉得这能行吗？
+            hint: Do you think；work
+      - key: think-state
+        type: vocab_sentence_building
+        title: 说看法和正在考虑
+        vocabWord: think
+        vocabMeaning: 认为；思考
+        direction: zh_to_en
+        patterns:
+          - chunk: I think
+            items:
+              - zh: 我觉得我们应该早点出发。
+                answer: I think we should leave earlier.
+                hint: should leave earlier
+              - zh: 我不觉得这是个好主意。
+                answer: I don't think this is a good idea.
+                hint: I don't think
+          - chunk: think about it
+            items:
+              - zh: 让我想想再告诉你。
+                answer: Let me think about it and tell you later.
+                hint: Let me；later
+              - zh: 你先别急着回答，再想想。
+                answer: Don't rush to answer—think about it first.
+                hint: Don't rush；first
+          - chunk: think of
+            items:
+              - zh: 我当时什么都想不出来。
+                answer: I couldn't think of anything to say.
+                hint: couldn't；anything to say
+              - zh: 你能想到更好的例子吗？
+                answer: Can you think of a better example?
+                hint: a better example
+      - key: think-about-other
+        type: pattern_drill
+        title: 说考虑别的事情
+        pattern: think about [noun/doing]
+        patternMeaning: 思考、考虑
+        direction: zh_to_en
+        items:
+          - zh: 我最近一直在想明年的计划。
+            answer: I've been thinking about next year's plan lately.
+            hint: I've been thinking；lately
+          - zh: 你有没有考虑过换个城市生活？
+            answer: Have you thought about living in another city?
+            hint: Have you；living in another city
+          - zh: 先别想工作了，休息一下。
+            answer: Stop thinking about work for a while and take a break.
+            hint: Stop thinking；take a break
+      - key: think-of-other
+        type: pattern_drill
+        title: 说想到别的东西
+        pattern: think of [noun]
+        patternMeaning: 想到；想起
+        direction: zh_to_en
+        items:
+          - zh: 你能想到他的名字吗？
+            answer: Can you think of his name?
+            hint: Can you
+          - zh: 一提到夏天，我就会想到海边。
+            answer: When I think of summer, I think of the beach.
+            hint: When I think of；the beach
+          - zh: 我想不出还有谁能帮忙。
+            answer: I can't think of anyone else who can help.
+            hint: can't；anyone else
+      - key: think-clause-other
+        type: pattern_drill
+        title: 说别的看法
+        pattern: I think [clause]
+        patternMeaning: 认为……
+        direction: zh_to_en
+        items:
+          - zh: 我觉得他明天会来。
+            answer: I think he'll come tomorrow.
+            hint: he'll come；tomorrow
+          - zh: 我觉得我们还可以再试一次。
+            answer: I think we can try one more time.
+            hint: can try；one more time
+          - zh: 我不觉得问题有那么严重。
+            answer: I don't think the problem is that serious.
+            hint: I don't think；that serious
+      - key: think-of-doing-other
+        type: pattern_drill
+        title: 说考虑做别的事
+        pattern: think of [doing]
+        patternMeaning: 考虑做某事
+        direction: zh_to_en
+        items:
+          - zh: 你有没有想过自己创业？
+            answer: Have you ever thought of starting your own business?
+            hint: Have you ever；starting your own business
+          - zh: 我正在考虑周末去爬山。
+            answer: I'm thinking of going hiking this weekend.
+            hint: thinking of；going hiking
+          - zh: 他们从没想过放弃。
+            answer: They never thought of giving up.
+            hint: never；giving up
+      - key: think-twice-other
+        type: pattern_drill
+        title: 说在别的事前三思
+        pattern: think twice
+        patternMeaning: 三思
+        direction: zh_to_en
+        items:
+          - zh: 借那么多钱之前你得三思。
+            answer: You should think twice before borrowing so much money.
+            hint: before borrowing
+          - zh: 看到价格以后，我重新考虑了一下。
+            answer: After seeing the price, I thought twice.
+            hint: After seeing；thought twice
+          - zh: 发那条消息前最好再想想。
+            answer: You'd better think twice before sending that message.
+            hint: You'd better；before sending
+      - key: think-it-over-other
+        type: pattern_drill
+        title: 说把别的事再想想
+        pattern: think it over
+        patternMeaning: 仔细考虑
+        direction: zh_to_en
+        items:
+          - zh: 这个报价你再想想，明天告诉我们。
+            answer: Think the offer over and tell us tomorrow.
+            hint: the offer；tomorrow
+          - zh: 她说她要再考虑几天。
+            answer: She said she needed a few days to think it over.
+            hint: needed a few days
+          - zh: 别着急，先把这件事想清楚。
+            answer: Don't rush—think it over carefully first.
+            hint: Don't rush；carefully
+      - key: think-ahead-other
+        type: pattern_drill
+        title: 说提前考虑别的事
+        pattern: think ahead
+        patternMeaning: 提前考虑
+        direction: zh_to_en
+        items:
+          - zh: 旅行前最好提前把细节想好。
+            answer: It's best to think ahead about the details before the trip.
+            hint: It's best；before the trip
+          - zh: 如果我们提前想好，就不会浪费这么多时间。
+            answer: If we had thought ahead, we wouldn't have wasted so much time.
+            hint: If we had；wouldn't have wasted
+          - zh: 团队需要提前考虑可能的风险。
+            answer: The team needs to think ahead about possible risks.
+            hint: needs to；possible risks
+      - key: think-highly-other
+        type: pattern_drill
+        title: 说高度评价别的人或事
+        pattern: think highly of [someone/something]
+        patternMeaning: 高度评价
+        direction: zh_to_en
+        items:
+          - zh: 同事们都很认可他的专业能力。
+            answer: His colleagues think highly of his professional skills.
+            hint: His colleagues；professional skills
+          - zh: 我一直很看重诚实。
+            answer: I've always thought highly of honesty.
+            hint: I've always；honesty
+          - zh: 客户对这次服务评价很高。
+            answer: The client thinks highly of this service.
+            hint: The client；this service
+      - key: think-jobs-build
+        type: sentence_decomposition
+        title: 把考虑换工作说完整
+        sourceKind: chunk
+        sourceText: think about changing jobs
+        fullSentence: I've been thinking about changing jobs because I want more growth.
+        fullSentenceZh: 我一直在考虑换工作，因为我想有更多成长。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I've been thinking about changing jobs.
+            zh: 我一直在考虑换工作。
+            highlight: ''
+            hint: 先说一直在考虑换工作
+          - level: 2
+            label: 加原因开头
+            en: I've been thinking about changing jobs because I want more.
+            zh: 我一直在考虑换工作，因为我想要更多。
+            highlight: because I want more
+            hint: 补上因为我想要更多
+          - level: 3
+            label: 完整句
+            en: I've been thinking about changing jobs because I want more growth.
+            zh: 我一直在考虑换工作，因为我想有更多成长。
+            highlight: growth
+            hint: 把“更多”具体成成长
+      - key: think-wait-build
+        type: sentence_decomposition
+        title: 把再等一会儿的想法说完整
+        sourceKind: chunk
+        sourceText: I think we need more time
+        fullSentence: I think we should wait a little longer until we have more information.
+        fullSentenceZh: 我觉得我们应该再等一会儿，直到拿到更多信息。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I think we should wait.
+            zh: 我觉得我们应该等。
+            highlight: ''
+            hint: 先说我觉得我们应该等
+          - level: 2
+            label: 加一点时间
+            en: I think we should wait a little longer.
+            zh: 我觉得我们应该再等一会儿。
+            highlight: a little longer
+            hint: 补上再等一会儿
+          - level: 3
+            label: 完整句
+            en: I think we should wait a little longer until we have more information.
+            zh: 我觉得我们应该再等一会儿，直到拿到更多信息。
+            highlight: until we have more information
+            hint: 补上直到拿到更多信息

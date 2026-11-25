@@ -1,0 +1,369 @@
+learning:
+  exercises:
+    pipeline:
+      - key: assume-data-correct
+        kind: chunk
+        type: chunk_substitution
+        title: 说假定数据没错
+        chunk: assume that the data is correct
+        chunkMeaning: 假定数据是正确的
+        direction: zh_to_en
+        items:
+          - zh: 我们先假定数据是正确的。
+            answer: Let's assume that the data is correct.
+            hint: Let's assume
+          - zh: 报告里默认数据没问题。
+            answer: The report assumes that the data is correct.
+            hint: The report assumes
+          - zh: 除非你证明有误，我就当数据是对的。
+            answer: Unless you prove otherwise, I'll assume that the data is correct.
+            hint: Unless you prove otherwise；I'll
+      - key: assume-the-worst
+        kind: chunk
+        type: chunk_substitution
+        title: 说往最坏的情况想
+        chunk: assume the worst
+        chunkMeaning: 往最坏的情况想
+        direction: zh_to_en
+        items:
+          - zh: 别一上来就往最坏的情况想。
+            answer: Don't assume the worst right away.
+            hint: Don't；right away
+          - zh: 他一失联，大家就都想到了最坏的结果。
+            answer: Once he went silent, everyone assumed the worst.
+            hint: Once he went silent；everyone
+          - zh: 我倾向于先往坏处想，再核实。
+            answer: I tend to assume the worst first, then check.
+            hint: I tend to；then check
+      - key: assume-task-simple
+        kind: chunk
+        type: chunk_substitution
+        title: 说以为任务很简单
+        chunk: assume the task to be simple
+        chunkMeaning: 以为任务简单
+        direction: zh_to_en
+        items:
+          - zh: 我们当时以为这个任务很简单。
+            answer: We assumed the task to be simple at the time.
+            hint: at the time
+          - zh: 别理所当然地觉得这事简单。
+            answer: Don't just assume the task to be simple.
+            hint: Don't just assume
+          - zh: 新手往往默认工作都很简单。
+            answer: Newcomers often assume the task to be simple.
+            hint: Newcomers often
+      - key: assume-responsibility-mistake
+        kind: chunk
+        type: chunk_substitution
+        title: 说为错误承担责任
+        chunk: assume responsibility for the mistake
+        chunkMeaning: 为错误承担责任
+        direction: zh_to_en
+        items:
+          - zh: 经理当众为这次失误承担了责任。
+            answer: The manager assumed responsibility for the mistake in public.
+            hint: in public
+          - zh: 你得为自己的错误负责。
+            answer: You need to assume responsibility for the mistake.
+            hint: You need to
+          - zh: 她愿意承担错误，没有推卸给别人。
+            answer: She was willing to assume responsibility for the mistake instead of blaming others.
+            hint: was willing to；instead of blaming others
+      - key: reasonable-to-assume
+        kind: chunk
+        type: chunk_substitution
+        title: 说这么假定合情合理
+        chunk: reasonable to assume
+        chunkMeaning: 这样假定是合理的
+        direction: zh_to_en
+        items:
+          - zh: 有这些数据，这么假定是合理的。
+            answer: With this data, it's reasonable to assume.
+            hint: With this data；it's
+          - zh: 看他反应，合理推测他已经知道了。
+            answer: From his reaction, it's reasonable to assume he already knows.
+            hint: From his reaction；he already knows
+          - zh: 在缺少反证时，这么假设说得通。
+            answer: Without contrary evidence, it's reasonable to assume that's true.
+            hint: Without contrary evidence；that's true
+      - key: wrongly-assume
+        kind: chunk
+        type: chunk_substitution
+        title: 说误以为
+        chunk: wrongly assume
+        chunkMeaning: 错误地假定
+        direction: zh_to_en
+        items:
+          - zh: 我误以为他已经同意了。
+            answer: I wrongly assumed he had already agreed.
+            hint: he had already agreed
+          - zh: 很多人错以为注册就等于能用了。
+            answer: Many people wrongly assume registration means it's ready to use.
+            hint: registration means；ready to use
+          - zh: 你别想当然，别再猜错了。
+            answer: Don't wrongly assume again—check the facts.
+            hint: Don't；check the facts
+      - key: automatically-assume
+        kind: chunk
+        type: chunk_substitution
+        title: 说下意识就认定
+        chunk: automatically assume
+        chunkMeaning: 自动就想当然
+        direction: zh_to_en
+        items:
+          - zh: 人一紧张就会下意识觉得大家在盯着自己。
+            answer: When we're nervous, we automatically assume everyone is watching us.
+            hint: When we're nervous；everyone is watching us
+          - zh: 别一看到差评就默认产品不行。
+            answer: Don't automatically assume the product is bad just because of one bad review.
+            hint: Don't；just because of one bad review
+          - zh: 系统会默认你已读通知。
+            answer: The system automatically assumes you've read the notice.
+            hint: The system；you've read the notice
+      - key: assume-control-project
+        kind: chunk
+        type: chunk_substitution
+        title: 说接手项目主导权
+        chunk: assume control of the project
+        chunkMeaning: 接手项目掌控权
+        direction: zh_to_en
+        items:
+          - zh: 下周她将接手整个项目。
+            answer: Next week she will assume control of the project.
+            hint: Next week she will
+          - zh: 总监离职后，由他接管项目。
+            answer: After the director left, he assumed control of the project.
+            hint: After the director left
+          - zh: 董事会谁有权接管这个项目？
+            answer: Who on the board can assume control of the project?
+            hint: Who on the board
+      - key: assume-leading-role
+        kind: chunk
+        type: chunk_substitution
+        title: 说担任牵头角色
+        chunk: assume a leading role
+        chunkMeaning: 担任主导角色
+        direction: zh_to_en
+        items:
+          - zh: 今年她会在团队里挑大梁。
+            answer: This year she will assume a leading role on the team.
+            hint: This year she will；on the team
+          - zh: 谈判时他主动站到了主导位置。
+            answer: In the negotiation, he assumed a leading role.
+            hint: In the negotiation
+          - zh: 年轻人也可以在这个项目里发挥带头作用。
+            answer: Younger members can also assume a leading role in this project.
+            hint: Younger members can also；in this project
+      - key: assume-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方的预设前提
+        chunk: assume that
+        chunkMeaning: 假定；认为
+        direction: en_to_zh
+        items:
+          - en: I assume that everyone has read the briefing.
+            answer: 我假定大家都看过简报了。
+            hint: everyone has read；the briefing
+          - en: Don't assume that the numbers won't change.
+            answer: 别假定数字不会变。
+            hint: the numbers won't change
+          - en: We can't assume that the client will agree.
+            answer: 我们不能认定客户一定会同意。
+            hint: the client will agree
+      - key: assume-worst-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在往坏处想
+        chunk: assume the worst
+        chunkMeaning: 往最坏想
+        direction: en_to_zh
+        items:
+          - en: When he didn't reply, she assumed the worst.
+            answer: 他没回复，她就往最坏的情况想了。
+            hint: didn't reply
+          - en: Try not to assume the worst before we get the test results.
+            answer: 在拿到检测结果之前，尽量别往最坏想。
+            hint: before we get；the test results
+          - en: Assuming the worst won't help us make a clear plan.
+            answer: 一味往坏处想，帮不了我们定清计划。
+            hint: won't help us；make a clear plan
+      - key: assume-state
+        type: vocab_sentence_building
+        title: 说假定、担当和想当然
+        vocabWord: assume
+        vocabMeaning: 假定；认为；承担
+        direction: zh_to_en
+        patterns:
+          - chunk: assume that
+            items:
+              - zh: 我默认大家都知道截止日期。
+                answer: I assume that everyone knows the deadline.
+                hint: everyone knows；the deadline
+              - zh: 别理所当然地认为他会道歉。
+                answer: Don't assume that he'll apologize.
+                hint: Don't assume；he'll apologize
+          - chunk: assume responsibility
+            items:
+              - zh: 团队负责人要为结果担责。
+                answer: The team lead should assume responsibility for the outcome.
+                hint: The team lead should；the outcome
+              - zh: 她主动承担了沟通失误的责任。
+                answer: She assumed responsibility for the communication error.
+                hint: the communication error
+          - chunk: assume the worst
+            items:
+              - zh: 没消息时别先往坏处想。
+                answer: When there's no news, don't assume the worst.
+                hint: When there's no news
+              - zh: 他习惯把沉默想成最坏情况。
+                answer: He's used to assuming the worst when people go quiet.
+                hint: He's used to；when people go quiet
+      - key: assume-that-other
+        type: pattern_drill
+        title: 说别的默认前提
+        pattern: assume (that) [clause]
+        patternMeaning: 假定……
+        direction: zh_to_en
+        items:
+          - zh: 我原以为会议会改期。
+            answer: I assumed the meeting would be rescheduled.
+            hint: would be rescheduled
+          - zh: 设备正常时，大家默认不会出问题。
+            answer: When the equipment works, people assume nothing will go wrong.
+            hint: nothing will go wrong
+          - zh: 你能别默认我随时有空吗？
+            answer: Can you stop assuming I'm always free?
+            hint: stop assuming；I'm always free
+      - key: assume-worst-other
+        type: pattern_drill
+        title: 在别的场合往坏处想
+        pattern: assume the worst
+        patternMeaning: 往最坏想
+        direction: zh_to_en
+        items:
+          - zh: 医生叫他先别自己吓自己。
+            answer: The doctor told him not to assume the worst.
+            hint: The doctor told him
+          - zh: 市场一动荡，投资人就容易悲观。
+            answer: When the market shakes, investors assume the worst.
+            hint: When the market shakes；investors
+          - zh: 等官方声明出来再下结论吧。
+            answer: Wait for the official statement before you assume the worst.
+            hint: Wait for；the official statement
+      - key: reasonable-assume-other
+        type: pattern_drill
+        title: 说别的合理推断
+        pattern: it's reasonable to assume [clause]
+        patternMeaning: 合理假定
+        direction: zh_to_en
+        items:
+          - zh: 票卖光了，合理推测他很受欢迎。
+            answer: The show sold out—it's reasonable to assume he's popular.
+            hint: The show sold out
+          - zh: 连夜加班，推测进度落后也正常。
+            answer: They're working overnight, so it's reasonable to assume they're behind.
+            hint: they're behind
+          - zh: 连续三次迟到，猜他有别的事也说得通。
+            answer: After three late arrivals, it's reasonable to assume something's going on.
+            hint: something's going on
+      - key: wrongly-assume-other
+        type: pattern_drill
+        title: 说别的错以为
+        pattern: wrongly assume [clause]
+        patternMeaning: 误以为
+        direction: zh_to_en
+        items:
+          - zh: 我错把他当成本地人了。
+            answer: I wrongly assumed he was a local.
+            hint: he was a local
+          - zh: 他们误以为演示用的是真数据。
+            answer: They wrongly assumed the demo used real data.
+            hint: the demo used real data
+          - zh: 客户错以为费用全包在报价里了。
+            answer: The client wrongly assumed all fees were included in the quote.
+            hint: all fees were included
+      - key: assume-control-other
+        type: pattern_drill
+        title: 说接手别的事务
+        pattern: assume control of [noun]
+        patternMeaning: 接手掌控
+        direction: zh_to_en
+        items:
+          - zh: 危机爆发后，政府接管了机场运营。
+            answer: After the crisis, the government assumed control of airport operations.
+            hint: airport operations
+          - zh: 谁能临时接管这个部门？
+            answer: Who can assume control of the department temporarily?
+            hint: the department；temporarily
+          - zh: 新 CEO 一上任就抓财务大权。
+            answer: The new CEO assumed control of finances as soon as he started.
+            hint: as soon as he started
+      - key: assume-role-other
+        type: pattern_drill
+        title: 说在别处挑大梁
+        pattern: assume a leading role
+        patternMeaning: 担任主导角色
+        direction: zh_to_en
+        items:
+          - zh: 她在社区项目里起了带头作用。
+            answer: She assumed a leading role in the community project.
+            hint: in the community project
+          - zh: 资深员工要在指导新人上带头。
+            answer: Senior staff should assume a leading role in mentoring newcomers.
+            hint: in mentoring newcomers
+          - zh: 谁会在下届峰会当东道主的舵手？
+            answer: Who will assume a leading role as host at the next summit?
+            hint: as host；the next summit
+      - key: assume-data-build
+        type: sentence_decomposition
+        title: 把假定数据正确说完整
+        sourceKind: chunk
+        sourceText: assume that the data is correct
+        fullSentence: Let's assume that the data is correct so we can finish the draft tonight.
+        fullSentenceZh: 咱们先假定数据没问题，这样今晚能把初稿弄完。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let's assume that the data is correct.
+            zh: 咱们先假定数据没问题。
+            highlight: ''
+            hint: 先说假定数据正确
+          - level: 2
+            label: 加目的
+            en: Let's assume that the data is correct so we can move on.
+            zh: 咱们先假定数据没问题，这样能往下推进。
+            highlight: so we can move on
+            hint: 补上这样能继续推进
+          - level: 3
+            label: 完整句
+            en: Let's assume that the data is correct so we can finish the draft tonight.
+            zh: 咱们先假定数据没问题，这样今晚能把初稿弄完。
+            highlight: finish the draft tonight
+            hint: 把目的具体成今晚完成初稿
+      - key: assume-responsibility-build
+        type: sentence_decomposition
+        title: 把为失误担责说完整
+        sourceKind: chunk
+        sourceText: assume responsibility for the mistake
+        fullSentence: She publicly assumed responsibility for the mistake and promised to fix the process.
+        fullSentenceZh: 她公开为这次失误担责，并承诺会改掉流程问题。
+        levels:
+          - level: 1
+            label: 核心句
+            en: She assumed responsibility for the mistake.
+            zh: 她为这次失误承担了责任。
+            highlight: ''
+            hint: 先说她为失误担责
+          - level: 2
+            label: 加场合
+            en: She publicly assumed responsibility for the mistake.
+            zh: 她公开为这次失误担了责。
+            highlight: publicly
+            hint: 加上公开
+          - level: 3
+            label: 完整句
+            en: She publicly assumed responsibility for the mistake and promised to fix the process.
+            zh: 她公开为这次失误担责，并承诺会改掉流程问题。
+            highlight: promised to fix the process
+            hint: 补上承诺改进流程
