@@ -4,32 +4,6 @@ import { ListeningQueueEngine, type QueueScheduler } from '../listening-queue.en
 import { DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS } from '../immersive-player.store'
 import type { ImmersivePlaybackSettings, ImmersivePlayerItem } from '../immersive-player.types'
 
-const mediaSessionMock = vi.hoisted(() => ({
-  ensureMediaSessionHandlers: vi.fn(async () => undefined),
-  setMediaSessionMeta: vi.fn(async () => undefined),
-  setMediaSessionPlaying: vi.fn(async () => undefined),
-  setMediaSessionPaused: vi.fn(async () => undefined),
-  clearMediaSession: vi.fn(async () => undefined),
-  handlers: null as null | {
-    play: () => void
-    pause: () => void
-    next: () => void
-    prev: () => void
-    seekTo: (seconds: number) => void
-  },
-}))
-
-vi.mock('../immersive-media-session', () => ({
-  ensureMediaSessionHandlers: vi.fn(async (handlers: typeof mediaSessionMock.handlers) => {
-    mediaSessionMock.handlers = handlers
-    return mediaSessionMock.ensureMediaSessionHandlers(handlers)
-  }),
-  setMediaSessionMeta: mediaSessionMock.setMediaSessionMeta,
-  setMediaSessionPlaying: mediaSessionMock.setMediaSessionPlaying,
-  setMediaSessionPaused: mediaSessionMock.setMediaSessionPaused,
-  clearMediaSession: mediaSessionMock.clearMediaSession,
-}))
-
 vi.mock('../immersive-audio.transport', async () => {
   const actual = await vi.importActual<typeof import('../immersive-audio.transport')>('../immersive-audio.transport')
   return {
@@ -90,6 +64,7 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
 
   const calls = {
     resolve: [] as string[],
+    armQueue: [] as Array<{ count: number; startIndex: number; assetIds: string[] }>,
     playQueue: [] as Array<{ count: number; startIndex: number; assetIds: string[] }>,
     queueNext: 0,
     queuePrevious: 0,
@@ -115,6 +90,17 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
         return `tts://${segment.id}`
       }
       return segment.audioUrl
+    },
+    async armQueue(items, options) {
+      const startIndex = options?.startIndex ?? 0
+      queue = items
+      queueIndex = startIndex
+      activeAssetId = items[startIndex]?.assetId ?? null
+      calls.armQueue.push({
+        count: items.length,
+        startIndex,
+        assetIds: items.map((entry) => entry.assetId),
+      })
     },
     async playQueue(items, options) {
       const startIndex = options?.startIndex ?? 0
@@ -222,12 +208,6 @@ describe('ListeningQueueEngine', () => {
   let loadMoreCount: number
 
   beforeEach(() => {
-    mediaSessionMock.handlers = null
-    mediaSessionMock.ensureMediaSessionHandlers.mockClear()
-    mediaSessionMock.setMediaSessionMeta.mockClear()
-    mediaSessionMock.setMediaSessionPlaying.mockClear()
-    mediaSessionMock.setMediaSessionPaused.mockClear()
-    mediaSessionMock.clearMediaSession.mockClear()
     settings = {
       ...DEFAULT_IMMERSIVE_PLAYBACK_SETTINGS,
       pauseGapSeconds: 2,
@@ -624,7 +604,7 @@ describe('ListeningQueueEngine', () => {
     await vi.waitFor(() => expect(indexChanges).toContain(1))
   })
 
-  it('remotePause / remotePlay only sync state and do not call transport pause/resume', async () => {
+  it('remotePause / remotePlay sync Engine state without double transport pause/resume', async () => {
     settings.autoNext = false
     bind([item('w1', 'hello')])
     void engine.play()
@@ -637,20 +617,9 @@ describe('ListeningQueueEngine', () => {
       assetId: 'immersive:w1:main:0',
       state: 'paused',
     })
-    expect(engine.getState().status).toBe('paused')
-    expect(fakeTransport.calls.resume).toBe(0)
-    // transport.pause must not be invoked — native already paused
-    expect(fakeTransport.calls.stop).toBe(0)
-
-    const pauseSpy = vi.spyOn(fakeTransport.transport, 'pause')
-    const resumeSpy = vi.spyOn(fakeTransport.transport, 'resume')
-    fakeTransport.emit({
-      type: 'playbackState',
-      reason: 'remotePause',
-      assetId: 'immersive:w1:main:0',
-      state: 'paused',
-    })
-    expect(pauseSpy).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(engine.getState().status).toBe('paused'))
+    // Capgo remote handler already paused — Engine must not call transport.pause again.
+    expect(fakeTransport.calls.pause).toBe(0)
 
     fakeTransport.emit({
       type: 'playbackState',
@@ -658,35 +627,37 @@ describe('ListeningQueueEngine', () => {
       assetId: 'immersive:w1:main:0',
       state: 'playing',
     })
-    expect(engine.getState().status).toBe('playing')
-    expect(resumeSpy).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(engine.getState().status).toBe('playing'))
+    // Capgo remote handler already resumed — Engine must not call transport.resume again.
+    expect(fakeTransport.calls.resume).toBe(0)
     expect(fakeTransport.calls.playQueue.length).toBe(1)
-    pauseSpy.mockRestore()
-    resumeSpy.mockRestore()
     fakeTransport.complete()
   })
 
-  it('MediaSession handlers drive pause/resume/next/prev/seekTo', async () => {
-    settings.autoNext = false
-    const items = [item('w1', 'one'), item('w2', 'two')]
-    bind(items)
-    void engine.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    await vi.waitFor(() => expect(mediaSessionMock.handlers).toBeTruthy())
-
-    mediaSessionMock.handlers!.pause()
-    await vi.waitFor(() => expect(fakeTransport.calls.pause).toBe(1))
+  it('armSession resolves first segment and arms paused queue', async () => {
+    bind([item('w1', 'hello')])
+    await engine.armSession()
+    expect(fakeTransport.calls.armQueue.length).toBe(1)
+    expect(fakeTransport.calls.armQueue[0].assetIds[0]).toContain('immersive:w1')
     expect(engine.getState().status).toBe('paused')
+    expect(fakeTransport.calls.playQueue.length).toBe(0)
+  })
 
-    mediaSessionMock.handlers!.play()
-    await vi.waitFor(() => expect(fakeTransport.calls.resume).toBe(1))
+  it('remotePlay while armed starts Engine play loop', async () => {
+    settings.autoNext = false
+    bind([item('w1', 'hello')])
+    await engine.armSession()
+    expect(fakeTransport.calls.armQueue.length).toBe(1)
+
+    fakeTransport.emit({
+      type: 'playbackState',
+      reason: 'remotePlay',
+      assetId: 'immersive:w1:main:0',
+      state: 'playing',
+    })
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     expect(engine.getState().status).toBe('playing')
-
-    mediaSessionMock.handlers!.seekTo(1.5)
-    await vi.waitFor(() => expect(fakeTransport.calls.seekTo).toEqual([1.5]))
-
-    mediaSessionMock.handlers!.next()
-    await vi.waitFor(() => expect(indexChanges).toContain(1))
+    fakeTransport.complete()
   })
 })
 

@@ -53,15 +53,6 @@ vi.mock('@capgo/capacitor-native-audio', () => {
   return { NativeAudio }
 })
 
-const mediaSessionApi = vi.hoisted(() => ({
-  setMediaSessionPosition: vi.fn(async () => undefined),
-  setMediaSessionPlaying: vi.fn(async () => undefined),
-  setMediaSessionPaused: vi.fn(async () => undefined),
-  clearMediaSession: vi.fn(async () => undefined),
-}))
-
-vi.mock('../immersive-media-session', () => mediaSessionApi)
-
 vi.mock('@/lib/native', () => ({
   isNative: () => true,
   isIOS: () => true,
@@ -90,10 +81,18 @@ vi.mock('@capacitor/core', async () => {
   }
 })
 
+vi.mock('../immersive-audio.transport', async () => {
+  const actual = await vi.importActual<typeof import('../immersive-audio.transport')>('../immersive-audio.transport')
+  return {
+    ...actual,
+    resolveAppLogoArtworkUri: vi.fn(async () => LOGO_FILE_URI),
+  }
+})
+
 const { NativeAudio } = await import('@capgo/capacitor-native-audio')
 const { resolvePlaybackAudio } = await import('@/lib/offline/playback-audio')
 const { resetAppLogoArtworkCache } = await import('../immersive-audio.transport')
-const { immersivePlaybackService } = await import('../immersive-playback.service')
+const { immersivePlaybackService, resetImmersiveArtworkCacheForTests } = await import('../immersive-playback.service')
 
 function emit(event: string, payload: unknown) {
   for (const handler of nativeListeners.get(event) ?? []) {
@@ -116,21 +115,22 @@ describe('immersivePlaybackService setQueue transport', () => {
     vi.mocked(NativeAudio.setCurrentTime).mockClear()
     vi.mocked(NativeAudio.addListener).mockClear()
     vi.mocked(resolvePlaybackAudio).mockClear()
-    mediaSessionApi.setMediaSessionPosition.mockClear()
-    mediaSessionApi.setMediaSessionPlaying.mockClear()
-    mediaSessionApi.setMediaSessionPaused.mockClear()
-    mediaSessionApi.clearMediaSession.mockClear()
     fsMock.stat.mockClear()
     fsMock.getUri.mockClear()
     fsMock.writeFile.mockClear()
     fsMock.stat.mockResolvedValue({ type: 'file', size: 12, ctime: 0, mtime: 0, uri: LOGO_FILE_URI })
     fsMock.getUri.mockResolvedValue({ uri: LOGO_FILE_URI })
     resetAppLogoArtworkCache()
+    resetImmersiveArtworkCacheForTests()
     await immersivePlaybackService.stop({ clearSession: true })
     immersivePlaybackService.clearResolveCache()
+    // stop() itself clears the native queue — ignore that for per-test assertions.
+    vi.mocked(NativeAudio.clearQueue).mockClear()
+    vi.mocked(NativeAudio.configure).mockClear()
+    vi.mocked(NativeAudio.setQueue).mockClear()
   })
 
-  it('resolves as file:// and plays via setQueue', async () => {
+  it('resolves as file:// and plays via setQueue with notificationMetadata', async () => {
     const segment = {
       id: 'seg-1',
       itemId: 'item-1',
@@ -153,6 +153,8 @@ describe('immersivePlaybackService setQueue transport', () => {
         assetId: 'immersive:seg-1',
         fileUrl: url!,
         title: 'hello',
+        artist: '漫语町',
+        album: '听力',
         segmentId: 'seg-1',
       },
     ], { startIndex: 0, playbackRate: 1 })
@@ -165,20 +167,48 @@ describe('immersivePlaybackService setQueue transport', () => {
           assetId: 'immersive:seg-1',
           assetPath: url,
           isUrl: true,
+          notificationMetadata: expect.objectContaining({
+            title: 'hello',
+            artist: '漫语町',
+            album: '听力',
+            artworkUrl: LOGO_FILE_URI,
+          }),
         })],
       }))
     })
-    const queued = vi.mocked(NativeAudio.setQueue).mock.calls[0]?.[0]
-    expect(queued?.items[0]).not.toHaveProperty('notificationMetadata')
     expect(NativeAudio.configure).toHaveBeenCalledWith(expect.objectContaining({
-      showNotification: false,
+      showNotification: true,
     }))
+    // R5: playQueue must not clearQueue before setQueue (avoids blank Now Playing).
+    expect(NativeAudio.clearQueue).not.toHaveBeenCalled()
 
     emit('complete', { assetId: 'immersive:seg-1' })
     await playPromise
   })
 
-  it('stop invalidates in-flight playQueue', async () => {
+  it('armQueue uses autoPlay false and notificationMetadata', async () => {
+    await immersivePlaybackService.armQueue([
+      {
+        assetId: 'immersive:a',
+        fileUrl: 'file://a.mp3',
+        title: 'a',
+        artist: 'app',
+        album: 'album',
+        segmentId: 'a',
+      },
+    ])
+    expect(NativeAudio.setQueue).toHaveBeenCalledWith(expect.objectContaining({
+      autoPlay: false,
+      items: [expect.objectContaining({
+        notificationMetadata: expect.objectContaining({
+          title: 'a',
+          artworkUrl: LOGO_FILE_URI,
+        }),
+      })],
+    }))
+  })
+
+  it('stop invalidates in-flight playQueue and clearQueue', async () => {
     const playPromise = immersivePlaybackService.playQueue([
       {
         assetId: 'immersive:a',
@@ -222,42 +252,41 @@ describe('immersivePlaybackService setQueue transport', () => {
     await vi.waitFor(() => expect(NativeAudio.setQueue).toHaveBeenCalled())
     await immersivePlaybackService.pause()
     expect(NativeAudio.pause).toHaveBeenCalledWith({ assetId: 'immersive:a' })
-    expect(mediaSessionApi.setMediaSessionPaused).toHaveBeenCalled()
     const ok = await immersivePlaybackService.resume()
     expect(ok).toBe(true)
     expect(NativeAudio.resume).toHaveBeenCalledWith({ assetId: 'immersive:a' })
-    expect(mediaSessionApi.setMediaSessionPlaying).toHaveBeenCalled()
     await immersivePlaybackService.stop({ clearSession: true })
     await expect(playPromise).resolves.toBeUndefined()
-    expect(mediaSessionApi.clearMediaSession).toHaveBeenCalled()
+    expect(NativeAudio.clearQueue).toHaveBeenCalled()
   })
 
-  it('progress updates MediaSession position and seekTo sets current time', async () => {
+  it('progress does not write Now Playing; seekTo sets current time', async () => {
     const playPromise = immersivePlaybackService.playQueue([
       { assetId: 'immersive:a', fileUrl: 'file://a.mp3', title: 'a', segmentId: 'a' },
     ])
     await vi.waitFor(() => expect(NativeAudio.setQueue).toHaveBeenCalled())
-    mediaSessionApi.setMediaSessionPosition.mockClear()
 
     emit('progress', { assetId: 'immersive:a', position: 1.25, duration: 4 })
-    await vi.waitFor(() => {
-      expect(mediaSessionApi.setMediaSessionPosition).toHaveBeenCalledWith({
-        position: 1.25,
-        duration: 4,
-        playbackRate: 1,
-      })
-    })
+    // Allow microtasks; MediaSession path is gone — progress is JS/UI only.
+    await Promise.resolve()
 
     await immersivePlaybackService.seekTo(2.5)
     expect(NativeAudio.setCurrentTime).toHaveBeenCalledWith({ assetId: 'immersive:a', time: 2.5 })
-    expect(mediaSessionApi.setMediaSessionPosition).toHaveBeenCalledWith({
-      position: 2.5,
-      duration: 4,
-      playbackRate: 1,
-    })
 
     await immersivePlaybackService.stop({ clearSession: true })
     await expect(playPromise).resolves.toBeUndefined()
+  })
+
+  it('forces rate 1 even when playQueue requests another rate', async () => {
+    const playPromise = immersivePlaybackService.playQueue([
+      { assetId: 'immersive:a', fileUrl: 'file://a.mp3', title: 'a', segmentId: 'a' },
+    ], { playbackRate: 1.5 })
+    await vi.waitFor(() => expect(NativeAudio.setRate).toHaveBeenCalledWith({
+      assetId: 'immersive:a',
+      rate: 1,
+    }))
+    emit('complete', { assetId: 'immersive:a' })
+    await playPromise
   })
 
   it('rebinds track waiter on remote queueChange', async () => {

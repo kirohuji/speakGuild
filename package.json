@@ -30,8 +30,12 @@
       "sql.js": "1.11.0"
     },
     "patchedDependencies": {
-      "@capgo/capacitor-wechat@8.0.32": "patches/@capgo__capacitor-wechat@8.0.32.patch",
-      "@sentry/capacitor@4.1.0": "patches/@sentry__capacitor@4.1.0.patch"
+      "@capgo/capacitor-wechat@8.0.32": "/Users/lourd/Desktop/workspace/speakGuild/patches/@capgo__capacitor-wechat@8.0.32.patch",
+      "@sentry/capacitor@4.1.0": "/Users/lourd/Desktop/workspace/speakGuild/patches/@sentry__capacitor@4.1.0.patch",
+      "@capgo/capacitor-native-audio@8.5.4": "patches/@capgo__capacitor-native-audio@8.5.4.patch"
     }
+  },
+  "dependencies": {
+    "@capgo/capacitor-native-audio": "^8.5.4"
   }
 }

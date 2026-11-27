@@ -5,17 +5,10 @@ import type {
   QueuePlayItem,
 } from './immersive-audio.transport'
 import {
+  IMMERSIVE_PLAYBACK_RATE,
   immersiveLog,
-  resolveAppLogoArtworkUri,
   toQueueAssetId,
 } from './immersive-audio.transport'
-import {
-  clearMediaSession,
-  ensureMediaSessionHandlers,
-  setMediaSessionMeta,
-  setMediaSessionPaused,
-  setMediaSessionPlaying,
-} from './immersive-media-session'
 import {
   normalizePauseGapSeconds,
   resolveSilenceFileUrl,
@@ -142,8 +135,8 @@ export class ListeningQueueEngine {
   private windowMeta: Array<{ segmentIndex: number; isGap: boolean }> = []
   private windowLength = 0
   private lastKnownQueueIndex = -1
-  private artworkUri: string | null = null
-  private mediaSessionReady = false
+  /** True while runItemLoop / softRestart owns the playback generation. */
+  private playbackLoopActive = false
 
   constructor(options: ListeningQueueEngineOptions) {
     this.transport = options.transport
@@ -157,27 +150,44 @@ export class ListeningQueueEngine {
     this.onEmptySegments = options.onEmptySegments
     this.onPlayFailed = options.onPlayFailed
 
-    void this.ensureLockScreenSession()
-
     this.transport.setNativeEventHandler((event) => {
       if (event.type === 'playbackState') {
         if (event.reason === 'remotePlay') {
-          // NativeAudio already resumed. Only sync engine/UI — never call transport.resume()
-          // (would double-resume and can soft-restart on false → audible jump).
-          immersiveLog('engine.remotePlay.sync')
-          this.syncFromRemotePlay()
+          // Capgo remotePlay already resumed the native asset + wrote Now Playing.
+          // Engine only syncs state / starts the wait loop — do not transport.resume again.
+          immersiveLog('engine.remote.play', {
+            assetId: event.assetId,
+            queueIndex: this.transport.getQueueIndex(),
+            engineState: this.state.status,
+            note: 'native_already_resumed_np_hold_then_arm',
+          })
+          this.handleRemotePlay()
         } else if (event.reason === 'remotePause') {
-          // NativeAudio already paused. Only sync engine/UI — never call transport.pause().
-          immersiveLog('engine.remotePause.sync')
-          this.syncFromRemotePause()
+          // Capgo remotePause already paused + wrote Now Playing; sync Engine only.
+          immersiveLog('engine.remote.pause', {
+            assetId: event.assetId,
+            queueIndex: this.transport.getQueueIndex(),
+            engineState: this.state.status,
+            note: 'native_already_froze_np_bar',
+          })
+          this.handleRemotePause()
         } else if (event.reason === 'remoteNextTrack' || event.reason === 'remoteNext') {
-          // Fallback when plugin emits playbackState instead of queueChange (e.g. empty/edge queue).
-          immersiveLog('engine.remoteNext.playbackState', { reason: event.reason })
+          immersiveLog('engine.remote.next', {
+            reason: event.reason,
+            assetId: event.assetId,
+            queueIndex: this.transport.getQueueIndex(),
+            windowLength: this.windowLength,
+          })
           if (this.windowLength <= 1 || this.transport.getQueueIndex() >= this.windowLength - 1) {
             fireAndForget(this.next(true))
           }
         } else if (event.reason === 'remotePreviousTrack' || event.reason === 'remotePrevious') {
-          immersiveLog('engine.remotePrev.playbackState', { reason: event.reason })
+          immersiveLog('engine.remote.prev', {
+            reason: event.reason,
+            assetId: event.assetId,
+            queueIndex: this.transport.getQueueIndex(),
+            windowLength: this.windowLength,
+          })
           if (this.windowLength <= 1 || this.transport.getQueueIndex() <= 0) {
             fireAndForget(this.prev(true))
           }
@@ -202,7 +212,7 @@ export class ListeningQueueEngine {
 
       this.syncFromQueueIndex(event.index)
 
-      // Cross learning-item when remote skip cannot move within the native window.
+      // Cross learning-item when remote skip cannot move within the native window (R5).
       if (isNext && event.reason === 'remoteNext' && this.windowLength > 0) {
         if (event.index >= this.windowLength - 1 && prevQueueIndex >= this.windowLength - 1) {
           fireAndForget(this.next(true))
@@ -226,6 +236,11 @@ export class ListeningQueueEngine {
 
   getState(): ListeningQueueEngineState {
     return { ...this.state }
+  }
+
+  /** False after arm-only; true once play()/runItemLoop owns the session. */
+  hasPlaybackLoop(): boolean {
+    return this.playbackLoopActive
   }
 
   /** Test helper: locked segment snapshot for current item. */
@@ -266,17 +281,84 @@ export class ListeningQueueEngine {
     this.bumpGeneration()
     this.pendingContinue = false
     this.clearPendingContinueTimer()
+    this.playbackLoopActive = true
     await this.playFromCurrentItem({ rebuildSnapshot: true })
   }
 
+  /**
+   * Open Immersive → paused Now Playing card before the user presses play (docs §3).
+   */
+  async armSession() {
+    if (this.state.status === 'playing' || this.state.status === 'loading') return
+    if (this.playbackLoopActive || this.pendingContinue) return
+    const binding = this.binding
+    if (!binding) return
+    const item = binding.items[binding.index]
+    if (!item) return
+
+    const settings = this.getSettings()
+    const segments = buildPlaybackSegments(item, settings)
+    if (segments.length === 0) return
+
+    this.itemSegments = segments
+    this.snapshotItemId = item.id
+    this.segmentIndex = 0
+
+    const allowTts = !this.isBackground()
+    let armed: QueuePlayItem | null = null
+    for (const segment of segments) {
+      const fileUrl = await this.transport.resolve(segment, { allowTts })
+      if (!fileUrl) continue
+      armed = {
+        assetId: toQueueAssetId(segment.id),
+        fileUrl,
+        title: segment.title,
+        artist: segment.subtitle || this.mediaLabels?.artist,
+        album: this.mediaLabels?.album,
+        segmentId: segment.id,
+        kind: 'segment',
+      }
+      this.segmentIndex = segments.indexOf(segment)
+      this.patchState({
+        status: 'paused',
+        absoluteIndex: this.absoluteIndexOf(binding),
+        currentItemId: item.id,
+        currentSegment: segment,
+        gapActive: false,
+        errorMessage: null,
+      })
+      break
+    }
+    if (!armed) return
+
+    this.windowMeta = [{ segmentIndex: this.segmentIndex, isGap: false }]
+    this.windowLength = 1
+    this.lastKnownQueueIndex = 0
+    immersiveLog('lockscreen.arm', { assetId: armed.assetId, itemId: item.id })
+    try {
+      await this.transport.armQueue([armed], { startIndex: 0 })
+    } catch (error) {
+      immersiveLog('lockscreen.arm.failed', {
+        message: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
   async pause() {
-    immersiveLog('engine.pause', { gapActive: this.state.gapActive, timerGap: this.timerGapRunning })
+    immersiveLog('engine.pause', {
+      gapActive: this.state.gapActive,
+      timerGap: this.timerGapRunning,
+      engineState: this.state.status,
+      assetId: this.transport.getActiveAssetId(),
+      queueIndex: this.transport.getQueueIndex(),
+      absoluteIndex: this.state.absoluteIndex,
+      note: 'expect_native_freezePause_next',
+    })
     // Timer-gap fallback only — silence-queue gaps pause via NativeAudio like any track.
     if (this.state.gapActive && this.timerGapRunning) {
       this.gapPaused = true
       this.scheduler.cancel()
       this.patchState({ status: 'paused' })
-      void setMediaSessionPaused()
       return
     }
     this.patchState({ status: 'paused' })
@@ -288,11 +370,15 @@ export class ListeningQueueEngine {
       gapActive: this.state.gapActive,
       gapPaused: this.gapPaused,
       timerGap: this.timerGapRunning,
+      engineState: this.state.status,
+      assetId: this.transport.getActiveAssetId(),
+      queueIndex: this.transport.getQueueIndex(),
+      absoluteIndex: this.state.absoluteIndex,
+      note: 'expect_native_resumeHold_then_arm',
     })
     if (this.state.gapActive && this.timerGapRunning && this.gapPaused) {
       this.gapPaused = false
       this.patchState({ status: 'playing' })
-      void setMediaSessionPlaying()
       this.gapResume?.()
       return true
     }
@@ -311,39 +397,36 @@ export class ListeningQueueEngine {
   }
 
   /**
-   * Lock-screen / headset pause already applied by NativeAudio.
-   * Sync session state only — do not call transport.pause().
+   * Lock-screen pause: Capgo already paused the player. Sync Engine/UI only
+   * (avoids second NativeAudio.pause that rewrites timeBeforePause / flashes scrubber).
    */
-  private syncFromRemotePause() {
+  private handleRemotePause() {
     if (this.state.gapActive && this.timerGapRunning) {
       this.gapPaused = true
       this.scheduler.cancel()
       this.patchState({ status: 'paused' })
-      void setMediaSessionPaused()
       return
     }
-    if (this.state.status === 'playing' || this.state.status === 'loading') {
-      this.patchState({ status: 'paused' })
-      void setMediaSessionPaused()
-    }
+    this.patchState({ status: 'paused' })
   }
 
   /**
-   * Headset / legacy NativeAudio remote play already applied.
-   * Sync session state only — do not call transport.resume() (avoids soft-restart).
+   * Lock-screen play: Capgo already resumed when a track was paused.
+   * If a playback loop is active, only sync status. If armed (no loop yet),
+   * start play() so auto-advance continues after the first track.
    */
-  private syncFromRemotePlay() {
+  private handleRemotePlay() {
     if (this.state.gapActive && this.timerGapRunning && this.gapPaused) {
       this.gapPaused = false
       this.patchState({ status: 'playing' })
-      void setMediaSessionPlaying()
       this.gapResume?.()
       return
     }
-    if (this.state.status === 'paused' || this.state.status === 'loading') {
+    if (this.playbackLoopActive) {
       this.patchState({ status: 'playing' })
-      void setMediaSessionPlaying()
+      return
     }
+    fireAndForget(this.play())
   }
 
   async next(continuePlayback = true) {
@@ -400,16 +483,15 @@ export class ListeningQueueEngine {
     this.scheduler.cancel()
     this.gapPaused = false
     this.timerGapRunning = false
+    this.playbackLoopActive = false
     this.clearSleepTimer()
     this.segmentIndex = 0
     this.snapshotItemId = null
     this.itemSegments = []
     this.windowMeta = []
     this.windowLength = 0
+    // clearSession → stop + clearQueue clears the Now Playing card (docs §6 / §9).
     await this.transport.stop({ clearSession: options?.clearSession !== false })
-    if (options?.clearSession !== false) {
-      await clearMediaSession()
-    }
     this.patchState({
       status: options?.status ?? 'idle',
       currentSegment: null,
@@ -420,7 +502,8 @@ export class ListeningQueueEngine {
 
   updateSettings(partial: Partial<ImmersivePlaybackSettings>) {
     if (partial.playbackRate !== undefined) {
-      fireAndForget(this.transport.setRate(partial.playbackRate))
+      // Immersive rate locked to 1 this phase — transport ignores non-1 values.
+      fireAndForget(this.transport.setRate(IMMERSIVE_PLAYBACK_RATE))
     }
     this.refreshSleepTimer()
   }
@@ -431,43 +514,6 @@ export class ListeningQueueEngine {
     this.transport.clearResolveCache()
     this.listeners.clear()
     this.binding = null
-  }
-
-  private async ensureLockScreenSession() {
-    if (this.mediaSessionReady) return
-    this.mediaSessionReady = true
-    await ensureMediaSessionHandlers({
-      play: () => {
-        fireAndForget(this.resume())
-      },
-      pause: () => {
-        fireAndForget(this.pause())
-      },
-      next: () => {
-        fireAndForget(this.next(true))
-      },
-      prev: () => {
-        fireAndForget(this.prev(true))
-      },
-      seekTo: (seconds) => {
-        fireAndForget(this.transport.seekTo(seconds))
-      },
-    })
-    try {
-      this.artworkUri = await resolveAppLogoArtworkUri()
-    } catch {
-      this.artworkUri = null
-    }
-  }
-
-  private publishLockScreenMeta(item: QueuePlayItem | null | undefined) {
-    if (!item) return
-    void setMediaSessionMeta({
-      title: item.title,
-      artist: item.artist || this.mediaLabels?.artist,
-      album: item.album || this.mediaLabels?.album,
-      artworkSrc: this.artworkUri ?? undefined,
-    })
   }
 
   private syncFromQueueIndex(queueIndex: number) {
@@ -482,17 +528,6 @@ export class ListeningQueueEngine {
         status: meta.isGap && this.state.status === 'paused' ? 'paused' : 'playing',
         gapActive: meta.isGap,
       })
-      this.publishLockScreenMeta({
-        assetId: toQueueAssetId(segment.id),
-        fileUrl: '',
-        title: segment.title,
-        artist: segment.subtitle || this.mediaLabels?.artist,
-        album: this.mediaLabels?.album,
-        segmentId: segment.id,
-        kind: meta.isGap ? 'gap' : 'segment',
-      })
-      if (this.state.status === 'playing') void setMediaSessionPlaying()
-      else if (this.state.status === 'paused') void setMediaSessionPaused()
     }
   }
 
@@ -579,6 +614,7 @@ export class ListeningQueueEngine {
     const generation = this.generation
     this.scheduler.cancel()
     this.gapPaused = false
+    this.playbackLoopActive = true
     await this.transport.stop({ clearSession: false })
 
     this.patchState({ status: 'loading', gapActive: false, currentSegment: segment, errorMessage: null })
@@ -626,11 +662,13 @@ export class ListeningQueueEngine {
     }
 
     if (this.itemSegments.length === 0) {
+      this.playbackLoopActive = false
       this.patchState({ status: 'idle', currentItemId: item.id, currentSegment: null })
       this.onEmptySegments?.()
       return
     }
 
+    this.playbackLoopActive = true
     this.patchState({
       status: 'loading',
       absoluteIndex: this.absoluteIndexOf(binding),
@@ -643,6 +681,7 @@ export class ListeningQueueEngine {
   }
 
   private async runItemLoop(generation: number) {
+    this.playbackLoopActive = true
     try {
       do {
         if (!this.isCurrent(generation)) return
@@ -657,6 +696,7 @@ export class ListeningQueueEngine {
       await this.advanceAfterItem(generation)
     } catch (error) {
       if (!this.isCurrent(generation)) return
+      this.playbackLoopActive = false
       immersiveLog('engine.playback.failed', {
         message: error instanceof Error ? error.message : String(error),
       })
@@ -756,13 +796,10 @@ export class ListeningQueueEngine {
       currentSegment: this.itemSegments[this.segmentIndex],
       gapActive: false,
     })
-    await this.ensureLockScreenSession()
-    this.publishLockScreenMeta(windowItems[0])
-    void setMediaSessionPlaying()
 
     await this.transport.playQueue(windowItems, {
       startIndex: 0,
-      playbackRate: settings.playbackRate,
+      playbackRate: IMMERSIVE_PLAYBACK_RATE,
     })
     if (!this.isCurrent(generation)) return false
 
@@ -868,9 +905,9 @@ export class ListeningQueueEngine {
     immersiveLog('engine.advanceAfterItem', { absolute, total, hasNext, autoNext: settings.autoNext })
 
     if (!settings.autoNext || (!hasNext && !settings.loopQueue)) {
+      this.playbackLoopActive = false
       this.patchState({ status: 'ended', currentSegment: null })
       await this.transport.clearSession()
-      await clearMediaSession()
       return
     }
 
@@ -880,12 +917,31 @@ export class ListeningQueueEngine {
     }
 
     const nextAbsolute = hasNext ? absolute + 1 : 0
-    this.armPendingContinue()
+    const nextLocal = nextAbsolute - binding.windowOffset
     this.snapshotItemId = null
     this.itemSegments = []
     this.segmentIndex = 0
     this.windowMeta = []
     this.windowLength = 0
+
+    // Play next item immediately — do not clearQueue/arm via React round-trip
+    // (that blanked the Now Playing card between learning items).
+    if (binding.items[nextLocal]) {
+      this.pendingContinue = false
+      this.clearPendingContinueTimer()
+      this.binding = { ...binding, index: nextLocal }
+      this.patchState({
+        status: 'loading',
+        absoluteIndex: nextAbsolute,
+        currentItemId: binding.items[nextLocal]?.id ?? null,
+        currentSegment: null,
+      })
+      binding.onIndexChange(nextAbsolute)
+      await this.playFromCurrentItem({ rebuildSnapshot: true })
+      return
+    }
+
+    this.armPendingContinue()
     this.patchState({ status: 'loading', currentSegment: null })
     binding.onIndexChange(nextAbsolute)
   }

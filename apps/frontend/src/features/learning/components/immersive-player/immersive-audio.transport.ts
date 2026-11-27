@@ -1,11 +1,46 @@
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import type { PlaybackSegment } from './immersive-player.types'
 
+/**
+ * Unified immersive debug prefix — same string as Capgo native (`[MANYU_IMMERSIVE]`).
+ * Filter Xcode + Safari with that token. Events are `js.*` here and `native.*` in Swift.
+ *
+ * Clock-related fields (when present):
+ * - player / visual / deltaVP — AVAudioPlayer vs NP wall-clock bar (+ = bar ahead)
+ * - lastNp / npRate / npAge — last NP write baseline
+ * - pin / pinSource / staleClock — pause freeze decision
+ */
 export const IMMERSIVE_LOG_PREFIX = '[MANYU_IMMERSIVE]'
 
+function formatLogValue(value: unknown): string {
+  if (value === null || value === undefined) return 'nil'
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return String(value)
+    if (Number.isInteger(value)) return String(value)
+    return value.toFixed(4).replace(/\.?0+$/, '') || '0'
+  }
+  if (typeof value === 'string') {
+    return /\s/.test(value) ? JSON.stringify(value) : value
+  }
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+/** One-line logs so Xcode + Web Inspector share the same readable stream. */
 export function immersiveLog(step: string, data?: Record<string, unknown>) {
-  if (data) console.log(IMMERSIVE_LOG_PREFIX, step, data)
-  else console.log(IMMERSIVE_LOG_PREFIX, step)
+  const event = step.startsWith('js.') || step.startsWith('native.') ? step : `js.${step}`
+  if (!data || Object.keys(data).length === 0) {
+    console.log(`${IMMERSIVE_LOG_PREFIX} ${event}`)
+    return
+  }
+  const body = Object.entries(data)
+    .map(([key, value]) => `${key}=${formatLogValue(value)}`)
+    .join(' ')
+  console.log(`${IMMERSIVE_LOG_PREFIX} ${event} ${body}`)
 }
 
 export type MediaMetadataLabels = {
@@ -49,8 +84,19 @@ export type ImmersiveNativeEvent =
       assetId: string
     }
 
+/** Immersive lock-screen / Now Playing rate is locked to 1 this phase (docs §4 / §6). */
+export const IMMERSIVE_PLAYBACK_RATE = 1
+
 export type ImmersiveAudioTransport = {
   resolve(segment: PlaybackSegment, options?: { allowTts?: boolean }): Promise<string | null>
+  /**
+   * Arm Now Playing with a paused card before the user presses play (docs §3).
+   * Uses setQueue({ autoPlay: false }) + notificationMetadata; native patch writes rate=0.
+   */
+  armQueue(
+    items: QueuePlayItem[],
+    options?: { startIndex?: number },
+  ): Promise<void>
   /**
    * Replace the active queue and start at startIndex.
    * Resolves when the started track completes (or is stopped).

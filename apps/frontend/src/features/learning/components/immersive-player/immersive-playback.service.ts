@@ -14,14 +14,10 @@ import type {
   QueuePlayItem,
 } from './immersive-audio.transport'
 import {
+  IMMERSIVE_PLAYBACK_RATE,
   immersiveLog,
+  resolveAppLogoArtworkUri,
 } from './immersive-audio.transport'
-import {
-  clearMediaSession,
-  setMediaSessionPaused,
-  setMediaSessionPlaying,
-  setMediaSessionPosition,
-} from './immersive-media-session'
 
 export type {
   ImmersiveAudioTransport,
@@ -44,10 +40,16 @@ let queueItems: QueuePlayItem[] = []
 let queueIndex = -1
 let activeAssetId: string | null = null
 let playEpoch = 0
-let activePlaybackRate = 1
+let activePlaybackRate = IMMERSIVE_PLAYBACK_RATE
 let lastKnownPosition = 0
 let lastKnownDuration = 0
+let artworkUri: string | null = null
 let trackWaiter: { assetId: string; resolve: () => void; reject: (error: Error) => void } | null = null
+
+/** Test helper — clears cached artwork between suites. */
+export function resetImmersiveArtworkCacheForTests() {
+  artworkUri = null
+}
 
 let htmlAudio: HTMLAudioElement | null = null
 
@@ -55,14 +57,6 @@ const resolveCache = new Map<string, Promise<string | null>>()
 
 let visualState: ImmersivePlaybackVisualState = { state: 'idle', media: null }
 const visualStateListeners = new Set<(state: ImmersivePlaybackVisualState) => void>()
-
-function pushMediaSessionPosition(playbackRate: number) {
-  void setMediaSessionPosition({
-    position: lastKnownPosition,
-    duration: lastKnownDuration > 0 ? lastKnownDuration : undefined,
-    playbackRate,
-  })
-}
 
 function publishVisualState(state: ImmersivePlaybackVisualState) {
   visualState = state
@@ -93,18 +87,46 @@ function waitForTrack(assetId: string): Promise<void> {
   })
 }
 
+function forceImmersiveRate(_requested?: number) {
+  return IMMERSIVE_PLAYBACK_RATE
+}
+
+async function ensureArtworkUri() {
+  if (artworkUri) return artworkUri
+  try {
+    artworkUri = await resolveAppLogoArtworkUri()
+  } catch {
+    artworkUri = null
+  }
+  return artworkUri
+}
+
+function toNativeQueueItems(items: QueuePlayItem[]) {
+  return items.map((item) => ({
+    assetId: item.assetId,
+    assetPath: item.fileUrl,
+    isUrl: true as const,
+    notificationMetadata: {
+      title: item.title,
+      artist: item.artist,
+      album: item.album,
+      artworkUrl: artworkUri ?? undefined,
+    },
+  }))
+}
+
 async function configureNativeAudio() {
   if (configured || !isNative()) return
   configured = true
-  // showNotification: false — Capgo Now Playing rewrites elapsed on remotePlay/Pause and
-  // causes lock-screen scrubber flash-back; we keep background audio without the system card.
-  immersiveLog('configure', { showNotification: false, backgroundPlayback: true })
+  // Single-plugin Now Playing: Capgo owns the lock-screen card (docs §2 / §6).
+  immersiveLog('configure', { showNotification: true, backgroundPlayback: true })
   await NativeAudio.configure({
     focus: true,
     background: true,
     backgroundPlayback: true,
     ignoreSilent: true,
-    showNotification: false,
+    showNotification: true,
+    // progressInterval: JS/UI only. Lock-screen: native rate=1 + quiet visual rebase (§4).
     progressInterval: 0.5,
   }).catch((error) => {
     configured = false
@@ -176,12 +198,10 @@ async function ensureNativeListeners() {
   })
 
   progressHandle = await NativeAudio.addListener('progress', (event: ProgressEvent) => {
+    // JS/UI position only — native Plugin quietly re-bases NP; do not double-write (§4).
     if (activeAssetId && event.assetId !== activeAssetId) return
     lastKnownPosition = event.position
     if (event.duration > 0) lastKnownDuration = event.duration
-    if (visualState.state === 'playing') {
-      pushMediaSessionPosition(activePlaybackRate)
-    }
   })
 }
 
@@ -315,9 +335,58 @@ function createTransport(): ImmersiveAudioTransport {
       return resolveSegmentUrl(segment, options?.allowTts !== false)
     },
 
+    async armQueue(items, options) {
+      const startIndex = options?.startIndex ?? 0
+      if (!items.length || startIndex < 0 || startIndex >= items.length) {
+        throw new Error('Invalid armQueue items/startIndex')
+      }
+
+      queueItems = items
+      queueIndex = startIndex
+      const start = items[startIndex]
+      immersiveLog('lockscreen.arm', {
+        count: items.length,
+        startIndex,
+        assetId: start.assetId,
+      })
+
+      if (!isNative()) {
+        activeAssetId = start.assetId
+        lastKnownPosition = 0
+        lastKnownDuration = 0
+        publishVisualState({ state: 'paused', media: null })
+        return
+      }
+
+      await configureNativeAudio()
+      await ensureNativeListeners()
+      await ensureArtworkUri()
+
+      // Prefer Capgo setQueue(autoPlay:false)+metadata. Native patch (docs §3.1) writes
+      // MPNowPlayingInfoCenter with playbackRate=0 so the paused card appears without play.
+      const queueState = await NativeAudio.setQueue({
+        items: toNativeQueueItems(items),
+        startIndex,
+        autoPlay: false,
+      })
+
+      immersiveLog('setQueue.arm', {
+        assetId: queueState.assetId,
+        index: queueState.index,
+        count: queueState.count,
+      })
+
+      activeAssetId = queueState.assetId || start.assetId
+      queueIndex = queueState.index >= 0 ? queueState.index : startIndex
+      lastKnownPosition = 0
+      lastKnownDuration = 0
+      activePlaybackRate = IMMERSIVE_PLAYBACK_RATE
+      publishVisualState({ state: 'paused', media: null })
+    },
+
     async playQueue(items, options) {
       const startIndex = options?.startIndex ?? 0
-      const playbackRate = options?.playbackRate ?? 1
+      const playbackRate = forceImmersiveRate(options?.playbackRate)
       const epoch = ++playEpoch
       activePlaybackRate = playbackRate
       settleTrack()
@@ -343,15 +412,12 @@ function createTransport(): ImmersiveAudioTransport {
 
       await configureNativeAudio()
       await ensureNativeListeners()
-      await clearNativeQueue()
+      await ensureArtworkUri()
+      // R5: do not clearQueue before setQueue — avoid blank Now Playing during window swap.
+      // setQueue replaces the playlist; Capgo updates the card on play.
 
-      // MediaSession owns lock-screen Now Playing — omit Capgo notificationMetadata.
       const queueState = await NativeAudio.setQueue({
-        items: items.map((item) => ({
-          assetId: item.assetId,
-          assetPath: item.fileUrl,
-          isUrl: true,
-        })),
+        items: toNativeQueueItems(items),
         startIndex,
         autoPlay: true,
       })
@@ -372,10 +438,8 @@ function createTransport(): ImmersiveAudioTransport {
       lastKnownPosition = 0
       lastKnownDuration = 0
 
-      await NativeAudio.setRate({ assetId: activeAssetId, rate: playbackRate }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
-      void setMediaSessionPlaying()
-      pushMediaSessionPosition(playbackRate)
 
       const completion = waitForTrack(activeAssetId)
       await completion
@@ -390,7 +454,7 @@ function createTransport(): ImmersiveAudioTransport {
 
       immersiveLog('queueNext', { from: queueIndex, to: nextIndex })
       const epoch = ++playEpoch
-      activePlaybackRate = activePlaybackRate || 1
+      activePlaybackRate = IMMERSIVE_PLAYBACK_RATE
 
       if (!isNative()) {
         return playWebAdjacent(1)
@@ -405,7 +469,7 @@ function createTransport(): ImmersiveAudioTransport {
       activeAssetId = state.assetId || queueItems[nextIndex]?.assetId || null
       if (!activeAssetId) return false
 
-      await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
       await waitForTrack(activeAssetId)
       return epoch === playEpoch
@@ -434,40 +498,62 @@ function createTransport(): ImmersiveAudioTransport {
       activeAssetId = state.assetId || queueItems[prevIndex]?.assetId || null
       if (!activeAssetId) return false
 
-      await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
       await waitForTrack(activeAssetId)
       return epoch === playEpoch
     },
 
     async pause() {
-      immersiveLog('pause', { assetId: activeAssetId, queueIndex, position: lastKnownPosition })
-      // Freeze scrubber before native pause so lock-screen position does not keep advancing.
-      pushMediaSessionPosition(0)
-      void setMediaSessionPaused()
+      immersiveLog('transport.pause.enter', {
+        assetId: activeAssetId,
+        queueIndex,
+        jsPosition: lastKnownPosition,
+        jsDuration: lastKnownDuration,
+        visualState: visualState.state,
+      })
+      if (visualState.state === 'paused') {
+        immersiveLog('transport.pause.skip', { reason: 'already_paused', assetId: activeAssetId })
+        return
+      }
       if (isNative() && activeAssetId) {
         await NativeAudio.pause({ assetId: activeAssetId }).catch(() => undefined)
+        immersiveLog('transport.pause.nativeDone', { assetId: activeAssetId, queueIndex })
       } else if (htmlAudio) {
         lastKnownPosition = htmlAudio.currentTime
         lastKnownDuration = Number.isFinite(htmlAudio.duration) ? htmlAudio.duration : lastKnownDuration
         htmlAudio.pause()
-        pushMediaSessionPosition(0)
+        immersiveLog('transport.pause.webDone', {
+          assetId: activeAssetId,
+          player: lastKnownPosition,
+          duration: lastKnownDuration,
+        })
       }
       publishVisualState({ state: 'paused', media: htmlAudio })
     },
 
     async resume() {
-      immersiveLog('resume', { assetId: activeAssetId, queueIndex })
+      immersiveLog('transport.resume.enter', {
+        assetId: activeAssetId,
+        queueIndex,
+        jsPosition: lastKnownPosition,
+        jsDuration: lastKnownDuration,
+        visualState: visualState.state,
+      })
+      if (visualState.state === 'playing') {
+        immersiveLog('transport.resume.skip', { reason: 'already_playing', assetId: activeAssetId })
+        return true
+      }
       if (isNative()) {
         if (!activeAssetId) return false
         try {
           await NativeAudio.resume({ assetId: activeAssetId })
         } catch {
+          immersiveLog('transport.resume.nativeFailed', { assetId: activeAssetId })
           return false
         }
+        immersiveLog('transport.resume.nativeDone', { assetId: activeAssetId, queueIndex })
         publishVisualState({ state: 'playing', media: null })
-        void setMediaSessionPlaying()
-        pushMediaSessionPosition(activePlaybackRate)
         return true
       }
       if (!htmlAudio) return false
@@ -491,7 +577,6 @@ function createTransport(): ImmersiveAudioTransport {
         if (options?.clearSession !== false) {
           await clearNativeQueue()
           await detachNativeListeners()
-          await clearMediaSession()
         }
       }
       if (htmlAudio) {
@@ -511,15 +596,13 @@ function createTransport(): ImmersiveAudioTransport {
     },
 
     async setRate(playbackRate) {
-      activePlaybackRate = playbackRate
-      immersiveLog('setRate', { playbackRate, assetId: activeAssetId })
+      // Rate locked to 1 for immersive this phase (docs §6).
+      activePlaybackRate = forceImmersiveRate(playbackRate)
+      immersiveLog('setRate', { playbackRate: activePlaybackRate, assetId: activeAssetId, locked: true })
       if (isNative() && activeAssetId) {
-        await NativeAudio.setRate({ assetId: activeAssetId, rate: playbackRate }).catch(() => undefined)
+        await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
       } else if (htmlAudio) {
-        htmlAudio.playbackRate = playbackRate
-      }
-      if (visualState.state === 'playing') {
-        pushMediaSessionPosition(playbackRate)
+        htmlAudio.playbackRate = IMMERSIVE_PLAYBACK_RATE
       }
     },
 
@@ -538,7 +621,6 @@ function createTransport(): ImmersiveAudioTransport {
         const clamped = duration > 0 ? Math.min(Math.max(0, seconds), duration) : Math.max(0, seconds)
         await NativeAudio.setCurrentTime({ assetId: activeAssetId, time: clamped }).catch(() => undefined)
         lastKnownPosition = clamped
-        pushMediaSessionPosition(visualState.state === 'playing' ? activePlaybackRate : 0)
         return
       }
 
@@ -581,7 +663,6 @@ function createTransport(): ImmersiveAudioTransport {
       lastKnownDuration = 0
       if (isNative()) {
         await clearNativeQueue()
-        await clearMediaSession()
       }
       publishVisualState({ state: 'idle', media: null })
     },

@@ -229,6 +229,14 @@ export function ImmersivePlayerDialog({
     })
   }, [emitIndexChange, index, items, onLoadMore, open, playlistTotal, windowOffset])
 
+  // Arm paused Now Playing only when Immersive opens — NOT on every index change
+  // (re-arm mid-queue cleared the card and fought playFromCurrentItem).
+  useEffect(() => {
+    const engine = engineRef.current
+    if (!engine || !open) return
+    void engine.armSession()
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     /**
@@ -302,6 +310,12 @@ export function ImmersivePlayerDialog({
       return
     }
     if (status === 'paused') {
+      // Arm-only (loop never started): play() builds the full segment window.
+      // resume() would only restart the single armed asset.
+      if (!engine.hasPlaybackLoop()) {
+        await engine.play()
+        return
+      }
       const resumed = await engine.resume()
       if (!resumed) await engine.play()
       return
