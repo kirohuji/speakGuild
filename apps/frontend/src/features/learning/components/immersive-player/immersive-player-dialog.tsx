@@ -36,7 +36,11 @@ import { isIOS, isNative } from '@/lib/native'
 import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { immersiveLog } from './immersive-audio.transport'
-import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
+import {
+  immersivePlaybackService,
+  warmupImmersiveArtwork,
+  type ImmersivePlaybackVisualState,
+} from './immersive-playback.service'
 import { createTimerScheduler, ListeningQueueEngine, type ListeningQueueEngineState } from './listening-queue.engine'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
 import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerExample, type ImmersivePlayerItem, type ImmersivePlayerStatus } from './immersive-player.types'
@@ -231,10 +235,14 @@ export function ImmersivePlayerDialog({
 
   // Arm paused Now Playing only when Immersive opens — NOT on every index change
   // (re-arm mid-queue cleared the card and fought playFromCurrentItem).
+  // Prefetch file:// logo so the first NP write has artwork.
   useEffect(() => {
     const engine = engineRef.current
     if (!engine || !open) return
-    void engine.armSession()
+    void (async () => {
+      await warmupImmersiveArtwork()
+      await engine.armSession()
+    })()
   }, [open])
 
   useEffect(() => {
@@ -460,53 +468,65 @@ export function ImmersivePlayerDialog({
                 )}
 
                 {!hiddenText && displayExamples.length > 0 && (
-                  <section className="space-y-3">
-                    <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
-                      <MessageSquareText className="size-3.5" /> {t('immersivePlayer.segment.example')}
-                    </div>
-                    <div className="space-y-2">
-                      {displayExamples.map((example, exampleIndex) => {
-                        const playing = Boolean(example.audioUrl && playingExampleUrl === example.audioUrl)
-                        return (
-                          <div
-                            key={`${example.en}:${exampleIndex}`}
-                            className={cn('rounded-md px-1 py-2', playing && 'bg-primary/10')}
-                          >
-                            <div className="flex items-start gap-2">
-                              <p className="min-w-0 flex-1 text-base font-medium leading-7 text-foreground">{example.en}</p>
-                              {example.audioUrl && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const wasQueuePlaying = statusRef.current === 'playing' || statusRef.current === 'loading'
-                                    resumeQueueAfterExampleRef.current = wasQueuePlaying
-                                    void engineRef.current?.pause()
-                                    void playExampleAudio(example.audioUrl, null, 'voice', {
-                                      onEnded: () => {
-                                        if (!resumeQueueAfterExampleRef.current) return
-                                        resumeQueueAfterExampleRef.current = false
-                                        void engineRef.current?.play()
-                                      },
-                                    })
-                                  }}
-                                  className={cn(
-                                    'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-background hover:text-foreground',
-                                    playing ? 'bg-primary/15 text-primary' : 'text-muted-foreground',
-                                  )}
-                                  aria-label={t('insight.playExample')}
-                                  aria-pressed={playing}
-                                >
-                                  <Volume2 className="size-3.5" />
-                                </button>
-                              )}
-                            </div>
-                            {example.zh && (
-                              <p className="mt-1 text-sm leading-6 text-muted-foreground">{example.zh}</p>
+                  <section className="space-y-2">
+                    {displayExamples.map((example, exampleIndex) => {
+                      const canPlay = Boolean(example.audioUrl)
+                      const playing = Boolean(example.audioUrl && playingExampleUrl === example.audioUrl)
+                      const playExample = () => {
+                        if (!example.audioUrl) return
+                        const wasQueuePlaying = statusRef.current === 'playing' || statusRef.current === 'loading'
+                        resumeQueueAfterExampleRef.current = wasQueuePlaying
+                        void engineRef.current?.pause()
+                        void playExampleAudio(example.audioUrl, null, 'voice', {
+                          onEnded: () => {
+                            if (!resumeQueueAfterExampleRef.current) return
+                            resumeQueueAfterExampleRef.current = false
+                            void engineRef.current?.play()
+                          },
+                        })
+                      }
+                      return (
+                        <div
+                          key={`${example.en}:${exampleIndex}`}
+                          role={canPlay ? 'button' : undefined}
+                          tabIndex={canPlay ? 0 : undefined}
+                          onClick={canPlay ? playExample : undefined}
+                          onKeyDown={canPlay ? (event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault()
+                              playExample()
+                            }
+                          } : undefined}
+                          aria-label={canPlay ? t('insight.playExample') : undefined}
+                          aria-pressed={canPlay ? playing : undefined}
+                          className={cn(
+                            'rounded-md px-3 py-2.5',
+                            playing && 'bg-primary/10',
+                            canPlay && 'cursor-pointer transition-colors hover:bg-primary/5',
+                          )}
+                        >
+                          <div className="flex items-start gap-2">
+                            <p className="min-w-0 flex-1 text-base font-medium leading-7 text-foreground">{example.en}</p>
+                            {canPlay && (
+                              <span
+                                className={cn(
+                                  'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full',
+                                  playing ? 'bg-primary/15 text-primary' : 'text-muted-foreground',
+                                )}
+                                aria-hidden="true"
+                              >
+                                <Volume2
+                                  className={cn('size-3.5', playing && 'animate-pulse text-primary')}
+                                />
+                              </span>
                             )}
                           </div>
-                        )
-                      })}
-                    </div>
+                          {example.zh && (
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{example.zh}</p>
+                          )}
+                        </div>
+                      )
+                    })}
                   </section>
                 )}
               </div>

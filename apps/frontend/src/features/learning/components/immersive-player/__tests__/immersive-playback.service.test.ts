@@ -277,13 +277,13 @@ describe('immersivePlaybackService setQueue transport', () => {
     await expect(playPromise).resolves.toBeUndefined()
   })
 
-  it('forces rate 1 even when playQueue requests another rate', async () => {
+  it('forwards playQueue playbackRate to NativeAudio.setRate', async () => {
     const playPromise = immersivePlaybackService.playQueue([
       { assetId: 'immersive:a', fileUrl: 'file://a.mp3', title: 'a', segmentId: 'a' },
     ], { playbackRate: 1.5 })
     await vi.waitFor(() => expect(NativeAudio.setRate).toHaveBeenCalledWith({
       assetId: 'immersive:a',
-      rate: 1,
+      rate: 1.5,
     }))
     emit('complete', { assetId: 'immersive:a' })
     await playPromise

@@ -1,6 +1,6 @@
 import { showRequestError } from '@/lib/request-feedback'
 import { LEARNING_LIBRARY_CHANGED_EVENT } from '@/lib/offline/learning-content.repository'
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { localDateKey } from '@/lib/date/calendar-date'
@@ -1031,57 +1031,62 @@ function ExpressionLibraryPageContent() {
     }
 
     return (
-      <Virtuoso
-        data={virtualRows}
-        className="h-full scrollbar-hide"
-        increaseViewportBy={{ top: 360, bottom: 720 }}
-        endReached={() => { void loadNextPage() }}
-        onScroll={(event) => {
-          const scroller = event.currentTarget
-          const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-          const top = Math.min(maxTop, Math.max(0, scroller.scrollTop))
-          const atTop = top <= 2
-          const atBottom = top >= maxTop - 2
+      // absolute inset gives Virtuoso a definite height; h-full alone collapses on
+      // iPad when any ancestor resolves to height:auto (flex + overflow-hidden).
+      <div className="relative min-h-0 flex-1">
+        <Virtuoso
+          data={virtualRows}
+          className="absolute inset-0 scrollbar-hide"
+          style={{ touchAction: 'pan-y' } as CSSProperties}
+          increaseViewportBy={{ top: 360, bottom: 720 }}
+          endReached={() => { void loadNextPage() }}
+          onScroll={(event) => {
+            const scroller = event.currentTarget
+            const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+            const top = Math.min(maxTop, Math.max(0, scroller.scrollTop))
+            const atTop = top <= 2
+            const atBottom = top >= maxTop - 2
 
-          // iOS rubber-band scrolling reports tiny reverse deltas at both edges.
-          // Treat an edge as stable and require deliberate travel before changing chrome.
-          if (atTop) {
-            setHeaderCondensed(false)
-            headerScrollIntentRef.current = { down: 0, up: 0 }
-            listScrollTopRef.current = top
-            return
-          }
-          if (atBottom) {
-            listScrollTopRef.current = top
-            return
-          }
+            // iOS rubber-band scrolling reports tiny reverse deltas at both edges.
+            // Treat an edge as stable and require deliberate travel before changing chrome.
+            if (atTop) {
+              setHeaderCondensed(false)
+              headerScrollIntentRef.current = { down: 0, up: 0 }
+              listScrollTopRef.current = top
+              return
+            }
+            if (atBottom) {
+              listScrollTopRef.current = top
+              return
+            }
 
-          const delta = top - listScrollTopRef.current
-          if (delta > 0.5) {
-            headerScrollIntentRef.current.down += delta
-            headerScrollIntentRef.current.up = 0
-            if (headerScrollIntentRef.current.down >= 24) setHeaderCondensed(true)
-          } else if (delta < -0.5) {
-            headerScrollIntentRef.current.up -= delta
-            headerScrollIntentRef.current.down = 0
-            if (headerScrollIntentRef.current.up >= 24) setHeaderCondensed(false)
-          }
-          listScrollTopRef.current = top
-        }}
-        components={{
-          Header: () => listHintHeader(immersiveClassName),
-          Footer: () => listFooter,
-        }}
-        itemContent={(_, row) => renderListRow(row)}
-      />
+            const delta = top - listScrollTopRef.current
+            if (delta > 0.5) {
+              headerScrollIntentRef.current.down += delta
+              headerScrollIntentRef.current.up = 0
+              if (headerScrollIntentRef.current.down >= 24) setHeaderCondensed(true)
+            } else if (delta < -0.5) {
+              headerScrollIntentRef.current.up -= delta
+              headerScrollIntentRef.current.down = 0
+              if (headerScrollIntentRef.current.up >= 24) setHeaderCondensed(false)
+            }
+            listScrollTopRef.current = top
+          }}
+          components={{
+            Header: () => listHintHeader(immersiveClassName),
+            Footer: () => listFooter,
+          }}
+          itemContent={(_, row) => renderListRow(row)}
+        />
+      </div>
     )
   }
 
   const page = (
     <div className={cn(
-      isMobile ? 'mx-auto max-w-2xl px-4 pt-3 md:h-auto' : 'flex h-full min-h-0 flex-col pt-0',
-      isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0',
-      selectionMode ? 'md:pb-28' : isMobile ? 'md:pb-10' : 'pb-0',
+      // Keep h-full on tablet/iPad too — md:h-auto collapses Virtuoso to 0 height.
+      isMobile ? 'mx-auto flex h-full min-h-0 max-w-2xl flex-col overflow-hidden px-4 pb-0 pt-3' : 'flex h-full min-h-0 flex-col pt-0 pb-0',
+      selectionMode && 'pb-28',
     )}>
       <header className="mb-4 flex shrink-0 items-center gap-3">
         <button
@@ -1170,7 +1175,7 @@ function ExpressionLibraryPageContent() {
         </div>
 
         {/* 移动端 forceMount 保滑动切 tab；桌面只挂载当前 tab，列表区单独滚动 */}
-        <TabsContent value="words" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <TabsContent value="words" forceMount={isMobile ? true : undefined} className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1180,7 +1185,7 @@ function ExpressionLibraryPageContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="chunk" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <TabsContent value="chunk" forceMount={isMobile ? true : undefined} className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1190,7 +1195,7 @@ function ExpressionLibraryPageContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="pattern" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+        <TabsContent value="pattern" forceMount={isMobile ? true : undefined} className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (

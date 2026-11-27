@@ -34,10 +34,10 @@
 要点：
 
 1. **`configure({ showNotification: true, background: true, backgroundPlayback: true })`**：Capgo 写锁屏卡；音频 session 为可打断其它 App 的 `.playback`（音乐 / 播客类主音源）。
-2. **队列项必须带 `notificationMetadata`**（title / artist / album / artworkUrl），否则卡上元数据空洞。
-3. **队列**：`NativeAudio.setQueue`（段音频 + 静音 gap 轨）；权威仍在 `ListeningQueueEngine`。
-4. **锁屏按钮目标**：多轨时 **上一首 / 下一首（学习项）**；拖进度走插件 seek。Capgo 默认 ±15 skip 若与产品冲突，用 configure / patch 关掉或改槽位，**不**为此重新引入 MediaSession。
-5. **本阶段倍速锁 1**（产品与 Now Playing `playbackRate`）；非 1 倍速放到最后再做。
+2. **队列项必须带 `notificationMetadata`**（title / artist / album / artworkUrl），否则卡上元数据空洞。`artworkUrl` **只写可加载的 `file://` logo**（开播前 `warmupImmersiveArtwork` / `ensureArtworkUri`）；失败则省略，禁止 WebView/http 回退。
+3. **队列**：`NativeAudio.setQueue` **仅内容轨**；停顿静音 **bake 进内容 WAV**（`immersive-audio-pad.ts`），不再插独立 gap 轨。规则：单词→例句 **1s 拼在例句开头**；其余（含例句→下词、词→词、项间）**X=`pauseGapSeconds` 拼在上一段末尾**；后台 **0**。倍速时按 `silenceSec * rate` 采样，使墙钟等待仍约等于设定秒数。
+4. **锁屏按钮**：**上一首 / 下一首（学习项）+ 拖进度**；Capgo patch **关掉 ±15 skip**（`skipForward/Backward.isEnabled = false`），**不**再引 MediaSession。
+5. **倍速**：设置 0.75 / 1 / 1.25 / 1.5 传到 `NativeAudio.setRate`；Now Playing 播中写**实际 rate** 并 quiet rebase（见 §4）。
 
 ```mermaid
 flowchart LR
@@ -97,21 +97,21 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 
 其它播放器（Music / Spotify）的做法：
 
-1. **播中**用 `elapsed + rate=1` 墙钟插值 → 条丝滑。
-2. **播中约每 0.1s** 把字典 `elapsed` **安静 rebase 到当前 visual**，`rate` 仍为 `1`（用户无感）。间隔过大时暂停仍会带着 `jumpFromSys≈npAge` 闪。
-3. **暂停**：字典落后时先 `pauseBridge`（同 pin、`rate=1`）再同轮写 `rate=0`（依赖 0.1s rebase 把 jump 压小）。锁屏 play/pause **串行 + coalesce**（`remoteDesiredPlaying`），禁止在 settle 中叠第二次 freeze/arm。
+1. **播中**用 `elapsed + rate=实际倍速` 墙钟插值 → 条丝滑（1.0 即真实墙钟；非 1 时与 `setRate` 对齐）。
+2. **播中约每 0.1s** 把字典 `elapsed` **安静 rebase 到当前 visual**，`rate` 保持**当前倍速**（用户无感）。间隔过大时暂停仍会带着 `jumpFromSys≈npAge` 闪。
+3. **暂停**：字典落后时先 `pauseBridge`（同 pin、当前 rate）再同轮写 `rate=0`（依赖 0.1s rebase 把 jump 压小）。锁屏 play/pause **串行 + coalesce**（`remoteDesiredPlaying`），禁止在 settle 中叠第二次 freeze/arm。
 
-系统没有「把条绑到 AVAudioPlayer」的 API；`rate=1` 本来就是墙钟。若整段只 arm 一次、播中永不改 elapsed，暂停时字典仍是旧基准、条已插值走远 → `jumpFromSys` 很大 → iOS 收 `rate=0` 时往回闪。这是反复修 pause 顺序仍闪的**根因**。
+系统没有「把条绑到 AVAudioPlayer」的 API；Now Playing `playbackRate` 就是墙钟倍率。若整段只 arm 一次、播中永不改 elapsed，暂停时字典仍是旧基准、条已插值走远 → `jumpFromSys` 很大 → iOS 收 `rate=0` 时往回闪。这是反复修 pause 顺序仍闪的**根因**。
 
-短句启动延迟会让 player 慢半拍——开播时**等 `currentTime` 离开 0 再 arm `rate=1`**。暂停冻 visual，并 seek player 到同一点，恢复也对齐。
+短句启动延迟会让 player 慢半拍——开播时**等 `currentTime` 离开 0 再 arm 当前 rate**。暂停冻 visual，并 seek player 到同一点，恢复也对齐。`setRate` 时同步改 NP rate 并按 visual rebase。
 
 硬约定：
 
-1. **播中 `rate=1`**；JS progress **不得**写 NP（只服务 App 内 UI）。
-2. **play / 切轨**：先 metadata + `rate=0` @0；player 动了再 `publishPlaying.arm` → live elapsed + `rate=1`，并启动 quiet rebase。
-3. **播中允许 quiet rebase**：只把 `elapsed` 写成**当前 visual**（已显示位置），`rate` 保持 `1`。**禁止**写成明显落后的 player（那才会闪回）。
-4. **暂停**：先可选 `pauseBridge`（同 pin、`rate=1` 对齐字典），再 `rate=0` 冻 visual；`timeBeforePause` 同值；seek player 会合。验收：`jumpFromSys` 应在 **±0.05s** 量级。
-4b. **恢复**（seek 已到位后）：先写 NP `elapsed=pin, rate=1`，**再** `asset.resume()`（`publishResumeArmThenPlay`）。禁止先出声再 hold/arm——声会领先条 ~20ms，体感「点播放往前闪」。
+1. **播中写实际 `playbackRate`**；JS progress **不得**写 NP（只服务 App 内 UI）。
+2. **play / 切轨**：先 metadata + `rate=0` @0；player 动了再 `publishPlaying.arm` → live elapsed + 实际 rate，并启动 quiet rebase。
+3. **播中允许 quiet rebase**：只把 `elapsed` 写成**当前 visual**（已显示位置），`rate` 保持实际倍速。**禁止**写成明显落后的 player（那才会闪回）。
+4. **暂停**：先可选 `pauseBridge`（同 pin、当前 rate 对齐字典），再 `rate=0` 冻 visual；`timeBeforePause` 同值；seek player 会合。验收：`jumpFromSys` 应在 **±0.05s** 量级。
+4b. **恢复**（seek 已到位后）：先写 NP `elapsed=pin, rate=实际倍速`，**再** `asset.resume()`（`publishResumeArmThenPlay`）。禁止先出声再 hold/arm——声会领先条 ~20ms，体感「点播放往前闪」。
 5. **轨尾**：永远不要强行写 100%（`leaveCard`）；交给下一首 `publishPlaying` 或 `clearQueue`。
 6. **禁止**在 `audioQueue` 里 `main.sync`（Capacitor 会死锁卡死）。
 7. **armSession** 只开窗一次；换项直接 `playQueue`。
@@ -128,9 +128,10 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 | `listening-queue.engine.ts` | 队列权威；`armSession`；remote → 直接驱动 Transport；跨学习项 next/prev；窗尾滑窗 |
 | `immersive-playback.service.ts` | Transport：`showNotification: true`、`setQueue` + metadata、状态点写 Now Playing（见 §4） |
 | `immersive-media-session.ts` | **目标删除**；迁移完成前仍是旧双插件写卡方，勿与新设计并存 |
-| `immersive-player-dialog.tsx` | UI；`open` 时触发 arm；回前台若已 `playing` 则 skip 二次 resume |
-| `immersive-silence.ts` | 句间静音 WAV 进官方队列 |
-| `patches/@capgo__capacitor-native-audio@…` | arm 写卡（`playbackRate = 0`）；按需 elapsed clamp / skip 槽位 |
+| `immersive-player-dialog.tsx` | UI；`open` 时 warmup artwork + arm；回前台若已 `playing` 则 skip 二次 resume |
+| `immersive-audio-pad.ts` | 内容音频尾部拼静音 → Cache WAV `file://`；倍速补偿采样 |
+| `immersive-silence.ts` | 纯静音 WAV 工具（pad 失败时 timer gap 仍可用其语义） |
+| `patches/@capgo__capacitor-native-audio@…` | arm 写卡；rate-aware NP；**关闭 ±15**；artwork 缓存合并 |
 
 入口：`expression-library-page` → `useLeanInsightPlaylist` → `ImmersivePlayerDialog`。
 
@@ -142,12 +143,13 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 2. 沉浸式 **`showNotification: true`**；队列项带 `notificationMetadata`。
 3. **禁止**在沉浸式路径再挂 `@capgo/capacitor-media-session`（双写 → 进度闪回 / 按键双触发）。
 4. Remote 与 UI 共用 Engine 驱动路径；禁止 remote「只 sync」再叠一层 resume/pause。
-5. Now Playing：播中 `rate=1` + visual quiet rebase、暂停 `rate=0`（见 §4）。
-6. **本阶段不做倍速**（UI / Now Playing 均按 1）；非 1 留到最后。
-7. 锁屏交互优先 **上下曲（学习项）+ 拖进度**；±15 若与产品冲突则 configure/patch，不引 MediaSession。
-8. 后台禁止新 TTS；后台 0 gap（不插静音轨）。
+5. Now Playing：播中实际 rate + visual quiet rebase、暂停 `rate=0`（见 §4）。
+6. **倍速解锁**：UI / Transport / Capgo NP 同一 `playbackRate`；改 rate 或 gap 时重建当前窗（尾静音依赖二者）。
+7. 锁屏 **仅上下曲（学习项）+ 拖进度**；±15 已在 Capgo patch 关闭。
+8. 后台禁止新 TTS；后台 **0** 尾静音（不 pad）。
 9. 关窗必须停播并 `clearQueue`（卡随之消失：关掉 Immersive 界面后锁屏不应再挂卡、不应再出声）。
 10. 改 native 插件 / patch 后必须 `cap sync ios` 再打真机包。
+11. 封面：原生路径只接受 `file://` logo；开播 / arm 前必须物化成功，否则省略 `artworkUrl`。
 
 ---
 
@@ -156,11 +158,12 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 | 阶段 | 内容 | 状态 |
 |------|------|------|
 | **Docs** | 目标架构 + 进度策略 + 交叉手册 | 完成（含本次） |
-| **Arm patch + 单插件** | 卸 MediaSession；`showNotification: true`；arm patch 出 paused 卡；remote 单路径；rate=1 | 未开始 |
+| **Arm patch + 单插件** | 卸 MediaSession；`showNotification: true`；arm patch 出 paused 卡；remote 单路径 | 进行中 |
+| **倍速 + 尾静音 + ±15 off** | rate-aware NP；内容轨 bake silence；关掉 skip | 进行中 |
 | **窗尾换窗硬修** | 优先 `addTracks` 滑窗；remote 走 Engine；换窗无空卡（R5 必做） | 未开始 |
 | **真机验收** | §9 清单 | 未开始 |
 
-**本阶段明确延后**：UI ↔ 锁屏完全同拍、gap 期间冻结 metadata 显示、倍速（非 1）。
+**本阶段明确延后**：UI ↔ 锁屏完全同拍（细粒度）。
 
 真机滤日志：统一前缀 `[MANYU_IMMERSIVE]`（`js.*` + `native.*`），见 §10。
 
@@ -178,18 +181,18 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 ### R2 — elapsed 闪回 / 顿挫
 
 - **现象**：remote pause/play 或周期性写 elapsed 导致 scrubber 闪前再跳回、一顿一顿。
-- **修法**：落实 §4（播中 rate=1 + visual quiet rebase；状态点更新）。禁止把落后的 player 当 elapsed 写回。  
+- **修法**：落实 §4（播中实际 rate + visual quiet rebase；状态点更新）。禁止把落后的 player 当 elapsed 写回。  
 - **本阶段**：闪回 **不挡主路径**；验收要求「不严重闪回」，不要求零闪回。
 
 ### R3 — ±15 vs 上一首 / 下一首
 
 - **现象**：Capgo 默认 skip ±15 占锁屏左右槽，与「切学习项」冲突。
-- **修法**：configure 关掉 skip 或改槽位；多轨队列露出 prev/next；必要时 patch。
+- **修法**：**已做** — Capgo patch 禁用 `skipForward` / `skipBackward`；保留 next/previous track。
 
-### R4 — 静音 gap 轨（显示瞬跳，非时钟漂移）
+### R4 — 尾静音（原独立 gap 轨）
 
-- **现象**：进 gap 时锁屏 duration/position 短暂变成 gap 轨；出 gap 再跳回内容轨。静音 WAV 时长准时，**音频队列不会越播越偏**。
-- **修法**：**延后**——本阶段标为已知显示瞬跳；后续可评估 gap 期间冻结上一句 Now Playing metadata。
+- **现象（旧）**：独立 gap 轨会让锁屏 duration/position 短暂切到静音轨。
+- **修法（现）**：去掉 gap 轨；`decodeAudioData` → 追加静音 → Cache WAV，内容轨自带尾静音。UI 仍按 segment 切文案。pad 失败时才 timer `waitGap`。
 
 ### R5 — 队列窗尾 / `setQueue` 换窗（必须修复）
 
@@ -212,17 +215,18 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 ## 9. 真机验收清单
 
 1. **打开 Immersive、不点播放**，立刻锁屏 → **有卡、paused、元数据正确**  
-2. 卡上 play → 出声；playing 时 scrubber **连贯**（`rate=1` 插值，无步进）  
+2. 卡上 play → 出声；playing 时 scrubber **连贯**（实际 rate 插值，无步进）  
 3. pause / seek / 切轨后 elapsed 与真实位置对齐；暂停**不闪**  
-
 4. 暂停后卡仍在；**关窗后卡消失**、播放停止  
-5. 前台连播 ≥5 条 + gap  
+5. 前台连播 ≥5 条；词间 / 词句停顿符合 1s / X 规则（锁屏不闪到独立 gap 轨）  
 6. 播放中锁屏 ≥1 分钟，**音频仍自动下一首**，系统卡可见  
 7. 锁屏 pause → play：**不严重闪回**；拖进度后音频与 scrubber 对齐  
 8. **窗尾连续下一首**：卡 title/进度与音频同一切换，**无空白卡**、不停播  
-9. 锁屏上一首 / 下一首切学习条目  
+9. 锁屏上一首 / 下一首切学习条目；**无 ±15**  
+10. 改倍速：进度不漂；词间等待墙钟仍约等于设定秒数  
+11. 封面稳定为 App logo（`file://`）  
 
-本阶段不验收倍速。升级依赖或 patch 后：`cap sync ios`，再跑本清单。
+升级依赖或 patch 后：`cap sync ios`，再跑本清单。
 
 ---
 

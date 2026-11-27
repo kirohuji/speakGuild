@@ -115,7 +115,7 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..85d1e36e36f82fd566792cd05e182785
  
      private func notifyQueueChange(assetId: String, index: Int, reason: String) {
 diff --git a/ios/Sources/NativeAudioPlugin/Plugin.swift b/ios/Sources/NativeAudioPlugin/Plugin.swift
-index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12642a8e78 100644
+index 471e7718b6b978f58f8d15505e7891d698925e12..7264bd415649c276b25033765898382565246c17 100644
 --- a/ios/Sources/NativeAudioPlugin/Plugin.swift
 +++ b/ios/Sources/NativeAudioPlugin/Plugin.swift
 @@ -96,7 +96,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
@@ -127,7 +127,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
      var isRunningTests = false
      internal var playbackQueueIds: [String] = []
      internal var playbackQueueIndex: Int = -1
-@@ -104,6 +104,23 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -104,6 +104,35 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      internal var configuredProgressInterval: Double = 0.5
      private var lastProgressEmitByAsset: [String: TimeInterval] = [:]
  
@@ -147,11 +147,23 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +    private var remoteResumeSettling = false
 +    /// Latest user intent while a settle is in flight. `nil` = no pending coalesce.
 +    private var remoteDesiredPlaying: Bool?
++    /// Last rate applied via setRate / play — used for Now Playing wall-clock interpolation.
++    internal var activePlaybackRate: Double = 1.0
++    /// Cached logo artwork so publishPlaying meta can attach UIImage synchronously.
++    private var cachedArtworkImage: UIImage?
++    private var cachedArtworkUrl: String?
++
++    /// Rate written to MPNowPlayingInfoCenter while playing (respects setRate).
++    internal func playingNpRate() -> Double {
++        let rate = activePlaybackRate
++        if rate.isFinite && rate > 0.01 { return rate }
++        return 1.0
++    }
 +
      /// Initialize plugin state and audio-related handlers, and register background behavior for session management.
      ///
      /// Performs initial plugin setup after the plugin is loaded.
-@@ -217,7 +234,13 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -217,7 +246,13 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          return .stopped
      }
  
@@ -166,7 +178,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          let emit = {
              let asset = audioAsset ?? self.audioList[assetId] as? AudioAsset
              let resolvedState = state ?? self.resolvePlaybackState(assetId: assetId, audioAsset: asset)
-@@ -228,7 +251,17 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -228,7 +263,17 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  "isPlaying": resolvedState == .playing
              ]
              if let asset {
@@ -185,7 +197,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
                  let duration = asset.getDuration()
                  if duration.isFinite {
                      data["duration"] = duration
-@@ -245,9 +278,22 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -245,9 +290,22 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      }
  
      internal func handlePlaybackCompletion(assetId: String, audioAsset: AudioAsset? = nil) {
@@ -210,7 +222,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          }
          notifyPlaybackState(assetId: assetId, reason: "complete", state: .stopped, audioAsset: audioAsset)
      }
-@@ -255,6 +301,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -255,6 +313,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      /// Must be called on `audioQueue`. If `timeBeforePause` is stored, clears it and seeks (async for remote) before running `resume` + Now Playing refresh.
      /// Mirrors `resume(_:)` (non–fade-in path): restores `volumeBeforePause` via `setVolume`, clears that key from `audioAssetData`, then `resume()`.
      private func resumeAssetFromStoredPausePositionIfNeeded(assetId: String, asset: AudioAsset, reason: String = "resume") {
@@ -229,7 +241,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          var restoredTime: TimeInterval?
          if var data = audioAssetData[assetId],
             let time = data["timeBeforePause"] as? TimeInterval {
-@@ -268,8 +326,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -268,8 +338,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              restoredVolume = volume
          }
  
@@ -250,7 +262,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
              if let volume = restoredVolume {
                  asset.setVolume(volume: NSNumber(value: volume), fadeDuration: 0)
              }
-@@ -277,12 +347,32 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -277,12 +359,32 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  data.removeValue(forKey: "volumeBeforePause")
                  self.audioAssetData[assetId] = data
              }
@@ -266,8 +278,8 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +                self.logClock("native.play.\(reason)", assetId: assetId, player: elapsed, duration: duration, extra: [
 +                    "mode": "armThenResume",
 +                    "fromPause": elapsedForCard != nil,
-+                    "writeRate": 1,
-+                    "note": "np_rate1_at_pin_then_audio_resume"
++                    "writeRate": self.playingNpRate(),
++                    "note": "np_rate_at_pin_then_audio_resume"
 +                ])
 +                self.publishResumeArmThenPlay(
 +                    assetId: assetId,
@@ -286,7 +298,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          }
          if let resumeTime = restoredTime {
              asset.setCurrentTime(time: resumeTime) { [weak self] in
-@@ -294,50 +384,182 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -294,50 +396,182 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          }
      }
  
@@ -502,7 +514,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          }
  
          // Stop command
-@@ -370,32 +592,24 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -370,51 +604,29 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              return .success
          }
  
@@ -542,14 +554,36 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +                playing = (self.audioList[assetId] as? AudioAsset)?.isPlaying() ?? false
              }
 -            return .success
+-        }
+-
+-        // Skip forward command
+-        commandCenter.skipForwardCommand.preferredIntervals = [NSNumber(value: 15)]
+-        commandCenter.skipForwardCommand.isEnabled = true
+-        commandCenter.skipForwardCommand.addTarget { [weak self] event in
+-            guard let self else { return .commandFailed }
+-            guard let skipEvent = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
+-            return self.handleSeekCommand(delta: skipEvent.interval)
 +            if playing {
 +                return self.handleRemotePauseCommand(source: "toggle")
 +            }
 +            return self.handleRemotePlayCommand()
          }
  
-         // Skip forward command
-@@ -820,8 +1034,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+-        // Skip backward command
+-        commandCenter.skipBackwardCommand.preferredIntervals = [NSNumber(value: 15)]
+-        commandCenter.skipBackwardCommand.isEnabled = true
+-        commandCenter.skipBackwardCommand.addTarget { [weak self] event in
+-            guard let self else { return .commandFailed }
+-            guard let skipEvent = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
+-            return self.handleSeekCommand(delta: -skipEvent.interval)
+-        }
++        // MANYU: hide ±15 skip — lock screen uses previous/next track (learning items).
++        commandCenter.skipForwardCommand.isEnabled = false
++        commandCenter.skipBackwardCommand.isEnabled = false
+ 
+         // Scrub / change position command
+         commandCenter.changePlaybackPositionCommand.isEnabled = true
+@@ -820,8 +1032,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  // Update notification center if enabled
                  if self.showNotification {
                      self.currentlyPlayingAssetId = assetId
@@ -564,7 +598,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
                  }
                  self.notifyPlaybackState(assetId: assetId, reason: "playOnce", state: .playing, audioAsset: asset)
              }
-@@ -982,8 +1200,9 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -982,8 +1198,9 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
  
                          if self.showNotification {
                              self.currentlyPlayingAssetId = audioId
@@ -576,7 +610,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
                          }
                          self.notifyPlaybackState(assetId: audioId, reason: "play", state: .playing, audioAsset: audioAsset)
                          call.resolve()
-@@ -1096,6 +1315,36 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1096,6 +1313,36 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
  
              let finishResume: () -> Void = { [weak self] in
                  guard let self else { return }
@@ -597,8 +631,8 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +                    self.logClock("native.resume", assetId: audioId, player: elapsed, duration: duration, extra: [
 +                        "mode": "armThenResume",
 +                        "fromPause": restoredTime != nil,
-+                        "writeRate": 1,
-+                        "note": "js_np_rate1_at_pin_then_audio_resume"
++                        "writeRate": self.playingNpRate(),
++                        "note": "js_np_rate_at_pin_then_audio_resume"
 +                    ])
 +                    self.publishResumeArmThenPlay(
 +                        assetId: audioId,
@@ -613,7 +647,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
                  if fadeIn {
                      let targetVolume = restoredVolume ?? (audioAsset.channels.first?.volume ?? audioAsset.initialVolume)
                      audioAsset.setVolume(volume: 0, fadeDuration: 0)
-@@ -1107,14 +1356,6 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1107,14 +1354,6 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                      }
                      audioAsset.resume()
                  }
@@ -628,7 +662,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
                  self.notifyPlaybackState(assetId: audioId, reason: "resume", state: .playing, audioAsset: audioAsset)
                  call.resolve()
              }
-@@ -1131,6 +1372,10 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1131,6 +1370,10 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      }
  
      @objc func pause(_ call: CAPPluginCall) {
@@ -639,7 +673,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          audioQueue.sync {
              self.audioQueue.setSpecific(key: self.audioQueueContextKey, value: true)
              defer { self.audioQueue.setSpecific(key: self.audioQueueContextKey, value: nil) }
-@@ -1145,28 +1390,50 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1145,28 +1388,50 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              var data = audioAssetData[audioAsset.assetId] ?? [:]
              data["volumeBeforePause"] = currentVolume
  
@@ -705,7 +739,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          }
      }
  
-@@ -1248,8 +1515,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1248,8 +1513,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              audioAsset.loop()
              if self.showNotification {
                  self.currentlyPlayingAssetId = audioAsset.assetId
@@ -720,7 +754,46 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
              }
              self.notifyPlaybackState(assetId: audioAsset.assetId, reason: "loop", state: .playing, audioAsset: audioAsset)
              call.resolve()
-@@ -1640,6 +1911,8 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1337,7 +1606,38 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+             }
+ 
+             let rate = min(max(call.getFloat(Constant.Rate) ?? Constant.DefaultRate, Constant.MinRate), Constant.MaxRate)
++            self.activePlaybackRate = Double(rate)
+             audioAsset.setRate(rate: rate as NSNumber)
++            // Keep Now Playing wall-clock in sync with the new rate (rebase at current visual).
++            if self.showNotification,
++               self.currentlyPlayingAssetId == audioAsset.assetId,
++               audioAsset.isPlaying() {
++                let assetId = audioAsset.assetId
++                let duration = audioAsset.getDuration()
++                let player = audioAsset.getCurrentTime()
++                let npRate = self.playingNpRate()
++                self.npWriteGeneration += 1
++                let gen = self.npWriteGeneration
++                DispatchQueue.main.async { [weak self] in
++                    guard let self else { return }
++                    guard gen == self.npWriteGeneration else { return }
++                    let visual = self.nowPlayingVisualElapsed(duration: duration, fallback: player)
++                    var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
++                    info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = visual
++                    info[MPNowPlayingInfoPropertyPlaybackRate] = npRate
++                    if duration.isFinite && duration > 0 {
++                        info[MPMediaItemPropertyPlaybackDuration] = duration
++                    }
++                    MPNowPlayingInfoCenter.default().nowPlayingInfo = info
++                    self.noteNowPlayingClock(elapsed: visual, rate: npRate, reason: "setRate")
++                    self.logClock("native.np.setRate", assetId: assetId, player: player, duration: duration, extra: [
++                        "writeElapsed": self.fmtTime(visual),
++                        "writeRate": npRate,
++                        "note": "rebase_visual_after_rate_change"
++                    ])
++                    self.scheduleQuietNowPlayingRebase(assetId: assetId, generation: gen, duration: duration)
++                }
++            }
+             call.resolve()
+         }
+     }
+@@ -1640,6 +1940,8 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                      "duration": duration
                  ])
              }
@@ -729,7 +802,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
  
              if let fadeData = audioAssetData[asset.assetId],
                 let fadeOut = fadeData["fadeOut"] as? Bool, fadeOut,
-@@ -1695,6 +1968,599 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1695,6 +1997,609 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          call.resolve()
      }
  
@@ -879,6 +952,11 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +                if let title = metadata["title"] { info[MPMediaItemPropertyTitle] = title }
 +                if let artist = metadata["artist"] { info[MPMediaItemPropertyArtist] = artist }
 +                if let album = metadata["album"] { info[MPMediaItemPropertyAlbumTitle] = album }
++                if let artworkUrl = metadata["artworkUrl"],
++                   artworkUrl == self.cachedArtworkUrl,
++                   let image = self.cachedArtworkImage {
++                    info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
++                }
 +            }
 +            info[MPMediaItemPropertyPlaybackDuration] = duration
 +            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
@@ -917,20 +995,21 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +                print("[MANYU_IMMERSIVE] native.np.resumeArm.dropStale gen=\(gen) current=\(self.npWriteGeneration)")
 +                return
 +            }
++            let npRate = self.playingNpRate()
 +            self.logClock("native.np.resumeArm", assetId: assetId, player: pin, duration: duration, extra: [
 +                "writeElapsed": self.fmtTime(pin),
-+                "writeRate": 1,
-+                "note": "rate1_at_pin_before_audio_resume"
++                "writeRate": npRate,
++                "note": "rate_at_pin_before_audio_resume"
 +            ])
 +            var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
 +            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = pin
-+            info[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
++            info[MPNowPlayingInfoPropertyPlaybackRate] = npRate
 +            if duration.isFinite && duration > 0 {
 +                info[MPMediaItemPropertyPlaybackDuration] = duration
 +            }
 +            MPNowPlayingInfoCenter.default().nowPlayingInfo = info
 +            self.setNowPlayingPlaybackState(playing: true)
-+            self.noteNowPlayingClock(elapsed: pin, rate: 1, reason: "resumeArm")
++            self.noteNowPlayingClock(elapsed: pin, rate: npRate, reason: "resumeArm")
 +            self.scheduleQuietNowPlayingRebase(
 +                assetId: assetId,
 +                generation: gen,
@@ -1084,12 +1163,13 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +            if duration.isFinite && duration > 0 {
 +                pinned = min(duration, pinned)
 +            }
++            let npRate = self.playingNpRate()
 +            self.logClock("native.np.arm", assetId: assetId, player: live, duration: duration, extra: [
 +                "polled": self.fmtTime(elapsed),
 +                "live": self.fmtTime(live),
 +                "floor": resumePinFloor.map { self.fmtTime($0) } ?? "nil",
 +                "writeElapsed": self.fmtTime(pinned),
-+                "writeRate": 1,
++                "writeRate": npRate,
 +                "attempt": attempt,
 +                "note": resumePinFloor != nil
 +                    ? "resume_arm_at_hold_pin_not_live"
@@ -1097,13 +1177,13 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +            ])
 +            var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
 +            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = pinned
-+            info[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
++            info[MPNowPlayingInfoPropertyPlaybackRate] = npRate
 +            if duration.isFinite && duration > 0 {
 +                info[MPMediaItemPropertyPlaybackDuration] = duration
 +            }
 +            MPNowPlayingInfoCenter.default().nowPlayingInfo = info
 +            self.setNowPlayingPlaybackState(playing: true)
-+            self.noteNowPlayingClock(elapsed: pinned, rate: 1, reason: "armRate1")
++            self.noteNowPlayingClock(elapsed: pinned, rate: npRate, reason: "armPlaying")
 +            // Keep dictionary elapsed ≈ displayed bar for the rest of the track.
 +            self.scheduleQuietNowPlayingRebase(
 +                assetId: assetId,
@@ -1125,7 +1205,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +    /// Periodically rewrite `elapsed = current visual` with `rate=1` while playing.
 +    /// Invisible to the user (bar already there); makes pause `jumpFromSys` ≈ 0.
 +    /// Does **not** bump `npWriteGeneration` — freeze/reset cancel us by bumping gen.
-+    private func scheduleQuietNowPlayingRebase(
++    internal func scheduleQuietNowPlayingRebase(
 +        assetId: String,
 +        generation: UInt64,
 +        duration: TimeInterval
@@ -1147,21 +1227,22 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +            let sysElapsed = sysInfo?[MPNowPlayingInfoPropertyElapsedPlaybackTime] as? Double
 +            let npAge = self.lastNpWallTime > 0
 +                ? (CFAbsoluteTimeGetCurrent() - self.lastNpWallTime) : -1
++            let npRate = self.playingNpRate()
 +            self.logClock("native.np.quietRebase", assetId: assetId, player: stillPlaying.1, duration: duration, extra: [
 +                "writeElapsed": self.fmtTime(visual),
-+                "writeRate": 1,
++                "writeRate": npRate,
 +                "npAgeBefore": String(format: "%.3f", npAge),
 +                "jumpFromSys": sysElapsed.map { String(format: "%+.4f", visual - $0) } ?? "nil",
-+                "note": "rebase_dict_to_visual_keep_rate1"
++                "note": "rebase_dict_to_visual_keep_playing_rate"
 +            ])
 +            var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
 +            if duration.isFinite && duration > 0 {
 +                info[MPMediaItemPropertyPlaybackDuration] = duration
 +            }
 +            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = visual
-+            info[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
++            info[MPNowPlayingInfoPropertyPlaybackRate] = npRate
 +            MPNowPlayingInfoCenter.default().nowPlayingInfo = info
-+            self.noteNowPlayingClock(elapsed: visual, rate: 1, reason: "quietRebase")
++            self.noteNowPlayingClock(elapsed: visual, rate: npRate, reason: "quietRebase")
 +            self.scheduleQuietNowPlayingRebase(
 +                assetId: assetId,
 +                generation: generation,
@@ -1242,19 +1323,21 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +            // (player still "playing" → play ignored → later pause lands → scrubber thrash).
 +            // 0.1s quiet rebase keeps jumpFromSys small enough that sync rate=0 is fine.
 +            if self.lastNpRate > 0, let jump = jumpFromSys, abs(jump) > 0.02 {
++                let bridgeRate = self.playingNpRate()
 +                var bridge = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
 +                if duration.isFinite && duration > 0 {
 +                    bridge[MPMediaItemPropertyPlaybackDuration] = duration
 +                }
 +                bridge[MPNowPlayingInfoPropertyElapsedPlaybackTime] = pin
-+                bridge[MPNowPlayingInfoPropertyPlaybackRate] = 1.0
++                bridge[MPNowPlayingInfoPropertyPlaybackRate] = bridgeRate
 +                MPNowPlayingInfoCenter.default().nowPlayingInfo = bridge
-+                self.noteNowPlayingClock(elapsed: pin, rate: 1, reason: "pauseBridge")
++                self.noteNowPlayingClock(elapsed: pin, rate: bridgeRate, reason: "pauseBridge")
 +                self.immersiveLog("native.np.pauseBridge", [
 +                    "assetId": assetId,
 +                    "pin": self.fmtTime(pin),
 +                    "jumpClosed": String(format: "%+.4f", jump),
-+                    "note": "rebase_visual_rate1_before_rate0"
++                    "writeRate": bridgeRate,
++                    "note": "rebase_visual_playing_rate_before_rate0"
 +                ])
 +            }
 +
@@ -1329,7 +1412,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
      // swiftlint:disable cyclomatic_complexity
      /// Updates the system Now Playing information for the specified audio asset.
      ///
-@@ -1705,14 +2571,32 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1705,14 +2610,32 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      ///   - audioId: The asset identifier used to retrieve Now Playing metadata.
      ///   - audioAsset: The audio asset used to obtain current playback time and duration.
  
@@ -1346,7 +1429,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
 +        let duration = audioAsset.getDuration()
 +        let elapsed = forceElapsed ?? audioAsset.getCurrentTime()
 +        let playing = forcePlaying ?? audioAsset.isPlaying()
-+        let rate: Double = playing ? 1.0 : 0.0
++        let rate: Double = playing ? playingNpRate() : 0.0
 +        print("[MANYU_IMMERSIVE] native.np.update assetId=\(audioId) elapsed=\(elapsed) duration=\(duration) rate=\(rate) title=\(metadata?["title"] ?? "nil")")
 +
 +        npWriteGeneration += 1
@@ -1366,7 +1449,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
              if let metadata = metadata {
                  if let title = metadata["title"] {
                      nowPlayingInfo[MPMediaItemPropertyTitle] = title
-@@ -1738,30 +2622,55 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1738,30 +2661,55 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                                  let stillCurrent = self.audioQueue.sync { self.currentlyPlayingAssetId == targetAudioId }
                                  guard stillCurrent else { return }
  
@@ -1427,7 +1510,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
              MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
          }
      }
-@@ -1774,6 +2683,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1774,6 +2722,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              data["timeBeforePause"] = elapsedTime
              self.audioAssetData[assetId] = data
              if self.showNotification && self.currentlyPlayingAssetId == assetId {
@@ -1435,14 +1518,14 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
                  self.updatePlaybackState(isPlaying: false, elapsedTime: elapsedTime, duration: duration)
              }
              if let audioAsset = self.audioList[assetId] as? AudioAsset {
-@@ -1799,17 +2709,37 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1799,17 +2748,37 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          }
      }
  
 -    private func updatePlaybackState(isPlaying: Bool, elapsedTime: TimeInterval? = nil, duration: TimeInterval? = nil) {
 -        DispatchQueue.main.async {
 +    internal func updatePlaybackState(isPlaying: Bool, elapsedTime: TimeInterval? = nil, duration: TimeInterval? = nil) {
-+        let rate: Double = isPlaying ? 1.0 : 0.0
++        let rate: Double = isPlaying ? playingNpRate() : 0.0
 +        print("[MANYU_IMMERSIVE] native.np.playbackState current=\(currentlyPlayingAssetId ?? "nil") elapsed=\(elapsedTime.map(String.init(describing:)) ?? "keep") duration=\(duration.map(String.init(describing:)) ?? "keep") rate=\(rate)")
 +        npWriteGeneration += 1
 +        let gen = npWriteGeneration
@@ -1476,3 +1559,35 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..6ecf6f6e80b7e1253326a1f4fcda6c12
          }
      }
  
+@@ -1818,6 +2787,10 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+     ///   - urlString: A string representing either a local file path (plain path or `file://` URL) or a remote URL (e.g., `http://` or `https://`).
+     ///   - completion: Called with the loaded `UIImage` on success, or `nil` if the image could not be loaded.
+     private func loadArtwork(from urlString: String, completion: @escaping (UIImage?) -> Void) {
++        if cachedArtworkUrl == urlString, let image = cachedArtworkImage {
++            completion(image)
++            return
++        }
+         // Check if it's a local file path or URL
+         if let url = URL(string: urlString) {
+             if url.scheme == nil || url.isFileURL {
+@@ -1825,14 +2798,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+                 let path = url.path
+                 if FileManager.default.fileExists(atPath: path) {
+                     if let image = UIImage(contentsOfFile: path) {
++                        self.cachedArtworkUrl = urlString
++                        self.cachedArtworkImage = image
+                         completion(image)
+                         return
+                     }
+                 }
+             } else {
+-                // Remote URL
+-                URLSession.shared.dataTask(with: url) { data, _, _ in
++                // Remote URL — prefer file:// for immersive; still cache if it loads.
++                URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                     if let data = data, let image = UIImage(data: data) {
++                        self?.cachedArtworkUrl = urlString
++                        self?.cachedArtworkImage = image
+                         completion(image)
+                     } else {
+                         completion(nil)

@@ -65,7 +65,13 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
   const calls = {
     resolve: [] as string[],
     armQueue: [] as Array<{ count: number; startIndex: number; assetIds: string[] }>,
-    playQueue: [] as Array<{ count: number; startIndex: number; assetIds: string[] }>,
+    playQueue: [] as Array<{
+      count: number
+      startIndex: number
+      assetIds: string[]
+      fileUrls: string[]
+      playbackRate?: number
+    }>,
     queueNext: 0,
     queuePrevious: 0,
     stop: 0,
@@ -110,6 +116,8 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
         count: items.length,
         startIndex,
         assetIds: items.map((entry) => entry.assetId),
+        fileUrls: items.map((entry) => entry.fileUrl),
+        playbackRate: options?.playbackRate,
       })
       const start = items[startIndex]
       if (!start) throw new Error('empty queue')
@@ -227,8 +235,11 @@ describe('ListeningQueueEngine', () => {
       getSettings: () => settings,
       scheduler: fakeScheduler.scheduler,
       isBackground: () => background,
-      // Deterministic silence tracks — exercises official-queue gap path (not timer fallback).
-      resolveSilenceUrl: async (seconds) => `silence://gap-${seconds}s.wav`,
+      // Deterministic pad — bake lead/trail silence into content URL (not timer fallback).
+      resolvePaddedUrl: async ({ fileUrl, leadingSilenceSec, trailingSilenceSec, segmentId }) => {
+        if (leadingSilenceSec <= 0 && trailingSilenceSec <= 0) return fileUrl
+        return `padded://${segmentId}?L=${leadingSilenceSec}&T=${trailingSilenceSec}`
+      },
     })
   })
 
@@ -273,16 +284,21 @@ describe('ListeningQueueEngine', () => {
 
     const playPromise = engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    // main + silence gap + example (no trailing gap when not advancing)
-    expect(fakeTransport.calls.playQueue[0].count).toBe(3)
-    expect(fakeTransport.calls.playQueue[0].assetIds[1]).toContain('immersive:gap:')
+    // content-only: main (no pad) + example (1s leading; no trailing when not advancing)
+    expect(fakeTransport.calls.playQueue[0].count).toBe(2)
+    expect(fakeTransport.calls.playQueue[0].assetIds).toEqual([
+      'immersive:w1:main:0',
+      'immersive:w1:example:0',
+    ])
+    expect(fakeTransport.calls.playQueue[0].fileUrls[0]).toBe('file://w1.mp3')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toContain('padded://')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toContain('L=1')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toContain('T=0')
     fakeTransport.complete() // main
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
     expect(fakeScheduler.pending()).toEqual([])
-    expect(engine.getState().gapActive).toBe(true)
-    fakeTransport.complete() // silence
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
-    fakeTransport.complete() // example
+    expect(engine.getState().gapActive).toBe(false)
+    fakeTransport.complete() // example (+ baked 1s lead)
     await playPromise
 
     expect(engine.getState().status).toBe('ended')
@@ -295,12 +311,11 @@ describe('ListeningQueueEngine', () => {
 
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    // single main + trailing silence before advance
-    expect(fakeTransport.calls.playQueue[0].count).toBe(2)
-    expect(fakeTransport.calls.playQueue[0].assetIds[1]).toContain('immersive:gap:')
-    fakeTransport.complete() // main
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
-    fakeTransport.complete() // trailing silence
+    // single main with trailing silence baked before advance
+    expect(fakeTransport.calls.playQueue[0].count).toBe(1)
+    expect(fakeTransport.calls.playQueue[0].fileUrls[0]).toContain('padded://')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[0]).toContain('T=2')
+    fakeTransport.complete() // main + baked trailing
     await vi.waitFor(() => expect(indexChanges[0]).toBe(1))
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(2))
     fakeTransport.complete()
@@ -314,9 +329,7 @@ describe('ListeningQueueEngine', () => {
 
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    fakeTransport.complete() // main
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
-    fakeTransport.complete() // trailing silence
+    fakeTransport.complete() // main + baked trailing
     await vi.waitFor(() => expect(indexChanges).toContain(0))
   })
 
@@ -331,7 +344,7 @@ describe('ListeningQueueEngine', () => {
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     expect(fakeTransport.calls.playQueue[0].count).toBe(2)
-    expect(fakeTransport.calls.playQueue[0].assetIds.every((id) => !id.includes(':gap:'))).toBe(true)
+    expect(fakeTransport.calls.playQueue[0].fileUrls.every((url) => !url.startsWith('padded://'))).toBe(true)
     fakeTransport.complete()
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
     expect(fakeScheduler.pending()).toEqual([])
@@ -358,13 +371,16 @@ describe('ListeningQueueEngine', () => {
     bind([item('w1', 'hello')])
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    // two mains with silence between (no trailing — not advancing / not infinite)
-    expect(fakeTransport.calls.playQueue[0].count).toBe(3)
-    expect(fakeTransport.calls.playQueue[0].assetIds[1]).toContain('immersive:gap:')
+    // two mains; first has trailing X baked; second has none (not advancing)
+    expect(fakeTransport.calls.playQueue[0].count).toBe(2)
+    expect(fakeTransport.calls.playQueue[0].assetIds).toEqual([
+      'immersive:w1:main:0',
+      'immersive:w1:main:1',
+    ])
+    expect(fakeTransport.calls.playQueue[0].fileUrls[0]).toContain('T=2')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toBe('file://w1.mp3')
     fakeTransport.complete()
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
-    fakeTransport.complete() // silence
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
     fakeTransport.complete() // second main
     await vi.waitFor(() => expect(engine.getState().status).toBe('ended'))
   })
@@ -442,8 +458,6 @@ describe('ListeningQueueEngine', () => {
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     fakeTransport.complete() // main
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
-    fakeTransport.complete() // silence gap
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
     expect(engine.getState().currentSegment?.role).toBe('example')
     expect(engine.getState().currentSegment?.text).toBe('ex-a')
     const locked = engine.getItemSegmentSnapshot()
@@ -477,8 +491,6 @@ describe('ListeningQueueEngine', () => {
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     fakeTransport.complete() // main
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
-    fakeTransport.complete() // silence
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
     const locked = engine.getItemSegmentSnapshot()
     expect(locked[1]).toBe('w1:example:0')
     expect(engine.getState().currentSegment?.text).toBe('ex-a')
@@ -528,7 +540,6 @@ describe('ListeningQueueEngine', () => {
     expect(engine.getItemSegmentSnapshot()).toEqual(firstSnapshot)
     fakeTransport.complete() // restart main
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBeGreaterThan(0))
-    fakeTransport.complete() // silence after main
     await vi.waitFor(() => expect(engine.getState().currentSegment?.role).toBe('example'))
     expect(engine.getState().currentSegment?.text).toBe('alpha')
     expect(fakeTransport.calls.playQueue.at(-1)?.assetIds.some((id) => id.includes('example'))).toBe(true)
@@ -536,7 +547,7 @@ describe('ListeningQueueEngine', () => {
     randomSpy.mockRestore()
   })
 
-  it('advances with queueNext through silence gap tracks', async () => {
+  it('advances with queueNext through content tracks with baked silence', async () => {
     settings.autoNext = false
     settings.playExample = true
     const word = item('w1', 'hello')
@@ -546,27 +557,25 @@ describe('ListeningQueueEngine', () => {
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     expect(fakeTransport.calls.playQueue[0].assetIds).toEqual([
       'immersive:w1:main:0',
-      'immersive:gap:2s:after:w1:main:0',
       'immersive:w1:example:0',
     ])
+    expect(fakeTransport.calls.playQueue[0].fileUrls[0]).toBe('file://w1.mp3')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toContain('L=1')
     fakeTransport.complete()
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
-    expect(engine.getState().gapActive).toBe(true)
-    expect(fakeScheduler.pending()).toEqual([])
-    fakeTransport.complete()
-    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
     expect(engine.getState().gapActive).toBe(false)
+    expect(fakeScheduler.pending()).toEqual([])
     fakeTransport.complete()
   })
 
-  it('falls back to timer gap when silence URL is unavailable', async () => {
+  it('falls back to timer gap when pad fails', async () => {
     await engine.dispose()
     engine = new ListeningQueueEngine({
       transport: fakeTransport.transport,
       getSettings: () => settings,
       scheduler: fakeScheduler.scheduler,
       isBackground: () => background,
-      resolveSilenceUrl: async () => null,
+      resolvePaddedUrl: async () => null,
     })
     settings.autoNext = false
     settings.playExample = true
@@ -576,8 +585,12 @@ describe('ListeningQueueEngine', () => {
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
     expect(fakeTransport.calls.playQueue[0].count).toBe(2)
+    expect(fakeTransport.calls.playQueue[0].fileUrls[0]).toBe('file://w1.mp3')
+    expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toBe('file://ex.mp3')
     fakeTransport.complete()
+    // word→example 1s is leading on example — timer before queueNext when pad failed
     await vi.waitFor(() => expect(fakeScheduler.pending().length).toBe(1))
+    expect(fakeScheduler.pending()[0]).toBe(1000)
     fakeScheduler.flush()
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
     fakeTransport.complete()
@@ -588,18 +601,12 @@ describe('ListeningQueueEngine', () => {
     bind(items)
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    // Window is [main, trailing silence]. Move to last slot then remoteNext again.
+    // Content-only window [main with baked trailing]. remoteNext at last index advances item.
     fakeTransport.emit({
       type: 'queueChange',
       reason: 'remoteNext',
-      assetId: 'immersive:gap:2s:after:w1:main:0',
-      index: 1,
-    })
-    fakeTransport.emit({
-      type: 'queueChange',
-      reason: 'remoteNext',
-      assetId: 'immersive:gap:2s:after:w1:main:0',
-      index: 1,
+      assetId: 'immersive:w1:main:0',
+      index: 0,
     })
     await vi.waitFor(() => expect(indexChanges).toContain(1))
   })

@@ -84,8 +84,14 @@ export type ImmersiveNativeEvent =
       assetId: string
     }
 
-/** Immersive lock-screen / Now Playing rate is locked to 1 this phase (docs §4 / §6). */
-export const IMMERSIVE_PLAYBACK_RATE = 1
+/** Allowed immersive playback rates (settings UI + Now Playing). */
+export const IMMERSIVE_PLAYBACK_RATES = [0.75, 1, 1.25, 1.5] as const
+export type ImmersivePlaybackRate = (typeof IMMERSIVE_PLAYBACK_RATES)[number]
+
+export function normalizeImmersivePlaybackRate(rate: number | undefined): ImmersivePlaybackRate {
+  if (rate === 0.75 || rate === 1 || rate === 1.25 || rate === 1.5) return rate
+  return 1
+}
 
 export type ImmersiveAudioTransport = {
   resolve(segment: PlaybackSegment, options?: { allowTts?: boolean }): Promise<string | null>
@@ -181,21 +187,35 @@ async function materializeLogoFileUri(): Promise<string> {
 }
 
 /**
- * iOS NativeAudio artwork must be file:// or http(s).
- * Capacitor WebView URLs (capacitor:// / https://localhost) fail in native image loaders.
+ * iOS NativeAudio artwork must be file://.
+ * Capacitor WebView / bare http(s) URLs often fail in MPNowPlayingInfoCenter loaders.
+ * Retries materialization; throws if no file:// URI (caller omits artworkUrl).
  */
 export async function resolveAppLogoArtworkUri(): Promise<string> {
-  if (typeof window === 'undefined') return '/logo.png'
-  if (!logoArtworkUriPromise) {
-    logoArtworkUriPromise = materializeLogoFileUri().catch((error) => {
-      logoArtworkUriPromise = null
-      throw error
-    })
+  if (typeof window === 'undefined') {
+    throw new Error('logo artwork requires browser/native runtime')
+  }
+  const attempt = async () => {
+    if (!logoArtworkUriPromise) {
+      logoArtworkUriPromise = materializeLogoFileUri().catch((error) => {
+        logoArtworkUriPromise = null
+        throw error
+      })
+    }
+    return logoArtworkUriPromise
   }
   try {
-    return await logoArtworkUriPromise
-  } catch {
-    return resolveAppLogoUrl()
+    const uri = await attempt()
+    if (uri.startsWith('file://')) return uri
+    throw new Error(`logo artwork is not file:// (${uri.slice(0, 32)})`)
+  } catch (firstError) {
+    logoArtworkUriPromise = null
+    immersiveLog('artwork.retry', {
+      message: firstError instanceof Error ? firstError.message : String(firstError),
+    })
+    const uri = await attempt()
+    if (uri.startsWith('file://')) return uri
+    throw new Error(`logo artwork is not file:// after retry`)
   }
 }
 

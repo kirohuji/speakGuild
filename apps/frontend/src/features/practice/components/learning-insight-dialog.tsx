@@ -46,6 +46,10 @@ import { InsightPracticeButton } from './insight-practice-button'
 import { InsightRegenerateButton, useInsightRegeneration } from './insight-regeneration'
 import { patternSlotLabel, type PatternSlot } from '@/features/learning/lib/pattern-slot'
 import { InsightListLoadMoreSentinel, insightLoadMoreAfterIndex } from './insight-list-load-more'
+import { useDoubleTapTabSwitch } from '../hooks/use-double-tap-tab-switch'
+
+const WORD_INSIGHT_TABS = ['description', 'examples', 'dictionary']
+const SIMPLE_INSIGHT_TABS = ['description', 'examples']
 
 type VocabularyInsight = {
   kind: 'word'
@@ -861,10 +865,16 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
     }
   }
 
-  const changeTab = (value: string) => {
+  const changeTab = useCallback((value: string) => {
     setActiveTab(value)
     if (value === 'dictionary') setDictionaryRequested(true)
-  }
+  }, [])
+
+  const { containerRef: tabTapRef, onTouchStart: onTabTapStart, onTouchEnd: onTabDoubleTap } = useDoubleTapTabSwitch(
+    WORD_INSIGHT_TABS,
+    activeTab,
+    changeTab,
+  )
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="flex h-full flex-col">
@@ -884,7 +894,12 @@ function WordInsight({ item: original, hideSave = false, practiceUnitId }: { ite
         <InsightPracticeButton item={item} unitId={practiceUnitId} />
         <InsightRegenerateButton item={item} field={activeTab} onUpdated={onUpdated} />
       </div>
-      <div className="relative min-h-0 flex-1">
+      <div
+        ref={tabTapRef}
+        className="relative min-h-0 flex-1"
+        onTouchStart={onTabTapStart}
+        onTouchEnd={onTabDoubleTap}
+      >
         {/* 讲解 */}
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
@@ -1245,6 +1260,12 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
     setSaving(false)
   }
 
+  const { containerRef: tabTapRef, onTouchStart: onTabTapStart, onTouchEnd: onTabDoubleTap } = useDoubleTapTabSwitch(
+    SIMPLE_INSIGHT_TABS,
+    activeTab,
+    setActiveTab,
+  )
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
       <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
@@ -1262,7 +1283,12 @@ function ChunkInsightView({ item: original, hideSave = false, practiceUnitId }: 
         <InsightPracticeButton item={item} unitId={practiceUnitId} />
         <InsightRegenerateButton item={item} field={activeTab} onUpdated={onUpdated} />
       </div>
-      <div className="relative min-h-0 flex-1">
+      <div
+        ref={tabTapRef}
+        className="relative min-h-0 flex-1"
+        onTouchStart={onTabTapStart}
+        onTouchEnd={onTabDoubleTap}
+      >
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="py-4">
@@ -1344,6 +1370,12 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
     setSaving(false)
   }
 
+  const { containerRef: tabTapRef, onTouchStart: onTabTapStart, onTouchEnd: onTabDoubleTap } = useDoubleTapTabSwitch(
+    SIMPLE_INSIGHT_TABS,
+    activeTab,
+    setActiveTab,
+  )
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
       <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
@@ -1362,7 +1394,12 @@ function PatternInsightView({ item: original, hideSave = false, practiceUnitId }
         <InsightPracticeButton item={item} unitId={practiceUnitId} />
         <InsightRegenerateButton item={item} field={activeTab} onUpdated={onUpdated} />
       </div>
-      <div className="relative min-h-0 flex-1">
+      <div
+        ref={tabTapRef}
+        className="relative min-h-0 flex-1"
+        onTouchStart={onTabTapStart}
+        onTouchEnd={onTabDoubleTap}
+      >
         <TabsContent value="structure" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="space-y-4 py-4">

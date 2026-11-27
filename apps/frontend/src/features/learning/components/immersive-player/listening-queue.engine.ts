@@ -5,15 +5,17 @@ import type {
   QueuePlayItem,
 } from './immersive-audio.transport'
 import {
-  IMMERSIVE_PLAYBACK_RATE,
   immersiveLog,
+  normalizeImmersivePlaybackRate,
   toQueueAssetId,
 } from './immersive-audio.transport'
 import {
-  normalizePauseGapSeconds,
-  resolveSilenceFileUrl,
-  toGapAssetId,
-} from './immersive-silence'
+  computeLeadingSilenceSeconds,
+  computeTrailingSilenceSeconds,
+  resolvePaddedSegmentFileUrl,
+  type PadSilenceInput,
+} from './immersive-audio-pad'
+import { normalizePauseGapSeconds } from './immersive-silence'
 import type {
   ImmersivePlaybackSettings,
   ImmersivePlayerItem,
@@ -54,8 +56,11 @@ export type ListeningQueueEngineOptions = {
   isBackground: () => boolean
   now?: () => number
   mediaLabels?: MediaMetadataLabels
-  /** Override silence URL resolution (tests / custom assets). */
-  resolveSilenceUrl?: (seconds: number) => Promise<string | null>
+  /**
+   * Override silence pad (tests). Return padded file URL, or null to
+   * simulate pad failure (engine falls back to timer waitGap).
+   */
+  resolvePaddedUrl?: (input: PadSilenceInput) => Promise<string | null>
   onSleepEnd?: () => void
   onEmptySegments?: () => void
   onPlayFailed?: (error: unknown) => void
@@ -111,7 +116,7 @@ export class ListeningQueueEngine {
   private readonly isBackground: () => boolean
   private readonly now: () => number
   private readonly mediaLabels?: MediaMetadataLabels
-  private readonly resolveSilenceUrl: (seconds: number) => Promise<string | null>
+  private readonly resolvePaddedUrl: (input: PadSilenceInput) => Promise<string | null>
   private readonly onSleepEnd?: () => void
   private readonly onEmptySegments?: () => void
   private readonly onPlayFailed?: (error: unknown) => void
@@ -124,15 +129,21 @@ export class ListeningQueueEngine {
   private pendingContinueTimer: ReturnType<typeof setTimeout> | null = null
   private gapPaused = false
   private gapResume: (() => void) | null = null
-  /** True only while JS timer waitGap is in flight (silence-queue gaps use transport pause). */
+  /** True only while JS timer waitGap is in flight (pad-failure fallback). */
   private timerGapRunning = false
   private sleepTimer: ReturnType<typeof setTimeout> | null = null
   private loadMoreInFlightOffset: number | null = null
   private itemSegments: PlaybackSegment[] = []
   private snapshotItemId: string | null = null
   private segmentIndex = 0
-  /** Maps native queue index → learning segment index (+ whether slot is silence). */
-  private windowMeta: Array<{ segmentIndex: number; isGap: boolean }> = []
+  /** Maps native queue index → learning segment index (content-only; no gap tracks). */
+  private windowMeta: Array<{
+    segmentIndex: number
+    leadingBaked: boolean
+    trailingBaked: boolean
+    leadingSilenceSec: number
+    trailingSilenceSec: number
+  }> = []
   private windowLength = 0
   private lastKnownQueueIndex = -1
   /** True while runItemLoop / softRestart owns the playback generation. */
@@ -145,7 +156,7 @@ export class ListeningQueueEngine {
     this.isBackground = options.isBackground
     this.now = options.now ?? (() => Date.now())
     this.mediaLabels = options.mediaLabels
-    this.resolveSilenceUrl = options.resolveSilenceUrl ?? resolveSilenceFileUrl
+    this.resolvePaddedUrl = options.resolvePaddedUrl ?? resolvePaddedSegmentFileUrl
     this.onSleepEnd = options.onSleepEnd
     this.onEmptySegments = options.onEmptySegments
     this.onPlayFailed = options.onPlayFailed
@@ -331,7 +342,13 @@ export class ListeningQueueEngine {
     }
     if (!armed) return
 
-    this.windowMeta = [{ segmentIndex: this.segmentIndex, isGap: false }]
+    this.windowMeta = [{
+      segmentIndex: this.segmentIndex,
+      leadingBaked: true,
+      trailingBaked: true,
+      leadingSilenceSec: 0,
+      trailingSilenceSec: 0,
+    }]
     this.windowLength = 1
     this.lastKnownQueueIndex = 0
     immersiveLog('lockscreen.arm', { assetId: armed.assetId, itemId: item.id })
@@ -501,11 +518,20 @@ export class ListeningQueueEngine {
   }
 
   updateSettings(partial: Partial<ImmersivePlaybackSettings>) {
-    if (partial.playbackRate !== undefined) {
-      // Immersive rate locked to 1 this phase — transport ignores non-1 values.
-      fireAndForget(this.transport.setRate(IMMERSIVE_PLAYBACK_RATE))
+    const rateChanged = partial.playbackRate !== undefined
+    const gapChanged = partial.pauseGapSeconds !== undefined
+    if (rateChanged) {
+      const rate = normalizeImmersivePlaybackRate(partial.playbackRate)
+      fireAndForget(this.transport.setRate(rate))
     }
     this.refreshSleepTimer()
+    // Trailing silence bake depends on rate + gap; rebuild the content window.
+    if (
+      (rateChanged || gapChanged) &&
+      (this.state.status === 'playing' || this.state.status === 'paused' || this.state.status === 'loading')
+    ) {
+      fireAndForget(this.softRestartCurrentSegment())
+    }
   }
 
   async dispose() {
@@ -525,8 +551,8 @@ export class ListeningQueueEngine {
     if (segment) {
       this.patchState({
         currentSegment: segment,
-        status: meta.isGap && this.state.status === 'paused' ? 'paused' : 'playing',
-        gapActive: meta.isGap,
+        status: this.state.status === 'paused' ? 'paused' : 'playing',
+        gapActive: false,
       })
     }
   }
@@ -717,21 +743,25 @@ export class ListeningQueueEngine {
   }
 
   /**
-   * Resolve playable segments from `fromSegmentIndex`, setQueue the window
-   * (with silence gap tracks when possible), then queueNext until exhausted.
+   * Resolve playable segments from `fromSegmentIndex`, bake trailing silence into
+   * each content file, setQueue (content-only), then queueNext until exhausted.
    */
   private async playSegmentWindow(generation: number, fromSegmentIndex: number): Promise<boolean> {
     const allowTts = !this.isBackground()
     const settings = this.getSettings()
     const gapSeconds = normalizePauseGapSeconds(settings.pauseGapSeconds)
-    const wantGap = !this.isBackground() && gapSeconds > 0
-    const silenceUrl = wantGap ? await this.resolveSilenceUrl(gapSeconds) : null
-    if (!this.isCurrent(generation)) return false
-    const useQueueSilence = Boolean(silenceUrl)
+    const playbackRate = normalizeImmersivePlaybackRate(settings.playbackRate)
+    const background = this.isBackground()
     const needTrailingGap = this.willNeedTrailingGap()
 
     const windowItems: QueuePlayItem[] = []
-    const windowMeta: Array<{ segmentIndex: number; isGap: boolean }> = []
+    const windowMeta: Array<{
+      segmentIndex: number
+      leadingBaked: boolean
+      trailingBaked: boolean
+      leadingSilenceSec: number
+      trailingSilenceSec: number
+    }> = []
 
     const resolvedSegments: Array<{ index: number; segment: PlaybackSegment; fileUrl: string }> = []
     for (let i = fromSegmentIndex; i < this.itemSegments.length; i += 1) {
@@ -744,33 +774,63 @@ export class ListeningQueueEngine {
     }
 
     for (let r = 0; r < resolvedSegments.length; r += 1) {
+      if (!this.isCurrent(generation)) return false
       const { index, segment, fileUrl } = resolvedSegments[r]
+      const isLast = r === resolvedSegments.length - 1
+      const prevSegment = r === 0 ? undefined : resolvedSegments[r - 1]?.segment
+      const nextSegment = isLast ? undefined : resolvedSegments[r + 1]?.segment
+      const leadingSilenceSec = computeLeadingSilenceSeconds({
+        segment,
+        prevSegment,
+        background,
+      })
+      const trailingSilenceSec = computeTrailingSilenceSeconds({
+        segment,
+        nextSegment,
+        isLastInResolvedWindow: isLast,
+        needTrailingGap,
+        pauseGapSeconds: gapSeconds,
+        background,
+      })
+
+      let playUrl = fileUrl
+      let leadingBaked = leadingSilenceSec <= 0
+      let trailingBaked = trailingSilenceSec <= 0
+      if (leadingSilenceSec > 0 || trailingSilenceSec > 0) {
+        const padded = await this.resolvePaddedUrl({
+          segmentId: segment.id,
+          fileUrl,
+          leadingSilenceSec,
+          trailingSilenceSec,
+          playbackRate,
+        })
+        if (!this.isCurrent(generation)) return false
+        if (padded) {
+          playUrl = padded
+          leadingBaked = true
+          trailingBaked = true
+        } else {
+          leadingBaked = leadingSilenceSec <= 0
+          trailingBaked = trailingSilenceSec <= 0
+        }
+      }
+
       windowItems.push({
         assetId: toQueueAssetId(segment.id),
-        fileUrl,
+        fileUrl: playUrl,
         title: segment.title,
         artist: segment.subtitle || this.mediaLabels?.artist,
         album: this.mediaLabels?.album,
         segmentId: segment.id,
         kind: 'segment',
       })
-      windowMeta.push({ segmentIndex: index, isGap: false })
-
-      const isLast = r === resolvedSegments.length - 1
-      const insertGap = useQueueSilence && silenceUrl && (!isLast || needTrailingGap)
-      if (insertGap) {
-        windowItems.push({
-          assetId: toGapAssetId(segment.id, gapSeconds),
-          fileUrl: silenceUrl,
-          // Keep previous title so lock screen doesn't flash empty / -:--.
-          title: segment.title,
-          artist: segment.subtitle || this.mediaLabels?.artist,
-          album: this.mediaLabels?.album,
-          segmentId: segment.id,
-          kind: 'gap',
-        })
-        windowMeta.push({ segmentIndex: index, isGap: true })
-      }
+      windowMeta.push({
+        segmentIndex: index,
+        leadingBaked,
+        trailingBaked,
+        leadingSilenceSec,
+        trailingSilenceSec,
+      })
     }
 
     this.windowMeta = windowMeta
@@ -780,9 +840,15 @@ export class ListeningQueueEngine {
     immersiveLog('engine.playWindow', {
       fromSegmentIndex,
       windowLength: windowItems.length,
-      useQueueSilence,
-      gapSeconds: useQueueSilence ? gapSeconds : 0,
-      kinds: windowItems.map((item) => item.kind ?? 'segment'),
+      gapSeconds,
+      playbackRate,
+      pads: windowMeta.map((meta) => ({
+        segmentIndex: meta.segmentIndex,
+        lead: meta.leadingSilenceSec,
+        trail: meta.trailingSilenceSec,
+        leadBaked: meta.leadingBaked,
+        trailBaked: meta.trailingBaked,
+      })),
       segmentIds: windowItems.map((item) => item.segmentId),
     })
 
@@ -797,9 +863,16 @@ export class ListeningQueueEngine {
       gapActive: false,
     })
 
+    // Leading silence on first track: if pad failed, wait before starting.
+    const firstMeta = windowMeta[0]
+    if (firstMeta && !firstMeta.leadingBaked && firstMeta.leadingSilenceSec > 0) {
+      const continued = await this.waitGap(generation, firstMeta.leadingSilenceSec)
+      if (!continued || !this.isCurrent(generation)) return false
+    }
+
     await this.transport.playQueue(windowItems, {
       startIndex: 0,
-      playbackRate: IMMERSIVE_PLAYBACK_RATE,
+      playbackRate,
     })
     if (!this.isCurrent(generation)) return false
 
@@ -809,11 +882,10 @@ export class ListeningQueueEngine {
     while (windowPos < windowItems.length - 1) {
       if (!this.isCurrent(generation)) return false
 
-      const currentIsGap = windowMeta[windowPos]?.isGap === true
-      // Silence tracks already occupy the gap; only timer-fallback needs waitGap
-      // after a real segment when the next slot is also a real segment (or trailing).
-      if (!useQueueSilence && !currentIsGap) {
-        const continued = await this.waitGap(generation)
+      const meta = windowMeta[windowPos]
+      // Pad failure fallback: trailing silence after current content.
+      if (meta && !meta.trailingBaked && meta.trailingSilenceSec > 0) {
+        const continued = await this.waitGap(generation, meta.trailingSilenceSec)
         if (!continued || !this.isCurrent(generation)) return false
       }
 
@@ -825,6 +897,13 @@ export class ListeningQueueEngine {
         continue
       }
 
+      const nextMeta = windowMeta[windowPos + 1]
+      // Next track's leading silence (e.g. 1s before example) if not baked.
+      if (nextMeta && !nextMeta.leadingBaked && nextMeta.leadingSilenceSec > 0) {
+        const continued = await this.waitGap(generation, nextMeta.leadingSilenceSec)
+        if (!continued || !this.isCurrent(generation)) return false
+      }
+
       const advanced = await this.transport.queueNext()
       if (!this.isCurrent(generation)) return false
       if (!advanced) break
@@ -833,23 +912,31 @@ export class ListeningQueueEngine {
       this.syncFromQueueIndex(windowPos)
     }
 
-    // Timer-fallback trailing gap when silence could not be inserted.
+    // Timer-fallback trailing gap when last segment pad failed.
     if (!this.isCurrent(generation)) return false
-    if (!useQueueSilence && needTrailingGap) {
-      const continued = await this.waitGap(generation)
+    const lastMeta = windowMeta[windowMeta.length - 1]
+    if (lastMeta && !lastMeta.trailingBaked && lastMeta.trailingSilenceSec > 0) {
+      const continued = await this.waitGap(generation, lastMeta.trailingSilenceSec)
       if (!continued || !this.isCurrent(generation)) return false
     }
 
     return true
   }
 
-  /** Fallback when silence WAV cannot be resolved — keeps prior JS timer gap behavior. */
-  private async waitGap(generation: number): Promise<boolean> {
-    const seconds = normalizePauseGapSeconds(this.getSettings().pauseGapSeconds)
+  /** Fallback when trailing silence could not be baked into the content file. */
+  private async waitGap(generation: number, silenceSeconds?: number): Promise<boolean> {
+    const seconds =
+      silenceSeconds != null && silenceSeconds > 0
+        ? silenceSeconds
+        : normalizePauseGapSeconds(this.getSettings().pauseGapSeconds)
     const ms = seconds * 1000
     const effectiveMs = this.isBackground() ? 0 : ms
 
-    immersiveLog('engine.waitGap.enter', { ms: effectiveMs, background: this.isBackground() })
+    immersiveLog('engine.waitGap.enter', {
+      ms: effectiveMs,
+      seconds,
+      background: this.isBackground(),
+    })
     this.timerGapRunning = true
     this.patchState({ gapActive: true, status: this.gapPaused ? 'paused' : 'playing' })
 

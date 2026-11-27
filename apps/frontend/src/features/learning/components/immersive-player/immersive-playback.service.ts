@@ -14,8 +14,8 @@ import type {
   QueuePlayItem,
 } from './immersive-audio.transport'
 import {
-  IMMERSIVE_PLAYBACK_RATE,
   immersiveLog,
+  normalizeImmersivePlaybackRate,
   resolveAppLogoArtworkUri,
 } from './immersive-audio.transport'
 
@@ -40,7 +40,7 @@ let queueItems: QueuePlayItem[] = []
 let queueIndex = -1
 let activeAssetId: string | null = null
 let playEpoch = 0
-let activePlaybackRate = IMMERSIVE_PLAYBACK_RATE
+let activePlaybackRate = 1
 let lastKnownPosition = 0
 let lastKnownDuration = 0
 let artworkUri: string | null = null
@@ -87,18 +87,22 @@ function waitForTrack(assetId: string): Promise<void> {
   })
 }
 
-function forceImmersiveRate(_requested?: number) {
-  return IMMERSIVE_PLAYBACK_RATE
-}
-
 async function ensureArtworkUri() {
-  if (artworkUri) return artworkUri
+  if (artworkUri?.startsWith('file://')) return artworkUri
   try {
     artworkUri = await resolveAppLogoArtworkUri()
-  } catch {
+  } catch (error) {
+    immersiveLog('artwork.unavailable', {
+      message: error instanceof Error ? error.message : String(error),
+    })
     artworkUri = null
   }
   return artworkUri
+}
+
+/** Prefetch logo into Cache before first Now Playing write (dialog open). */
+export async function warmupImmersiveArtwork(): Promise<string | null> {
+  return ensureArtworkUri()
 }
 
 function toNativeQueueItems(items: QueuePlayItem[]) {
@@ -126,7 +130,7 @@ async function configureNativeAudio() {
     backgroundPlayback: true,
     ignoreSilent: true,
     showNotification: true,
-    // progressInterval: JS/UI only. Lock-screen: native rate=1 + quiet visual rebase (§4).
+    // progressInterval: JS/UI only. Lock-screen: native rate-aware clock + quiet visual rebase (§4).
     progressInterval: 0.5,
   }).catch((error) => {
     configured = false
@@ -380,13 +384,13 @@ function createTransport(): ImmersiveAudioTransport {
       queueIndex = queueState.index >= 0 ? queueState.index : startIndex
       lastKnownPosition = 0
       lastKnownDuration = 0
-      activePlaybackRate = IMMERSIVE_PLAYBACK_RATE
+      activePlaybackRate = 1
       publishVisualState({ state: 'paused', media: null })
     },
 
     async playQueue(items, options) {
       const startIndex = options?.startIndex ?? 0
-      const playbackRate = forceImmersiveRate(options?.playbackRate)
+      const playbackRate = normalizeImmersivePlaybackRate(options?.playbackRate)
       const epoch = ++playEpoch
       activePlaybackRate = playbackRate
       settleTrack()
@@ -438,7 +442,7 @@ function createTransport(): ImmersiveAudioTransport {
       lastKnownPosition = 0
       lastKnownDuration = 0
 
-      await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: playbackRate }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
 
       const completion = waitForTrack(activeAssetId)
@@ -454,7 +458,6 @@ function createTransport(): ImmersiveAudioTransport {
 
       immersiveLog('queueNext', { from: queueIndex, to: nextIndex })
       const epoch = ++playEpoch
-      activePlaybackRate = IMMERSIVE_PLAYBACK_RATE
 
       if (!isNative()) {
         return playWebAdjacent(1)
@@ -469,7 +472,7 @@ function createTransport(): ImmersiveAudioTransport {
       activeAssetId = state.assetId || queueItems[nextIndex]?.assetId || null
       if (!activeAssetId) return false
 
-      await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
       await waitForTrack(activeAssetId)
       return epoch === playEpoch
@@ -498,7 +501,7 @@ function createTransport(): ImmersiveAudioTransport {
       activeAssetId = state.assetId || queueItems[prevIndex]?.assetId || null
       if (!activeAssetId) return false
 
-      await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
       publishVisualState({ state: 'playing', media: null })
       await waitForTrack(activeAssetId)
       return epoch === playEpoch
@@ -596,13 +599,12 @@ function createTransport(): ImmersiveAudioTransport {
     },
 
     async setRate(playbackRate) {
-      // Rate locked to 1 for immersive this phase (docs §6).
-      activePlaybackRate = forceImmersiveRate(playbackRate)
-      immersiveLog('setRate', { playbackRate: activePlaybackRate, assetId: activeAssetId, locked: true })
+      activePlaybackRate = normalizeImmersivePlaybackRate(playbackRate)
+      immersiveLog('setRate', { playbackRate: activePlaybackRate, assetId: activeAssetId })
       if (isNative() && activeAssetId) {
-        await NativeAudio.setRate({ assetId: activeAssetId, rate: IMMERSIVE_PLAYBACK_RATE }).catch(() => undefined)
+        await NativeAudio.setRate({ assetId: activeAssetId, rate: activePlaybackRate }).catch(() => undefined)
       } else if (htmlAudio) {
-        htmlAudio.playbackRate = IMMERSIVE_PLAYBACK_RATE
+        htmlAudio.playbackRate = activePlaybackRate
       }
     },
 
