@@ -1,0 +1,610 @@
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { CheckCheck, CircleCheck, CircleDashed, Filter, Settings, Sparkles } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
+import type { ColumnConfig, ConfigDataTableProps } from '@/components/common/config-datatable'
+import type { PracticeRecord, PracticeRecordsResult } from '@/features/profile/api'
+import {
+  type PracticeSession,
+  type TopicDetail,
+  warmupRecordApi,
+  type WarmupRecord,
+} from '@/features/practice/api/english-practice-api'
+import type { VnPlayerHandle } from '@/features/vn-engine/vn-player'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/cn'
+import { practiceRepository } from '@/lib/offline'
+import { TopicSessionReadonlyReviewDrawer } from './topic-session-readonly-review-drawer'
+
+const LazyConfigDataTable = lazy(() =>
+  import('@/components/common/config-datatable').then((m) => ({ default: m.ConfigDataTable })),
+)
+
+function ConfigDataTable<T extends Record<string, any>>(props: ConfigDataTableProps<T>) {
+  return <LazyConfigDataTable {...(props as ConfigDataTableProps<Record<string, any>>)} />
+}
+
+const PracticeAnalysisPanel = lazy(() =>
+  import('@/features/practice/components/practice-analysis-panel').then((m) => ({ default: m.PracticeAnalysisPanel })),
+)
+const WarmupRecordDetailDialog = lazy(() =>
+  import('@/features/practice/components/warmup-record-detail-dialog').then((m) => ({ default: m.WarmupRecordDetailDialog })),
+)
+const PracticeDialogueVnReplay = lazy(() =>
+  import('./practice-dialogue-vn-replay').then((m) => ({ default: m.PracticeDialogueVnReplay })),
+)
+
+export function PracticeRecordsWithTabs({ active }: { active: boolean }) {
+  const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState('vn')
+
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full min-h-0 flex-col">
+      <TabsList className="mb-3 w-full shrink-0">
+        <TabsTrigger value="vn" className="flex-1 text-xs">{t('profile.records')}</TabsTrigger>
+        <TabsTrigger value="warmup" className="flex-1 text-xs">{t('learning.warmupPractice')}</TabsTrigger>
+      </TabsList>
+      <TabsContent value="vn" className="mt-0 min-h-0 flex-1 overflow-hidden">
+        <PracticeRecordsContent active={active && activeTab === 'vn'} />
+      </TabsContent>
+      <TabsContent value="warmup" className="mt-0 min-h-0 flex-1 overflow-hidden">
+        <WarmupRecordsContent />
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+
+// ─── 知识点练习记录 ────────────────────────────────────────────────────────
+function warmupRecordFingerprint(record: WarmupRecord) {
+  const items = Array.isArray(record.items) ? record.items : []
+  return items
+    .map((item: any) => `${item.stepId ?? ''}|${item.userAnswer ?? ''}|${item.answer ?? item.suggestedAnswer ?? ''}`)
+    .join('::')
+}
+
+function warmupRecordKeys(record: WarmupRecord) {
+  const keys = new Set<string>()
+  const remoteId = (record as any).remoteId
+  if (remoteId) keys.add(`remote:${remoteId}`)
+  if (!String(record.id).startsWith('guided-warmup:') && !String(record.id).startsWith('today-warmup:') && !String(record.id).startsWith('warmup:')) {
+    keys.add(`remote:${record.id}`)
+  }
+  const fingerprint = warmupRecordFingerprint(record)
+  if (fingerprint) keys.add(`fp:${fingerprint}`)
+  keys.add(`id:${record.id}`)
+  return [...keys]
+}
+
+function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string, t: (key: string, opts?: Record<string, unknown>) => string) {
+  const items = Array.isArray(record.items) ? record.items : []
+  const first = items[0] as any
+  if (!first) return record.topicTitle || fallback
+  const title = first.groupTitle || first.displayLabel || record.topicTitle || fallback
+  const prompt = first.zh || first.promptZh || first.answer || first.suggestedAnswer
+  if (items.length === 1 && prompt && prompt !== title) return `${title} · ${String(prompt).slice(0, 28)}`
+  return items.length > 1 ? `${title} · ${t('learning.questionCountLabel', { count: items.length })}` : title
+}
+
+function warmupRecordPracticeCount(record: WarmupRecord) {
+  const items = Array.isArray(record.items) ? record.items : []
+  return items.reduce((sum, item: any) => sum + Math.max(1, Number(item.practiceCount ?? 1)), 0)
+}
+
+function mergeWarmupRecords(localRecords: WarmupRecord[], remoteRecords: WarmupRecord[]) {
+  const seen = new Set<string>()
+  return [...localRecords, ...remoteRecords]
+    .filter((record) => {
+      const keys = warmupRecordKeys(record)
+      if (keys.some((key) => seen.has(key))) return false
+      keys.forEach((key) => seen.add(key))
+      return true
+    })
+    .sort((a, b) => String((b as any).updatedAt ?? b.createdAt ?? '').localeCompare(String((a as any).updatedAt ?? a.createdAt ?? '')))
+}
+
+function WarmupRecordsContent() {
+  const { t } = useTranslation()
+  const [records, setRecords] = useState<WarmupRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const pageSize = 15
+  const [page, setPage] = useState(1)
+  const [selectedRecord, setSelectedRecord] = useState<WarmupRecord | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    Promise.allSettled([
+      practiceRepository.listLocalWarmupRecords(),
+      warmupRecordApi.listAll(),
+      practiceRepository.getPracticeDataResetAt(),
+    ]).then(([localResult, remoteResult, resetResult]) => {
+      if (cancelled) return
+      const localRecords = localResult.status === 'fulfilled' ? localResult.value : []
+      const resetAt = resetResult.status === 'fulfilled' ? resetResult.value : null
+      const remoteRecords = remoteResult.status === 'fulfilled'
+        ? remoteResult.value.filter((record) => !resetAt || String(record.createdAt ?? '').localeCompare(resetAt) >= 0)
+        : []
+      setRecords(mergeWarmupRecords(localRecords, remoteRecords))
+    }).catch(() => {
+      if (!cancelled) setRecords([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const pagedRecords = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return records.slice(start, start + pageSize)
+  }, [records, page])
+
+  const columns: ColumnConfig<WarmupRecord>[] = [
+    {
+      key: 'topicTitle',
+      header: t('learning.warmupPractice'),
+      cell: (v, row) => {
+        const passedItems = row.items?.filter((i: any) => i.passed).length ?? 0
+        const totalItems = row.items?.length ?? 0
+        const practiceCount = warmupRecordPracticeCount(row)
+        return (
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <span className="text-sm font-medium">{warmupRecordDisplayTitle(row, t('learning.warmupPractice'), t)}</span>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {passedItems}/{totalItems} {t('learning.passedSuffix')} · {t('todayTask.practiceTimes', { count: practiceCount })}
+              </p>
+              {v && (
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{v}</p>
+              )}
+              {row.feedback && (
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.feedback}</p>
+              )}
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'createdAt',
+      header: t('learning.dateHeader'),
+      cell: (v) => (
+        <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+          {new Date(v).toLocaleDateString()}
+        </span>
+      ),
+      align: 'center',
+    },
+  ]
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <p className="shrink-0 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">
+        {t('learning.recordsHint')}
+      </p>
+      <ConfigDataTable
+        data={pagedRecords}
+        columns={columns}
+        total={records.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        isLoading={loading}
+        emptyMessage={t('learning.noWarmupRecords')}
+        onRowClick={setSelectedRecord}
+        className="min-h-0 flex-1 text-xs [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3 [&_tr]:border-0"
+      />
+      <Suspense fallback={null}>
+        <WarmupRecordDetailDialog
+          items={selectedRecord?.items ?? []}
+          topicTitle={selectedRecord?.topicTitle}
+          score={selectedRecord?.score}
+          open={Boolean(selectedRecord)}
+          onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+function PracticeRecordsContent({ active }: { active: boolean }) {
+  const { t } = useTranslation()
+  const [data, setData] = useState<PracticeRecordsResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [selectedRecord, setSelectedRecord] = useState<PracticeRecord | null>(null)
+  const [recordTypes, setRecordTypes] = useState<Array<'dialogue' | 'reading' | 'writing'>>(['dialogue', 'reading', 'writing'])
+  const [filterOpen, setFilterOpen] = useState(false)
+  const pageSize = 15
+
+  useEffect(() => {
+    if (!active) return
+    let cancelled = false
+    setIsLoading(true)
+    // 离线优先：有本地缓存直接展示；空缓存时 repository 内部再 refresh
+    void practiceRepository.listPracticeRecords({ page: 1, pageSize: 100 })
+      .then((next) => {
+        if (!cancelled) setData(next)
+      })
+      .catch(() => {
+        if (!cancelled) setData({ list: [], total: 0, page, pageSize })
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [active])
+
+  useEffect(() => {
+    if (!active) setFilterOpen(false)
+  }, [active])
+
+  const visibleRecords = useMemo(() => (data?.list ?? []).filter((record) => recordTypes.includes(record.recordType ?? 'dialogue')), [data?.list, recordTypes])
+  const pagedRecords = useMemo(() => visibleRecords.slice((page - 1) * pageSize, page * pageSize), [page, visibleRecords])
+  const toggleRecordType = (type: 'dialogue' | 'reading' | 'writing') => {
+    setPage(1)
+    setRecordTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type])
+  }
+  const isFiltered = recordTypes.length < 3
+  const filterTypeOptions = [
+    ['dialogue', t('profile.practiceRecords.filterTypes.dialogue')],
+    ['reading', t('profile.practiceRecords.filterTypes.reading')],
+    ['writing', t('profile.practiceRecords.filterTypes.writing')],
+  ] as const
+
+  const columns: ColumnConfig<PracticeRecord>[] = [
+    {
+      key: 'topicName',
+      header: t('profile.practiceRecords.columns.topic'),
+      cell: (v, row) => {
+        const type = row.recordType ?? 'dialogue'
+        const typeClass =
+          type === 'reading'
+            ? 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+            : type === 'writing'
+              ? 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+              : 'border-border/80 bg-muted/60 text-muted-foreground'
+        return (
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-sm font-medium">{v}</span>
+              <Badge variant="outline" className={cn('h-5 shrink-0 px-1.5 text-[10px] font-semibold opacity-90', typeClass)}>
+                {t(`profile.practiceRecords.types.${type}`)}
+              </Badge>
+            </div>
+            {row.questionText && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{row.questionText}</p>
+            )}
+            {row.summary && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.summary}</p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      key: 'status',
+      header: t('profile.practiceRecords.columns.status'),
+      width: 88,
+      cell: (v, row) => (
+          <div className="inline-flex flex-col items-center gap-1">
+            <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="max-w-full truncate text-[10px]">
+              {v === 'analyzed' ? t('profile.practiceRecords.status.analyzed') : v === 'analyzing' ? t('profile.practiceRecords.status.analyzing') : v === 'completed' ? t('profile.practiceRecords.status.completed') : v === 'failed' ? t('profile.practiceRecords.status.failed') : t('profile.practiceRecords.status.inProgress')}
+            </Badge>
+            <div className="flex flex-col items-center gap-0.5 text-[11px] leading-none text-muted-foreground">
+              {typeof row.score === 'number' && (
+                <span className="font-semibold text-primary tabular-nums">
+                  {row.score}
+                  <span className="ml-0.5 font-medium text-muted-foreground">{t('profile.reviewScoreUnit')}</span>
+                </span>
+              )}
+              <span className="tabular-nums">
+                {row.practiceCount ?? 0}
+                <span className="ml-0.5">{t('profile.reviewPracticeCountUnit')}</span>
+              </span>
+            </div>
+          </div>
+      ),
+      align: 'center',
+    },
+    {
+      key: 'lastPracticeAt',
+      header: t('profile.practiceRecords.columns.date'),
+      width: 64,
+      cell: (v) => {
+        const date = new Date(v)
+        return (
+          <span className="inline-block whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+            {`${date.getMonth() + 1}/${date.getDate()}`}
+          </span>
+        )
+      },
+      align: 'center',
+    },
+  ]
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="flex shrink-0 items-center gap-2">
+        <p className="min-w-0 flex-1 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">{t('profile.reviewIncompleteHint')}</p>
+        <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="secondary"
+              size="sm"
+              className={cn(
+                'h-8 shrink-0 rounded-full border-0 px-2.5 text-xs shadow-none',
+                isFiltered && 'bg-primary/10 text-primary hover:bg-primary/15',
+              )}
+              aria-label={t('profile.practiceRecords.filterAria')}
+            >
+              <Filter className="size-3.5" />
+              <span>{isFiltered ? `${recordTypes.length}/3` : t('profile.practiceRecords.filter')}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="w-52 overflow-hidden rounded-xl border-0 bg-background p-1.5 text-foreground shadow-none"
+          >
+            <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
+              <p className="text-xs font-semibold tracking-wide text-foreground">{t('profile.practiceRecords.filterTitle')}</p>
+              {isFiltered && (
+                <button
+                  type="button"
+                  onClick={() => setRecordTypes(['dialogue', 'reading', 'writing'])}
+                  className="text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t('profile.practiceRecords.showAll')}
+                </button>
+              )}
+            </div>
+            <div className="space-y-0.5">
+              {filterTypeOptions.map(([type, label]) => {
+                const selected = recordTypes.includes(type)
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={selected}
+                    onClick={() => toggleRecordType(type)}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted',
+                      selected ? 'text-foreground' : 'text-muted-foreground',
+                    )}
+                  >
+                    <span className={cn(
+                      'flex size-5 shrink-0 items-center justify-center rounded border',
+                      selected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/45',
+                    )}>
+                      <CheckCheck className={cn('size-3.5', !selected && 'invisible')} />
+                    </span>
+                    <span className="flex-1">{label}</span>
+                    {selected && (
+                      <span className="text-[10px] font-medium text-muted-foreground">{t('profile.practiceRecords.shown')}</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <ConfigDataTable
+        data={pagedRecords}
+        columns={columns}
+        total={visibleRecords.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        isLoading={isLoading}
+        emptyMessage={t('profile.practiceRecords.empty')}
+        onRowClick={setSelectedRecord}
+        className="min-h-0 flex-1 [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_tr]:border-0"
+      />
+      <PracticeRecordReadonlyReviewDrawer
+        record={selectedRecord}
+        open={Boolean(selectedRecord && (selectedRecord.recordType ?? 'dialogue') === 'dialogue')}
+        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+      />
+      <TopicSessionReadonlyReviewDrawer
+        record={selectedRecord && (selectedRecord.recordType === 'reading' || selectedRecord.recordType === 'writing') ? selectedRecord : null}
+        open={Boolean(selectedRecord && (selectedRecord.recordType === 'reading' || selectedRecord.recordType === 'writing'))}
+        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+      />
+    </div>
+  )
+}
+
+function PracticeRecordReadonlyReviewDrawer({
+  record,
+  open,
+  onOpenChange,
+}: {
+  record: PracticeRecord | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useTranslation()
+  const isMobile = useIsMobile()
+  const [session, setSession] = useState<PracticeSession | null>(null)
+  const [topicDetail, setTopicDetail] = useState<TopicDetail | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [view, setView] = useState<'replay' | 'analysis'>('replay')
+  const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
+
+  useEffect(() => {
+    if (!open || !record?.sessionId) return
+    setLoading(true)
+    setSession(null)
+    setTopicDetail(null)
+    setView('replay')
+    Promise.all([
+      practiceRepository.getPracticeSessionForReview(record.sessionId),
+      practiceRepository.getTopicDetail(record.topicId).catch(() => null),
+    ])
+      .then(([nextSession, nextTopicDetail]) => {
+        setSession(nextSession)
+        setTopicDetail(nextTopicDetail)
+      })
+      .catch(() => setSession(null))
+      .finally(() => setLoading(false))
+  }, [open, record?.sessionId, record?.topicId])
+
+  const packageId = record?.unitId || session?.sceneId || topicDetail?.scene?.id || ''
+  const hasTurns = Boolean(session?.turns?.length)
+  const hasAnalysis = Boolean(session?.analysisResult)
+  const titleLabel = view === 'analysis'
+    ? t('scripts.aiReviewTab')
+    : t('scripts.dialogueReplay')
+
+  const body = loading ? (
+    <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
+  ) : !session ? (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <p className="text-sm text-muted-foreground">{t('profile.reviewLoadFailed')}</p>
+      <Button variant="secondary" size="sm" className="border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+    </div>
+  ) : !hasTurns && !hasAnalysis ? (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
+      <Button variant="secondary" size="sm" className="border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+    </div>
+  ) : (
+    <div className="relative h-full">
+      <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2">
+        <div className="grid h-9 w-full max-w-[440px] grid-cols-[1fr_auto_1fr] items-center gap-1.5 rounded-full bg-background/90 px-2 text-foreground shadow-none backdrop-blur-2xl">
+          <div className="flex items-center justify-start">
+            <Button variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+          </div>
+          <p className="max-w-[10rem] truncate text-center text-xs font-medium text-muted-foreground" title={record?.questionText || undefined}>
+            {titleLabel}
+          </p>
+          <div className="flex items-center justify-end gap-1.5 pr-0.5">
+            {view === 'replay' && (
+              <button
+                type="button"
+                className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                onClick={() => vnPlayerRef.current?.toggleSettings()}
+                aria-label={t('profile.settings')}
+              >
+                <Settings className="size-3.5" />
+              </button>
+            )}
+            <Sparkles className={cn('size-3.5', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+            <Switch
+              checked={view === 'analysis'}
+              onCheckedChange={(checked) => setView(checked ? 'analysis' : 'replay')}
+              disabled={!hasAnalysis && view === 'replay'}
+              aria-label={t('learning.toggleAiReview')}
+              title={view === 'analysis' ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
+            />
+          </div>
+        </div>
+      </div>
+      {view === 'analysis' ? (
+        <div className="h-full overflow-y-auto px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-16">
+          {session.analysisResult ? (
+            <Suspense fallback={<MobilePageLoading rows={3} />}>
+              <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
+            </Suspense>
+          ) : (
+            <p className="rounded-xl bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">{t('profile.reviewNoAnalysis')}</p>
+          )}
+        </div>
+      ) : !hasTurns ? (
+        <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
+          {hasAnalysis && (
+            <Button size="sm" className="border-0 shadow-none" onClick={() => setView('analysis')}>
+              {t('profile.reviewViewAnalysis')}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <Suspense fallback={<MobilePageLoading rows={4} minHeightClassName="min-h-full" />}>
+          <PracticeDialogueVnReplay
+            session={session}
+            topicDetail={topicDetail}
+            packageId={packageId}
+            vnPlayerRef={vnPlayerRef}
+            onRequestClose={() => onOpenChange(false)}
+            renderTurnFeedback={(turn) => <PracticeReplayFeedback turn={turn} />}
+            renderTurnFeedbackChat={(turn) => <PracticeReplayFeedback turn={turn} compact />}
+            endedActions={hasAnalysis ? (
+              <div className="mx-auto flex items-center justify-center">
+                <Button size="sm" className="h-8 rounded-full border-0 px-4 text-xs shadow-none" onClick={() => setView('analysis')}>
+                  {t('profile.reviewViewAnalysis')}
+                </Button>
+              </div>
+            ) : undefined}
+          />
+        </Suspense>
+      )}
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{t('profile.reviewTitle')}</DrawerTitle>
+          </DrawerHeader>
+          {body}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex h-[min(92vh,900px)] max-w-5xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden">
+        <DialogTitle className="sr-only">{t('profile.reviewTitle')}</DialogTitle>
+        <div className="min-h-0 flex-1 overflow-hidden">{body}</div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PracticeReplayFeedback({
+  turn,
+  compact = false,
+}: {
+  turn: NonNullable<PracticeSession['turns']>[number]
+  compact?: boolean
+}) {
+  const { t } = useTranslation()
+  const judgement = turn.judgement as { passed?: boolean; feedback?: string; chunksUsed?: string[] } | null
+  if (!judgement) return null
+
+  return (
+    <div className={cn(
+      'text-foreground backdrop-blur-xl',
+      compact ? 'px-3 py-2.5' : 'px-4 py-3 pb-safe',
+      judgement.passed ? 'bg-emerald-500/[0.08]' : 'bg-amber-500/[0.08]',
+    )}>
+      <div className="flex items-center gap-2 text-xs font-semibold">
+        {judgement.passed ? <CircleCheck className="size-3.5 text-emerald-500" /> : <CircleDashed className="size-3.5 text-amber-500" />}
+        <span>{judgement.passed ? t('profile.reviewRoundPassed') : t('profile.reviewRoundNeedsAdjust')}</span>
+      </div>
+      {judgement.feedback && <p className="mt-1.5 text-xs leading-5 text-foreground/75">{judgement.feedback}</p>}
+      {(judgement.chunksUsed ?? turn.chunksUsed).length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {(judgement.chunksUsed ?? turn.chunksUsed).map((chunk) => (
+            <Badge key={chunk} variant="secondary" className="rounded-full border-0 bg-background/50 px-2 text-[10px] shadow-none">{chunk}</Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,362 @@
+learning:
+  exercises:
+    pipeline:
+      - key: remain-calm
+        kind: chunk
+        type: chunk_substitution
+        title: 说请大家保持冷静
+        chunk: remain calm
+        chunkMeaning: 保持冷静
+        direction: zh_to_en
+        items:
+          - zh: 请保持冷静。
+            answer: Please remain calm.
+            hint: remain
+          - zh: 情况再糟，你也要保持冷静。
+            answer: However bad it gets, you need to remain calm.
+            hint: However bad it gets
+          - zh: 大家都保持冷静，等着消息。
+            answer: Everyone remained calm and waited for the news.
+            hint: waited for the news
+      - key: remain-friend
+        kind: chunk
+        type: chunk_substitution
+        title: 说他仍然是我的密友
+        chunk: remain a close friend
+        chunkMeaning: 仍然是密友
+        direction: zh_to_en
+        items:
+          - zh: 他仍然是我的密友。
+            answer: He remained a close friend.
+            hint: remained
+          - zh: 我们分手之后还是朋友。
+            answer: We remained friends after we broke up.
+            hint: friends；broke up
+          - zh: 她一直是个值得信任的人。
+            answer: She remained a person you could trust.
+            hint: you could trust
+      - key: remain-calm-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说保持状态
+        chunk: remain calm
+        chunkMeaning: 保持冷静
+        direction: en_to_zh
+        items:
+          - en: Please remain calm.
+            answer: 请保持冷静。
+            hint: Please
+          - en: Everyone remained calm and waited for the news.
+            answer: 大家都保持冷静，等着消息。
+            hint: waited for the news
+          - en: He remained a close friend.
+            answer: 他仍然是我的密友。
+            hint: a close friend
+      - key: remain-state
+        type: vocab_sentence_building
+        title: 说仍然是个谜、仍可用
+        vocabWord: remain
+        vocabMeaning: 仍然；保持
+        direction: zh_to_en
+        patterns:
+          - chunk: remain a mystery
+            items:
+              - zh: 原因仍然是个谜。
+                answer: The cause remains a mystery.
+                hint: The cause
+              - zh: 他为什么走，到现在还是个谜。
+                answer: Why he left remains a mystery.
+                hint: Why he left
+              - zh: 事故发生的原因一直没弄清楚。
+                answer: The cause of the accident remained a mystery.
+                hint: The cause of the accident
+          - chunk: remain available
+            items:
+              - zh: 这项服务将继续可用。
+                answer: The service will remain available.
+                hint: will remain available
+              - zh: 网站会一直开放。
+                answer: The website will remain available.
+                hint: The website
+              - zh: 我们随时可以帮忙。
+                answer: We'll remain available if you need help.
+                hint: if you need help
+          - chunk: remain in place
+            items:
+              - zh: 旧规则仍然有效。
+                answer: The old rules remain in place.
+                hint: remain in place
+              - zh: 这些规定暂时不变。
+                answer: These rules will remain in place for now.
+                hint: for now
+              - zh: 原有的流程还在继续用。
+                answer: The original process remains in place.
+                hint: The original process
+      - key: remain-office
+        kind: chunk
+        type: chunk_substitution
+        title: 说她一直留在办公室到很晚
+        chunk: remain in the office
+        chunkMeaning: 留在办公室
+        direction: zh_to_en
+        items:
+          - zh: 她一直留在办公室到很晚。
+            answer: She remained in the office until late.
+            hint: until late
+          - zh: 请大家留在座位上。
+            answer: Please remain in your seats.
+            hint: your seats
+          - zh: 他整个下午都待在房间里。
+            answer: He remained in his room all afternoon.
+            hint: all afternoon
+      - key: remain-unchanged
+        kind: chunk
+        type: chunk_substitution
+        title: 说基本结构保持不变
+        chunk: remain unchanged
+        chunkMeaning: 保持不变
+        direction: zh_to_en
+        items:
+          - zh: 基本结构保持不变。
+            answer: The basic structure remains unchanged.
+            hint: The basic structure
+          - zh: 价格今年不会变。
+            answer: The price will remain unchanged this year.
+            hint: will remain unchanged
+          - zh: 规则没改，只是执行更严了。
+            answer: The rules remained unchanged, but they are enforced more strictly.
+            hint: enforced more strictly
+      - key: remain-to-be-seen
+        kind: chunk
+        type: chunk_substitution
+        title: 说是否有效还有待观察
+        chunk: remain to be seen
+        chunkMeaning: 尚待观察
+        direction: zh_to_en
+        items:
+          - zh: 是否有效还有待观察。
+            answer: Whether it will work remains to be seen.
+            hint: Whether it will work
+          - zh: 这个办法能不能奏效，还要看后面。
+            answer: It remains to be seen whether this will work.
+            hint: whether this will work
+          - zh: 他会不会来，现在还说不准。
+            answer: It remains to be seen whether he'll come.
+            hint: whether he'll come
+      - key: remain-silent-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说保持沉默
+        chunk: remain silent
+        chunkMeaning: 保持沉默
+        direction: en_to_zh
+        items:
+          - en: He remained silent throughout the meeting.
+            answer: 整个会议期间他都保持沉默。
+            hint: throughout the meeting
+          - en: She remained silent when we asked her.
+            answer: 问她的时候，她一直没说话。
+            hint: when we asked her
+          - en: They remained silent on this issue.
+            answer: 对这件事他们一直不肯表态。
+            hint: on this issue
+      - key: remain-focused-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 说工作中保持专注
+        chunk: remain focused
+        chunkMeaning: 保持专注
+        direction: zh_to_en
+        items:
+          - zh: 我工作时能一直保持专注。
+            answer: I can remain focused while I work.
+            hint: while I work
+          - zh: 他很难在会议上保持专注。
+            answer: He finds it hard to remain focused in meetings.
+            hint: finds it hard to
+          - zh: 想保持专注，就先关掉通知。
+            answer: To remain focused, turn off your notifications first.
+            hint: turn off your notifications
+      - key: remain-seated-other
+        kind: chunk
+        type: chunk_substitution
+        title: 说请大家保持就座
+        chunk: remain seated
+        chunkMeaning: 保持就座
+        direction: zh_to_en
+        items:
+          - zh: 飞机降落前请保持就座。
+            answer: Please remain seated until the plane lands.
+            hint: until the plane lands
+          - zh: 演出期间请留在座位上。
+            answer: Please remain seated during the show.
+            hint: during the show
+          - zh: 大家坐着等，不要走动。
+            answer: Everyone remained seated and waited.
+            hint: waited
+      - key: remain-silent
+        kind: chunk
+        type: chunk_substitution
+        title: 说保持沉默
+        chunk: remain silent
+        chunkMeaning: 保持沉默
+        direction: zh_to_en
+        items:
+          - zh: 他对这个问题一直不吭声。
+            answer: He remained silent on the question.
+            hint: on the question
+          - zh: 大家都沉默了。
+            answer: Everyone remained silent.
+            hint: Everyone
+          - zh: 他宁可沉默，也不愿说谎。
+            answer: He preferred to remain silent rather than lie.
+            hint: rather than lie
+      - key: remain-focused
+        kind: chunk
+        type: chunk_substitution
+        title: 说尽量继续专注于主要问题
+        chunk: remain focused on the main issue
+        chunkMeaning: 持续专注于主要问题
+        direction: zh_to_en
+        items:
+          - zh: 尽量继续专注于主要问题。
+            answer: Try to remain focused on the main issue.
+            hint: Try to
+          - zh: 干扰这么多，很难保持专注。
+            answer: With all these distractions, it's hard to remain focused.
+            hint: distractions
+          - zh: 他一直专注于目标，没有分心。
+            answer: He remained focused on the goal and didn't get distracted.
+            hint: didn't get distracted
+      - key: remain-adjective
+        type: pattern_drill
+        title: 说保持某种状态
+        pattern: remain [adjective]
+        patternMeaning: 保持某种状态
+        direction: zh_to_en
+        items:
+          - zh: 问题的原因仍然不清楚。
+            answer: The cause of the problem remains unclear.
+            hint: unclear
+          - zh: 火车停下前请保持就座。
+            answer: Please remain seated until the train stops.
+            hint: seated；until the train stops
+          - zh: 有些问题仍然没有得到回答。
+            answer: Some questions remain unanswered.
+            hint: unanswered
+      - key: remain-in-place-other
+        type: pattern_drill
+        title: 说继续留在某地
+        pattern: remain in [place]
+        patternMeaning: 继续待在某处
+        direction: zh_to_en
+        items:
+          - zh: 请留在座位上，不要起身。
+            answer: Please remain in your seats and don't stand up.
+            hint: don't stand up
+          - zh: 他一直在房间里等到中午。
+            answer: He remained in the room until noon.
+            hint: until noon
+          - zh: 下雨了，我们只好留在室内。
+            answer: It rained, so we had to remain indoors.
+            hint: indoors
+      - key: remain-noun-other
+        type: pattern_drill
+        title: 说仍然是某种身份
+        pattern: remain [noun]
+        patternMeaning: 仍然是某种身份
+        direction: zh_to_en
+        items:
+          - zh: 他一直是我们最好的朋友。
+            answer: He remained our best friend.
+            hint: our best friend
+          - zh: 这家公司仍然是行业的领头人。
+            answer: The company remains a leader in the industry.
+            hint: a leader
+          - zh: 她始终是个务实的人。
+            answer: She remained a practical person.
+            hint: a practical person
+      - key: remain-silent-other
+        type: pattern_drill
+        title: 说保持沉默或其他状态
+        pattern: remain silent / remain unchanged
+        patternMeaning: 保持沉默 / 保持不变
+        direction: zh_to_en
+        items:
+          - zh: 对这件事他一直不说话。
+            answer: He remained silent about it.
+            hint: about it
+          - zh: 数据一直没有变化。
+            answer: The data remained unchanged.
+            hint: The data
+          - zh: 尽管有人反对，政策还是没变。
+            answer: Despite the objections, the policy remained unchanged.
+            hint: Despite the objections
+      - key: remain-listen
+        type: pattern_drill
+        title: 听懂对方说仍然怎样
+        pattern: remain [adjective] / remain to be seen
+        patternMeaning: 仍然怎样 / 尚待观察
+        direction: en_to_zh
+        items:
+          - en: The cause of the problem remains unclear.
+            answer: 问题的原因仍然不清楚。
+            hint: The cause
+          - en: Whether it will work remains to be seen.
+            answer: 是否有效还有待观察。
+            hint: Whether it will work
+          - en: The rules remained unchanged.
+            answer: 规则保持不变。
+            hint: unchanged
+      - key: remain-seated-build
+        type: sentence_decomposition
+        title: 把保持就座说完整
+        sourceKind: chunk
+        sourceText: remain calm
+        fullSentence: Please remain seated and keep your seat belt on until the plane stops.
+        fullSentenceZh: 飞机停稳前，请大家保持就座，系好安全带。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Please remain seated.
+            zh: 请保持就座。
+            highlight: ''
+            hint: 先说保持就座
+          - level: 2
+            label: 加动作
+            en: Please remain seated and keep your seat belt on.
+            zh: 请保持就座，系好安全带。
+            highlight: keep your seat belt on
+            hint: 补上系好安全带
+          - level: 3
+            label: 完整句
+            en: Please remain seated and keep your seat belt on until the plane stops.
+            zh: 飞机停稳前，请大家保持就座，系好安全带。
+            highlight: until the plane stops
+            hint: 补上飞机停稳前
+      - key: remain-mystery-build
+        type: sentence_decomposition
+        title: 把仍是个谜说完整
+        sourceKind: vocab
+        sourceText: remain
+        fullSentence: The cause of the fire remains a mystery, and the police are still investigating.
+        fullSentenceZh: 起火的原因仍然是个谜，警方还在调查。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The cause of the fire remains a mystery.
+            zh: 起火的原因仍然是个谜。
+            highlight: ''
+            hint: 先说仍是个谜
+          - level: 2
+            label: 加强调
+            en: The cause of the fire still remains a mystery.
+            zh: 起火的原因到现在仍然是个谜。
+            highlight: still
+            hint: 补上到现在仍然
+          - level: 3
+            label: 完整句
+            en: The cause of the fire remains a mystery, and the police are still investigating.
+            zh: 起火的原因仍然是个谜，警方还在调查。
+            highlight: the police are still investigating
+            hint: 补上警方还在调查

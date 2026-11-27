@@ -1,0 +1,434 @@
+learning:
+  exercises:
+    pipeline:
+      - key: realize-made-mistake
+        kind: chunk
+        type: chunk_substitution
+        title: 说意识到自己犯了错
+        chunk: realize that I'd made a mistake
+        chunkMeaning: 意识到自己犯过错
+        direction: zh_to_en
+        items:
+          - zh: 后来我才发现自己搞错了。
+            answer: Later I realized that I'd made a mistake.
+            hint: Later I realized that；I'd made
+          - zh: 听到她的解释后，我才意识到我弄错了。
+            answer: After hearing her explanation, I realized that I'd made a mistake.
+            hint: After hearing；explanation
+          - zh: 他半夜醒来，忽然意识到自己犯了个大错。
+            answer: He woke up in the middle of the night and suddenly realized that he'd made a mistake.
+            hint: woke up；suddenly realized
+      - key: realize-how-late
+        kind: chunk
+        type: chunk_substitution
+        title: 说意识到已经多晚了
+        chunk: realize how late it was
+        chunkMeaning: 意识到时间已经很晚
+        direction: zh_to_en
+        items:
+          - zh: 我一看表，才发现已经这么晚了。
+            answer: I looked at the clock and realized how late it was.
+            hint: looked at the clock；how late
+          - zh: 聊得起劲，我们才意识到已经很晚了。
+            answer: We were chatting away and then realized how late it was.
+            hint: chatting away；then realized
+          - zh: 走出电影院，他突然意识到时间不早了。
+            answer: As he left the cinema, he realized how late it was.
+            hint: As he left；the cinema
+      - key: realize-importance-sleep
+        kind: chunk
+        type: chunk_substitution
+        title: 说意识到睡眠的重要性
+        chunk: realize the importance of sleep
+        chunkMeaning: 意识到睡眠有多重要
+        direction: zh_to_en
+        items:
+          - zh: 熬夜几天后，我才意识到睡眠有多重要。
+            answer: After a few sleepless nights, I realized the importance of sleep.
+            hint: After a few sleepless nights
+          - zh: 她生病之后更明白睡觉有多关键。
+            answer: After she got sick, she realized the importance of sleep even more.
+            hint: After she got sick；even more
+          - zh: 医生的话让他终于意识到睡眠的重要性。
+            answer: What the doctor said helped him realize the importance of sleep.
+            hint: What the doctor said；helped him
+      - key: realize-a-dream
+        kind: chunk
+        type: chunk_substitution
+        title: 说实现梦想
+        chunk: realize a dream
+        chunkMeaning: 实现梦想（realize 作“实现”）
+        direction: zh_to_en
+        items:
+          - zh: 十年过去，她终于圆了自己的一个梦。
+            answer: After ten years, she finally realized a dream.
+            hint: After ten years；finally realized a dream
+          - zh: 他们终于实现了开咖啡馆的梦想。
+            answer: They finally realized a dream of opening a café.
+            hint: finally realized；of opening
+          - zh: 能在这里工作，算是实现了我从小的梦想。
+            answer: Working here means I've realized a dream I've had since I was little.
+            hint: means I've realized；since I was little
+      - key: come-to-realize
+        kind: chunk
+        type: chunk_substitution
+        title: 说慢慢才明白过来
+        chunk: come to realize
+        chunkMeaning: 逐渐意识到
+        direction: zh_to_en
+        items:
+          - zh: 我慢慢才意识到问题出在我身上。
+            answer: I came to realize that the problem was with me.
+            hint: came to realize that
+          - zh: 相处久了，她才逐渐明白他其实很可靠。
+            answer: Over time, she came to realize that he was actually reliable.
+            hint: Over time；actually reliable
+          - zh: 经历那件事之后，我们都开始意识到沟通有多重要。
+            answer: After what happened, we all came to realize how important communication is.
+            hint: we all came to realize；how important
+      - key: suddenly-realize
+        kind: chunk
+        type: chunk_substitution
+        title: 说突然意识到
+        chunk: suddenly realize
+        chunkMeaning: 突然意识到
+        direction: zh_to_en
+        items:
+          - zh: 我突然意识到钱包不见了。
+            answer: I suddenly realized my wallet was missing.
+            hint: I suddenly realized；was missing
+          - zh: 他走在街上，忽然意识到自己走错了方向。
+            answer: Walking down the street, he suddenly realized he was going the wrong way.
+            hint: Walking down the street；the wrong way
+          - zh: 听到那句话，她猛地明白过来对方在试探她。
+            answer: When she heard that line, she suddenly realized he was testing her.
+            hint: When she heard；was testing her
+      - key: fully-realize-risk
+        kind: chunk
+        type: chunk_substitution
+        title: 说完全意识到风险
+        chunk: fully realize the risk
+        chunkMeaning: 充分认识到风险
+        direction: zh_to_en
+        items:
+          - zh: 签字前，你得完全明白风险有多大。
+            answer: Before you sign, you need to fully realize the risk.
+            hint: Before you sign；need to fully realize
+          - zh: 大家直到出事才彻底意识到风险。
+            answer: People didn't fully realize the risk until something went wrong.
+            hint: didn't fully realize；until something went wrong
+          - zh: 听完汇报，董事会才充分认识到风险。
+            answer: After the briefing, the board fully realized the risk.
+            hint: After the briefing；the board
+      - key: fail-to-realize
+        kind: chunk
+        type: chunk_substitution
+        title: 说没意识到
+        chunk: fail to realize
+        chunkMeaning: 未能意识到
+        direction: zh_to_en
+        items:
+          - zh: 他没能意识到自己已经得罪了客户。
+            answer: He failed to realize that he'd already upset the client.
+            hint: failed to realize that；upset the client
+          - zh: 很多人没意识到这个小习惯会伤眼睛。
+            answer: Many people fail to realize that this little habit hurts their eyes.
+            hint: Many people fail to realize
+          - zh: 公司起初没看清市场已经变了。
+            answer: At first, the company failed to realize the market had changed.
+            hint: At first；the market had changed
+      - key: make-someone-realize
+        kind: chunk
+        type: chunk_substitution
+        title: 说让人意识到
+        chunk: make someone realize
+        chunkMeaning: 使某人意识到
+        direction: zh_to_en
+        items:
+          - zh: 那封邮件让她意识到局势有多严重。
+            answer: That email made her realize how serious the situation was.
+            hint: made her realize how serious
+          - zh: 我希望这次谈话能让你意识到问题在哪。
+            answer: I hope this talk can make you realize where the problem is.
+            hint: make you realize where
+          - zh: 亲眼看到现场，才让他们意识到损失有多大。
+            answer: Seeing the scene in person made them realize how big the loss was.
+            hint: Seeing the scene in person；how big
+      - key: realize-the-difference
+        kind: chunk
+        type: chunk_substitution
+        title: 说意识到区别在哪
+        chunk: realize the difference
+        chunkMeaning: 意识到差异
+        direction: zh_to_en
+        items:
+          - zh: 用了一阵子，我才意识到两款产品的差别。
+            answer: After using them for a while, I realized the difference.
+            hint: After using them for a while
+          - zh: 培训结束后，员工更能体会理论和实践的不同。
+            answer: After the training, employees can realize the difference better.
+            hint: After the training；better
+          - zh: 她把两样样品并排放，好让客户看出差别。
+            answer: She put the two samples side by side so customers could realize the difference.
+            hint: side by side；so customers could
+      - key: realize-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说意识到某事实
+        chunk: realize that
+        chunkMeaning: 意识到……
+        direction: en_to_zh
+        items:
+          - en: I didn't realize that the meeting had been moved to Thursday.
+            answer: 我没意识到会议改到周四了。
+            hint: had been moved；Thursday
+          - en: She suddenly realized that everyone was waiting for her.
+            answer: 她突然意识到大家都在等她。
+            hint: everyone was waiting for her
+          - en: Do you realize that you're speaking too fast?
+            answer: 你意识到自己说得太快了吗？
+            hint: Do you realize；speaking too fast
+      - key: realize-how-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说意识到程度
+        chunk: realize how
+        chunkMeaning: 意识到有多……
+        direction: en_to_zh
+        items:
+          - en: I didn't realize how tired I was until I sat down.
+            answer: 我坐下后才意识到自己有多累。
+            hint: how tired；until I sat down
+          - en: He finally realized how much his parents had done for him.
+            answer: 他终于明白父母为他付出了多少。
+            hint: how much；had done for him
+          - en: Only then did she realize how serious the problem was.
+            answer: 直到那时她才意识到问题有多严重。
+            hint: Only then；how serious
+      - key: realize-state
+        type: vocab_sentence_building
+        title: 说察觉与逐渐明白
+        vocabWord: realize
+        vocabMeaning: 意识到；实现（梦想）
+        direction: zh_to_en
+        patterns:
+          - chunk: realize that
+            items:
+              - zh: 我才意识到我记错日期了。
+                answer: I just realized that I got the date wrong.
+                hint: just realized that
+              - zh: 你还没意识到这件事会影响所有人吗？
+                answer: Don't you realize that this will affect everyone?
+                hint: Don't you realize that
+          - chunk: realize how
+            items:
+              - zh: 旅行回来我才意识到家乡有多安静。
+                answer: After the trip, I realized how quiet my hometown is.
+                hint: realized how quiet
+              - zh: 她慢慢意识到独自生活并不那么容易。
+                answer: She slowly realized how hard it is to live alone.
+                hint: slowly realized how hard
+          - chunk: come to realize
+            items:
+              - zh: 我后来才明白他当时是开玩笑。
+                answer: I came to realize he was joking at the time.
+                hint: came to realize he was joking
+              - zh: 我们需要让员工逐渐认识到质量的重要性。
+                answer: We need employees to come to realize the importance of quality.
+                hint: come to realize the importance of
+      - key: realize-that-other
+        type: pattern_drill
+        title: 说意识到别的事实
+        pattern: realize that [clause]
+        patternMeaning: 意识到……
+        direction: zh_to_en
+        items:
+          - zh: 下了车我才意识到坐过站了。
+            answer: After I got off, I realized that I'd missed my stop.
+            hint: After I got off；missed my stop
+          - zh: 她没意识到自己会这么想念家乡。
+            answer: She didn't realize that she'd miss home this much.
+            hint: didn't realize that；this much
+          - zh: 他们终于意识到预算不够了。
+            answer: They finally realized that the budget wasn't enough.
+            hint: finally realized that
+      - key: realize-how-other
+        type: pattern_drill
+        title: 说意识到别的程度
+        pattern: realize how [adj/adv]
+        patternMeaning: 意识到有多……
+        direction: zh_to_en
+        items:
+          - zh: 排练几次后，演员才意识到自己有多紧张。
+            answer: After a few rehearsals, the actors realized how nervous they were.
+            hint: After a few rehearsals
+          - zh: 换个城市住，你会意识到生活成本差多少。
+            answer: Living in another city makes you realize how different the cost of living is.
+            hint: cost of living
+          - zh: 看到数据后，管理层才意识到增长有多快。
+            answer: After seeing the numbers, management realized how fast growth was.
+            hint: After seeing the numbers
+      - key: realize-importance-other
+        type: pattern_drill
+        title: 说意识到别的事有多重要
+        pattern: realize the importance of [something]
+        patternMeaning: 意识到……的重要性
+        direction: zh_to_en
+        items:
+          - zh: 疫情之后，很多人更重视健康了。
+            answer: After the pandemic, many people realized the importance of health.
+            hint: After the pandemic
+          - zh: 失败几次他才明白备份有多关键。
+            answer: After a few failures, he realized the importance of backups.
+            hint: After a few failures；backups
+          - zh: 新人需要慢慢体会团队合作的价值。
+            answer: New hires need time to realize the importance of teamwork.
+            hint: need time to realize
+      - key: realize-dream-other
+        type: pattern_drill
+        title: 说实现别的梦想
+        pattern: realize a dream
+        patternMeaning: 实现梦想
+        direction: zh_to_en
+        items:
+          - zh: 能进这所学校，算是实现了父母的愿望。
+            answer: Getting into this school means realizing a dream for my parents.
+            hint: means realizing a dream for
+          - zh: 她一直在存钱，为的就是实现旅行的梦想。
+            answer: She's been saving so she can realize a dream of traveling.
+            hint: so she can realize；of traveling
+          - zh: 他们联手把开工作室的梦变成了现实。
+            answer: Together they realized a dream of opening a studio.
+            hint: Together they realized
+      - key: come-to-realize-other
+        type: pattern_drill
+        title: 说对别的事慢慢醒觉
+        pattern: come to realize
+        patternMeaning: 逐渐意识到
+        direction: zh_to_en
+        items:
+          - zh: 孩子长大后，父母才渐渐明白放手有多难。
+            answer: As their kids grew up, parents came to realize how hard letting go is.
+            hint: As their kids grew up
+          - zh: 换岗之后，他才逐渐意识到旧流程的弊端。
+            answer: After changing roles, he came to realize the problems with the old process.
+            hint: After changing roles
+          - zh: 读多了案例，学生会慢慢意识到细节决定成败。
+            answer: Reading more cases, students come to realize that details decide success or failure.
+            hint: details decide success or failure
+      - key: suddenly-realize-other
+        type: pattern_drill
+        title: 说突然明白别的事
+        pattern: suddenly realize
+        patternMeaning: 突然意识到
+        direction: zh_to_en
+        items:
+          - zh: 关掉电视那一刻，他才突然意识到家里有多安静。
+            answer: The moment he turned off the TV, he suddenly realized how quiet the house was.
+            hint: The moment he turned off the TV
+          - zh: 她在门口突然想起来自己没带钥匙。
+            answer: At the door, she suddenly realized she hadn't brought her keys.
+            hint: At the door；hadn't brought
+          - zh: 听第二遍录音，评委突然意识到选手唱错了词。
+            answer: On the second listen, the judges suddenly realized the singer had mixed up the lyrics.
+            hint: On the second listen；mixed up the lyrics
+      - key: fail-to-realize-other
+        type: pattern_drill
+        title: 说没看清别的危险或事实
+        pattern: fail to realize
+        patternMeaning: 未能意识到
+        direction: zh_to_en
+        items:
+          - zh: 团队没意识到截止日期已经提前了。
+            answer: The team failed to realize the deadline had been moved up.
+            hint: failed to realize；had been moved up
+          - zh: 游客常常没意识到当地习俗的差异。
+            answer: Tourists often fail to realize how different local customs can be.
+            hint: often fail to realize
+          - zh: 他太自信，没看出方案里的漏洞。
+            answer: He was overconfident and failed to realize the holes in the plan.
+            hint: overconfident；holes in the plan
+      - key: make-someone-realize-other
+        type: pattern_drill
+        title: 说让别的人明白过来
+        pattern: make someone realize
+        patternMeaning: 使某人意识到
+        direction: zh_to_en
+        items:
+          - zh: 对比数据能帮人看清差距有多大。
+            answer: Comparing the data can make people realize how big the gap is.
+            hint: Comparing the data can make
+          - zh: 那次失误迫使管理层意识到流程要改。
+            answer: That mistake made management realize the process had to change.
+            hint: made management realize
+          - zh: 孩子的成绩下滑让她终于意识到要减少加班。
+            answer: Her child's grades slipping made her realize she needed to work less overtime.
+            hint: made her realize she needed to
+      - key: realize-difference-other
+        type: pattern_drill
+        title: 说体会到别的差别
+        pattern: realize the difference
+        patternMeaning: 意识到差异
+        direction: zh_to_en
+        items:
+          - zh: 试了专业版，用户才感到和免费版的差别。
+            answer: After trying the pro version, users realize the difference from the free one.
+            hint: After trying the pro version
+          - zh: 住过宿舍和租房后，你会更清楚两种方式的不同。
+            answer: After living in a dorm and renting, you'll realize the difference.
+            hint: After living in a dorm and renting
+          - zh: 导师并排点评，帮助学生意识到语气上的差别。
+            answer: The mentor compared them side by side to help students realize the difference in tone.
+            hint: side by side；in tone
+      - key: realize-mistake-build
+        type: sentence_decomposition
+        title: 把意识到自己犯错说完整
+        sourceKind: chunk
+        sourceText: realize that I'd made a mistake
+        fullSentence: Only when I checked the figures again did I realize that I'd made a mistake and sent the wrong report.
+        fullSentenceZh: 直到我又核对了一遍数字，才意识到自己弄错了，还发错了报告。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I realized that I'd made a mistake.
+            zh: 我意识到自己犯错了。
+            highlight: ''
+            hint: 先说我意识到自己犯错了
+          - level: 2
+            label: 加核对动作
+            en: When I checked the figures again, I realized that I'd made a mistake.
+            zh: 我又核对了一遍数字，才意识到自己犯错了。
+            highlight: When I checked the figures again
+            hint: 补上又核对了一遍数字
+          - level: 3
+            label: 完整句
+            en: Only when I checked the figures again did I realize that I'd made a mistake and sent the wrong report.
+            zh: 直到我又核对了一遍数字，才意识到自己弄错了，还发错了报告。
+            highlight: sent the wrong report
+            hint: 补上还发错了报告
+      - key: realize-how-late-build
+        type: sentence_decomposition
+        title: 把意识到已经很晚说完整
+        sourceKind: chunk
+        sourceText: realize how late it was
+        fullSentence: We were still arguing when I glanced at my phone and realized how late it was, so we called it a night.
+        fullSentenceZh: 我们还在争，我看了眼手机才发现已经这么晚了，只好就此打住。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I realized how late it was.
+            zh: 我意识到已经很晚了。
+            highlight: ''
+            hint: 先说我意识到已经很晚了
+          - level: 2
+            label: 加发现方式
+            en: I glanced at my phone and realized how late it was.
+            zh: 我看了眼手机，才发现已经这么晚了。
+            highlight: glanced at my phone
+            hint: 补上看了一眼手机
+          - level: 3
+            label: 完整句
+            en: We were still arguing when I glanced at my phone and realized how late it was, so we called it a night.
+            zh: 我们还在争，我看了眼手机才发现已经这么晚了，只好就此打住。
+            highlight: so we called it a night
+            hint: 补上只好就此打住

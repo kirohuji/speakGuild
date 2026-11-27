@@ -1,0 +1,361 @@
+learning:
+  exercises:
+    pipeline:
+      - key: become-difficult
+        kind: chunk
+        type: chunk_substitution
+        title: 说找车位变得很困难
+        chunk: become difficult
+        chunkMeaning: 变得困难
+        direction: zh_to_en
+        items:
+          - zh: 找停车位变得很困难。
+            answer: It became difficult to find a place to park.
+            hint: to find a place to park
+          - zh: 这两件事要同时做，变得很难。
+            answer: Doing both at once has become difficult.
+            hint: Doing both at once
+          - zh: 用手机就能付款，方便多了。
+            answer: Paying with a phone has become easier.
+            hint: Paying with a phone
+      - key: become-doctor
+        kind: chunk
+        type: chunk_substitution
+        title: 说她成了一名医生
+        chunk: become a doctor
+        chunkMeaning: 成为一名医生
+        direction: zh_to_en
+        items:
+          - zh: 她成了一名医生。
+            answer: She became a doctor.
+            hint: became
+          - zh: 他最终成了团队的领导者。
+            answer: He eventually became the team's leader.
+            hint: eventually
+          - zh: 你以后想做什么工作？
+            answer: What do you want to become?
+            hint: What do you want to
+      - key: become-difficult-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说变得怎样
+        chunk: become clear
+        chunkMeaning: 变得清楚
+        direction: en_to_zh
+        items:
+          - en: It became difficult to find a place to park.
+            answer: 找停车位变得很困难。
+            hint: a place to park
+          - en: The reason soon became clear.
+            answer: 原因很快就清楚了。
+            hint: soon
+          - en: The situation became more complicated than we expected.
+            answer: 情况变得比我们预想的更复杂。
+            hint: more complicated
+      - key: become-state
+        type: vocab_sentence_building
+        title: 说变得清楚、成为可能
+        vocabWord: become
+        vocabMeaning: 变得；成为
+        direction: zh_to_en
+        patterns:
+          - chunk: become clear
+            items:
+              - zh: 原因很快就清楚了。
+                answer: The reason soon became clear.
+                hint: soon
+              - zh: 后来我才明白发生了什么。
+                answer: It became clear to me later what had happened.
+                hint: It became clear to me
+              - zh: 情况越来越清楚：我们得换个方法。
+                answer: It's becoming clear that we need another approach.
+                hint: It's becoming clear that
+          - chunk: become possible
+            items:
+              - zh: 在任何地方工作已经成为可能。
+                answer: Working from anywhere has become possible.
+                hint: has become
+              - zh: 现在线上办事已经可以了。
+                answer: It has become possible to do it online now.
+                hint: do it online
+              - zh: 多亏了新技术，这件事才有可能。
+                answer: Thanks to new technology, this has become possible.
+                hint: Thanks to
+          - chunk: become available
+            items:
+              - zh: 这些信息后来可以在网上获取。
+                answer: The information became available online.
+                hint: became available
+              - zh: 这款手机下个月就能买到了。
+                answer: This phone will become available next month.
+                hint: will become available
+              - zh: 还有三张票有货了。
+                answer: Three more tickets have become available.
+                hint: have become available
+      - key: become-interested
+        kind: chunk
+        type: chunk_substitution
+        title: 说上学时开始对历史感兴趣
+        chunk: become interested in history
+        chunkMeaning: 开始对历史感兴趣
+        direction: zh_to_en
+        items:
+          - zh: 我上学时开始对历史感兴趣。
+            answer: I became interested in history at school.
+            hint: at school
+          - zh: 她上大学时开始对编程感兴趣。
+            answer: She became interested in programming at university.
+            hint: programming；at university
+          - zh: 孩子最近对画画很感兴趣。
+            answer: The child has become interested in drawing.
+            hint: drawing
+      - key: become-aware
+        kind: chunk
+        type: chunk_substitution
+        title: 说我逐渐意识到这个问题
+        chunk: become aware of the problem
+        chunkMeaning: 意识到这个问题
+        direction: zh_to_en
+        items:
+          - zh: 我逐渐意识到了这个问题。
+            answer: I gradually became aware of the problem.
+            hint: gradually
+          - zh: 大家开始意识到问题的严重性。
+            answer: People are becoming aware of how serious the problem is.
+            hint: how serious the problem is
+          - zh: 我们当时没意识到风险。
+            answer: We didn't become aware of the risk at the time.
+            hint: didn't；at the time
+      - key: become-involved
+        kind: chunk
+        type: chunk_substitution
+        title: 说她参与了这个项目
+        chunk: become involved in the project
+        chunkMeaning: 参与这个项目
+        direction: zh_to_en
+        items:
+          - zh: 她参与了这个项目。
+            answer: She became involved in the project.
+            hint: became involved in
+          - zh: 他被迫卷进了这场争论。
+            answer: He became involved in the argument.
+            hint: the argument
+          - zh: 你可以参与这个活动，但不要承担太多。
+            answer: You can become involved in this event, but don't take on too much.
+            hint: take on too much
+      - key: become-familiar
+        kind: chunk
+        type: chunk_substitution
+        title: 说你很快就会熟悉这个系统
+        chunk: become familiar with the system
+        chunkMeaning: 熟悉这个系统
+        direction: zh_to_en
+        items:
+          - zh: 你很快就会熟悉这个系统。
+            answer: You'll become familiar with the system soon.
+            hint: become familiar with
+          - zh: 用一段时间就熟悉了。
+            answer: It takes time to become familiar with it.
+            hint: It takes time
+          - zh: 我对这一带还不太熟。
+            answer: I still haven't become familiar with this area.
+            hint: haven't；this area
+      - key: become-part-of
+        kind: chunk
+        type: chunk_substitution
+        title: 说这个习惯成了日常的一部分
+        chunk: become part of my routine
+        chunkMeaning: 成为我日常的一部分
+        direction: zh_to_en
+        items:
+          - zh: 这个习惯成了我日常生活的一部分。
+            answer: The habit became part of my routine.
+            hint: became part of
+          - zh: 每天早上跑步已经成了我的习惯。
+            answer: Running every morning has become part of my routine.
+            hint: Running every morning
+          - zh: 工作很快就成了他生活的一部分。
+            answer: Work soon became part of his life.
+            hint: part of his life
+      - key: become-familiar-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说熟悉某个系统
+        chunk: become familiar with the system
+        chunkMeaning: 熟悉这个系统
+        direction: en_to_zh
+        items:
+          - en: You'll become familiar with the system soon.
+            answer: 你很快就会熟悉这个系统。
+            hint: soon
+          - en: It takes time to become familiar with it.
+            answer: 用一段时间就熟悉了。
+            hint: It takes time
+          - en: I still haven't become familiar with this area.
+            answer: 我对这一带还不太熟。
+            hint: this area
+      - key: become-part-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说成为某事物的一部分
+        chunk: become part of
+        chunkMeaning: 成为某事物的一部分
+        direction: en_to_zh
+        items:
+          - en: The habit became part of my routine.
+            answer: 这个习惯成了我日常生活的一部分。
+            hint: my routine
+          - en: Running every morning has become part of my routine.
+            answer: 每天早上跑步已经成了我的习惯。
+            hint: Running every morning
+          - en: Work soon became part of his life.
+            answer: 工作很快就成了他生活的一部分。
+            hint: his life
+      - key: become-adjective
+        type: pattern_drill
+        title: 说变得怎样
+        pattern: become [adjective]
+        patternMeaning: 变得怎样
+        direction: zh_to_en
+        items:
+          - zh: 情况比我们预想的更复杂。
+            answer: The situation became more complicated than we expected.
+            hint: more complicated
+          - zh: 最近他变得很安静。
+            answer: He has become very quiet recently.
+            hint: recently
+          - zh: 一切变得越来越贵了。
+            answer: Everything is becoming more expensive.
+            hint: more expensive
+      - key: become-noun
+        type: pattern_drill
+        title: 说成为某个身份
+        pattern: become [noun]
+        patternMeaning: 成为某个身份
+        direction: zh_to_en
+        items:
+          - zh: 他的愿望是成为一名老师。
+            answer: His dream is to become a teacher.
+            hint: His dream is to
+          - zh: 她成了这家公司的老板。
+            answer: She became the boss of this company.
+            hint: the boss
+          - zh: 三年后他成了经理。
+            answer: Three years later, he became a manager.
+            hint: Three years later
+      - key: become-interested-other
+        type: pattern_drill
+        title: 说开始对别的事感兴趣
+        pattern: become interested in [something]
+        patternMeaning: 开始对某物感兴趣
+        direction: zh_to_en
+        items:
+          - zh: 他最近开始对摄影感兴趣。
+            answer: He has become interested in photography.
+            hint: photography
+          - zh: 孩子们开始对科学感兴趣了。
+            answer: The kids became interested in science.
+            hint: science
+          - zh: 你什么时候开始对这个感兴趣？
+            answer: When did you become interested in this?
+            hint: When did
+      - key: become-aware-other
+        type: pattern_drill
+        title: 说意识到别的事
+        pattern: become aware of [something]
+        patternMeaning: 开始意识到某事
+        direction: zh_to_en
+        items:
+          - zh: 他终于意识到了自己的错误。
+            answer: He finally became aware of his mistake.
+            hint: his mistake
+          - zh: 越来越多人开始意识到这个问题。
+            answer: More and more people are becoming aware of the problem.
+            hint: More and more people
+          - zh: 我们之前没注意到这些细节。
+            answer: We didn't become aware of these details before.
+            hint: didn't；these details
+      - key: become-involved-other
+        type: pattern_drill
+        title: 说参与别的事
+        pattern: become involved in [something]
+        patternMeaning: 参与某事
+        direction: zh_to_en
+        items:
+          - zh: 他参与了社区活动。
+            answer: He became involved in community events.
+            hint: community events
+          - zh: 别卷进这场争吵。
+            answer: Don't become involved in this argument.
+            hint: this argument
+          - zh: 她越来越投入这个研究。
+            answer: She's becoming more involved in the research.
+            hint: the research
+      - key: become-listen
+        type: pattern_drill
+        title: 听懂对方说变得怎样
+        pattern: become [adjective] / become [noun]
+        patternMeaning: 变得 / 成为
+        direction: en_to_zh
+        items:
+          - en: He eventually became the team's leader.
+            answer: 他最终成了团队的领导者。
+            hint: the team's leader
+          - en: It has become possible to work from anywhere.
+            answer: 在任何地方工作已经成为可能。
+            hint: from anywhere
+          - en: Everything is becoming more expensive.
+            answer: 一切变得越来越贵了。
+            hint: more expensive
+      - key: become-doctor-build
+        type: sentence_decomposition
+        title: 把成为医生说完整
+        sourceKind: chunk
+        sourceText: become a doctor
+        fullSentence: She studied hard for years and finally became a doctor.
+        fullSentenceZh: 她努力学了很多年，最后成了一名医生。
+        levels:
+          - level: 1
+            label: 核心句
+            en: She became a doctor.
+            zh: 她成了一名医生。
+            highlight: ''
+            hint: 先说她成了医生
+          - level: 2
+            label: 加时间
+            en: She finally became a doctor.
+            zh: 她最后成了一名医生。
+            highlight: finally
+            hint: 补上最后
+          - level: 3
+            label: 完整句
+            en: She studied hard for years and finally became a doctor.
+            zh: 她努力学了很多年，最后成了一名医生。
+            highlight: studied hard for years
+            hint: 补上努力学了很多年
+      - key: become-clear-build
+        type: sentence_decomposition
+        title: 把原因变得清楚说完整
+        sourceKind: vocab
+        sourceText: become
+        fullSentence: After we read the report, it became clear what had gone wrong.
+        fullSentenceZh: 我们看了报告以后，才明白问题出在哪里。
+        levels:
+          - level: 1
+            label: 核心句
+            en: It became clear what had gone wrong.
+            zh: 问题出在哪里清楚了。
+            highlight: ''
+            hint: 先说问题清楚了
+          - level: 2
+            label: 加条件
+            en: After reading the report, it became clear what had gone wrong.
+            zh: 看了报告之后，问题出在哪里就清楚了。
+            highlight: After reading the report
+            hint: 补上看了报告之后
+          - level: 3
+            label: 完整句
+            en: After we read the report, it became clear what had gone wrong.
+            zh: 我们看了报告以后，才明白问题出在哪里。
+            highlight: what had gone wrong
+            hint: 说清楚明白的是什么

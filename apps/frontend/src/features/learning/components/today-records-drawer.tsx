@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import type { ColumnConfig, ConfigDataTableProps } from '@/components/common/config-datatable'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
+import { useIsMobile } from '@/hooks/use-mobile'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
 import type { PracticeItem } from '../pages/today-task-page'
 
@@ -27,6 +29,7 @@ interface TodayRecordsDrawerProps {
 
 export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: TodayRecordsDrawerProps) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -58,68 +61,94 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: Today
               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{value}</p>
               {record.answer && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{record.answer}</p>}
             </div>
-            {/* <Eye className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" /> */}
           </div>
         )
       },
     },
-
   ]
+
+  const table = open ? (
+    <Suspense fallback={<MobilePageLoading rows={4} />}>
+      <ConfigDataTable
+        data={pagedRecords}
+        columns={columns}
+        total={records.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        emptyMessage={t('todayTask.noTodayPracticeRecords')}
+        onRowClick={(record) => setDetailIndex(records.indexOf(record))}
+        className="h-full min-h-0 text-xs [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3 [&_tr]:border-0"
+      />
+    </Suspense>
+  ) : null
+
+  const detail = open ? (
+    <Suspense fallback={null}>
+      <WarmupRecordDetailDialog
+        open={detailIndex !== null && Boolean(selectedRecord)}
+        onOpenChange={(nextOpen) => { if (!nextOpen) setDetailIndex(null) }}
+        items={records}
+        topicTitle={selectedRecord?.topicTitle || t('todayTask.todayPracticeRecords')}
+        initialIndex={detailIndex ?? 0}
+        contentClassName="!z-[10002]"
+        overlayClassName="!z-[10002]"
+      />
+    </Suspense>
+  ) : null
+
+  if (isMobile) {
+    return (
+      <>
+        <Drawer open={open} onOpenChange={setDrawerOpen}>
+          <DrawerContent
+            className="!z-[10001] flex h-[95dvh] max-h-[95dvh] w-full max-w-full flex-col overflow-hidden bg-background p-0"
+            overlayClassName="!z-[10001]"
+          >
+            <DrawerTitle className="sr-only">{t('todayTask.todayPracticeRecords')}</DrawerTitle>
+            <div className="flex h-full flex-col">
+              <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 pb-3 pt-2">
+                <h2 className="text-base font-semibold text-foreground">{t('todayTask.todayPracticeRecords')}</h2>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                >
+                  <ChevronDown className="size-5" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-3">
+                {table}
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+        {detail}
+      </>
+    )
+  }
 
   return (
     <>
-      <Drawer open={open} onOpenChange={setDrawerOpen}>
-      <DrawerContent
-        className="!z-[10001] flex h-[95dvh] max-h-[95dvh] w-full max-w-full flex-col overflow-hidden bg-background p-0"
-        overlayClassName="!z-[10001]"
-      >
-        <DrawerTitle className="sr-only">{t('todayTask.todayPracticeRecords')}</DrawerTitle>
-        <div className="flex h-full flex-col">
-          <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 pb-3 pt-2">
-            <h2 className="text-base font-semibold text-foreground">{t('todayTask.todayPracticeRecords')}</h2>
+      <Dialog open={open} onOpenChange={setDrawerOpen}>
+        <DialogContent className="flex h-[min(88vh,760px)] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden">
+          <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4">
+            <DialogTitle className="text-base font-semibold">{t('todayTask.todayPracticeRecords')}</DialogTitle>
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
               className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+              aria-label={t('common.close')}
             >
-              <ChevronDown className="size-5" />
+              <X className="size-4" />
             </button>
           </div>
-
-          <div className="min-h-0 flex-1 px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-3">
-            {open && (
-              <Suspense fallback={<MobilePageLoading rows={4} />}>
-                <ConfigDataTable
-                  data={pagedRecords}
-                  columns={columns}
-                  total={records.length}
-                  page={page}
-                  pageSize={pageSize}
-                  onPageChange={setPage}
-                  emptyMessage={t('todayTask.noTodayPracticeRecords')}
-                  onRowClick={(record) => setDetailIndex(records.indexOf(record))}
-                  className="h-full min-h-0 text-xs [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3 [&_tr]:border-0"
-                />
-              </Suspense>
-            )}
+          <div className="min-h-0 flex-1 overflow-hidden px-4 py-3">
+            {table}
           </div>
-        </div>
-      </DrawerContent>
-    </Drawer>
-
-    {open && (
-      <Suspense fallback={null}>
-        <WarmupRecordDetailDialog
-          open={detailIndex !== null && Boolean(selectedRecord)}
-          onOpenChange={(nextOpen) => { if (!nextOpen) setDetailIndex(null) }}
-          items={records}
-          topicTitle={selectedRecord?.topicTitle || t('todayTask.todayPracticeRecords')}
-          initialIndex={detailIndex ?? 0}
-          contentClassName="!z-[10002]"
-          overlayClassName="!z-[10002]"
-        />
-      </Suspense>
-    )}
+        </DialogContent>
+      </Dialog>
+      {detail}
     </>
   )
 }

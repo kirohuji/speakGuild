@@ -29,14 +29,18 @@ interface SpotlightOverlayProps {
   onNext: (fromClickAdvance?: boolean) => void
   onPrev: () => void
   onSkip: () => void
+  /** 目标始终未出现在界面上：分段静默取消 / Tour 跳过该步，不弹 missing 卡 */
+  onTargetUnavailable?: () => void
 }
 
-/** 获取目标元素的 bounding rect，不存在返回 null */
+/** 获取目标元素的 bounding rect；未挂载或尺寸为 0 视为不存在 */
 function getTargetRect(selector: string): DOMRect | null {
   try {
     const el = document.querySelector(selector)
     if (!el) return null
-    return el.getBoundingClientRect()
+    const rect = el.getBoundingClientRect()
+    if (rect.width < 1 || rect.height < 1) return null
+    return rect
   } catch {
     return null
   }
@@ -77,6 +81,7 @@ export function SpotlightOverlay({
   onNext,
   onPrev,
   onSkip,
+  onTargetUnavailable,
 }: SpotlightOverlayProps) {
   const { t } = useTranslation()
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
@@ -84,7 +89,7 @@ export function SpotlightOverlay({
   const [tooltipStyle, setTooltipStyle] = useState<Record<string, string | number>>({})
   const rafRef = useRef<number>(0)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
-  const [targetMissing, setTargetMissing] = useState(false)
+  const unavailableHandledRef = useRef(false)
   const isSingleUseGuide = mode === 'segment'
 
   // 分段提示是一次性的上下文说明：关闭即标记为已看，不应弹出“退出新手引导”。
@@ -120,8 +125,15 @@ export function SpotlightOverlay({
   // 步骤切换时重置 targetRect，避免旧步骤的高亮位置残留
   useEffect(() => {
     setTargetRect(null)
-    setTargetMissing(false)
+    unavailableHandledRef.current = false
   }, [step.id])
+
+  const reportUnavailable = useCallback(() => {
+    if (unavailableHandledRef.current) return
+    unavailableHandledRef.current = true
+    console.warn('[Spotlight] target not on screen:', step.targetSelector)
+    onTargetUnavailable?.()
+  }, [onTargetUnavailable, step.targetSelector])
 
   // 实时追踪目标元素位置
   const updatePosition = useCallback(() => {
@@ -131,21 +143,27 @@ export function SpotlightOverlay({
       const pos = calcPlacement(rect)
       setPlacement(pos.placement)
       setTooltipStyle(pos.style)
+      return
     }
-  }, [step.targetSelector])
+    // 曾显示过的目标中途消失（如已打卡按钮卸载）→ 静默收起
+    setTargetRect((prev) => {
+      if (prev) queueMicrotask(() => reportUnavailable())
+      return null
+    })
+  }, [reportUnavailable, step.targetSelector])
 
   useEffect(() => {
-    // 目标元素可能还没渲染，用 rAF 轮询等待
+    // 目标元素可能还没渲染，用 rAF 轮询等待；始终要求有可测尺寸
     let attempts = 0
     let foundEl: Element | null = null
+    const maxAttempts = isSingleUseGuide ? 120 : 400 // 分段 ~2s；Tour ~8s（跨路由加载）
     const tryFind = () => {
-      const el = document.querySelector(step.targetSelector)
-      if (el) {
-        setTargetMissing(false)
+      const rect = getTargetRect(step.targetSelector)
+      const el = rect ? document.querySelector(step.targetSelector) : null
+      if (el && rect) {
         // 首次找到时，若元素不在可视区域内则滚动到视口中央
         if (el !== foundEl) {
           foundEl = el
-          const rect = el.getBoundingClientRect()
           const centerY = rect.top + rect.height / 2
           const vh = window.innerHeight
           if (centerY < 80 || centerY > vh - 80) {
@@ -159,12 +177,10 @@ export function SpotlightOverlay({
         return
       }
       attempts++
-      if (attempts < 400) {
-        // 最多等 ~8 秒（含初始 150ms 延迟），覆盖慢速数据加载
+      if (attempts < maxAttempts) {
         rafRef.current = requestAnimationFrame(tryFind)
       } else {
-        console.warn('[Spotlight] timed out looking for:', step.targetSelector)
-        setTargetMissing(true)
+        reportUnavailable()
       }
     }
     // 稍微延迟一下等 DOM 渲染
@@ -180,7 +196,7 @@ export function SpotlightOverlay({
       document.removeEventListener('scroll', updatePosition, { capture: true })
       window.removeEventListener('resize', updatePosition)
     }
-  }, [step.targetSelector, updatePosition])
+  }, [isSingleUseGuide, reportUnavailable, step.targetSelector, updatePosition])
 
   // 监听目标元素点击（clickToAdvance）— 使用 document 级事件委托避免
   // React 重渲染导致 DOM 元素被替换后原生 listener 失效的问题
@@ -201,75 +217,8 @@ export function SpotlightOverlay({
     return () => document.removeEventListener('click', handler, true)
   }, [step.targetSelector, step.clickToAdvance, onNext])
 
-  // 目标不存在时给用户一个出口，避免引导状态卡住但页面没有任何提示。
-  if (!targetRect) {
-    if (targetMissing) {
-      return (
-        // onPointerDownCapture：拦截 pointerdown 冒泡到 document，避免 vaul/radix
-        // 的"点击外部关闭"判定把下层 Drawer 误关（引导属于模态层，不应触发）
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-6" onPointerDownCapture={(e) => e.stopPropagation()}>
-          <div className="w-full max-w-[280px] rounded-2xl bg-card p-4 text-card-foreground">
-            <div className="mb-3 flex items-center justify-end">
-              <div className="flex gap-1.5">
-                {Array.from({ length: totalSteps }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 rounded-full transition-all duration-300 ${
-                      i === stepIndex
-                        ? 'w-7 bg-primary'
-                        : i < stepIndex
-                          ? 'w-1.5 bg-primary/40'
-                          : 'w-1.5 bg-border'
-                    }`}
-                  />
-                ))}
-              </div>
-              {closeButton}
-            </div>
-            {isTestMode && (
-              <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
-                <FlaskConical className="size-3" /> {t('common.testMode')}
-              </div>
-            )}
-            <h3 className="text-[15px] font-semibold leading-snug text-foreground">
-              {step.titleKey ? t(step.titleKey) : step.title}
-            </h3>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-              {t('common.spotlightTargetMissing')}
-            </p>
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => onNext(false)}
-                className="inline-flex h-8 items-center gap-1 rounded-full bg-primary/[0.08] px-3.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]"
-              >
-                {stepIndex >= totalSteps - 1 ? t('common.done') : t('common.skipStep')}
-                {stepIndex < totalSteps - 1 && <ChevronRight className="size-3.5" />}
-              </button>
-            </div>
-
-            {!isSingleUseGuide && <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
-              <DialogContent
-                className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
-                overlayClassName="!z-[10000]"
-                onPointerDownCapture={(e) => e.stopPropagation()}
-              >
-                <DialogHeader>
-                  <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>
-                  <DialogDescription>{t('common.exitOnboardingDesc')}</DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="!flex-row justify-center gap-2 border-t border-border/60 bg-muted/10 -mx-6 -mb-6 mt-2 px-6 py-4 sm:rounded-b-lg">
-                  <Button variant="secondary" className="border-0 shadow-none" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
-                  <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>}
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
+  // 目标尚未出现：不渲染蒙版；超时由 onTargetUnavailable 静默处理
+  if (!targetRect) return null
 
   const holeX = targetRect.x - HOLE_PADDING
   const holeY = targetRect.y - HOLE_PADDING

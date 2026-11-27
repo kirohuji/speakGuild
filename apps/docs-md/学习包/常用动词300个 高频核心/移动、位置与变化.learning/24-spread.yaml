@@ -1,0 +1,379 @@
+learning:
+  exercises:
+    pipeline:
+      - key: spread-map
+        kind: chunk
+        type: chunk_substitution
+        title: 说把地图铺在桌上
+        chunk: spread the map on the table
+        chunkMeaning: 把地图铺在桌上
+        direction: zh_to_en
+        items:
+          - zh: 把地图铺在桌上。
+            answer: Spread the map on the table.
+            hint: Spread
+          - zh: 他把报纸摊开，开始读。
+            answer: He spread the newspaper and started reading.
+            hint: spread the newspaper
+          - zh: 请把桌布铺好。
+            answer: Please spread the tablecloth.
+            hint: the tablecloth
+      - key: spread-to-cities
+        kind: chunk
+        type: chunk_substitution
+        title: 说消息很快传到其他城市
+        chunk: spread to other cities
+        chunkMeaning: 传播到其他城市
+        direction: zh_to_en
+        items:
+          - zh: 消息很快传到了其他城市。
+            answer: The news quickly spread to other cities.
+            hint: The news；quickly
+          - zh: 这种病毒已经扩散到好几个国家。
+            answer: The virus has spread to several countries.
+            hint: has spread to
+          - zh: 这个趋势很快传到了学校。
+            answer: The trend spread to schools quickly.
+            hint: The trend
+      - key: spread-news-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说消息传开
+        chunk: spread rapidly
+        chunkMeaning: 迅速传播
+        direction: en_to_zh
+        items:
+          - en: The news spread faster than we expected.
+            answer: 消息传播得比我们预想的更快。
+            hint: faster than we expected
+          - en: The rumor spread rapidly online.
+            answer: 这个谣言很快在网上传开了。
+            hint: online
+          - en: The news quickly spread to other cities.
+            answer: 消息很快传到了其他城市。
+            hint: other cities
+      - key: spread-state
+        type: vocab_sentence_building
+        title: 说涂黄油、分摊费用
+        vocabWord: spread
+        vocabMeaning: 铺开；传播；涂抹
+        direction: zh_to_en
+        patterns:
+          - chunk: spread butter on bread
+            items:
+              - zh: 她在一片面包上涂了黄油。
+                answer: She spread butter on a slice of bread.
+                hint: a slice of bread
+              - zh: 先抹果酱，再放黄油。
+                answer: Spread the jam first, then add the butter.
+                hint: first；then
+              - zh: 面包上抹了厚厚一层黄油。
+                answer: Butter was spread thickly on the bread.
+                hint: was spread thickly
+          - chunk: spread the cost over twelve months
+            items:
+              - zh: 我们可以把费用分摊到十二个月内。
+                answer: We can spread the cost over twelve months.
+                hint: over twelve months
+              - zh: 这笔培训费分三年摊。
+                answer: The training cost is spread over three years.
+                hint: is spread over
+              - zh: 把付款分成六个月会更轻松。
+                answer: It's easier to spread the payments over six months.
+                hint: the payments
+          - chunk: spread the word
+            items:
+              - zh: 请把这次活动的消息传开。
+                answer: Please spread the word about the event.
+                hint: about the event
+              - zh: 好消息当然要传出去。
+                answer: Of course we should spread the word about the good news.
+                hint: the good news
+              - zh: 他到处跟人说要小心。
+                answer: He spread the word that we should be careful.
+                hint: that we should be careful
+      - key: spread-across-field
+        kind: chunk
+        type: chunk_substitution
+        title: 说火势蔓延到整片田野
+        chunk: spread across the field
+        chunkMeaning: 蔓延到整片田野
+        direction: zh_to_en
+        items:
+          - zh: 火势蔓延到了整片田野。
+            answer: The fire spread across the field.
+            hint: The fire
+          - zh: 雨云很快布满了整个天空。
+            answer: The storm clouds spread across the sky.
+            hint: The storm clouds
+          - zh: 这些书摊满了整张桌子。
+            answer: The books were spread across the whole table.
+            hint: were spread across
+      - key: spread-through-house
+        kind: chunk
+        type: chunk_substitution
+        title: 说气味弥漫了整栋房子
+        chunk: spread through the house
+        chunkMeaning: 弥漫整栋房子
+        direction: zh_to_en
+        items:
+          - zh: 气味弥漫了整栋房子。
+            answer: The smell spread through the house.
+            hint: The smell
+          - zh: 气味弥漫了整个房间。
+            answer: The smell spread throughout the room.
+            hint: throughout
+          - zh: 这个说法传遍了整个班级。
+            answer: The story spread through the whole class.
+            hint: The story
+      - key: spread-out-road
+        kind: chunk
+        type: chunk_substitution
+        title: 说人群沿着道路散开了
+        chunk: spread out along the road
+        chunkMeaning: 沿着道路散开
+        direction: zh_to_en
+        items:
+          - zh: 人群沿着道路散开了。
+            answer: The crowd spread out along the road.
+            hint: spread out
+          - zh: 警察让大家散开一些。
+            answer: The police asked people to spread out.
+            hint: spread out
+          - zh: 队伍沿着河边拉开了一长串。
+            answer: The line spread out along the river.
+            hint: along the river
+      - key: spread-word
+        kind: chunk
+        type: chunk_substitution
+        title: 说帮忙把消息传出去
+        chunk: spread the word
+        chunkMeaning: 把消息传开
+        direction: zh_to_en
+        items:
+          - zh: 能不能帮我们把这个消息传出去？
+            answer: Could you spread the word for us?
+            hint: for us
+          - zh: 我们在社交媒体上把这件事传开了。
+            answer: We spread the word on social media.
+            hint: on social media
+          - zh: 请大家帮忙告诉身边的人。
+            answer: Please help spread the word to people around you.
+            hint: people around you
+      - key: spread-rapidly
+        kind: chunk
+        type: chunk_substitution
+        title: 说谣言很快在网上传开
+        chunk: spread rapidly
+        chunkMeaning: 迅速传播
+        direction: zh_to_en
+        items:
+          - zh: 这个谣言很快在网上传开了。
+            answer: The rumor spread rapidly online.
+            hint: online
+          - zh: 消息传播得比我们预想的更快。
+            answer: The news spread faster than we expected.
+            hint: faster than we expected
+          - zh: 这个说法很有传播力。
+            answer: This idea is spreading rapidly.
+            hint: 进行时
+      - key: spread-butter
+        kind: chunk
+        type: chunk_substitution
+        title: 说在面包上抹黄油
+        chunk: spread butter on bread
+        chunkMeaning: 把黄油涂在面包上
+        direction: zh_to_en
+        items:
+          - zh: 早餐我通常吃抹了黄油的面包。
+            answer: For breakfast I usually have bread with butter spread on it.
+            hint: spread on it
+          - zh: 别抹那么多黄油。
+            answer: Don't spread so much butter.
+            hint: so much
+          - zh: 她一边抹黄油一边聊天。
+            answer: She chatted while spreading butter on her bread.
+            hint: while spreading
+      - key: spread-cost
+        kind: chunk
+        type: chunk_substitution
+        title: 说分期付款
+        chunk: spread the cost over twelve months
+        chunkMeaning: 把费用分摊到十二个月
+        direction: zh_to_en
+        items:
+          - zh: 这笔钱可以分十期付。
+            answer: You can spread the cost over ten payments.
+            hint: ten payments
+          - zh: 我们把这个开销摊到一整年。
+            answer: We spread the cost over the whole year.
+            hint: the whole year
+          - zh: 分期付也不会便宜。
+            answer: Spreading the cost doesn't make it cheaper.
+            hint: doesn't make it cheaper
+      - key: spread-out-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说散开
+        chunk: spread out
+        chunkMeaning: 散开；铺开
+        direction: en_to_zh
+        items:
+          - en: The crowd spread out along the road.
+            answer: 人群沿着道路散开了。
+            hint: along the road
+          - en: The police asked people to spread out.
+            answer: 警察让大家散开一些。
+            hint: The police
+          - en: He spread the photos out on the table.
+            answer: 他把照片摊在了桌上。
+            hint: the photos
+      - key: spread-butter-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 说在面包上抹东西
+        chunk: spread butter on bread
+        chunkMeaning: 把黄油涂在面包上
+        direction: zh_to_en
+        items:
+          - zh: 给每片面包都抹点黄油。
+            answer: Spread some butter on each slice.
+            hint: each slice
+          - zh: 她在吐司上抹了一层薄薄的黄油。
+            answer: She spread a thin layer of butter on the toast.
+            hint: a thin layer
+          - zh: 先把黄油抹在面包上，再加果酱。
+            answer: Spread the butter on the bread first, then add the jam.
+            hint: first；then
+      - key: spread-to-place
+        type: pattern_drill
+        title: 说传播到某地
+        pattern: spread to [place]
+        patternMeaning: 向某地传播
+        direction: zh_to_en
+        items:
+          - zh: 火势烧到了隔壁的房子。
+            answer: The fire spread to the next house.
+            hint: the next house
+          - zh: 这个潮流很快就传到了学校。
+            answer: The trend soon spread to schools.
+            hint: schools
+          - zh: 消息一下子传遍了全公司。
+            answer: The news spread to the whole company at once.
+            hint: at once
+      - key: spread-across-other
+        type: pattern_drill
+        title: 说蔓延到整个区域
+        pattern: spread across [area]
+        patternMeaning: 蔓延到整个区域
+        direction: zh_to_en
+        items:
+          - zh: 洪水淹没了整个小镇。
+            answer: The flood spread across the whole town.
+            hint: The flood
+          - zh: 阴影投满了整面墙。
+            answer: A shadow spread across the wall.
+            hint: A shadow
+          - zh: 这个消息传遍了全国。
+            answer: The news spread across the country.
+            hint: the country
+      - key: spread-through-other
+        type: pattern_drill
+        title: 说遍及某处
+        pattern: spread through [place]
+        patternMeaning: 遍及某处
+        direction: zh_to_en
+        items:
+          - zh: 音乐传遍了整个广场。
+            answer: The music spread through the whole square.
+            hint: the whole square
+          - zh: 这个笑话传遍了整个办公室。
+            answer: The joke spread through the whole office.
+            hint: the whole office
+          - zh: 病菌已经传遍了那所学校。
+            answer: The virus has spread through that school.
+            hint: has spread through
+      - key: spread-out-other
+        type: pattern_drill
+        title: 说把东西摊开或散开
+        pattern: spread [something] out
+        patternMeaning: 将某物摊开
+        direction: zh_to_en
+        items:
+          - zh: 他把照片摊在了桌上。
+            answer: He spread the photos out on the table.
+            hint: the photos；on the table
+          - zh: 请把地图展开，我们一起看。
+            answer: Spread the map out so we can look at it together.
+            hint: so we can look at it
+          - zh: 她把文件摊满了整张桌子。
+            answer: She spread the papers out across the desk.
+            hint: the papers；across the desk
+      - key: spread-listen
+        type: pattern_drill
+        title: 听不懂对方说传播
+        pattern: spread to [place] / spread rapidly
+        patternMeaning: 传播到 / 迅速传播
+        direction: en_to_zh
+        items:
+          - en: The virus has spread to several countries.
+            answer: 这种病毒已经扩散到好几个国家。
+            hint: has spread to
+          - en: The fire spread to the next house.
+            answer: 火势烧到了隔壁的房子。
+            hint: the next house
+          - en: The joke spread through the whole office.
+            answer: 这个笑话传遍了整个办公室。
+            hint: the whole office
+      - key: spread-news-build
+        type: sentence_decomposition
+        title: 把消息传开说完整
+        sourceKind: chunk
+        sourceText: spread the word
+        fullSentence: Please spread the word about the event so more people can join.
+        fullSentenceZh: 请把这次活动的消息传开，让更多人能参加。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Please spread the word about the event.
+            zh: 请把这次活动的消息传开。
+            highlight: ''
+            hint: 先说把消息传开
+          - level: 2
+            label: 加对象
+            en: Please spread the word about the event to your friends.
+            zh: 请把这次活动的消息告诉你的朋友。
+            highlight: to your friends
+            hint: 补上告诉朋友
+          - level: 3
+            label: 完整句
+            en: Please spread the word about the event so more people can join.
+            zh: 请把这次活动的消息传开，让更多人能参加。
+            highlight: so more people can join
+            hint: 补上让更多人参加
+      - key: spread-cost-build
+        type: sentence_decomposition
+        title: 把费用分摊说完整
+        sourceKind: vocab
+        sourceText: spread
+        fullSentence: If you spread the cost over twelve months, it's much easier to afford.
+        fullSentenceZh: 如果把费用分摊到十二个月，就轻松多了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: You can spread the cost over twelve months.
+            zh: 你可以把费用分摊到十二个月。
+            highlight: ''
+            hint: 先说分摊费用
+          - level: 2
+            label: 加条件
+            en: If you spread the cost over twelve months, it's cheaper each month.
+            zh: 如果把费用分摊到十二个月，每个月的负担就轻一些。
+            highlight: If you spread
+            hint: 补上如果
+          - level: 3
+            label: 完整句
+            en: If you spread the cost over twelve months, it's much easier to afford.
+            zh: 如果把费用分摊到十二个月，就轻松多了。
+            highlight: much easier to afford
+            hint: 补上轻松多了

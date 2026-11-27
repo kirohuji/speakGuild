@@ -73,6 +73,7 @@ export function AuthRouteGate({ children }: { children: ReactElement }) {
     location.pathname === '/marketing' ||
     location.pathname === '/company' ||
     location.pathname === '/support' ||
+    location.pathname === '/testflight' ||
     location.pathname === '/feedback' ||
     location.pathname.startsWith('/system/') ||
     isAuthPage

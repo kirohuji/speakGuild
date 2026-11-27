@@ -1,0 +1,360 @@
+learning:
+  exercises:
+    pipeline:
+      - key: reach-station
+        kind: chunk
+        type: chunk_substitution
+        title: 说刚好到了车站
+        chunk: reach the station
+        chunkMeaning: 到达车站
+        direction: zh_to_en
+        items:
+          - zh: 我们六点前刚好到了车站。
+            answer: We reached the station just before six.
+            hint: just before six
+          - zh: 我们天黑前到了村子。
+            answer: We reached the village just before dark.
+            hint: just before dark
+          - zh: 你们几点到车站的？
+            answer: What time did you reach the station?
+            hint: What time
+      - key: reach-by-email
+        kind: chunk
+        type: chunk_substitution
+        title: 说怎么联系到对方
+        chunk: reach me by email
+        chunkMeaning: 通过邮件联系到我
+        direction: zh_to_en
+        items:
+          - zh: 你可以通过邮件联系到我。
+            answer: You can reach me by email.
+            hint: by email
+          - zh: 我一整天都联系不上他。
+            answer: I couldn't reach him all day.
+            hint: couldn't；all day
+          - zh: 有问题随时给我打电话。
+            answer: You can reach me by phone any time.
+            hint: by phone；any time
+      - key: reach-station-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说到哪了
+        chunk: reach the station
+        chunkMeaning: 到达车站
+        direction: en_to_zh
+        items:
+          - en: We reached the station just before six.
+            answer: 我们六点前刚好到了车站。
+            hint: just before six
+          - en: Call me when you reach the station.
+            answer: 你到车站后给我打电话。
+            hint: when you reach
+          - en: We didn't reach the station until midnight.
+            answer: 我们直到半夜才到车站。
+            hint: not…until midnight
+      - key: reach-state
+        type: vocab_sentence_building
+        title: 说达到某个水平或目标
+        vocabWord: reach
+        vocabMeaning: 达到；触及；联系到
+        direction: zh_to_en
+        patterns:
+          - chunk: reach our goal
+            items:
+              - zh: 我们终于达成了目标。
+                answer: We finally reached our goal.
+                hint: finally
+              - zh: 按现在的进度，我们达成不了目标。
+                answer: At this rate, we won't reach our goal.
+                hint: At this rate
+              - zh: 你已经朝目标迈进了一步。
+                answer: You've reached one step closer to your goal.
+                hint: one step closer
+          - chunk: reach 35 degrees
+            items:
+              - zh: 气温达到了35度。
+                answer: The temperature reached 35 degrees.
+                hint: The temperature
+              - zh: 气温达到了40度。
+                answer: The temperature reached 40 degrees.
+                hint: 40 degrees
+              - zh: 明天高温会达到多少度？
+                answer: How high will the temperature reach tomorrow?
+                hint: How high；will
+          - chunk: reach our sales target
+            items:
+              - zh: 我们提前完成了销售目标。
+                answer: We reached our sales target ahead of schedule.
+                hint: ahead of schedule
+              - zh: 这个季度我们没达到销售目标。
+                answer: We didn't reach our sales target this quarter.
+                hint: didn't；this quarter
+              - zh: 我们月底应该能完成目标。
+                answer: We should reach our target by the end of the month.
+                hint: by the end of the month
+      - key: reach-agreement
+        kind: chunk
+        type: chunk_substitution
+        title: 说双方达成协议
+        chunk: reach an agreement
+        chunkMeaning: 达成协议
+        direction: zh_to_en
+        items:
+          - zh: 双方达成了协议。
+            answer: The two sides reached an agreement.
+            hint: The two sides
+          - zh: 他们还没达成协议。
+            answer: They haven't reached an agreement yet.
+            hint: haven't；yet
+          - zh: 我们讨论了很久才达成协议。
+            answer: It took us a long time to reach an agreement.
+            hint: It took us
+      - key: reach-out
+        kind: chunk
+        type: chunk_substitution
+        title: 说主动联系他
+        chunk: reach out to him
+        chunkMeaning: 主动联系他
+        direction: zh_to_en
+        items:
+          - zh: 我明天会联系他。
+            answer: I'll reach out to him tomorrow.
+            hint: I'll；tomorrow
+          - zh: 你应该主动联系她道个歉。
+            answer: You should reach out to her and say sorry.
+            hint: should；say sorry
+          - zh: 需要帮忙就联系我。
+            answer: Reach out to me if you need help.
+            hint: if you need help
+      - key: reach-for-book
+        kind: chunk
+        type: chunk_substitution
+        title: 说伸手去拿书
+        chunk: reach for the book
+        chunkMeaning: 伸手去拿书
+        direction: zh_to_en
+        items:
+          - zh: 她伸手去拿架子上的书。
+            answer: She reached for the book on the shelf.
+            hint: reached；on the shelf
+          - zh: 别伸手去拿那杯开水。
+            answer: Don't reach for that cup of hot water.
+            hint: Don't；hot water
+          - zh: 他伸手去拿遥控器，但够不到。
+            answer: He reached for the remote, but he couldn't reach it.
+            hint: couldn't reach it
+      - key: reach-conclusion
+        kind: chunk
+        type: chunk_substitution
+        title: 说得出了相同结论
+        chunk: reach the same conclusion
+        chunkMeaning: 得出相同的结论
+        direction: zh_to_en
+        items:
+          - zh: 我们得出了相同的结论。
+            answer: We reached the same conclusion.
+            hint: the same conclusion
+          - zh: 看了数据之后，他们得出了另一个结论。
+            answer: After looking at the data, they reached a different conclusion.
+            hint: a different conclusion
+          - zh: 你是怎么得出这个结论的？
+            answer: How did you reach that conclusion?
+            hint: How did
+      - key: reach-point
+        kind: chunk
+        type: chunk_substitution
+        title: 说到了需要休息的程度
+        chunk: reach the point where I need a break
+        chunkMeaning: 到了需要休息一下的程度
+        direction: zh_to_en
+        items:
+          - zh: 我已经到了需要休息一下的程度。
+            answer: I've reached the point where I need a break.
+            hint: the point where
+          - zh: 我们到了不得不做决定的时候了。
+            answer: We've reached the point where we have to decide.
+            hint: where we have to decide
+          - zh: 事情已经发展到我不得不求助的地步。
+            answer: It has reached the point where I have to ask for help.
+            hint: ask for help
+      - key: reach-out-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说联系某人
+        chunk: reach out to him
+        chunkMeaning: 主动联系他
+        direction: en_to_zh
+        items:
+          - en: I'll reach out to him tomorrow.
+            answer: 我明天会联系他。
+            hint: tomorrow
+          - en: She reached out to me after the meeting.
+            answer: 会议之后她主动联系了我。
+            hint: after the meeting
+          - en: Please reach out to us if you have any questions.
+            answer: 如果你有任何问题，请随时联系我们。
+            hint: any questions
+      - key: reach-place
+        type: pattern_drill
+        title: 换个地点说到哪了
+        pattern: reach [place]
+        patternMeaning: 到达某地；reach 直接接地点
+        direction: zh_to_en
+        items:
+          - zh: 我们八点到了机场。
+            answer: We reached the airport at eight.
+            hint: 不加 to；at eight
+          - zh: 爬到山顶我们花了三个小时。
+            answer: It took us three hours to reach the top.
+            hint: It took us
+          - zh: 你到公司前先给我发个消息。
+            answer: Send me a message before you reach the office.
+            hint: before you reach
+      - key: reach-person
+        type: pattern_drill
+        title: 说用什么方式联系到人
+        pattern: reach [someone] by [method]
+        patternMeaning: 通过某种方式联系某人
+        direction: zh_to_en
+        items:
+          - zh: 你可以通过微信联系我。
+            answer: You can reach me on WeChat.
+            hint: on WeChat
+          - zh: 我整个下午都联系不上经理。
+            answer: I couldn't reach the manager all afternoon.
+            hint: couldn't；all afternoon
+          - zh: 打哪个号码能联系到你？
+            answer: What number can I reach you on?
+            hint: What number
+      - key: reach-level
+        type: pattern_drill
+        title: 说数值达到多少
+        pattern: reach [level]
+        patternMeaning: 达到某个水平或数值
+        direction: zh_to_en
+        items:
+          - zh: 昨天下午气温达到了38度。
+            answer: The temperature reached 38 degrees yesterday afternoon.
+            hint: 38 degrees
+          - zh: 报名人数达到了两千人。
+            answer: The number of applicants reached two thousand.
+            hint: the number of applicants
+          - zh: 水位比昨天高了很多。
+            answer: The water level is much higher than yesterday.
+            hint: much higher；than yesterday
+      - key: reach-goal-other
+        type: pattern_drill
+        title: 说别的事情达到目标
+        pattern: reach [goal/target]
+        patternMeaning: 达成目标或指标
+        direction: zh_to_en
+        items:
+          - zh: 我们提前达成了今年的目标。
+            answer: We reached this year's goal ahead of time.
+            hint: ahead of time
+          - zh: 团队刚开始就没达标。
+            answer: The team didn't reach its target at first.
+            hint: didn't；at first
+          - zh: 你觉得我们能达成目标吗？
+            answer: Do you think we can reach our goal?
+            hint: Do you think
+      - key: reach-out-other
+        type: pattern_drill
+        title: 说主动联系别人
+        pattern: reach out to [someone]
+        patternMeaning: 主动联系某人
+        direction: zh_to_en
+        items:
+          - zh: 我下周会联系客户。
+            answer: I'll reach out to the client next week.
+            hint: the client；next week
+          - zh: 他们主动联系了老客户。
+            answer: They reached out to their old customers.
+            hint: reached out to
+          - zh: 遇到问题就联系我。
+            answer: Reach out to me if you have a problem.
+            hint: if you have a problem
+      - key: reach-for-other
+        type: pattern_drill
+        title: 说伸手去拿别的东西
+        pattern: reach for [something]
+        patternMeaning: 伸手去拿某物
+        direction: zh_to_en
+        items:
+          - zh: 他伸手去拿桌上的手机。
+            answer: He reached for the phone on the table.
+            hint: reached for；on the table
+          - zh: 小孩伸手想拿那块蛋糕。
+            answer: The child reached for the cake.
+            hint: The child
+          - zh: 她伸手去拿放在高处的箱子。
+            answer: She reached for the box that was up high.
+            hint: that was up high
+      - key: reach-for-listen
+        type: pattern_drill
+        title: 听懂对方说伸手去拿
+        pattern: reach for [something]
+        patternMeaning: 伸手去拿某物
+        direction: en_to_zh
+        items:
+          - en: She reached for the book on the shelf.
+            answer: 她伸手去拿架子上的书。
+            hint: on the shelf
+          - en: He reached for my hand, but I moved away.
+            answer: 他伸手想牵我的手，但我躲开了。
+            hint: my hand；moved away
+          - en: The child reached for the last cookie.
+            answer: 孩子伸手去拿最后一块饼干。
+            hint: the last cookie
+      - key: reach-arrive-build
+        type: sentence_decomposition
+        title: 把天黑前到村子的经过说完整
+        sourceKind: chunk
+        sourceText: reach the station
+        fullSentence: We reached the village just before dark, and finally found a small hotel.
+        fullSentenceZh: 我们天黑前刚好到了村子，最后找到了一家小旅馆。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We reached the village.
+            zh: 我们到了村子。
+            highlight: ''
+            hint: 先说到村子
+          - level: 2
+            label: 加时间
+            en: We reached the village just before dark.
+            zh: 我们天黑前刚好到了村子。
+            highlight: just before dark
+            hint: 补上天黑前
+          - level: 3
+            label: 完整句
+            en: We reached the village just before dark, and finally found a small hotel.
+            zh: 我们天黑前刚好到了村子，最后找到了一家小旅馆。
+            highlight: and finally found a small hotel
+            hint: 补上最后找到旅馆
+      - key: reach-break-build
+        type: sentence_decomposition
+        title: 把需要休息的程度说完整
+        sourceKind: vocab
+        sourceText: reach
+        fullSentence: I've reached the point where I need a break, so I'm taking a few days off.
+        fullSentenceZh: 我已经到了需要休息一下的程度，所以打算休息几天。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I've reached the point where I need a break.
+            zh: 我已经到了需要休息一下的程度。
+            highlight: ''
+            hint: 先说到需要休息
+          - level: 2
+            label: 加程度
+            en: I've really reached the point where I need a break.
+            zh: 我真的到了需要休息一下的程度。
+            highlight: really
+            hint: 补上真的
+          - level: 3
+            label: 完整句
+            en: I've reached the point where I need a break, so I'm taking a few days off.
+            zh: 我已经到了需要休息一下的程度，所以打算休息几天。
+            highlight: so I'm taking a few days off
+            hint: 补上打算休息几天

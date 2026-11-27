@@ -1,0 +1,360 @@
+learning:
+  exercises:
+    pipeline:
+      - key: follow-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说跟我来带路
+        chunk: Follow me
+        chunkMeaning: 跟我来
+        direction: zh_to_en
+        items:
+          - zh: 跟我来，我给你带路。
+            answer: Follow me. I'll show you the way.
+            hint: show you the way
+          - zh: 跟着我，别离得太远。
+            answer: Follow me and stay close.
+            hint: stay close
+          - zh: 你先走，我跟着你。
+            answer: You go first, and I'll follow you.
+            hint: go first
+      - key: follow-road
+        kind: chunk
+        type: chunk_substitution
+        title: 说沿着这条路走
+        chunk: follow this road
+        chunkMeaning: 沿着这条路走
+        direction: zh_to_en
+        items:
+          - zh: 沿这条路走大约两公里。
+            answer: Follow this road for about two kilometers.
+            hint: for about two kilometers
+          - zh: 一直沿着这条路走，就到火车站了。
+            answer: Follow this road all the way, and you'll get to the station.
+            hint: all the way
+          - zh: 别走小路，跟着主路走就行。
+            answer: Don't take the small path; just follow the main road.
+            hint: the small path；the main road
+      - key: follow-me-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说跟上来
+        chunk: Follow me
+        chunkMeaning: 跟我来
+        direction: en_to_zh
+        items:
+          - en: Follow me. I'll show you the way.
+            answer: 跟我来，我给你带路。
+            hint: show you the way
+          - en: Follow me and stay close; it's crowded here.
+            answer: 跟着我，别离太远，这里人很多。
+            hint: it's crowded here
+          - en: Just follow me. I know a shortcut.
+            answer: 跟着我就行，我知道一条近路。
+            hint: a shortcut
+      - key: follow-state
+        type: vocab_sentence_building
+        title: 说跟上说明和内容
+        vocabWord: follow
+        vocabMeaning: 跟随；遵循；听懂
+        direction: zh_to_en
+        patterns:
+          - chunk: follow the instructions
+            items:
+              - zh: 请仔细按照说明操作。
+                answer: Please follow the instructions carefully.
+                hint: carefully
+              - zh: 你要是照着说明做，就不会出错。
+                answer: If you follow the instructions, you won't go wrong.
+                hint: If；won't go wrong
+              - zh: 我没看说明就装了。
+                answer: I installed it without following the instructions.
+                hint: installed；without following
+          - chunk: follow his explanation
+            items:
+              - zh: 我没能跟上他的解释。
+                answer: I couldn't follow his explanation.
+                hint: couldn't
+              - zh: 这部分我没跟上，你能再说一遍吗？
+                answer: I didn't follow this part; could you say it again?
+                hint: this part；could you
+              - zh: 他讲得太快了，大家都跟不上。
+                answer: He spoke too fast, and nobody could follow his explanation.
+                hint: too fast；nobody
+          - chunk: follow what he's saying
+            items:
+              - zh: 我跟不上他在说什么。
+                answer: I can't follow what he's saying.
+                hint: what he's saying
+              - zh: 我有点跟不上你说的内容。
+                answer: I'm having trouble following what you're saying.
+                hint: having trouble
+              - zh: 你能跟上老师讲的内容吗？
+                answer: Can you follow what the teacher is saying?
+                hint: the teacher
+      - key: follow-up-client
+        kind: chunk
+        type: chunk_substitution
+        title: 说明天跟进客户
+        chunk: follow up with the client
+        chunkMeaning: 跟进客户
+        direction: zh_to_en
+        items:
+          - zh: 我明天会跟进客户。
+            answer: I'll follow up with the client tomorrow.
+            hint: follow up with；tomorrow
+          - zh: 会后我会跟每个客户跟进一下。
+            answer: I'll follow up with each client after the meeting.
+            hint: each client；after the meeting
+          - zh: 上周那个客户你跟进过了吗？
+            answer: Did you follow up with that client last week?
+            hint: Did you；last week
+      - key: follow-through
+        kind: chunk
+        type: chunk_substitution
+        title: 说她总是兑现承诺
+        chunk: follow through on her promises
+        chunkMeaning: 兑现她的承诺
+        direction: zh_to_en
+        items:
+          - zh: 她总是兑现自己的承诺。
+            answer: She always follows through on her promises.
+            hint: follows through on
+          - zh: 说过的话就要做到。
+            answer: If you say something, you should follow through on it.
+            hint: If you say something
+          - zh: 他答应了，但从来没真正做到。
+            answer: He promised, but he never followed through on it.
+            hint: promised；never
+      - key: follow-along
+        kind: chunk
+        type: chunk_substitution
+        title: 说跟着一起做
+        chunk: follow along
+        chunkMeaning: 跟着一起做
+        direction: zh_to_en
+        items:
+          - zh: 跟着做，我会解释每一步。
+            answer: Follow along and I'll explain each step.
+            hint: each step
+          - zh: 大家跟着一起做，不用着急。
+            answer: Just follow along; there's no need to rush.
+            hint: no need to rush
+          - zh: 你跟着做一遍就会了。
+            answer: You'll get it once you follow along.
+            hint: once you
+      - key: follow-behind
+        kind: chunk
+        type: chunk_substitution
+        title: 说孩子跟在父母后面
+        chunk: follow behind their parents
+        chunkMeaning: 跟在父母后面
+        direction: zh_to_en
+        items:
+          - zh: 孩子们跟在父母后面。
+            answer: The children followed behind their parents.
+            hint: followed behind
+          - zh: 小狗一直跟在我们后面。
+            answer: The little dog followed behind us all the way.
+            hint: all the way
+          - zh: 别跟在别人后面，自己走。
+            answer: Don't follow behind others; walk on your own.
+            hint: on your own
+      - key: follow-rules
+        kind: chunk
+        type: chunk_substitution
+        title: 说大家都得遵守同样的规则
+        chunk: follow the rules
+        chunkMeaning: 遵守规则
+        direction: zh_to_en
+        items:
+          - zh: 每个人都必须遵守同样的规则。
+            answer: Everyone has to follow the same rules.
+            hint: has to
+          - zh: 在这里，大家都得按规矩来。
+            answer: Here, everyone needs to follow the rules.
+            hint: Here
+          - zh: 他从来不守规则。
+            answer: He never follows the rules.
+            hint: never
+      - key: follow-up-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说跟进与兼诺
+        chunk: follow up with the client
+        chunkMeaning: 跟进客户
+        direction: en_to_zh
+        items:
+          - en: I'll follow up with the client tomorrow.
+            answer: 我明天会跟进客户。
+            hint: tomorrow
+          - en: She always follows through on her promises.
+            answer: 她总是兑现自己的承诺。
+            hint: always
+          - en: Follow along and I'll explain each step.
+            answer: 跟着做，我会解释每一步。
+            hint: each step
+      - key: follow-someone
+        type: pattern_drill
+        title: 说跟着别人
+        pattern: follow [someone]
+        patternMeaning: 跟随某人；不加 to
+        direction: zh_to_en
+        items:
+          - zh: 别跟着我，我有事要办。
+            answer: Don't follow me; I have something to do.
+            hint: 不加 to；have something to do
+          - zh: 我一直跟着她走到了门口。
+            answer: I followed her to the door.
+            hint: to the door
+          - zh: 那只猫一直跟着我回了家。
+            answer: The cat followed me home.
+            hint: followed me home
+      - key: follow-road-other
+        type: pattern_drill
+        title: 说沿别的路线走
+        pattern: follow [road/route]
+        patternMeaning: 沿着路线前进
+        direction: zh_to_en
+        items:
+          - zh: 沿着这条路走到十字路口。
+            answer: Follow this road to the crossroads.
+            hint: the crossroads
+          - zh: 跟着地图上的路线走就不会迷路。
+            answer: Follow the route on the map and you won't get lost.
+            hint: on the map；won't get lost
+          - zh: 我们沿着河边的小路走。
+            answer: We followed the path along the river.
+            hint: along the river
+      - key: follow-instructions-other
+        type: pattern_drill
+        title: 说按别的说明做
+        pattern: follow [instructions]
+        patternMeaning: 按说明做
+        direction: zh_to_en
+        items:
+          - zh: 请按照屏幕上显示的步骤操作。
+            answer: Follow the steps shown on the screen.
+            hint: shown on the screen
+          - zh: 照着我说的做，别多问。
+            answer: Just follow what I say and don't ask questions.
+            hint: don't ask questions
+          - zh: 他完全按医嘱吃了药。
+            answer: He followed the doctor's instructions exactly.
+            hint: the doctor's instructions；exactly
+      - key: follow-up-other
+        type: pattern_drill
+        title: 说跟进别的事
+        pattern: follow up with [someone] / follow up on [something]
+        patternMeaning: 跟进某人 / 跟进某事
+        direction: zh_to_en
+        items:
+          - zh: 我下周会再联系你，跟进一下情况。
+            answer: I'll follow up with you next week.
+            hint: follow up with；next week
+          - zh: 他答应跟进这件事，但一直没消息。
+            answer: He promised to follow up on it, but I never heard back.
+            hint: follow up on it；never heard back
+          - zh: 我发邮件跟进了一下发票的事。
+            answer: I followed up on the invoice by email.
+            hint: the invoice；by email
+      - key: follow-through-other
+        type: pattern_drill
+        title: 说兑现别的事情
+        pattern: follow through on [something]
+        patternMeaning: 兑现承诺
+        direction: zh_to_en
+        items:
+          - zh: 他兑现了所有的承诺。
+            answer: He followed through on all his promises.
+            hint: all his promises
+          - zh: 计划不错，就看你能不能不半途而废。
+            answer: The plan is good; let's see if you can follow through on it.
+            hint: let's see if
+          - zh: 光有想法不够，得真正做出来。
+            answer: Having an idea isn't enough; you have to follow through on it.
+            hint: isn't enough
+      - key: follow-rules-other
+        type: pattern_drill
+        title: 说遵守别的规则
+        pattern: follow the rules
+        patternMeaning: 遵守规则
+        direction: zh_to_en
+        items:
+          - zh: 在机场你必须遵守安全规定。
+            answer: You must follow the safety rules at the airport.
+            hint: the safety rules；at the airport
+          - zh: 不守规矩的人会被请出去。
+            answer: People who don't follow the rules will be asked to leave.
+            hint: will be asked to leave
+          - zh: 为了公平，大家都得按同样的规矩来。
+            answer: To be fair, everyone has to follow the same rules.
+            hint: To be fair
+      - key: follow-saying-listen
+        type: pattern_drill
+        title: 听懂对方说没跟上或跟得上
+        pattern: follow [explanation] / follow what [someone] is saying
+        patternMeaning: 理解并跟上讲解
+        direction: en_to_zh
+        items:
+          - en: Sorry, I didn't follow what you just said.
+            answer: 抱歉，你刚说的我没跟上。
+            hint: just said
+          - en: I couldn't follow his explanation at all.
+            answer: 我完全跟不上他的解释。
+            hint: at all
+          - en: Are you following what the teacher is saying?
+            answer: 你跟得上老师讲的吗？
+            hint: the teacher
+      - key: follow-me-build
+        type: sentence_decomposition
+        title: 把带路这件事说完整
+        sourceKind: chunk
+        sourceText: Follow me
+        fullSentence: Follow me and stay close, because this place is very crowded.
+        fullSentenceZh: 跟着我，别离得太远，因为这里人非常多。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Follow me.
+            zh: 跟着我。
+            highlight: ''
+            hint: 先说跟着我
+          - level: 2
+            label: 加强调
+            en: Follow me and stay close.
+            zh: 跟着我，别离得太远。
+            highlight: and stay close
+            hint: 补上别离太远
+          - level: 3
+            label: 完整句
+            en: Follow me and stay close, because this place is very crowded.
+            zh: 跟着我，别离得太远，因为这里人非常多。
+            highlight: because this place is very crowded
+            hint: 补上因为这里人非常多
+      - key: follow-cant-build
+        type: sentence_decomposition
+        title: 把跟不上对方说话说完整
+        sourceKind: vocab
+        sourceText: follow
+        fullSentence: I'm having trouble following what you're saying, so could you speak more slowly?
+        fullSentenceZh: 我有点跟不上你说的内容，你能说慢一点吗？
+        levels:
+          - level: 1
+            label: 核心句
+            en: I can't follow what you're saying.
+            zh: 我跟不上你在说什么。
+            highlight: ''
+            hint: 先说跟不上
+          - level: 2
+            label: 加转折
+            en: I'm having trouble following what you're saying.
+            zh: 我有点跟不上你说的内容。
+            highlight: having trouble
+            hint: 补上有困难
+          - level: 3
+            label: 完整句
+            en: I'm having trouble following what you're saying, so could you speak more slowly?
+            zh: 我有点跟不上你说的内容，你能说慢一点吗？
+            highlight: so could you speak more slowly
+            hint: 补上请对方说慢点

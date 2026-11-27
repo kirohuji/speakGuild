@@ -1,0 +1,1440 @@
+learning:
+  vocabulary:
+    - think
+    - know
+    - believe
+    - understand
+    - remember
+    - forget
+    - realize
+    - notice
+    - recognize
+    - consider
+    - suppose
+    - assume
+    - guess
+    - imagine
+    - expect
+    - doubt
+    - wonder
+    - decide
+    - judge
+    - compare
+    - evaluate
+    - conclude
+    - learn
+    - study
+    - review
+    - think twice
+    - think it over
+    - think ahead
+    - think clearly
+    - think highly of
+    - think for yourself
+    - get to know
+    - know for sure
+    - know from experience
+    - know about
+    - know of
+    - you never know
+    - believe in yourself
+    - firmly believe
+    - believe every word
+    - believe it or not
+    - hard to believe
+    - make yourself understood
+    - fully understand
+    - clearly understand
+    - understand the point
+    - come to understand
+    - easy to understand
+    - if I remember correctly
+    - remember clearly
+    - remember vividly
+    - always remember
+    - completely forget
+    - never forget
+    - forget all about
+    - easy to forget
+    - realize the importance of
+    - realize a dream
+    - come to realize
+    - suddenly realize
+    - fully realize
+    - fail to realize
+    - realize the difference
+    - hardly notice
+    - immediately notice
+    - notice a change
+    - go unnoticed
+    - be widely recognized
+    - instantly recognize
+    - barely recognize
+    - recognize the importance of
+    - recognize a pattern
+    - carefully consider
+    - consider the possibility
+    - all things considered
+    - be considered to be
+    - worth considering
+    - I suppose so
+    - I suppose not
+    - suppose for a moment
+    - be supposed to
+    - assume responsibility
+    - assume the worst
+    - assume control
+    - assume a role
+    - guess what
+    - take a guess
+    - guess correctly
+    - as you can imagine
+    - hard to imagine
+    - just imagine
+    - imagine the worst
+    - as expected
+    - than expected
+    - fully expect
+    - expect too much
+    - seriously doubt
+    - doubt yourself
+    - have no reason to doubt
+    - can't help wondering
+    - begin to wonder
+    - decide whether
+    - finally decide
+    - decide for yourself
+    - decide against
+    - decide in favor of
+    - can't decide
+    - judge fairly
+    - judge too quickly
+    - judge by appearances
+    - compare A with B
+    - compare A to B
+    - nothing compares to
+    - compare prices
+    - compare notes
+    - evaluate the risk
+    - carefully evaluate
+    - evaluate performance
+    - evaluate objectively
+    - conclude from
+    - conclude with
+    - reasonably conclude
+    - conclude an agreement
+    - learn from
+    - learn from experience
+    - learn the hard way
+    - never stop learning
+    - learn by heart
+    - study hard
+    - study in detail
+    - study abroad
+    - study the data
+    - review regularly
+    - review progress
+    - review performance
+    - review a draft
+    - review the evidence
+    - thought
+    - knowledge
+    - belief
+    - understanding
+    - memory
+    - experience
+    - information
+    - evidence
+    - fact
+    - detail
+    - decision
+    - judgment
+    - opinion
+    - assumption
+    - possibility
+    - conclusion
+    - comparison
+    - difference
+    - similarity
+    - criterion
+    - criteria
+    - reason
+    - consequence
+    - opportunity
+    - alternative
+    - approach
+    - research
+    - analysis
+    - pattern
+    - mistake
+    - importance
+    - confidence
+    - logic
+    - accuracy
+    - perspective
+    - expectation
+    - uncertainty
+    - ability
+    - skill
+    - progress
+    - feedback
+    - reasonable
+    - likely
+    - aware
+    - certain
+    - familiar
+    - carefully
+    - clearly
+    - deeply
+    - gradually
+    - eventually
+    - correctly
+    - seriously
+    - logically
+    - objectively
+    - critically
+    - independently
+  chunks:
+    - think about changing jobs
+    - think of a better way
+    - What do you think of the idea?
+    - I think we need more time
+    - think of moving abroad
+    - think twice before deciding
+    - think it over
+    - think ahead
+    - think clearly
+    - think highly of her work
+    - think for yourself
+    - know the answer
+    - know that you are busy
+    - know where he went
+    - know how to fix it
+    - get to know someone
+    - know for sure
+    - know from experience
+    - know about the project
+    - know of a few good places
+    - you never know
+    - believe you
+    - believe that things will improve
+    - believe in what she is doing
+    - can't believe you remembered
+    - believed to be over 200 years old
+    - believe in yourself
+    - firmly believe
+    - believe every word
+    - believe it or not
+    - hard to believe
+    - understand the problem
+    - understand that you're under pressure
+    - understand why he left
+    - understand him better
+    - make yourself understood
+    - fully understand how it works
+    - clearly understand the plan
+    - understand your point
+    - come to understand
+    - easy to understand
+    - remember that day
+    - remember meeting her once
+    - remember to lock the door
+    - remember that I had a meeting
+    - if I remember correctly
+    - remember it clearly
+    - remember correctly
+    - remember names
+    - remember vividly
+    - always remember what you said
+    - forget his name
+    - never forget meeting her
+    - forget to reply to his message
+    - forget about work for a while
+    - forget that the store closes early
+    - completely forget
+    - never forget that moment
+    - forget all about it
+    - easy to forget
+    - forget your name
+    - realize that I'd made a mistake
+    - realize how late it was
+    - realize the importance of sleep
+    - realize a dream
+    - come to realize
+    - suddenly realize
+    - fully realize the risk
+    - fail to realize
+    - make someone realize
+    - realize the difference
+    - notice the difference
+    - notice that he looked tired
+    - notice him leave the room
+    - notice her looking at me
+    - be noticed immediately
+    - hardly notice the noise
+    - immediately notice the difference
+    - notice a change
+    - notice something unusual
+    - go unnoticed
+    - recognize him
+    - recognize faces
+    - recognize him as a friend
+    - recognize that the situation has changed
+    - widely recognized as an expert
+    - instantly recognize his voice
+    - barely recognize the place
+    - recognize the importance of sleep
+    - recognize a pattern
+    - recognize her contribution
+    - consider every option
+    - consider moving closer to work
+    - consider this important
+    - consider him a good leader
+    - consider whether the plan is realistic
+    - carefully consider the consequences
+    - consider the possibility
+    - all things considered
+    - considered to be very safe
+    - worth considering
+    - suppose he's already left
+    - suppose that the plan fails
+    - supposed to be here at nine
+    - not supposed to use phones here
+    - What do you suppose happened?
+    - I suppose so
+    - I suppose not
+    - suppose for a moment
+    - supposed to mean
+    - supposed to happen next
+    - assume that the data is correct
+    - assume the worst
+    - assume the task to be simple
+    - assume responsibility for the mistake
+    - reasonable to assume
+    - wrongly assume
+    - automatically assume
+    - assume control of the project
+    - assume a leading role
+    - guess the answer
+    - guess that something was wrong
+    - I guess we'll have to wait
+    - Guess what
+    - take a guess
+    - guess wildly
+    - guess his age
+    - your guess is as good as mine
+    - guess correctly
+    - keep you guessing
+    - imagine a world without the internet
+    - imagine living there
+    - imagine that you had no deadline
+    - imagine him saying that
+    - as you can imagine
+    - hard to imagine
+    - just imagine
+    - imagine yourself five years from now
+    - imagine the worst
+    - imagine for a moment
+    - expect some delays
+    - expect to finish by Friday
+    - expect him to call
+    - expect that demand will increase
+    - expected to rise
+    - as expected
+    - longer than expected
+    - fully expect him to succeed
+    - What did you expect?
+    - expect too much
+    - doubt his ability
+    - doubt that he'll agree
+    - doubt whether this will work
+    - don't doubt that she tried her best
+    - seriously doubt
+    - doubt yourself
+    - begin to doubt
+    - have no reason to doubt
+    - wonder if he's still awake
+    - wonder why she changed her mind
+    - I was wondering if you could help
+    - wonder about that
+    - wonder what to do next
+    - can't help wondering
+    - begin to wonder
+    - wonder to yourself
+    - wonder aloud
+    - decide to stay
+    - decide on a date
+    - decide that it was too risky
+    - decide whether to go
+    - decide how to proceed
+    - finally decide
+    - decide for yourself
+    - decide against moving
+    - decide in favor of the proposal
+    - can't decide which one
+    - judge the situation
+    - judge people by their appearance
+    - judging by his reaction
+    - judge the plan to be too expensive
+    - judge whether it worked
+    - judge fairly
+    - judge too quickly
+    - judge by appearances
+    - judge the quality of the results
+    - compare this version with the old one
+    - compare the city to New York
+    - compare several options
+    - compared with last year
+    - nothing compares to a good night's sleep
+    - compare prices
+    - compare notes
+    - directly compare
+    - compare favorably with competitors
+    - comparing yourself with others
+    - evaluate the results
+    - evaluate whether the change is necessary
+    - evaluate each proposal based on cost
+    - evaluated on performance
+    - evaluate the risk
+    - carefully evaluate
+    - evaluate performance
+    - evaluate its effectiveness
+    - evaluate objectively
+    - evaluate against clear criteria
+    - conclude that the plan was too risky
+    - conclude from the data
+    - conclude with a short discussion
+    - conclude by thanking everyone
+    - conclude the meeting
+    - reasonably conclude
+    - conclude too quickly
+    - conclude an agreement
+    - conclude successfully
+    - learn English
+    - learn to drive
+    - learn how to explain this clearly
+    - learn that he had already left
+    - learn from our mistakes
+    - learn by doing
+    - learn from experience
+    - learn the hard way
+    - never stop learning
+    - learn by heart
+    - study biology
+    - study for an exam
+    - study at a university
+    - study the effect of sleep on memory
+    - study how users interacted with the system
+    - study hard
+    - study in detail
+    - study closely
+    - study abroad
+    - study the data
+    - review my notes
+    - review this document
+    - review the plan
+    - review what happened yesterday
+    - review new laptops
+    - review regularly
+    - review progress
+    - review performance
+    - review a draft
+    - review the evidence
+  patterns:
+    - I think [clause].
+    - I don't know [wh-clause].
+    - I remember [doing].
+    - Remember to [do].
+    - I forgot to [do].
+    - I realized that [clause].
+    - I noticed [someone] [doing].
+    - I consider [something] [adjective].
+    - I'm considering [doing].
+    - I expect [someone] to [do].
+    - I wonder if [clause].
+    - I decided to [do].
+    - I learned how to [do].
+  chunk_models:
+    - structure: think about [noun/doing]
+      meaning: 思考、考虑
+      examples:
+        - think about changing jobs
+    - structure: think of [noun]
+      meaning: 想到；想起
+      examples:
+        - think of a better way
+    - structure: What do you think of [noun]?
+      meaning: 觉得……怎么样
+      examples:
+        - What do you think of the idea?
+    - structure: I think [clause]
+      meaning: 认为……
+      examples:
+        - I think we need more time
+    - structure: think of [doing]
+      meaning: 考虑做某事
+      examples:
+        - think of moving abroad
+    - structure: think twice
+      meaning: 三思
+      examples:
+        - think twice before deciding
+    - structure: think it over
+      meaning: 仔细考虑
+      examples:
+        - think it over
+    - structure: think ahead
+      meaning: 提前考虑
+      examples:
+        - think ahead
+    - structure: think clearly
+      meaning: 清楚思考
+      examples:
+        - think clearly
+    - structure: think highly of [someone/something]
+      meaning: 高度评价
+      examples:
+        - think highly of her work
+    - structure: think for yourself
+      meaning: 独立思考
+      examples:
+        - think for yourself
+    - structure: know [noun]
+      meaning: 知道；认识
+      examples:
+        - know the answer
+    - structure: know that [clause]
+      meaning: 知道……
+      examples:
+        - know that you are busy
+    - structure: know [wh-clause]
+      meaning: 知道具体信息
+      examples:
+        - know where he went
+    - structure: know how to [do]
+      meaning: 知道怎么做
+      examples:
+        - know how to fix it
+    - structure: get to know [someone]
+      meaning: 逐渐了解
+      examples:
+        - get to know someone
+    - structure: know for sure
+      meaning: 确定知道
+      examples:
+        - know for sure
+    - structure: know from experience
+      meaning: 从经验中知道
+      examples:
+        - know from experience
+    - structure: know about [something]
+      meaning: 了解有关……的信息
+      examples:
+        - know about the project
+    - structure: know of [something]
+      meaning: 知道……的存在
+      examples:
+        - know of a few good places
+    - structure: you never know
+      meaning: 很难说；谁知道呢
+      examples:
+        - you never know
+    - structure: believe [someone]
+      meaning: 相信某人的话
+      examples:
+        - believe you
+    - structure: believe that [clause]
+      meaning: 相信、认为……
+      examples:
+        - believe that things will improve
+    - structure: believe in [noun]
+      meaning: 相信……的价值或存在
+      examples:
+        - believe in what she is doing
+    - structure: can't believe [clause]
+      meaning: 难以相信
+      examples:
+        - can't believe you remembered
+    - structure: be believed to [do]
+      meaning: 被认为……
+      examples:
+        - believed to be over 200 years old
+    - structure: believe in yourself
+      meaning: 相信自己
+      examples:
+        - believe in yourself
+    - structure: firmly believe
+      meaning: 坚信
+      examples:
+        - firmly believe
+    - structure: believe every word
+      meaning: 相信每一句话
+      examples:
+        - believe every word
+    - structure: believe it or not
+      meaning: 信不信由你
+      examples:
+        - believe it or not
+    - structure: hard to believe
+      meaning: 难以置信
+      examples:
+        - hard to believe
+    - structure: understand [noun]
+      meaning: 理解某事
+      examples:
+        - understand the problem
+    - structure: understand that [clause]
+      meaning: 明白……
+      examples:
+        - understand that you're under pressure
+    - structure: understand why/how [clause]
+      meaning: 理解原因或方式
+      examples:
+        - understand why he left
+    - structure: understand [someone]
+      meaning: 理解某人
+      examples:
+        - understand him better
+    - structure: make yourself understood
+      meaning: 让别人明白自己
+      examples:
+        - make yourself understood
+    - structure: fully understand
+      meaning: 完全理解
+      examples:
+        - fully understand how it works
+    - structure: clearly understand
+      meaning: 清楚理解
+      examples:
+        - clearly understand the plan
+    - structure: understand the point
+      meaning: 明白重点
+      examples:
+        - understand your point
+    - structure: come to understand
+      meaning: 逐渐理解
+      examples:
+        - come to understand
+    - structure: easy to understand
+      meaning: 容易理解
+      examples:
+        - easy to understand
+    - structure: remember [noun]
+      meaning: 记得某事
+      examples:
+        - remember that day
+    - structure: remember [doing]
+      meaning: 记得做过某事
+      examples:
+        - remember meeting her once
+    - structure: remember to [do]
+      meaning: 记得去做某事
+      examples:
+        - remember to lock the door
+    - structure: remember that [clause]
+      meaning: 记得……
+      examples:
+        - remember that I had a meeting
+    - structure: if I remember correctly
+      meaning: 如果我没记错
+      examples:
+        - if I remember correctly
+    - structure: remember clearly
+      meaning: 清楚记得
+      examples:
+        - remember it clearly
+    - structure: remember correctly
+      meaning: 记得没错
+      examples:
+        - remember correctly
+    - structure: remember [someone's] name
+      meaning: 记住名字
+      examples:
+        - remember names
+    - structure: remember vividly
+      meaning: 鲜明地记得
+      examples:
+        - remember vividly
+    - structure: always remember
+      meaning: 永远记得
+      examples:
+        - always remember what you said
+    - structure: forget [noun]
+      meaning: 忘记某事
+      examples:
+        - forget his name
+    - structure: never forget [doing]
+      meaning: 永远不会忘记做过
+      examples:
+        - never forget meeting her
+    - structure: forget to [do]
+      meaning: 忘记去做
+      examples:
+        - forget to reply to his message
+    - structure: forget about [noun]
+      meaning: 忘掉；暂时不考虑
+      examples:
+        - forget about work for a while
+    - structure: forget that [clause]
+      meaning: 忘记一个事实
+      examples:
+        - forget that the store closes early
+    - structure: completely forget
+      meaning: 完全忘记
+      examples:
+        - completely forget
+    - structure: never forget
+      meaning: 永远不会忘记
+      examples:
+        - never forget that moment
+    - structure: forget all about [something]
+      meaning: 忘得一干二净
+      examples:
+        - forget all about it
+    - structure: easy to forget
+      meaning: 容易忘记
+      examples:
+        - easy to forget
+    - structure: forget [someone's] name
+      meaning: 忘记名字
+      examples:
+        - forget your name
+    - structure: realize that [clause]
+      meaning: 意识到……
+      examples:
+        - realize that I'd made a mistake
+    - structure: realize how [adjective] [clause]
+      meaning: 意识到程度
+      examples:
+        - realize how late it was
+    - structure: realize the importance of [noun]
+      meaning: 意识到……的重要性
+      examples:
+        - realize the importance of sleep
+    - structure: realize a dream
+      meaning: 实现梦想
+      examples:
+        - realize a dream
+    - structure: come to realize
+      meaning: 逐渐意识到
+      examples:
+        - come to realize
+    - structure: suddenly realize
+      meaning: 突然意识到
+      examples:
+        - suddenly realize
+    - structure: fully realize
+      meaning: 充分意识到
+      examples:
+        - fully realize the risk
+    - structure: fail to realize
+      meaning: 没有意识到
+      examples:
+        - fail to realize
+    - structure: make [someone] realize
+      meaning: 让某人意识到
+      examples:
+        - make someone realize
+    - structure: realize the difference
+      meaning: 意识到差别
+      examples:
+        - realize the difference
+    - structure: notice [noun]
+      meaning: 注意到某物
+      examples:
+        - notice the difference
+    - structure: notice that [clause]
+      meaning: 注意到……
+      examples:
+        - notice that he looked tired
+    - structure: notice [someone] [do]
+      meaning: 注意到动作整体
+      examples:
+        - notice him leave the room
+    - structure: notice [someone] [doing]
+      meaning: 注意到正在发生的动作
+      examples:
+        - notice her looking at me
+    - structure: be noticed
+      meaning: 被注意到
+      examples:
+        - be noticed immediately
+    - structure: hardly notice
+      meaning: 几乎没注意到
+      examples:
+        - hardly notice the noise
+    - structure: immediately notice
+      meaning: 立刻注意到
+      examples:
+        - immediately notice the difference
+    - structure: notice a change
+      meaning: 注意到变化
+      examples:
+        - notice a change
+    - structure: notice something unusual
+      meaning: 注意到异常
+      examples:
+        - notice something unusual
+    - structure: go unnoticed
+      meaning: 未被注意
+      examples:
+        - go unnoticed
+    - structure: recognize [someone]
+      meaning: 认出某人
+      examples:
+        - recognize him
+    - structure: recognize [something]
+      meaning: 识别某物
+      examples:
+        - recognize faces
+    - structure: recognize [someone/something] as...
+      meaning: 认定为……
+      examples:
+        - recognize him as a friend
+    - structure: recognize that [clause]
+      meaning: 承认、认识到……
+      examples:
+        - recognize that the situation has changed
+    - structure: be widely recognized
+      meaning: 被广泛认可
+      examples:
+        - widely recognized as an expert
+    - structure: instantly recognize
+      meaning: 立刻认出
+      examples:
+        - instantly recognize his voice
+    - structure: barely recognize
+      meaning: 几乎认不出
+      examples:
+        - barely recognize the place
+    - structure: recognize the importance of [noun]
+      meaning: 认识到……的重要性
+      examples:
+        - recognize the importance of sleep
+    - structure: recognize a pattern
+      meaning: 识别模式
+      examples:
+        - recognize a pattern
+    - structure: recognize [someone's] contribution
+      meaning: 认可某人的贡献
+      examples:
+        - recognize her contribution
+    - structure: consider [noun]
+      meaning: 考虑某事
+      examples:
+        - consider every option
+    - structure: consider [doing]
+      meaning: 考虑做某事
+      examples:
+        - consider moving closer to work
+    - structure: consider [something] [adjective]
+      meaning: 认为某事具有某种性质
+      examples:
+        - consider this important
+    - structure: consider [someone] [noun]
+      meaning: 把某人看作……
+      examples:
+        - consider him a good leader
+    - structure: consider whether [clause]
+      meaning: 考虑是否……
+      examples:
+        - consider whether the plan is realistic
+    - structure: carefully consider
+      meaning: 仔细考虑
+      examples:
+        - carefully consider the consequences
+    - structure: consider the possibility
+      meaning: 考虑这种可能性
+      examples:
+        - consider the possibility
+    - structure: all things considered
+      meaning: 综合考虑
+      examples:
+        - all things considered
+    - structure: be considered to be
+      meaning: 被认为是
+      examples:
+        - considered to be very safe
+    - structure: worth considering
+      meaning: 值得考虑
+      examples:
+        - worth considering
+    - structure: suppose [clause]
+      meaning: 我想、大概
+      examples:
+        - suppose he's already left
+    - structure: suppose that [clause]
+      meaning: 假设……
+      examples:
+        - suppose that the plan fails
+    - structure: be supposed to [do]
+      meaning: 应该；按安排该做
+      examples:
+        - supposed to be here at nine
+    - structure: not supposed to [do]
+      meaning: 不应该做
+      examples:
+        - not supposed to use phones here
+    - structure: What do you suppose [clause]?
+      meaning: 你觉得……？
+      examples:
+        - What do you suppose happened?
+    - structure: I suppose so
+      meaning: 我想是吧
+      examples:
+        - I suppose so
+    - structure: I suppose not
+      meaning: 我想不是
+      examples:
+        - I suppose not
+    - structure: suppose for a moment
+      meaning: 先假设一下
+      examples:
+        - suppose for a moment
+    - structure: be supposed to mean
+      meaning: 本意是；应该表示
+      examples:
+        - supposed to mean
+    - structure: be supposed to happen
+      meaning: 按计划接下来该发生
+      examples:
+        - supposed to happen next
+    - structure: assume that [clause]
+      meaning: 假定……
+      examples:
+        - assume that the data is correct
+    - structure: assume the worst
+      meaning: 往最坏处想
+      examples:
+        - assume the worst
+    - structure: assume [something] to be [adjective]
+      meaning: 假定某事如何
+      examples:
+        - assume the task to be simple
+    - structure: assume responsibility
+      meaning: 承担责任
+      examples:
+        - assume responsibility for the mistake
+    - structure: it is reasonable to assume
+      meaning: 可合理假定
+      examples:
+        - reasonable to assume
+    - structure: wrongly assume
+      meaning: 错误地假定
+      examples:
+        - wrongly assume
+    - structure: automatically assume
+      meaning: 不假思索地假定
+      examples:
+        - automatically assume
+    - structure: assume control
+      meaning: 接管；取得控制
+      examples:
+        - assume control of the project
+    - structure: assume a role
+      meaning: 担任某个角色
+      examples:
+        - assume a leading role
+    - structure: guess [noun]
+      meaning: 猜某事
+      examples:
+        - guess the answer
+    - structure: guess that [clause]
+      meaning: 猜测……
+      examples:
+        - guess that something was wrong
+    - structure: I guess [clause]
+      meaning: 我想；估计
+      examples:
+        - I guess we'll have to wait
+    - structure: Guess what
+      meaning: 你猜怎么着
+      examples:
+        - Guess what
+    - structure: take a guess
+      meaning: 猜一下
+      examples:
+        - take a guess
+    - structure: guess wildly
+      meaning: 瞎猜
+      examples:
+        - guess wildly
+    - structure: guess [someone's] age
+      meaning: 猜年龄
+      examples:
+        - guess his age
+    - structure: your guess is as good as mine
+      meaning: 我也不知道
+      examples:
+        - your guess is as good as mine
+    - structure: guess correctly
+      meaning: 猜对
+      examples:
+        - guess correctly
+    - structure: keep [someone] guessing
+      meaning: 让人猜不透
+      examples:
+        - keep you guessing
+    - structure: imagine [noun]
+      meaning: 想象某物
+      examples:
+        - imagine a world without the internet
+    - structure: imagine [doing]
+      meaning: 想象做某事
+      examples:
+        - imagine living there
+    - structure: imagine that [clause]
+      meaning: 设想……
+      examples:
+        - imagine that you had no deadline
+    - structure: imagine [someone] [doing]
+      meaning: 想象某人做某事
+      examples:
+        - imagine him saying that
+    - structure: as you can imagine
+      meaning: 正如你能想象的
+      examples:
+        - as you can imagine
+    - structure: hard to imagine
+      meaning: 难以想象
+      examples:
+        - hard to imagine
+    - structure: just imagine
+      meaning: 想象一下
+      examples:
+        - just imagine
+    - structure: imagine yourself
+      meaning: 想象自己
+      examples:
+        - imagine yourself five years from now
+    - structure: imagine the worst
+      meaning: 往最坏处想
+      examples:
+        - imagine the worst
+    - structure: imagine for a moment
+      meaning: 先想象一下
+      examples:
+        - imagine for a moment
+    - structure: expect [noun]
+      meaning: 预期某事
+      examples:
+        - expect some delays
+    - structure: expect to [do]
+      meaning: 预计会做
+      examples:
+        - expect to finish by Friday
+    - structure: expect [someone] to [do]
+      meaning: 预期某人做
+      examples:
+        - expect him to call
+    - structure: expect that [clause]
+      meaning: 预计……
+      examples:
+        - expect that demand will increase
+    - structure: be expected to [do]
+      meaning: 预计会……
+      examples:
+        - expected to rise
+    - structure: as expected
+      meaning: 正如预期
+      examples:
+        - as expected
+    - structure: than expected
+      meaning: 比预期……
+      examples:
+        - longer than expected
+    - structure: fully expect
+      meaning: 完全预计
+      examples:
+        - fully expect him to succeed
+    - structure: What did you expect?
+      meaning: 你还指望什么
+      examples:
+        - What did you expect?
+    - structure: expect too much
+      meaning: 期望过高
+      examples:
+        - expect too much
+    - structure: doubt [noun]
+      meaning: 怀疑某事
+      examples:
+        - doubt his ability
+    - structure: doubt that [clause]
+      meaning: 怀疑……会成立
+      examples:
+        - doubt that he'll agree
+    - structure: doubt whether/if [clause]
+      meaning: 不确定是否
+      examples:
+        - doubt whether this will work
+    - structure: don't doubt that [clause]
+      meaning: 不怀疑……
+      examples:
+        - don't doubt that she tried her best
+    - structure: seriously doubt
+      meaning: 严重怀疑
+      examples:
+        - seriously doubt
+    - structure: doubt yourself
+      meaning: 怀疑自己
+      examples:
+        - doubt yourself
+    - structure: begin to doubt
+      meaning: 开始怀疑
+      examples:
+        - begin to doubt
+    - structure: have no reason to doubt
+      meaning: 没有理由怀疑
+      examples:
+        - have no reason to doubt
+    - structure: wonder if/whether [clause]
+      meaning: 想知道是否
+      examples:
+        - wonder if he's still awake
+    - structure: wonder why/how/what [clause]
+      meaning: 想知道……
+      examples:
+        - wonder why she changed her mind
+    - structure: I was wondering if [clause]
+      meaning: 委婉询问
+      examples:
+        - I was wondering if you could help
+    - structure: wonder about [noun]
+      meaning: 对……感到好奇
+      examples:
+        - wonder about that
+    - structure: wonder what to [do]
+      meaning: 不知道该做什么
+      examples:
+        - wonder what to do next
+    - structure: can't help wondering
+      meaning: 忍不住想知道
+      examples:
+        - can't help wondering
+    - structure: begin to wonder
+      meaning: 开始怀疑／纳闷
+      examples:
+        - begin to wonder
+    - structure: wonder to yourself
+      meaning: 心里暗想
+      examples:
+        - wonder to yourself
+    - structure: wonder aloud
+      meaning: 出声地想／自言自语
+      examples:
+        - wonder aloud
+    - structure: decide to [do]
+      meaning: 决定做
+      examples:
+        - decide to stay
+    - structure: decide on [noun]
+      meaning: 选定
+      examples:
+        - decide on a date
+    - structure: decide that [clause]
+      meaning: 认定／决定……
+      examples:
+        - decide that it was too risky
+    - structure: decide whether [clause]
+      meaning: 决定是否
+      examples:
+        - decide whether to go
+    - structure: decide how/what [clause]
+      meaning: 决定如何／什么
+      examples:
+        - decide how to proceed
+    - structure: finally decide
+      meaning: 最终决定
+      examples:
+        - finally decide
+    - structure: decide for yourself
+      meaning: 自己做决定
+      examples:
+        - decide for yourself
+    - structure: decide against [doing]
+      meaning: 决定不做
+      examples:
+        - decide against moving
+    - structure: decide in favor of [noun]
+      meaning: 决定支持
+      examples:
+        - decide in favor of the proposal
+    - structure: can't decide
+      meaning: 无法决定
+      examples:
+        - can't decide which one
+    - structure: judge [noun]
+      meaning: 判断、评价
+      examples:
+        - judge the situation
+    - structure: judge [someone] by [noun]
+      meaning: 根据……评价
+      examples:
+        - judge people by their appearance
+    - structure: judging by/from [noun]
+      meaning: 根据……判断
+      examples:
+        - judging by his reaction
+    - structure: judge [something] to be [adjective]
+      meaning: 认定怎样
+      examples:
+        - judge the plan to be too expensive
+    - structure: judge whether [clause]
+      meaning: 判断是否
+      examples:
+        - judge whether it worked
+    - structure: judge fairly
+      meaning: 公正判断
+      examples:
+        - judge fairly
+    - structure: judge too quickly
+      meaning: 过早下判断
+      examples:
+        - judge too quickly
+    - structure: judge by appearances
+      meaning: 以貌取人
+      examples:
+        - judge by appearances
+    - structure: judge the quality of [noun]
+      meaning: 判断质量
+      examples:
+        - judge the quality of the results
+    - structure: compare A with B
+      meaning: 比较 A 和 B
+      examples:
+        - compare this version with the old one
+    - structure: compare A to B
+      meaning: 把 A 比作 B
+      examples:
+        - compare the city to New York
+    - structure: compare [plural noun]
+      meaning: 比较多个事物
+      examples:
+        - compare several options
+    - structure: compared with/to [noun]
+      meaning: 与……相比
+      examples:
+        - compared with last year
+    - structure: nothing compares to [noun]
+      meaning: 没有什么能比
+      examples:
+        - nothing compares to a good night's sleep
+    - structure: compare prices
+      meaning: 比价
+      examples:
+        - compare prices
+    - structure: compare notes
+      meaning: 交换意见
+      examples:
+        - compare notes
+    - structure: directly compare
+      meaning: 直接比较
+      examples:
+        - directly compare
+    - structure: compare favorably with [noun]
+      meaning: 相比之下表现更好
+      examples:
+        - compare favorably with competitors
+    - structure: compare yourself with others
+      meaning: 拿自己和别人比
+      examples:
+        - comparing yourself with others
+    - structure: evaluate [noun]
+      meaning: 评估某事
+      examples:
+        - evaluate the results
+    - structure: evaluate whether [clause]
+      meaning: 评估是否
+      examples:
+        - evaluate whether the change is necessary
+    - structure: evaluate based on [noun]
+      meaning: 根据依据评估
+      examples:
+        - evaluate each proposal based on cost
+    - structure: be evaluated on [noun]
+      meaning: 按……被评价
+      examples:
+        - evaluated on performance
+    - structure: evaluate the risk
+      meaning: 评估风险
+      examples:
+        - evaluate the risk
+    - structure: carefully evaluate
+      meaning: 仔细评估
+      examples:
+        - carefully evaluate
+    - structure: evaluate performance
+      meaning: 评估表现
+      examples:
+        - evaluate performance
+    - structure: evaluate effectiveness
+      meaning: 评估有效性
+      examples:
+        - evaluate its effectiveness
+    - structure: evaluate objectively
+      meaning: 客观评估
+      examples:
+        - evaluate objectively
+    - structure: evaluate against [noun]
+      meaning: 按标准评估
+      examples:
+        - evaluate against clear criteria
+    - structure: conclude that [clause]
+      meaning: 得出结论
+      examples:
+        - conclude that the plan was too risky
+    - structure: conclude from [noun]
+      meaning: 从……得出结论
+      examples:
+        - conclude from the data
+    - structure: conclude with [noun]
+      meaning: 以……结束
+      examples:
+        - conclude with a short discussion
+    - structure: conclude by [doing]
+      meaning: 以……收尾
+      examples:
+        - conclude by thanking everyone
+    - structure: conclude [a meeting/speech]
+      meaning: 结束会议／讲话
+      examples:
+        - conclude the meeting
+    - structure: reasonably conclude
+      meaning: 合理推断
+      examples:
+        - reasonably conclude
+    - structure: conclude too quickly
+      meaning: 过早下结论
+      examples:
+        - conclude too quickly
+    - structure: conclude an agreement
+      meaning: 达成协议
+      examples:
+        - conclude an agreement
+    - structure: conclude successfully
+      meaning: 顺利结束
+      examples:
+        - conclude successfully
+    - structure: learn [noun]
+      meaning: 学习知识或技能
+      examples:
+        - learn English
+    - structure: learn to [do]
+      meaning: 学会做
+      examples:
+        - learn to drive
+    - structure: learn how to [do]
+      meaning: 学习如何做
+      examples:
+        - learn how to explain this clearly
+    - structure: learn that [clause]
+      meaning: 得知……
+      examples:
+        - learn that he had already left
+    - structure: learn from [noun]
+      meaning: 从……学习
+      examples:
+        - learn from our mistakes
+    - structure: learn by [doing]
+      meaning: 通过实践学习
+      examples:
+        - learn by doing
+    - structure: learn from experience
+      meaning: 从经验中学习
+      examples:
+        - learn from experience
+    - structure: learn the hard way
+      meaning: 吃一堑长一智
+      examples:
+        - learn the hard way
+    - structure: never stop learning
+      meaning: 永远学习
+      examples:
+        - never stop learning
+    - structure: learn by heart
+      meaning: 背下来
+      examples:
+        - learn by heart
+    - structure: study [subject]
+      meaning: 学习某学科
+      examples:
+        - study biology
+    - structure: study for [noun]
+      meaning: 备考
+      examples:
+        - study for an exam
+    - structure: study at [place]
+      meaning: 在某校学习
+      examples:
+        - study at a university
+    - structure: study [object]
+      meaning: 研究对象
+      examples:
+        - study the effect of sleep on memory
+    - structure: study how/why [clause]
+      meaning: 研究如何／为什么
+      examples:
+        - study how users interacted with the system
+    - structure: study hard
+      meaning: 努力学习
+      examples:
+        - study hard
+    - structure: study in detail
+      meaning: 详细研究
+      examples:
+        - study in detail
+    - structure: study closely
+      meaning: 仔细研究
+      examples:
+        - study closely
+    - structure: study abroad
+      meaning: 出国留学
+      examples:
+        - study abroad
+    - structure: study the data
+      meaning: 研究数据
+      examples:
+        - study the data
+    - structure: review [notes/material]
+      meaning: 复习资料
+      examples:
+        - review my notes
+    - structure: review [document]
+      meaning: 审查文件
+      examples:
+        - review this document
+    - structure: review [plan]
+      meaning: 重新审视计划
+      examples:
+        - review the plan
+    - structure: review what [clause]
+      meaning: 回顾发生了什么
+      examples:
+        - review what happened yesterday
+    - structure: review [product/performance]
+      meaning: 评价产品或表现
+      examples:
+        - review new laptops
+    - structure: review regularly
+      meaning: 定期复习
+      examples:
+        - review regularly
+    - structure: review progress
+      meaning: 回顾进度
+      examples:
+        - review progress
+    - structure: review performance
+      meaning: 评估表现
+      examples:
+        - review performance
+    - structure: review a draft
+      meaning: 审阅草稿
+      examples:
+        - review a draft
+    - structure: review the evidence
+      meaning: 审查证据
+      examples:
+        - review the evidence
+  exercises:
+    enabled: true
+    pipeline: []

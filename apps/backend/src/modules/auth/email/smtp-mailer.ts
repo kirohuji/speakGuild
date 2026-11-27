@@ -21,7 +21,7 @@ const nodemailer = require('nodemailer') as {
 
 const logger = new Logger('SmtpMailer');
 
-type OtpType = 'forget-password' | 'email-verification' | 'sign-in' | string;
+type OtpType = 'forget-password' | 'email-verification' | 'sign-in' | 'change-email' | string;
 
 const COPY: Record<string, { kicker: string; title: string; lead: string; subject: string }> = {
   'forget-password': {
@@ -35,6 +35,12 @@ const COPY: Record<string, { kicker: string; title: string; lead: string; subjec
     title: '请确认这是你的邮箱',
     lead: '把验证码填回漫语町，即可完成邮箱验证。验证码 5 分钟内有效。',
     subject: '漫语町验证码：验证邮箱',
+  },
+  'change-email': {
+    kicker: '修改邮箱',
+    title: '请确认新的邮箱地址',
+    lead: '有人正在把漫语町账号邮箱改到这个地址。把验证码填回漫语町即可完成修改。验证码 5 分钟内有效。',
+    subject: '漫语町验证码：修改邮箱',
   },
   'sign-in': {
     kicker: '登录验证',

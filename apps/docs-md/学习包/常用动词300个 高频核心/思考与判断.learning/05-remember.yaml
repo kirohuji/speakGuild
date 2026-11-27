@@ -1,0 +1,436 @@
+learning:
+  exercises:
+    pipeline:
+      - key: remember-that-day
+        kind: chunk
+        type: chunk_substitution
+        title: 说还记得那天
+        chunk: remember that day
+        chunkMeaning: 还记得那天
+        direction: zh_to_en
+        items:
+          - zh: 我还清楚记得那天。
+            answer: I still remember that day clearly.
+            hint: still；clearly
+          - zh: 你还记得那天吗？
+            answer: Do you remember that day?
+            hint: Do you remember
+          - zh: 她好像已经不太记得那天了。
+            answer: She doesn't seem to remember that day much anymore.
+            hint: doesn't seem to；anymore
+      - key: remember-meeting-her-once
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得见过她一次
+        chunk: remember meeting her once
+        chunkMeaning: 记得见过她一次
+        direction: zh_to_en
+        items:
+          - zh: 我只记得见过她一次，在走廊里。
+            answer: I only remember meeting her once, in the hallway.
+            hint: I only remember；in the hallway
+          - zh: 你还记得在酒会上见过她吗？
+            answer: Do you remember meeting her once at the party?
+            hint: Do you remember；at the party
+          - zh: 我依稀记得见过她，但记不清什么时候了。
+            answer: I vaguely remember meeting her once, but I can't recall when.
+            hint: vaguely；can't recall when
+      - key: remember-to-lock-the-door
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得要去锁门
+        chunk: remember to lock the door
+        chunkMeaning: 记得去锁门
+        direction: zh_to_en
+        items:
+          - zh: 出门前记得锁门。
+            answer: Remember to lock the door before you leave.
+            hint: Remember to；before you leave
+          - zh: 我昨天晚上记得锁门了。
+            answer: I remembered to lock the door last night.
+            hint: remembered to；last night
+          - zh: 别忘了锁门，记得去做。
+            answer: Don't forget—remember to lock the door.
+            hint: remember to
+      - key: remember-that-i-had-a-meeting
+        kind: chunk
+        type: chunk_substitution
+        title: 说突然想起有个会
+        chunk: remember that I had a meeting
+        chunkMeaning: 记得那时有个会
+        direction: zh_to_en
+        items:
+          - zh: 我突然想起自己还有个会。
+            answer: I suddenly remembered that I had a meeting.
+            hint: suddenly remembered that
+          - zh: 走到半路我才想起下午有会。
+            answer: Halfway there, I remembered that I had a meeting in the afternoon.
+            hint: Halfway there；in the afternoon
+          - zh: 她后来才想起那天她有个会，所以没来。
+            answer: She later remembered that she had a meeting, so she didn't come.
+            hint: later remembered that；so she didn't come
+      - key: if-i-remember-correctly
+        kind: chunk
+        type: chunk_substitution
+        title: 说如果我没记错
+        chunk: if I remember correctly
+        chunkMeaning: 如果我没记错
+        direction: zh_to_en
+        items:
+          - zh: 如果我没记错，会议是下周三。
+            answer: If I remember correctly, the meeting is next Wednesday.
+            hint: If I remember correctly；next Wednesday
+          - zh: 如果我没记错，你当时就在场。
+            answer: If I remember correctly, you were there at the time.
+            hint: you were there；at the time
+          - zh: 如果我没记错的话，我们去年见过一次。
+            answer: If I remember correctly, we met once last year.
+            hint: we met once；last year
+      - key: remember-it-clearly
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得很清楚
+        chunk: remember it clearly
+        chunkMeaning: 记得很清楚
+        direction: zh_to_en
+        items:
+          - zh: 多年以后，我仍然记得很清楚。
+            answer: Years later, I still remember it clearly.
+            hint: Years later；still
+          - zh: 她对我说她记得很清楚，一字不漏。
+            answer: She told me she remembers it clearly, word for word.
+            hint: She told me；word for word
+          - zh: 奇怪的是，我只记得结尾，前面不清楚。
+            answer: Oddly, I only remember the ending clearly, not the beginning.
+            hint: Oddly；not the beginning
+      - key: remember-correctly
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得没错
+        chunk: remember correctly
+        chunkMeaning: 记得没错
+        direction: zh_to_en
+        items:
+          - zh: 我不敢说我记得完全没错，但大致如此。
+            answer: I'm not sure I remember correctly in every detail, but that's roughly it.
+            hint: I'm not sure；roughly it
+          - zh: 你记得没错，日期就是那个。
+            answer: You remember correctly—the date was exactly that one.
+            hint: You remember correctly；exactly
+          - zh: 请再核对一下，我怕我没记对。
+            answer: Please double-check; I'm afraid I didn't remember correctly.
+            hint: double-check；I'm afraid
+      - key: remember-names
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得别人的名字
+        chunk: remember names
+        chunkMeaning: 记得名字
+        direction: zh_to_en
+        items:
+          - zh: 他记名字特别快，见过一次就记得。
+            answer: He's great at remembering names—once he meets someone, he remembers.
+            hint: great at remembering names；once he meets someone
+          - zh: 我老是记不住名字，真尴尬。
+            answer: I always have trouble remembering names, and it's embarrassing.
+            hint: have trouble remembering；embarrassing
+          - zh: 你怎么记得这么多人的名字？
+            answer: How do you remember so many people's names?
+            hint: How do you remember；so many people's
+      - key: remember-vividly
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得栩栩如生
+        chunk: remember vividly
+        chunkMeaning: 记得很鲜活
+        direction: zh_to_en
+        items:
+          - zh: 我至今仍生动地记得那一刻。
+            answer: I still remember that moment vividly.
+            hint: I still remember；that moment
+          - zh: 她生动地记得他离开那天的样子。
+            answer: She remembers vividly what he looked like the day he left.
+            hint: what he looked like；the day he left
+          - zh: 有些细节我记得太鲜活了，像刚发生。
+            answer: Some details I remember so vividly they feel like they just happened.
+            hint: so vividly；they feel like
+      - key: always-remember-what-you-said
+        kind: chunk
+        type: chunk_substitution
+        title: 说一直记得你说的话
+        chunk: always remember what you said
+        chunkMeaning: 一直记得你说的话
+        direction: zh_to_en
+        items:
+          - zh: 我会一直记得你说的话。
+            answer: I'll always remember what you said.
+            hint: I'll always remember
+          - zh: 她跟我说她会永远记得你当时说的话。
+            answer: She told me she would always remember what you said at the time.
+            hint: she would always remember；at the time
+          - zh: 低谷时，我总想起你的话，一直记着。
+            answer: In tough times, I keep coming back to your words—I always remember what you said.
+            hint: In tough times；keep coming back to
+      - key: remember-doing-done
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得已经做过（doing）
+        chunk: remember doing something
+        chunkMeaning: 记得做过某事
+        direction: zh_to_en
+        items:
+          - zh: 我记得锁过门了，你别再去了。
+            answer: I remember locking the door—don't go back again.
+            hint: remember locking；don't go back
+          - zh: 你记得交过作业了吗？我记得交过了。
+            answer: Do you remember handing in the homework? I remember doing it.
+            hint: remember handing in；remember doing it
+          - zh: 她突然记起自己说过那句话，脸红了。
+            answer: She suddenly remembered saying that sentence, and she blushed.
+            hint: remembered saying；blushed
+      - key: remember-to-do-ahead
+        kind: chunk
+        type: chunk_substitution
+        title: 说记得还没做、要去做的提醒
+        chunk: remember to do something
+        chunkMeaning: 记得要去做某事
+        direction: zh_to_en
+        items:
+          - zh: 走之前记得给花浇水。
+            answer: Remember to water the plants before you leave.
+            hint: Remember to；before you leave
+          - zh: 他忘了回电话，现在才想起来要打。
+            answer: He forgot to call back, but now he remembers he needs to do it.
+            hint: forgot to call back；remembers he needs to
+          - zh: 我把纸条贴在门上，提醒自己记得锁门。
+            answer: I stuck a note on the door to remind myself to lock it.
+            hint: remind myself to lock
+      - key: remember-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说还记得某事
+        chunk: remember that
+        chunkMeaning: 记得……
+        direction: en_to_zh
+        items:
+          - en: I remember that you promised to help me move.
+            answer: 我记得你答应过帮我搬家。
+            hint: promised to help；move
+          - en: She doesn't remember that we met before.
+            answer: 她不记得我们以前见过。
+            hint: doesn't remember；we met before
+          - en: Do you remember that the store closes at nine?
+            answer: 你记得那家店九点关门吗？
+            hint: the store closes；at nine
+      - key: remember-doing-vs-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂记得做过还是记得要做
+        chunk: remember doing / remember to do
+        chunkMeaning: 记得做过 / 记得要去做
+        direction: en_to_zh
+        items:
+          - en: I remember telling you not to worry.
+            answer: 我记得跟你说过别担心。
+            hint: remember telling；not to worry
+          - en: Please remember to bring your ID tomorrow.
+            answer: 明天请记得带上身份证。
+            hint: remember to bring；tomorrow
+          - en: I didn't remember to save the file before I shut down.
+            answer: 关机前我忘记保存文件了。
+            hint: didn't remember to save；before I shut down
+      - key: remember-state
+        type: vocab_sentence_building
+        title: 说记起与提醒要做
+        vocabWord: remember
+        vocabMeaning: 记得；记住
+        direction: zh_to_en
+        patterns:
+          - chunk: remember that
+            items:
+              - zh: 我记得你说过你会来。
+                answer: I remember that you said you would come.
+                hint: you said you would come
+              - zh: 我不记得那天发生了什么。
+                answer: I don't remember what happened that day.
+                hint: I don't remember what
+          - chunk: remember to
+            items:
+              - zh: 记得今晚给妈妈打个电话。
+                answer: Remember to call Mom tonight.
+                hint: Remember to call
+              - zh: 他常常忘记带钥匙。
+                answer: He often forgets to bring his keys.
+                hint: forgets to bring
+          - chunk: remember doing
+            items:
+              - zh: 我还记得第一次坐船的感觉。
+                answer: I still remember taking a boat for the first time.
+                hint: remember taking；for the first time
+              - zh: 你记得我们以前在这家店吃过饭吗？
+                answer: Do you remember eating at this restaurant before?
+                hint: remember eating；before
+      - key: remember-that-other
+        type: pattern_drill
+        title: 说还记得别的事
+        pattern: remember that [clause]
+        patternMeaning: 记得……（事实）
+        direction: zh_to_en
+        items:
+          - zh: 我记得你说你不吃辣。
+            answer: I remember that you said you don't eat spicy food.
+            hint: you said you don't eat
+          - zh: 他好像不记得我们约过时间了。
+            answer: He doesn't seem to remember that we agreed on a time.
+            hint: doesn't seem to；agreed on a time
+          - zh: 你能试着回忆一下你当时答应过什么吗？
+            answer: Can you try to remember what you promised at the time?
+            hint: try to remember what
+      - key: remember-doing-other
+        type: pattern_drill
+        title: 说记得做过别的事（-ing）
+        pattern: remember [doing]
+        patternMeaning: 记得做过
+        direction: zh_to_en
+        items:
+          - zh: 我记得在这座城市住过一年。
+            answer: I remember living in this city for a year.
+            hint: remember living；for a year
+          - zh: 你记得关窗了吗？我记得关过了。
+            answer: Do you remember closing the window? I remember doing it.
+            hint: remember closing；remember doing it
+          - zh: 她突然记起自己答应过要帮忙。
+            answer: She suddenly remembered agreeing to help.
+            hint: remembered agreeing
+      - key: remember-to-do-other
+        type: pattern_drill
+        title: 说记得要去做别的事（to do）
+        pattern: remember to [do]
+        patternMeaning: 记得要去做
+        direction: zh_to_en
+        items:
+          - zh: 出门记得关掉暖气。
+            answer: Remember to turn off the heat when you go out.
+            hint: Remember to turn off
+          - zh: 我等了一整天，他才记得回我消息。
+            answer: I waited all day before he remembered to reply to my message.
+            hint: remembered to reply
+          - zh: 她在日历上做了标记，提醒自己记得续签。
+            answer: She marked the calendar to remind herself to renew it.
+            hint: remind herself to renew
+      - key: remember-names-other
+        type: pattern_drill
+        title: 说记或不记别人的名字
+        pattern: remember [names]
+        patternMeaning: 记住名字
+        direction: zh_to_en
+        items:
+          - zh: 面试结束后我很难记住所有人的名字。
+            answer: After the interviews, it's hard for me to remember everyone's names.
+            hint: everyone's names
+          - zh: 用小技巧你能更快记住客户的名字。
+            answer: With a little trick, you can remember clients' names faster.
+            hint: clients' names；faster
+          - zh: 他礼貌地道歉，说没记住我的名字。
+            answer: He apologized politely and said he didn't remember my name.
+            hint: didn't remember my name
+      - key: if-remember-other
+        type: pattern_drill
+        title: 说如果记得没错的各种情况
+        pattern: if I remember correctly
+        patternMeaning: 如果我没记错
+        direction: zh_to_en
+        items:
+          - zh: 如果我没记错，票已经卖完了。
+            answer: If I remember correctly, the tickets are already sold out.
+            hint: already sold out
+          - zh: 如果我没记错，那是他第一次上台演讲。
+            answer: If I remember correctly, that was his first time speaking on stage.
+            hint: first time speaking on stage
+          - zh: 如果我没记错的话，合同三月到期。
+            answer: If I remember correctly, the contract expires in March.
+            hint: expires in March
+      - key: remember-clearly-other
+        type: pattern_drill
+        title: 说清楚地记得别的事
+        pattern: remember [something] clearly
+        patternMeaning: 清楚地记得
+        direction: zh_to_en
+        items:
+          - zh: 我清楚地记得他当时的表情。
+            answer: I remember his expression clearly.
+            hint: his expression
+          - zh: 她不太清楚记得整件事，只有片段。
+            answer: She doesn't remember the whole thing clearly—only fragments.
+            hint: the whole thing；only fragments
+          - zh: 你能清楚地记得密码吗？
+            answer: Can you remember the password clearly?
+            hint: the password
+      - key: remember-vividly-other
+        type: pattern_drill
+        title: 说生动地记得别的画面
+        pattern: remember [something] vividly
+        patternMeaning: 生动地记得
+        direction: zh_to_en
+        items:
+          - zh: 我生动地记得小时候那条街的气味。
+            answer: I remember vividly the smell of that street when I was little.
+            hint: the smell of that street
+          - zh: 那场雨他还生动地记得，像电影一样。
+            answer: He still remembers that rain vividly, like a movie.
+            hint: like a movie
+          - zh: 有些噩梦她记得太鲜活了，醒来还在怕。
+            answer: Some nightmares she remembers so vividly she's still scared when she wakes up.
+            hint: so vividly；when she wakes up
+      - key: remember-day-build
+        type: sentence_decomposition
+        title: 把还记得那天说完整
+        sourceKind: chunk
+        sourceText: remember that day
+        fullSentence: I still remember that day when we got lost and laughed until dark.
+        fullSentenceZh: 我还记得那天我们迷路了，一直笑到天黑。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I still remember that day.
+            zh: 我还记得那天。
+            highlight: ''
+            hint: 先说我还记得那天
+          - level: 2
+            label: 加那天发生的事
+            en: I still remember that day when we got lost.
+            zh: 我还记得那天我们迷路了。
+            highlight: when we got lost
+            hint: 补上那天我们迷路了
+          - level: 3
+            label: 完整句
+            en: I still remember that day when we got lost and laughed until dark.
+            zh: 我还记得那天我们迷路了，一直笑到天黑。
+            highlight: laughed until dark
+            hint: 补上一直笑到天黑
+      - key: remember-to-lock-build
+        type: sentence_decomposition
+        title: 把记得去锁门说完整
+        sourceKind: chunk
+        sourceText: remember to lock the door
+        fullSentence: Before you go to bed, please remember to lock the door and check the windows.
+        fullSentenceZh: 睡之前请记得锁门，并检查一下窗户。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Please remember to lock the door.
+            zh: 请记得锁门。
+            highlight: ''
+            hint: 先说请记得锁门
+          - level: 2
+            label: 加时间
+            en: Before you go to bed, please remember to lock the door.
+            zh: 睡之前请记得锁门。
+            highlight: Before you go to bed
+            hint: 补上睡之前
+          - level: 3
+            label: 完整句
+            en: Before you go to bed, please remember to lock the door and check the windows.
+            zh: 睡之前请记得锁门，并检查一下窗户。
+            highlight: check the windows
+            hint: 补上并检查窗户

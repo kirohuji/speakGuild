@@ -1,0 +1,386 @@
+learning:
+  exercises:
+    pipeline:
+      - key: decide-to-stay
+        kind: chunk
+        type: chunk_substitution
+        title: 说决定留下来
+        chunk: decide to stay
+        chunkMeaning: 决定留下
+        direction: zh_to_en
+        items:
+          - zh: 我们决定留下来过夜。
+            answer: We decided to stay overnight.
+            hint: overnight
+          - zh: 她最后决定不走了。
+            answer: In the end, she decided to stay.
+            hint: In the end
+          - zh: 考虑到天气，他们决定留在酒店。
+            answer: Given the weather, they decided to stay at the hotel.
+            hint: Given the weather；at the hotel
+      - key: decide-on-a-date
+        kind: chunk
+        type: chunk_substitution
+        title: 说定下日期
+        chunk: decide on a date
+        chunkMeaning: 选定日期
+        direction: zh_to_en
+        items:
+          - zh: 我们还得把婚礼日期定下来。
+            answer: We still need to decide on a date for the wedding.
+            hint: for the wedding
+          - zh: 委员会周五前会敲定会议日期。
+            answer: The committee will decide on a date by Friday.
+            hint: by Friday
+          - zh: 他们去年夏天就把旅行日期选定了。
+            answer: They decided on a date for the trip last summer.
+            hint: for the trip；last summer
+      - key: decide-that-too-risky
+        kind: chunk
+        type: chunk_substitution
+        title: 说认定风险太大
+        chunk: decide that it was too risky
+        chunkMeaning: 认定那太冒险
+        direction: zh_to_en
+        items:
+          - zh: 董事会认定那笔投资太冒险。
+            answer: The board decided that it was too risky.
+            hint: The board
+          - zh: 复核数据后，我们认定上线太冒险。
+            answer: After reviewing the data, we decided that it was too risky.
+            hint: After reviewing the data
+          - zh: 父母商量后认定让孩子独行太冒险。
+            answer: Her parents talked it over and decided that it was too risky.
+            hint: talked it over
+      - key: decide-whether-to-go
+        kind: chunk
+        type: chunk_substitution
+        title: 说斟酌去不去
+        chunk: decide whether to go
+        chunkMeaning: 决定去不去
+        direction: zh_to_en
+        items:
+          - zh: 我还在决定去不去。
+            answer: I'm still deciding whether to go.
+            hint: I'm still deciding
+          - zh: 你得尽快决定参不参加会。
+            answer: You need to decide whether to go to the conference soon.
+            hint: to the conference soon
+          - zh: 下雨后，很多人犹豫还要不要出门。
+            answer: After it rained, many people decided whether to go out or not.
+            hint: go out or not
+      - key: decide-how-to-proceed
+        kind: chunk
+        type: chunk_substitution
+        title: 说定下一步怎么做
+        chunk: decide how to proceed
+        chunkMeaning: 决定如何推进
+        direction: zh_to_en
+        items:
+          - zh: 会议的目标是决定下一步怎么做。
+            answer: The goal of the meeting is to decide how to proceed.
+            hint: The goal of the meeting
+          - zh: 领导让我们自己定怎么推进项目。
+            answer: The leader asked us to decide how to proceed with the project.
+            hint: with the project
+          - zh: 谈崩以后，双方得重新商量怎么走下一步。
+            answer: After talks broke down, both sides had to decide how to proceed.
+            hint: talks broke down
+      - key: finally-decide
+        kind: chunk
+        type: chunk_substitution
+        title: 说总算下定决心
+        chunk: finally decide
+        chunkMeaning: 终于决定
+        direction: zh_to_en
+        items:
+          - zh: 我们终于在周五下了决心。
+            answer: We finally decided on Friday.
+            hint: on Friday
+          - zh: 纠结数月后，她终于决定辞职。
+            answer: After months of hesitation, she finally decided to quit.
+            hint: to quit；After months
+          - zh: 城市议会终于拍板扩建地铁。
+            answer: The city council finally decided to expand the subway.
+            hint: The city council；expand the subway
+      - key: decide-for-yourself
+        kind: chunk
+        type: chunk_substitution
+        title: 说由你自己决定
+        chunk: decide for yourself
+        chunkMeaning: 自己拿主意
+        direction: zh_to_en
+        items:
+          - zh: 这得你自己决定，别人替不了。
+            answer: You have to decide for yourself—no one else can.
+            hint: no one else can
+          - zh: 我给你信息，但去不去你自己选。
+            answer: I'll give you the info, but you decide for yourself whether to go.
+            hint: I'll give you the info；whether to go
+          - zh: 成年后，很多事都要自己拍板。
+            answer: As an adult, you need to decide for yourself on many things.
+            hint: on many things
+      - key: decide-against-moving
+        kind: chunk
+        type: chunk_substitution
+        title: 说决定不搬了
+        chunk: decide against moving
+        chunkMeaning: 决定不搬家
+        direction: zh_to_en
+        items:
+          - zh: 算完账后，他们决定不搬了。
+            answer: After crunching the numbers, they decided against moving.
+            hint: After crunching the numbers
+          - zh: 考虑到孩子学校，我们决定暂不搬家。
+            answer: Considering the kids' school, we decided against moving for now.
+            hint: for now；the kids' school
+          - zh: 房价回落，她反而决定不搬离这座城。
+            answer: As prices fell, she decided against moving away from the city.
+            hint: moving away from the city
+      - key: decide-in-favor-of-proposal
+        kind: chunk
+        type: chunk_substitution
+        title: 说决定支持提案
+        chunk: decide in favor of the proposal
+        chunkMeaning: 决定赞成该提案
+        direction: zh_to_en
+        items:
+          - zh: 董事会投票后决定支持这项提案。
+            answer: The board voted and decided in favor of the proposal.
+            hint: voted and
+          - zh: 听取意见后，委员会决定赞成提案。
+            answer: After hearing feedback, the committee decided in favor of the proposal.
+            hint: After hearing feedback
+          - zh: 多数成员最后还是站到了提案一边。
+            answer: Most members finally decided in favor of the proposal.
+            hint: Most members finally
+      - key: cant-decide-which-one
+        kind: chunk
+        type: chunk_substitution
+        title: 说拿不准选哪个
+        chunk: can't decide which one
+        chunkMeaning: 没法决定选哪一个
+        direction: zh_to_en
+        items:
+          - zh: 两件都好看，我选不出来。
+            answer: They both look great—I can't decide which one.
+            hint: They both look great
+          - zh: 顾客在蓝色和绿色之间犹豫不决。
+            answer: The customer can't decide which one, blue or green.
+            hint: blue or green
+          - zh: 试吃之后，我们仍然定不下要哪道主菜。
+            answer: After tasting everything, we still can't decide which one to order.
+            hint: which one to order
+      - key: decide-whether-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在犹豫去留
+        chunk: decide whether to
+        chunkMeaning: 决定是否……
+        direction: en_to_zh
+        items:
+          - en: She needs to decide whether to accept the job abroad.
+            answer: 她需要决定要不要接那份国外的工作。
+            hint: accept the job abroad
+          - en: We haven't decided whether to renew the lease yet.
+            answer: 我们还没决定要不要续租。
+            hint: renew the lease
+          - en: They finally decided whether to launch this quarter or wait.
+            answer: 他们终于定了这季度上线还是再等等。
+            hint: launch this quarter or wait
+      - key: decide-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方认定某事
+        chunk: decided that
+        chunkMeaning: 认定……；决定……
+        direction: en_to_zh
+        items:
+          - en: The panel decided that the evidence wasn't strong enough.
+            answer: 专家组认定证据不够有力。
+            hint: wasn't strong enough
+          - en: He decided that staying was safer than leaving.
+            answer: 他觉得留下比离开更安全。
+            hint: staying was safer
+          - en: Investors decided that the market was too volatile for now.
+            answer: 投资者认为目前市场波动太大，暂时不合适。
+            hint: too volatile for now
+      - key: decide-state
+        type: vocab_sentence_building
+        title: 说拍板与拿主意
+        vocabWord: decide
+        vocabMeaning: 决定；下决心
+        direction: zh_to_en
+        patterns:
+          - chunk: decide to
+            items:
+              - zh: 我们决定提前回家过年。
+                answer: We decided to go home for Spring Festival early.
+                hint: go home；Spring Festival
+              - zh: 她还没决定是否要读研。
+                answer: She hasn't decided whether to pursue a master's degree.
+                hint: pursue a master's degree
+          - chunk: decide on
+            items:
+              - zh: 团队必须在下周一前定下方案。
+                answer: The team must decide on a plan by next Monday.
+                hint: a plan；by next Monday
+              - zh: 他们在三家供应商里选了一家。
+                answer: They decided on one of the three suppliers.
+                hint: one of the three suppliers
+          - chunk: can't decide
+            items:
+              - zh: 我左右为难，午饭点沙拉还是面条。
+                answer: I can't decide between salad or noodles for lunch.
+                hint: salad or noodles
+              - zh: 董事会迟迟定不下新任 CEO。
+                answer: The board still can't decide on a new CEO.
+                hint: on a new CEO
+      - key: decide-to-other
+        type: pattern_drill
+        title: 说决定做别的事
+        pattern: decide to [verb]
+        patternMeaning: 决定做某事
+        direction: zh_to_en
+        items:
+          - zh: 他决定卖掉旧车换电车。
+            answer: He decided to sell his old car and buy an electric one.
+            hint: sell his old car
+          - zh: 公司决定暂停招聘一个季度。
+            answer: The company decided to pause hiring for a quarter.
+            hint: pause hiring
+          - zh: 我们决定先小范围试点再全面推广。
+            answer: We decided to run a pilot before rolling it out widely.
+            hint: run a pilot；rolling it out
+      - key: decide-on-other
+        type: pattern_drill
+        title: 说在别的事上做选择
+        pattern: decide on [something]
+        patternMeaning: 在……上做出选择
+        direction: zh_to_en
+        items:
+          - zh: 他们花了两天才定下主题色。
+            answer: It took them two days to decide on the theme color.
+            hint: the theme color
+          - zh:  jury 最终选定了最佳影片。
+            answer: The jury finally decided on the best film.
+            hint: the best film
+          - zh: 家庭会议里大家敲定了度假目的地。
+            answer: At the family meeting, they decided on a vacation destination.
+            hint: vacation destination
+      - key: decide-that-other
+        type: pattern_drill
+        title: 说认定别的判断
+        pattern: decide that [clause]
+        patternMeaning: 认定……
+        direction: zh_to_en
+        items:
+          - zh: 法官认定被告无罪。
+            answer: The judge decided that the defendant was not guilty.
+            hint: not guilty
+          - zh: 我们认定当前节奏太快，需要放慢。
+            answer: We decided that the current pace was too fast and needed to slow down.
+            hint: too fast；slow down
+          - zh: 研究小组认定假说需要更多数据支撑。
+            answer: The research group decided that the hypothesis needed more data support.
+            hint: needed more data support
+      - key: decide-how-other
+        type: pattern_drill
+        title: 说定别的推进方式
+        pattern: decide how to proceed
+        patternMeaning: 决定如何继续
+        direction: zh_to_en
+        items:
+          - zh: 试点结束后，团队要重新定怎么推进。
+            answer: After the pilot, the team must decide how to proceed.
+            hint: After the pilot
+          - zh: 投诉激增，客服得商量后续怎么处理。
+            answer: With complaints rising, support needs to decide how to proceed.
+            hint: complaints rising
+          - zh: 战略合作失败，双方连夜定下一步安排。
+            answer: When the partnership failed, both sides stayed up to decide how to proceed.
+            hint: stayed up
+      - key: decide-against-other
+        type: pattern_drill
+        title: 说决定不做某事
+        pattern: decide against [doing]
+        patternMeaning: 决定不做
+        direction: zh_to_en
+        items:
+          - zh: 体检建议后，他决定不再熬夜加班。
+            answer: After the checkup advice, he decided against working late every night.
+            hint: working late every night
+          - zh: 听证会后，市政府决定暂不拆迁老街区。
+            answer: After the hearing, the city decided against demolishing the old district for now.
+            hint: demolishing the old district
+          - zh: 试镜落选，她反而决定不转行当演员了。
+            answer: After missing the audition, she decided against switching careers to acting.
+            hint: switching careers to acting
+      - key: decide-favor-other
+        type: pattern_drill
+        title: 说在别的事上拍板支持
+        pattern: decide in favor of [something]
+        patternMeaning: 决定支持；裁定有利于
+        direction: zh_to_en
+        items:
+          - zh: 仲裁庭裁定支持员工一方。
+            answer: The arbitration panel decided in favor of the employees.
+            hint: the employees
+          - zh: 投票结果倾向环保方案。
+            answer: The vote decided in favor of the greener option.
+            hint: the greener option
+          - zh: 陪审团最终认定原告胜诉。
+            answer: The jury finally decided in favor of the plaintiff.
+            hint: the plaintiff
+      - key: decide-stay-build
+        type: sentence_decomposition
+        title: 把决定留下说完整
+        sourceKind: chunk
+        sourceText: decide to stay
+        fullSentence: We decided to stay another night because the storm made the roads unsafe.
+        fullSentenceZh: 风暴让路况不安全，我们决定再留一晚。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We decided to stay.
+            zh: 我们决定留下来。
+            highlight: ''
+            hint: 先说我们决定留下
+          - level: 2
+            label: 加一点时长
+            en: We decided to stay another night.
+            zh: 我们决定再留一晚。
+            highlight: another night
+            hint: 补上再留一晚
+          - level: 3
+            label: 完整句
+            en: We decided to stay another night because the storm made the roads unsafe.
+            zh: 风暴让路况不安全，我们决定再留一晚。
+            highlight: because the storm made the roads unsafe
+            hint: 补上因为风暴路况不安全
+      - key: decide-proceed-build
+        type: sentence_decomposition
+        title: 把定推进方式说完整
+        sourceKind: chunk
+        sourceText: decide how to proceed
+        fullSentence: After the pilot failed, we met again to decide how to proceed without wasting more budget.
+        fullSentenceZh: 试点失败后我们又开了一次会，商定如何推进才能不再浪费预算。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We need to decide how to proceed.
+            zh: 我们得定一下怎么推进。
+            highlight: ''
+            hint: 先说需要定怎么推进
+          - level: 2
+            label: 加背景
+            en: After the pilot failed, we need to decide how to proceed.
+            zh: 试点失败后，我们得定怎么推进。
+            highlight: After the pilot failed
+            hint: 补上试点失败这一背景
+          - level: 3
+            label: 完整句
+            en: After the pilot failed, we met again to decide how to proceed without wasting more budget.
+            zh: 试点失败后我们又开了一次会，商定如何推进才能不再浪费预算。
+            highlight: without wasting more budget
+            hint: 补上别再浪费预算的目标

@@ -1,0 +1,361 @@
+learning:
+  exercises:
+    pipeline:
+      - key: lead-to-room
+        kind: chunk
+        type: chunk_substitution
+        title: 说他带我们去了楼上的房间
+        chunk: lead us to a small room
+        chunkMeaning: 把我们带到一个小房间
+        direction: zh_to_en
+        items:
+          - zh: 他带我们去了楼上的一个小房间。
+            answer: He led us to a small room upstairs.
+            hint: led；upstairs
+          - zh: 服务员把我们带到了靠窗的桌子。
+            answer: The waiter led us to a table by the window.
+            hint: The waiter；by the window
+          - zh: 请把客人带到会议室。
+            answer: Please lead the guests to the meeting room.
+            hint: the guests
+      - key: lead-to-problems
+        kind: chunk
+        type: chunk_substitution
+        title: 说小错误导致严重问题
+        chunk: lead to serious problems
+        chunkMeaning: 导致严重问题
+        direction: zh_to_en
+        items:
+          - zh: 一个小错误可能导致严重问题。
+            answer: A small mistake can lead to serious problems.
+            hint: can；serious problems
+          - zh: 沟通不够导致了这些问题。
+            answer: Poor communication led to these problems.
+            hint: Poor communication；led to
+          - zh: 不睡觉最后会出大问题。
+            answer: Not sleeping enough can lead to serious problems.
+            hint: Not sleeping enough
+      - key: lead-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说带路和导致
+        chunk: lead the way
+        chunkMeaning: 带路
+        direction: en_to_zh
+        items:
+          - en: You lead the way. I'll follow.
+            answer: 你带路，我跟着。
+            hint: I'll follow
+          - en: This road leads to the station.
+            answer: 这条路通往车站。
+            hint: This road
+          - en: His decision eventually led to a major change.
+            answer: 他的决定最终导致了重大变化。
+            hint: eventually；a major change
+      - key: lead-state
+        type: vocab_sentence_building
+        title: 说带领团队、导致结果、促使判断
+        vocabWord: lead
+        vocabMeaning: 带领；通向；导致
+        direction: zh_to_en
+        patterns:
+          - chunk: lead a team
+            items:
+              - zh: 她带领一个十人的团队。
+                answer: She leads a team of ten people.
+                hint: of ten people
+              - zh: 他刚被派去带一个新团队。
+                answer: He was just asked to lead a new team.
+                hint: was just asked to
+              - zh: 谁带这个项目？
+                answer: Who is leading this project?
+                hint: Who is
+          - chunk: lead to
+            items:
+              - zh: 这条路通向湖边。
+                answer: This road leads to the lake.
+                hint: leads to
+              - zh: 这条路通往车站吗？
+                answer: Does this road lead to the station?
+                hint: Does
+              - zh: 这个门通向哪里？
+                answer: Where does this door lead to?
+                hint: Where does
+          - chunk: lead me to believe
+            items:
+              - zh: 那条消息让我以为会议取消了。
+                answer: The message led me to believe that the meeting was cancelled.
+                hint: led me to believe
+              - zh: 你说的话让我以为你不来了。
+                answer: What you said led me to believe you weren't coming.
+                hint: weren't coming
+              - zh: 别让我误以为你有别的意思。
+                answer: Don't lead me to believe there's something else.
+                hint: something else
+      - key: lead-team
+        kind: chunk
+        type: chunk_substitution
+        title: 说带团队
+        chunk: lead a team
+        chunkMeaning: 带领团队
+        direction: zh_to_en
+        items:
+          - zh: 她带一个十人的团队。
+            answer: She leads a team of ten.
+            hint: a team of ten
+          - zh: 我明年开始带团队。
+            answer: I'll start leading a team next year.
+            hint: start leading
+          - zh: 带团队比一个人干累多了。
+            answer: Leading a team is much harder than working alone.
+            hint: much harder than；working alone
+      - key: lead-way
+        kind: chunk
+        type: chunk_substitution
+        title: 说你来带路
+        chunk: lead the way
+        chunkMeaning: 带路
+        direction: zh_to_en
+        items:
+          - zh: 你来带路，我跟着。
+            answer: You lead the way. I'll follow.
+            hint: I'll follow
+          - zh: 我来带路，你们跟上。
+            answer: I'll lead the way; just follow me.
+            hint: just follow me
+          - zh: 你带路吧，我们不认识这个地方。
+            answer: You lead the way; we don't know this place.
+            hint: this place
+      - key: lead-up-to
+        kind: chunk
+        type: chunk_substitution
+        title: 说一连串事件促成了决定
+        chunk: lead up to the decision
+        chunkMeaning: 逐渐促成这个决定
+        direction: zh_to_en
+        items:
+          - zh: 一连串事件最终促成了这个决定。
+            answer: Several events led up to the decision.
+            hint: led up to
+          - zh: 几个月的问题累积起来，才导致了这次辞职。
+            answer: Months of problems led up to this resignation.
+            hint: Months of problems；resignation
+          - zh: 前面这些争论都是在为最后的表决作铺垫。
+            answer: All the earlier arguments led up to the final vote.
+            hint: the final vote
+      - key: lead-on
+        kind: chunk
+        type: chunk_substitution
+        title: 说她不想让他误会
+        chunk: lead him on
+        chunkMeaning: 让他误以为自己有意思
+        direction: zh_to_en
+        items:
+          - zh: 她不想让他误以为自己对他有意思。
+            answer: She didn't want to lead him on.
+            hint: didn't want to
+          - zh: 别再给他错觉了。
+            answer: Stop leading him on.
+            hint: Stop
+          - zh: 我只是客气，不是想让你误会。
+            answer: I was just being polite; I didn't mean to lead you on.
+            hint: being polite
+      - key: lead-a-life
+        kind: chunk
+        type: chunk_substitution
+        title: 说她过着安静的生活
+        chunk: lead a quiet life
+        chunkMeaning: 过着安静的生活
+        direction: zh_to_en
+        items:
+          - zh: 她过着安静的生活。
+            answer: She leads a quiet life.
+            hint: leads
+          - zh: 他退休后过得很简单。
+            answer: After retiring, he leads a simple life.
+            hint: retiring
+          - zh: 他们在这个小镇过着平静的生活。
+            answer: They lead a peaceful life in this small town.
+            hint: peaceful；in this small town
+      - key: lead-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说导致后果
+        chunk: lead to serious problems
+        chunkMeaning: 导致严重问题
+        direction: en_to_zh
+        items:
+          - en: A small mistake can lead to serious problems.
+            answer: 一个小错误可能导致严重问题。
+            hint: can
+          - en: Poor sleep can lead to health problems.
+            answer: 睡眠不足可能导致健康问题。
+            hint: Poor sleep；health problems
+          - en: What led you to this decision?
+            answer: 是什么让你做出这个决定的？
+            hint: What led you
+      - key: lead-to-severe
+        kind: chunk
+        type: chunk_substitution
+        title: 说忽视细节的后果
+        chunk: lead to serious problems
+        chunkMeaning: 导致严重问题
+        direction: zh_to_en
+        items:
+          - zh: 只要一个小错误，就可能引发严重问题。
+            answer: Even a small mistake can lead to serious problems.
+            hint: Even a small mistake
+          - zh: 不沟通只会导致严重问题。
+            answer: Not talking will only lead to serious problems.
+            hint: Not talking
+          - zh: 幸好这一回没有出大问题。
+            answer: Luckily, this didn't lead to serious problems.
+            hint: Luckily
+      - key: lead-someone-to-place
+        type: pattern_drill
+        title: 说带别人去某地
+        pattern: lead [someone] to [place]
+        patternMeaning: 带某人到某地
+        direction: zh_to_en
+        items:
+          - zh: 他带我们穿过了后院。
+            answer: He led us through the backyard.
+            hint: through the backyard
+          - zh: 保安把我们从侧门带了出去。
+            answer: The guard led us out through the side door.
+            hint: The guard
+          - zh: 请把客人带到楼上来。
+            answer: Please lead the guests upstairs.
+            hint: upstairs
+      - key: lead-to-result
+        type: pattern_drill
+        title: 说导致别的结果
+        pattern: lead to [result]
+        patternMeaning: 导致某结果
+        direction: zh_to_en
+        items:
+          - zh: 偷懒会导致成绩下降。
+            answer: Being lazy leads to worse grades.
+            hint: Being lazy；worse grades
+          - zh: 那场雨直接导致了洪水。
+            answer: That rain led directly to the flood.
+            hint: directly；the flood
+          - zh: 谈得不好不会有什么好结果。
+            answer: A bad conversation won't lead to anything good.
+            hint: won't lead to
+      - key: lead-team-other
+        type: pattern_drill
+        title: 说带领别的团队
+        pattern: lead [team/group]
+        patternMeaning: 带领团队
+        direction: zh_to_en
+        items:
+          - zh: 她带了三年销售团队。
+            answer: She led the sales team for three years.
+            hint: the sales team；for three years
+          - zh: 谁来带这组新人？
+            answer: Who will lead this group of new people?
+            hint: this group
+          - zh: 一个好的经理应该带头做事。
+            answer: A good manager should lead the team by example.
+            hint: by example
+      - key: lead-way-other
+        type: pattern_drill
+        title: 说带路和带头
+        pattern: lead the way
+        patternMeaning: 带路；带头
+        direction: zh_to_en
+        items:
+          - zh: 你带路，我跟在你后面。
+            answer: You lead the way, and I'll follow behind you.
+            hint: follow behind you
+          - zh: 在这次改革中，他们公司带了头。
+            answer: Their company led the way in this reform.
+            hint: in this reform
+          - zh: 带路的是一位老向导。
+            answer: The person leading the way was an old guide.
+            hint: The person leading the way
+      - key: lead-up-other
+        type: pattern_drill
+        title: 说为某事作铺垫
+        pattern: lead up to [event]
+        patternMeaning: 逐渐促成某事
+        direction: zh_to_en
+        items:
+          - zh: 这些讨论为最终协议作了铺垫。
+            answer: These discussions led up to the final agreement.
+            hint: the final agreement
+          - zh: 在婚礼之前，他们准备了好几个月。
+            answer: They prepared for months leading up to the wedding.
+            hint: leading up to the wedding
+          - zh: 所有这些都在为换届做准备。
+            answer: All of this is leading up to the election.
+            hint: the election
+      - key: lead-life-other
+        type: pattern_drill
+        title: 说过着某种生活
+        pattern: lead a [kind of] life
+        patternMeaning: 过某种生活
+        direction: zh_to_en
+        items:
+          - zh: 她过着很忙碌的生活。
+            answer: She leads a very busy life.
+            hint: very busy
+          - zh: 他们想在小镇上过安稳的日子。
+            answer: They want to lead a stable life in a small town.
+            hint: a stable life
+          - zh: 他一个人过着安静的日子。
+            answer: He leads a quiet life on his own.
+            hint: on his own
+      - key: lead-route-build
+        type: sentence_decomposition
+        title: 把这条路通到哪里说完整
+        sourceKind: chunk
+        sourceText: lead to
+        fullSentence: This road leads to the lake, but it's closed in winter.
+        fullSentenceZh: 这条路通向湖边，不过冬天会封路。
+        levels:
+          - level: 1
+            label: 核心句
+            en: This road leads to the lake.
+            zh: 这条路通向湖边。
+            highlight: ''
+            hint: 先说通向湖边
+          - level: 2
+            label: 加条件
+            en: This road leads to the lake and is quite narrow.
+            zh: 这条路通向湖边，而且很窄。
+            highlight: is quite narrow
+            hint: 补上很窄
+          - level: 3
+            label: 完整句
+            en: This road leads to the lake, but it's closed in winter.
+            zh: 这条路通向湖边，不过冬天会封路。
+            highlight: but it's closed in winter
+            hint: 补上冬天封路
+      - key: lead-way-build
+        type: sentence_decomposition
+        title: 把带路说完整
+        sourceKind: vocab
+        sourceText: lead
+        fullSentence: You lead the way, and we'll follow you to the parking lot.
+        fullSentenceZh: 你带路，我们跟着你去停车场。
+        levels:
+          - level: 1
+            label: 核心句
+            en: You lead the way.
+            zh: 你带路。
+            highlight: ''
+            hint: 先说带路
+          - level: 2
+            label: 加跟随
+            en: You lead the way, and we'll follow.
+            zh: 你带路，我们跟着。
+            highlight: we'll follow
+            hint: 补上跟着
+          - level: 3
+            label: 完整句
+            en: You lead the way, and we'll follow you to the parking lot.
+            zh: 你带路，我们跟着你去停车场。
+            highlight: to the parking lot
+            hint: 补上到停车场

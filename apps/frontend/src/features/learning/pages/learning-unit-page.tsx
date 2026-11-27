@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, BookOpen,
+  ArrowLeft, ChevronRight, BookOpen,
   Target, Download,
   ChevronDown,
 } from 'lucide-react'
@@ -35,6 +36,9 @@ import {
 } from '../components/expression-prep-section'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { DesktopLearningShell, useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
+import { desktopLearningHref } from '@/features/home/desktop-learning-section'
 import { displayLearningUnitLocation } from '../lib/learning-unit-display'
 
 const PREP_PAGE_SIZE = 8
@@ -46,10 +50,25 @@ function pageFromSearchParams(searchParams: URLSearchParams, name: string) {
 }
 
 export function LearningUnitPage() {
+  const isMobile = useIsMobile()
+  if (!isMobile) {
+    return (
+      <DesktopLearningShell section="learning" asideMode="slot">
+        <LearningUnitPageContent />
+      </DesktopLearningShell>
+    )
+  }
+  return <LearningUnitPageContent />
+}
+
+function LearningUnitPageContent() {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
+  const asideSlot = useDesktopAsideSlot()
   const { unitId } = useParams<{ unitId: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const planHref = isMobile ? '/learning' : desktopLearningHref('learning')
 
   // 数据：来自 store
   const unit = useLearningStore((s) => s.unitDetail)
@@ -441,77 +460,70 @@ export function LearningUnitPage() {
   }, [setSearchParams])
 
   // 当前 unit 已有数据时不展示骨架，避免切换/重进时闪烁
-  if (loading && unit?.id !== unitId) return <MobilePageLoading rows={5} />
-  if (!unit && !loading) return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <Target className="size-12 text-muted-foreground/40" />
-      <p className="text-center text-muted-foreground">{isEnrolled ? t('learning.packNeedsDownload') : t('learning.unitNotFound')}</p>
-      {isEnrolled ? (
-        <Button
-          onClick={() => unitId && void downloadUnitPack(unitId)}
-          disabled={Boolean(downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done')}
-        >
-          <Download className="size-4" />
-          {downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done'
-            ? t('learning.downloading')
-            : t('learning.redownloadPack')}
-        </Button>
-      ) : (
-        <Button variant="secondary" className="border-0 shadow-none" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
-      )}
-    </div>
-  )
-
-  return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
-      {/* ===== Header ===== */}
-      <div className="mb-4">
-        <div className="flex min-h-10 items-center gap-3 md:hidden">
-          <button
-            type="button"
-            onClick={() => navigate('/learning')}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
-            aria-label={t('learning.learningPlan')}
+  if (loading && unit?.id !== unitId) {
+    return <MobilePageLoading rows={5} />
+  }
+  if (!unit && !loading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+        <Target className="size-12 text-muted-foreground/40" />
+        <p className="text-center text-muted-foreground">{isEnrolled ? t('learning.packNeedsDownload') : t('learning.unitNotFound')}</p>
+        {isEnrolled ? (
+          <Button
+            onClick={() => unitId && void downloadUnitPack(unitId)}
+            disabled={Boolean(downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done')}
           >
-            <ArrowLeft className="size-4" />
-          </button>
-          <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-            <p className="truncate text-xs text-muted-foreground">{unit.category}</p>
-            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{unit.title}</h1>
-          </div>
-        </div>
-        <div className="hidden md:block">
-          <Link to="/learning" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="size-4" /> {t('learning.learningPlan')}
-          </Link>
-          <div className="flex items-start justify-between gap-3 px-1">
-          <div className="min-w-0">
-            <Badge variant="secondary" className="mb-2 rounded-full">{unit.category}</Badge>
-            <h1 className="text-xl font-bold leading-tight text-foreground">{unit.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {displayLearningUnitLocation(unit.location, unit.contentMode === 'nqtr'
+            <Download className="size-4" />
+            {downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done'
+              ? t('learning.downloading')
+              : t('learning.redownloadPack')}
+          </Button>
+        ) : (
+          <Button variant="secondary" className="border-0 shadow-none" asChild><Link to={planHref}>{t('learning.backToPlan')}</Link></Button>
+        )}
+      </div>
+    )
+  }
+
+  const knowledgeCollapsed = isMobile && collapsedSections.has('knowledge')
+  const topicsCollapsed = isMobile && collapsedSections.has('topics')
+
+  const page = (
+    <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-24 pt-3' : 'flex h-full min-h-0 flex-col pb-0')}>
+      {/* ===== Header：与 practice/session 同一套圆形返回 + 双行标题 ===== */}
+      <div className={cn('mb-4 flex min-h-10 items-center gap-3', !isMobile && 'shrink-0')}>
+        <button
+          type="button"
+          onClick={() => navigate(planHref)}
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+          aria-label={t('learning.learningPlan')}
+        >
+          <ArrowLeft className="size-4" />
+        </button>
+        <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+          <p className="truncate text-xs text-muted-foreground">
+            {unit.category}
+            {!isMobile && unit.location
+              ? ` · ${displayLearningUnitLocation(unit.location, unit.contentMode === 'nqtr'
                 ? t('learning.contentModeNqtr')
-                : unit.contentMode === 'story' ? t('learning.contentModeStory') : unit.category)}
-            </p>
-          </div>
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Target className="size-5" />
-          </div>
-          </div>
+                : unit.contentMode === 'story' ? t('learning.contentModeStory') : unit.category)}`
+              : ''}
+          </p>
+          <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{unit.title}</h1>
         </div>
       </div>
 
       {/* ===== 说明 ===== */}
-      <section className="mb-5">
+      <section className={cn('mb-5', !isMobile && 'shrink-0')}>
         <SectionHeader
           eyebrow="1"
           title={t('learning.preparationTitle')}
-          subtitle={collapsedSections.has('prep') ? undefined : t('learning.prepSubtitle')}
-          collapsible
-          collapsed={collapsedSections.has('prep')}
+          subtitle={(isMobile && collapsedSections.has('prep')) ? undefined : t('learning.prepSubtitle')}
+          collapsible={isMobile}
+          collapsed={isMobile && collapsedSections.has('prep')}
           onToggle={() => toggleSection('prep')}
         />
-        {collapsedSections.has('prep') ? (
+        {(isMobile && collapsedSections.has('prep')) ? (
         <div className="rounded-lg bg-muted/30 px-4 py-3">
           <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
             {unit.description || t('learning.prepFallback')}
@@ -528,153 +540,171 @@ export function LearningUnitPage() {
         )}
       </section>
 
-      {/* ===== 知识点 ===== */}
-      <section className="mb-5">
-        <SectionHeader
-          eyebrow="2"
-          title={t('learning.knowledgePoints')}
-          subtitle={collapsedSections.has('knowledge') ? undefined : t('learning.knowledgeSubtitle')}
-          meta={`${vocabTotal + chunkTotal + patternTotal}${t('learning.items')}`}
-          collapsible
-          collapsed={collapsedSections.has('knowledge')}
-          onToggle={() => toggleSection('knowledge')}
-        />
+      {/* ===== 知识点：桌面右栏；移动端中栏可折叠 ===== */}
+      {(() => {
+        const knowledgeSection = (
+          <section className={cn(isMobile ? 'mb-5' : 'flex h-full min-h-0 flex-col')}>
+            <SectionHeader
+              eyebrow={isMobile ? '2' : undefined}
+              title={t('learning.knowledgePoints')}
+              subtitle={knowledgeCollapsed ? undefined : t('learning.knowledgeSubtitle')}
+              meta={`${vocabTotal + chunkTotal + patternTotal}${t('learning.items')}`}
+              collapsible={isMobile}
+              collapsed={knowledgeCollapsed}
+              onToggle={() => toggleSection('knowledge')}
+            />
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3" data-mobile-route-swipe>
-          <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-            <TabsTrigger value="vocab" className="rounded-md text-xs">
-              {t('learning.vocab')} {vocabTotal}
-            </TabsTrigger>
-            <TabsTrigger value="chunk" className="rounded-md text-xs">
-              {t('learning.coreChunks')} {chunkTotal}
-            </TabsTrigger>
-            <TabsTrigger value="pattern" className="rounded-md text-xs">
-              {t('learning.patterns')} {patternTotal}
-            </TabsTrigger>
-          </TabsList>
+            <Tabs value={activeTab} onValueChange={handleTabChange} className={cn('space-y-3', !isMobile && 'flex min-h-0 flex-1 flex-col')} data-mobile-route-swipe>
+              <TabsList className="grid h-10 w-full shrink-0 grid-cols-3 rounded-lg bg-muted/70 p-1">
+                <TabsTrigger value="vocab" className="rounded-md text-xs">
+                  {t('learning.vocab')} {vocabTotal}
+                </TabsTrigger>
+                <TabsTrigger value="chunk" className="rounded-md text-xs">
+                  {t('learning.coreChunks')} {chunkTotal}
+                </TabsTrigger>
+                <TabsTrigger value="pattern" className="rounded-md text-xs">
+                  {t('learning.patterns')} {patternTotal}
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="vocab" className="mt-0 space-y-2" data-mobile-gesture-allow>
-            {vocabTotal > 0 ? (
-              <>
-                {(collapsedSections.has('knowledge') ? (projected ? vocabPageItems.items : unit.vocabularies).slice(0, 2) : vocabPageItems.items).map((vocab, index) => (
-                  <VocabPrepCard
-                    key={vocab.id}
-                    vocab={vocab}
-                    collected={collectedTexts.has(vocab.word)}
-                    expanded={expandedItemId === vocab.id}
-                    onToggle={() => handleItemClick(vocab.id)}
-                    onOpen={() => openDialog('vocab', collapsedSections.has('knowledge') && !projected
-                      ? unit.vocabularies.indexOf(vocab)
-                      : vocabPageItems.startIndex + index)}
-                    onCollect={() => handleCollectWord(vocab)}
-                    {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
-                  />
-                ))}
-                {!collapsedSections.has('knowledge') && (
-                <PrepPager
-                  currentPage={prepPage.vocab}
-                  totalPages={vocabPageItems.totalPages}
-                  totalItems={vocabTotal}
-                  onPageChange={(page) => changePrepPage('vocab', page)}
-                />
-                )}
-              </>
-            ) : (
-              <EmptyPrepState label={t('learning.noVocab')} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="chunk" className="mt-0 space-y-2" data-mobile-gesture-allow>
-            {chunkTotal > 0 ? (
-              <>
-                {(collapsedSections.has('knowledge') ? (projected ? chunkPageItems.items : unit.chunks).slice(0, 2) : chunkPageItems.items).map((chunk, index) => (
-                  <ChunkPrepCard
-                    key={chunk.id}
-                    chunk={chunk}
-                    collected={collectedTexts.has(chunk.text)}
-                    expanded={expandedItemId === chunk.id}
-                    onToggle={() => handleItemClick(chunk.id)}
-                    onOpen={() => openDialog('chunk', collapsedSections.has('knowledge') && !projected
-                      ? unit.chunks.indexOf(chunk)
-                      : chunkPageItems.startIndex + index)}
-                    onCollect={() => handleCollectChunk(chunk)}
-                  />
-                ))}
-                {!collapsedSections.has('knowledge') && (
-                <PrepPager
-                  currentPage={prepPage.chunk}
-                  totalPages={chunkPageItems.totalPages}
-                  totalItems={chunkTotal}
-                  onPageChange={(page) => changePrepPage('chunk', page)}
-                />
-                )}
-              </>
-            ) : (
-              <EmptyPrepState label={t('learning.noChunks')} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="pattern" className="mt-0 space-y-2" data-mobile-gesture-allow>
-            {patternTotal > 0 ? (
-              <>
-                {(collapsedSections.has('knowledge') ? (projected ? patternPageItems.items : unit.sentencePatterns).slice(0, 2) : patternPageItems.items).map((pattern, index) => {
-                  const absoluteIndex = collapsedSections.has('knowledge') && !projected
-                    ? unit.sentencePatterns!.indexOf(pattern)
-                    : patternPageItems.startIndex + index
-                  const key = `${pattern.topicId}-${absoluteIndex}`
-                  return (
-                    <PatternPrepCard
-                      key={key}
-                      pattern={pattern}
-                      collected={collectedTexts.has(pattern.pattern)}
-                      expanded={expandedItemId === key}
-                      onToggle={() => handleItemClick(key)}
-                      onOpen={() => openDialog('pattern', absoluteIndex)}
-                      onCollect={() => handleCollectPattern(pattern)}
+              <TabsContent value="vocab" className={cn('mt-0 space-y-2', !isMobile && 'min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide')} data-mobile-gesture-allow>
+                {vocabTotal > 0 ? (
+                  <>
+                    {(knowledgeCollapsed ? (projected ? vocabPageItems.items : unit.vocabularies).slice(0, 2) : vocabPageItems.items).map((vocab, index) => (
+                      <VocabPrepCard
+                        key={vocab.id}
+                        vocab={vocab}
+                        collected={collectedTexts.has(vocab.word)}
+                        expanded={expandedItemId === vocab.id}
+                        onToggle={() => handleItemClick(vocab.id)}
+                        onOpen={() => openDialog('vocab', knowledgeCollapsed && !projected
+                          ? unit.vocabularies.indexOf(vocab)
+                          : vocabPageItems.startIndex + index)}
+                        onCollect={() => handleCollectWord(vocab)}
+                        {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
+                      />
+                    ))}
+                    {!knowledgeCollapsed && (
+                    <PrepPager
+                      currentPage={prepPage.vocab}
+                      totalPages={vocabPageItems.totalPages}
+                      totalItems={vocabTotal}
+                      onPageChange={(page) => changePrepPage('vocab', page)}
                     />
-                  )
-                })}
-                {!collapsedSections.has('knowledge') && (
-                <PrepPager
-                  currentPage={prepPage.pattern}
-                  totalPages={patternPageItems.totalPages}
-                  totalItems={patternTotal}
-                  onPageChange={(page) => changePrepPage('pattern', page)}
-                />
+                    )}
+                  </>
+                ) : (
+                  <EmptyPrepState label={t('learning.noVocab')} />
                 )}
-              </>
-            ) : (
-              <EmptyPrepState label={t('learning.noPatterns')} />
-            )}
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
 
-        {collapsedSections.has('knowledge') && (
-          <CurrentTabExpandButton
-            itemCount={currentKnowledgeTabCount}
-            onExpand={() => toggleSection('knowledge')}
-          />
-        )}
-      </section>
+              <TabsContent value="chunk" className={cn('mt-0 space-y-2', !isMobile && 'min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide')} data-mobile-gesture-allow>
+                {chunkTotal > 0 ? (
+                  <>
+                    {(knowledgeCollapsed ? (projected ? chunkPageItems.items : unit.chunks).slice(0, 2) : chunkPageItems.items).map((chunk, index) => (
+                      <ChunkPrepCard
+                        key={chunk.id}
+                        chunk={chunk}
+                        collected={collectedTexts.has(chunk.text)}
+                        expanded={expandedItemId === chunk.id}
+                        onToggle={() => handleItemClick(chunk.id)}
+                        onOpen={() => openDialog('chunk', knowledgeCollapsed && !projected
+                          ? unit.chunks.indexOf(chunk)
+                          : chunkPageItems.startIndex + index)}
+                        onCollect={() => handleCollectChunk(chunk)}
+                      />
+                    ))}
+                    {!knowledgeCollapsed && (
+                    <PrepPager
+                      currentPage={prepPage.chunk}
+                      totalPages={chunkPageItems.totalPages}
+                      totalItems={chunkTotal}
+                      onPageChange={(page) => changePrepPage('chunk', page)}
+                    />
+                    )}
+                  </>
+                ) : (
+                  <EmptyPrepState label={t('learning.noChunks')} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="pattern" className={cn('mt-0 space-y-2', !isMobile && 'min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide')} data-mobile-gesture-allow>
+                {patternTotal > 0 ? (
+                  <>
+                    {(knowledgeCollapsed ? (projected ? patternPageItems.items : unit.sentencePatterns).slice(0, 2) : patternPageItems.items).map((pattern, index) => {
+                      const absoluteIndex = knowledgeCollapsed && !projected
+                        ? unit.sentencePatterns!.indexOf(pattern)
+                        : patternPageItems.startIndex + index
+                      const key = `${pattern.topicId}-${absoluteIndex}`
+                      return (
+                        <PatternPrepCard
+                          key={key}
+                          pattern={pattern}
+                          collected={collectedTexts.has(pattern.pattern)}
+                          expanded={expandedItemId === key}
+                          onToggle={() => handleItemClick(key)}
+                          onOpen={() => openDialog('pattern', absoluteIndex)}
+                          onCollect={() => handleCollectPattern(pattern)}
+                        />
+                      )
+                    })}
+                    {!knowledgeCollapsed && (
+                    <PrepPager
+                      currentPage={prepPage.pattern}
+                      totalPages={patternPageItems.totalPages}
+                      totalItems={patternTotal}
+                      onPageChange={(page) => changePrepPage('pattern', page)}
+                    />
+                    )}
+                  </>
+                ) : (
+                  <EmptyPrepState label={t('learning.noPatterns')} />
+                )}
+              </TabsContent>
+            </Tabs>
+
+            {knowledgeCollapsed && (
+              <CurrentTabExpandButton
+                itemCount={currentKnowledgeTabCount}
+                onExpand={() => toggleSection('knowledge')}
+              />
+            )}
+          </section>
+        )
+
+        if (!isMobile) {
+          return asideSlot
+            ? createPortal(
+              <div className="scrollbar-hide flex h-full min-h-0 flex-col overflow-hidden px-4 py-4">
+                {knowledgeSection}
+              </div>,
+              asideSlot,
+            )
+            : null
+        }
+        return knowledgeSection
+      })()}
 
       {/* ===== 题目 ===== */}
       {unit.contentMode && !['practice', 'story'].includes(unit.contentMode) && (
-        <ContentModeExperience key={unit.id} unit={unit} />
+        <div className={cn(!isMobile && 'min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide')}>
+          <ContentModeExperience key={unit.id} unit={unit} />
+        </div>
       )}
       {(unit.contentMode ?? (unit.packageType === 'story' ? 'story' : 'practice')) === 'practice' && unit.trainingTopics.length > 0 && (
-        <section className="mb-5">
+        <section className={cn(isMobile ? 'mb-5' : 'flex min-h-0 flex-1 flex-col')}>
           <SectionHeader
-            eyebrow="3"
+            eyebrow={isMobile ? '3' : undefined}
             title={t('learning.practiceTitle')}
-            subtitle={collapsedSections.has('topics') ? undefined : t('learning.practiceSubtitle')}
+            subtitle={topicsCollapsed ? undefined : t('learning.practiceSubtitle')}
             meta={`${unit.trainingTopics.length}${t('learning.questions')}`}
-            collapsible
-            collapsed={collapsedSections.has('topics')}
+            collapsible={isMobile}
+            collapsed={topicsCollapsed}
             onToggle={() => toggleSection('topics')}
           />
-          <div className="space-y-2">
-            {(collapsedSections.has('topics') ? unit.trainingTopics.slice(0, 2) : topicPageItems.items).map((topic, i) => {
-              const absoluteIndex = collapsedSections.has('topics') ? i : topicPageItems.startIndex + i
+          <div className={cn('space-y-2', !isMobile && 'scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain')}>
+            {(topicsCollapsed ? unit.trainingTopics.slice(0, 2) : topicPageItems.items).map((topic, i) => {
+              const absoluteIndex = topicsCollapsed ? i : topicPageItems.startIndex + i
               return (
               <PracticeTopicCard
                 key={topic.id}
@@ -687,8 +717,8 @@ export function LearningUnitPage() {
               )
             })}
           </div>
-          {!collapsedSections.has('topics') && (
-            <div className="mt-2">
+          {!topicsCollapsed && (
+            <div className={cn('mt-2', !isMobile && 'shrink-0')}>
               <PrepPager
                 currentPage={topicPage}
                 totalPages={topicPageItems.totalPages}
@@ -697,7 +727,7 @@ export function LearningUnitPage() {
               />
             </div>
           )}
-          {collapsedSections.has('topics') && (
+          {topicsCollapsed && (
             <Button
               variant="ghost"
               size="sm"
@@ -739,6 +769,8 @@ export function LearningUnitPage() {
       />
     </div>
   )
+
+  return page
 }
 
 function SectionHeader({
@@ -750,7 +782,7 @@ function SectionHeader({
   collapsed = false,
   onToggle,
 }: {
-  eyebrow: string
+  eyebrow?: string
   title: string
   subtitle?: string
   meta?: string
@@ -763,9 +795,11 @@ function SectionHeader({
   return (
     <div className="mb-3 flex items-end justify-between gap-3 px-1">
       <div className="flex min-w-0 items-start gap-2">
-        <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-          {eyebrow}
-        </span>
+        {eyebrow ? (
+          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+            {eyebrow}
+          </span>
+        ) : null}
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           {subtitle && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle}</p>}

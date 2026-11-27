@@ -1,0 +1,363 @@
+learning:
+  exercises:
+    pipeline:
+      - key: appear-in-sky
+        kind: chunk
+        type: chunk_substitution
+        title: 说天空出现一道奇怪的光
+        chunk: appear in the sky
+        chunkMeaning: 出现在天空中
+        direction: zh_to_en
+        items:
+          - zh: 天空中出现了一道奇怪的光。
+            answer: A strange light appeared in the sky.
+            hint: A strange light
+          - zh: 云后面露出了一轮月亮。
+            answer: The moon appeared from behind the clouds.
+            hint: from behind the clouds
+          - zh: 天空中一下子出现了很多烟花。
+            answer: Fireworks appeared in the sky all at once.
+            hint: Fireworks；all at once
+      - key: appear-on-screen
+        kind: chunk
+        type: chunk_substitution
+        title: 说屏幕上突然出现了一条消息
+        chunk: appear on the screen
+        chunkMeaning: 出现在屏幕上
+        direction: zh_to_en
+        items:
+          - zh: 屏幕上突然出现了一条消息。
+            answer: A message appeared on the screen.
+            hint: appear suddenly 的用法；on the screen
+          - zh: 屏幕上突然出现了一个新选项。
+            answer: A new option suddenly appeared on the screen.
+            hint: suddenly
+          - zh: 那个图标一开始没显示出来。
+            answer: The icon didn't appear on the screen at first.
+            hint: didn't；at first
+      - key: appear-screen-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说出现和消失
+        chunk: appear on the screen
+        chunkMeaning: 出现在屏幕上
+        direction: en_to_zh
+        items:
+          - en: A message appeared on the screen.
+            answer: 屏幕上突然出现了一条消息。
+            hint: on the screen
+          - en: A new option suddenly appeared on the screen.
+            answer: 屏幕上突然出现了一个新选项。
+            hint: suddenly
+          - en: The icon didn't appear on the screen at first.
+            answer: 那个图标一开始没显示出来。
+            hint: at first
+      - key: appear-state
+        type: vocab_sentence_building
+        title: 说显得冷静、看来犯了错
+        vocabWord: appear
+        vocabMeaning: 出现；显得；似乎
+        direction: zh_to_en
+        patterns:
+          - chunk: appear calm
+            items:
+              - zh: 她看起来很平静。
+                answer: She appears calm.
+                hint: appears
+              - zh: 他表面上很冷静，其实很紧张。
+                answer: He appeared calm, but he was actually nervous.
+                hint: actually nervous
+              - zh: 面试时尽量显得从容一些。
+                answer: Try to appear calm during the interview.
+                hint: during the interview
+          - chunk: It appears that we made a mistake
+            items:
+              - zh: 看来我们犯了个错误。
+                answer: It appears that we made a mistake.
+                hint: It appears that
+              - zh: 看来问题已经解决了。
+                answer: It appears that the problem has been solved.
+                hint: has been solved
+              - zh: 看来他们临时改了计划。
+                answer: It appears that they changed the plan at the last minute.
+                hint: at the last minute
+          - chunk: appear to be more serious
+            items:
+              - zh: 问题似乎比我们想的更严重。
+                answer: The problem appears to be more serious than we thought.
+                hint: appears to be
+              - zh: 她看起来很着急。
+                answer: She appears to be in a hurry.
+                hint: in a hurry
+              - zh: 这一切似乎没有表面上那么简单。
+                answer: This appears to be more complicated than it looks.
+                hint: than it looks
+      - key: appear-to-know
+        kind: chunk
+        type: chunk_substitution
+        title: 说他似乎知道答案
+        chunk: appear to know the answer
+        chunkMeaning: 似乎知道答案
+        direction: zh_to_en
+        items:
+          - zh: 他似乎知道答案。
+            answer: He appears to know the answer.
+            hint: appears to know
+          - zh: 她好像已经知道结果了。
+            answer: She appears to have known the result.
+            hint: to have known
+          - zh: 他们似乎没听见我说的话。
+            answer: They didn't appear to hear what I said.
+            hint: didn't appear to
+      - key: appear-in-films
+        kind: chunk
+        type: chunk_substitution
+        title: 说她出演过几部电影
+        chunk: appear in several films
+        chunkMeaning: 出演过几部电影
+        direction: zh_to_en
+        items:
+          - zh: 她出演过几部电影。
+            answer: She appeared in several films.
+            hint: appeared in
+          - zh: 他在这部剧里只出现了一集。
+            answer: He appeared in only one episode of this show.
+            hint: only one episode
+          - zh: 这位演员最近两年没怎么露面。
+            answer: This actor hasn't appeared in anything for two years.
+            hint: hasn't appeared
+      - key: appear-before-judge
+        kind: chunk
+        type: chunk_substitution
+        title: 说他出现在法官面前
+        chunk: appear before the judge
+        chunkMeaning: 出庭，出现在法官面前
+        direction: zh_to_en
+        items:
+          - zh: 他出现在法官面前。
+            answer: He appeared before the judge.
+            hint: before the judge
+          - zh: 下个月他要出庭。
+            answer: He has to appear before the judge next month.
+            hint: has to；next month
+          - zh: 那个证人今天出庭作证。
+            answer: The witness appeared before the judge today.
+            hint: The witness
+      - key: appear-on-tv
+        kind: chunk
+        type: chunk_substitution
+        title: 说她昨晚出现在电视上
+        chunk: appear on TV
+        chunkMeaning: 出现在电视上
+        direction: zh_to_en
+        items:
+          - zh: 她昨晚出现在电视上。
+            answer: She appeared on TV last night.
+            hint: last night
+          - zh: 这则广告每天播三次。
+            answer: This ad appears on TV three times a day.
+            hint: three times a day
+          - zh: 他从来没上过电视。
+            answer: He has never appeared on TV.
+            hint: never
+      - key: appear-unlikely
+        kind: chunk
+        type: chunk_substitution
+        title: 说看来他不太可能来
+        chunk: appear unlikely
+        chunkMeaning: 看起来不太可能
+        direction: zh_to_en
+        items:
+          - zh: 看来他不太可能来。
+            answer: It appears unlikely that he'll come.
+            hint: It appears unlikely that
+          - zh: 看来明天不会下雨。
+            answer: It appears unlikely to rain tomorrow.
+            hint: to rain tomorrow
+          - zh: 这个方案好像很难通过。
+            answer: It appears unlikely that the plan will be approved.
+            hint: will be approved
+      - key: appear-in-place-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说出现在某处
+        chunk: appear in
+        chunkMeaning: 出现在某处
+        direction: en_to_zh
+        items:
+          - en: A strange light appeared in the sky.
+            answer: 天空中出现了一道奇怪的光。
+            hint: A strange light
+          - en: A cat appeared at the door.
+            answer: 一只猫突然出现在门口。
+            hint: at the door
+          - en: Her name appeared on the list.
+            answer: 她的名字出现在名单上。
+            hint: on the list
+      - key: appear-films-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 说出现在节目或戏里
+        chunk: appear on TV
+        chunkMeaning: 出现在电视上
+        direction: zh_to_en
+        items:
+          - zh: 这个节目每周播两次。
+            answer: The show appears on TV twice a week.
+            hint: twice a week
+          - zh: 她在话剧里演过一个小角色。
+            answer: She appeared in a play in a small role.
+            hint: a small role
+          - zh: 他在那部纪录片里出现了几秒。
+            answer: He appeared in that documentary for a few seconds.
+            hint: a few seconds
+
+      - key: appear-unlikely-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说看来不太可能
+        chunk: appear unlikely
+        chunkMeaning: 看起来不太可能
+        direction: en_to_zh
+        items:
+          - en: It appears unlikely that he'll come.
+            answer: 看来他不太可能来。
+            hint: he'll come
+          - en: It appears unlikely to rain tomorrow.
+            answer: 看来明天不会下雨。
+            hint: to rain
+          - en: It appears unlikely that the plan will be approved.
+            answer: 这个方案好像很难通过。
+            hint: be approved
+      - key: appear-in-place
+        type: pattern_drill
+        title: 说出现在某处
+        pattern: appear in [place]
+        patternMeaning: 出现在某处
+        direction: zh_to_en
+        items:
+          - zh: 一只猫突然出现在门口。
+            answer: A cat appeared at the door.
+            hint: at the door
+          - zh: 她的名字出现在名单上。
+            answer: Her name appeared on the list.
+            hint: on the list
+          - zh: 问题一开始就出现了。
+            answer: The problem appeared right at the beginning.
+            hint: right at the beginning
+      - key: appear-to-do
+        type: pattern_drill
+        title: 说似乎做某事
+        pattern: appear to [do]
+        patternMeaning: 似乎做某事
+        direction: zh_to_en
+        items:
+          - zh: 他似乎不知道这件事。
+            answer: He appears not to know about it.
+            hint: appears not to
+          - zh: 他们好像已经走了。
+            answer: They appear to have left already.
+            hint: to have left
+          - zh: 这台机器好像坏了。
+            answer: The machine appears to be broken.
+            hint: to be broken
+      - key: appear-adjective
+        type: pattern_drill
+        title: 说看起来怎样
+        pattern: appear [adjective]
+        patternMeaning: 看起来怎样
+        direction: zh_to_en
+        items:
+          - zh: 他看起来很累。
+            answer: He appears tired.
+            hint: appears tired
+          - zh: 这个请求看起来很合理。
+            answer: The request appears reasonable.
+            hint: reasonable
+          - zh: 一切看起来都很正常。
+            answer: Everything appears normal.
+            hint: Everything
+      - key: appear-before-other
+        type: pattern_drill
+        title: 说在别人面前出现或出庭
+        pattern: appear before [someone]
+        patternMeaning: 出现在某人面前
+        direction: zh_to_en
+        items:
+          - zh: 他下周要出庭。
+            answer: He will appear before a judge next week.
+            hint: will；next week
+          - zh: 她出现在委员会面前陈述情况。
+            answer: She appeared before the committee to explain.
+            hint: the committee；to explain
+          - zh: 被告明天出庭。
+            answer: The defendant appears in court tomorrow.
+            hint: The defendant；in court
+      - key: appear-listen
+        type: pattern_drill
+        title: 听懂对方说似乎和出现
+        pattern: appear to [do] / It appears that [clause]
+        patternMeaning: 似乎做某事 / 看来
+        direction: en_to_zh
+        items:
+          - en: He appears to know the answer.
+            answer: 他似乎知道答案。
+            hint: to know
+          - en: It appears that we made a mistake.
+            answer: 看来我们犯了个错误。
+            hint: made a mistake
+          - en: The problem appears to be more serious than we thought.
+            answer: 问题似乎比我们想的更严重。
+            hint: more serious
+      - key: appear-message-build
+        type: sentence_decomposition
+        title: 把消息出现说完整
+        sourceKind: chunk
+        sourceText: appear on the screen
+        fullSentence: A message appeared on the screen, but it disappeared before I could read it.
+        fullSentenceZh: 屏幕上出现了一条消息，可我还没看清它就消失了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: A message appeared.
+            zh: 出现了一条消息。
+            highlight: ''
+            hint: 先说出现了消息
+          - level: 2
+            label: 加位置
+            en: A message appeared on the screen.
+            zh: 屏幕上出现了一条消息。
+            highlight: on the screen
+            hint: 补上在屏幕上
+          - level: 3
+            label: 完整句
+            en: A message appeared on the screen, but it disappeared before I could read it.
+            zh: 屏幕上出现了一条消息，可我还没看清它就消失了。
+            highlight: but it disappeared before I could read it
+            hint: 补上还没看清就消失了
+      - key: appear-mistake-build
+        type: sentence_decomposition
+        title: 把看来犯错了说完整
+        sourceKind: vocab
+        sourceText: appear
+        fullSentence: It appears that we made a mistake in the first step.
+        fullSentenceZh: 看来我们在第一步就犯了个错误。
+        levels:
+          - level: 1
+            label: 核心句
+            en: It appears that we made a mistake.
+            zh: 看来我们犯了个错误。
+            highlight: ''
+            hint: 先说看出错了
+          - level: 2
+            label: 加位置
+            en: It appears that we made a mistake somewhere.
+            zh: 看来我们在某个地方犯了个错误。
+            highlight: somewhere
+            hint: 补上在某个地方
+          - level: 3
+            label: 完整句
+            en: It appears that we made a mistake in the first step.
+            zh: 看来我们在第一步就犯了个错误。
+            highlight: in the first step
+            hint: 补上第一步

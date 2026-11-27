@@ -1,0 +1,359 @@
+learning:
+  exercises:
+    pipeline:
+      - key: pass-station
+        kind: chunk
+        type: chunk_substitution
+        title: 说经过那个老教堂
+        chunk: pass the station
+        chunkMeaning: 经过车站
+        direction: zh_to_en
+        items:
+          - zh: 回家路上我们经过了那座老教堂。
+            answer: We passed the old church on the way home.
+            hint: passed；on the way home
+          - zh: 我们去那里的路上经过了一个小村庄。
+            answer: We passed a small village on the way there.
+            hint: a small village
+          - zh: 坐这趟车会经过车站吗？
+            answer: Does this bus pass the station?
+            hint: Does this bus
+      - key: pass-salt
+        kind: chunk
+        type: chunk_substitution
+        title: 请对方把盐递给我
+        chunk: pass me the salt
+        chunkMeaning: 把盐递给我
+        direction: zh_to_en
+        items:
+          - zh: 你能把盐递给我吗？
+            answer: Could you pass me the salt?
+            hint: Could you
+          - zh: 你能把水递给我吗？
+            answer: Could you pass me the water?
+            hint: the water
+          - zh: 麻烦把盘子递过来一下。
+            answer: Would you pass me the plate?
+            hint: the plate
+      - key: pass-station-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说经过哪里
+        chunk: pass the station
+        chunkMeaning: 经过车站
+        direction: en_to_zh
+        items:
+          - en: We passed the old church on the way home.
+            answer: 回家路上我们经过了那座老教堂。
+            hint: on the way home
+          - en: The bus passed the station without stopping.
+            answer: 公交车经过车站时没有停。
+            hint: without stopping
+          - en: I passed your office yesterday but didn't go in.
+            answer: 我昨天经过你办公室了，但没有进去。
+            hint: didn't go in
+      - key: pass-state
+        type: vocab_sentence_building
+        title: 说通过考试、把消息传下去
+        vocabWord: pass
+        vocabMeaning: 经过；传承；通过
+        direction: zh_to_en
+        patterns:
+          - chunk: pass the exam
+            items:
+              - zh: 我这次终于考过了。
+                answer: I finally passed the exam this time.
+                hint: finally
+              - zh: 我这次没考过。
+                answer: I didn't pass the exam this time.
+                hint: didn't
+              - zh: 他三次才考过。
+                answer: He passed the exam only on his third try.
+                hint: only；his third try
+          - chunk: pass on the message
+            items:
+              - zh: 我会把消息传下去。
+                answer: I'll pass the message on.
+                hint: pass on
+              - zh: 你能帮我把这个话带给他吗？
+                answer: Could you pass this message on to him?
+                hint: on to him
+              - zh: 她把这件事传给了整组人。
+                answer: She passed the news on to the whole team.
+                hint: the whole team
+          - chunk: pass the time
+            items:
+              - zh: 我读书来消磨时间。
+                answer: I read to pass the time.
+                hint: to pass the time
+              - zh: 等车的时候，我们聊天来打发时间。
+                answer: We chatted to pass the time while waiting for the bus.
+                hint: while waiting
+              - zh: 忙起来时，时间过得很快。
+                answer: Time passes quickly when you're busy.
+                hint: Time passes；when you're busy
+      - key: pass-exam
+        kind: chunk
+        type: chunk_substitution
+        title: 说她通过了考试
+        chunk: pass the exam
+        chunkMeaning: 通过考试
+        direction: zh_to_en
+        items:
+          - zh: 她第一次就通过了考试。
+            answer: She passed the exam on her first try.
+            hint: on her first try
+          - zh: 你考试过了吗？
+            answer: Did you pass the exam?
+            hint: Did you
+          - zh: 要是再不用功，这次就过不了。
+            answer: If you don't work harder, you won't pass the exam.
+            hint: If；won't
+      - key: pass-by-house
+        kind: chunk
+        type: chunk_substitution
+        title: 说从房子旁边经过
+        chunk: pass by the house
+        chunkMeaning: 从房子旁边经过
+        direction: zh_to_en
+        items:
+          - zh: 我看到他从窗边经过。
+            answer: I saw him pass by the window.
+            hint: saw him；the window
+          - zh: 我们每天上班都从这栋房子旁边过。
+            answer: We pass by this house every day on the way to work.
+            hint: every day；on the way to work
+          - zh: 他经过的时候跟我打了个招呼。
+            answer: He said hello when he passed by.
+            hint: said hello
+      - key: pass-through-town
+        kind: chunk
+        type: chunk_substitution
+        title: 说火车经过几个小镇
+        chunk: pass through the town
+        chunkMeaning: 穿过这个镇
+        direction: zh_to_en
+        items:
+          - zh: 这趟火车经过几个小镇。
+            answer: The train passes through several small towns.
+            hint: passes through
+          - zh: 我们开车穿过了整个镇子。
+            answer: We passed through the whole town by car.
+            hint: passed through；by car
+          - zh: 火车会在我们镇停吗？
+            answer: Does the train pass through our town?
+            hint: Does
+      - key: pass-away
+        kind: chunk
+        type: chunk_substitution
+        title: 说他祖父去年去世
+        chunk: pass away
+        chunkMeaning: 去世
+        direction: zh_to_en
+        items:
+          - zh: 他的祖父去年去世了。
+            answer: His grandfather passed away last year.
+            hint: passed away
+          - zh: 她在奶奶去世后搬了家。
+            answer: She moved after her grandmother passed away.
+            hint: after；moved
+          - zh: 他病了很久，最后还是走了。
+            answer: He was sick for a long time and finally passed away.
+            hint: finally
+      - key: pass-out
+        kind: chunk
+        type: chunk_substitution
+        title: 说他因为高温昏倒
+        chunk: pass out
+        chunkMeaning: 昏倒
+        direction: zh_to_en
+        items:
+          - zh: 他因为高温昏倒了。
+            answer: He passed out from the heat.
+            hint: from the heat
+          - zh: 她看到血就昏了过去。
+            answer: She passed out at the sight of blood.
+            hint: at the sight of blood
+          - zh: 天气太热，有人晕倒了吗？
+            answer: Did anyone pass out in the heat?
+            hint: anyone；in the heat
+      - key: pass-place
+        type: pattern_drill
+        title: 换个地方说经过
+        pattern: pass [place]
+        patternMeaning: 经过某地
+        direction: zh_to_en
+        items:
+          - zh: 我们经过了一家很不错的咖啡店。
+            answer: We passed a nice coffee shop.
+            hint: a nice coffee shop
+          - zh: 这路车经过博物馆吗？
+            answer: Does this bus pass the museum?
+            hint: the museum
+          - zh: 我们刚才路过了那所学校。
+            answer: We just passed that school.
+            hint: just
+      - key: pass-something-dou
+        type: pattern_drill
+        title: 说把东西递给别人
+        pattern: pass [someone] [something]
+        patternMeaning: 将某物递给某人
+        direction: zh_to_en
+        items:
+          - zh: 能把面包递给我吗？
+            answer: Could you pass me the bread?
+            hint: Could you
+          - zh: 请把文件递给他。
+            answer: Please pass him the file.
+            hint: pass him
+          - zh: 帮我把手机递过来好吗？
+            answer: Can you pass me my phone?
+            hint: my phone
+      - key: pass-something-to
+        type: pattern_drill
+        title: 换一种说法说递给某人
+        pattern: pass [something] to [someone]
+        patternMeaning: 把某物递给某人
+        direction: zh_to_en
+        items:
+          - zh: 你能把盐递给我吗？
+            answer: Could you pass the salt to me?
+            hint: to me
+          - zh: 请把这封信递给她。
+            answer: Please pass this letter to her.
+            hint: this letter
+          - zh: 他把钥匙递给了前台。
+            answer: He passed the key to the front desk.
+            hint: the front desk
+      - key: pass-exam-other
+        type: pattern_drill
+        title: 说通过别的考试
+        pattern: pass [exam/test]
+        patternMeaning: 通过考试
+        direction: zh_to_en
+        items:
+          - zh: 她上个月通过了驾照考试。
+            answer: She passed her driving test last month.
+            hint: her driving test
+          - zh: 这次面试我没通过。
+            answer: I didn't pass this interview.
+            hint: didn't
+          - zh: 只要复习，你就能考过。
+            answer: You'll pass the exam as long as you study.
+            hint: as long as
+      - key: pass-by-other
+        type: pattern_drill
+        title: 说从别处经过
+        pattern: pass by [place]
+        patternMeaning: 从某地经过
+        direction: zh_to_en
+        items:
+          - zh: 我每天早上都经过这家店。
+            answer: I pass by this shop every morning.
+            hint: every morning
+          - zh: 刚才有人从门口经过了。
+            answer: Someone just passed by the door.
+            hint: Someone
+          - zh: 我们可以顺路经过你家。
+            answer: We can pass by your place on the way.
+            hint: on the way
+      - key: pass-through-other
+        type: pattern_drill
+        title: 说穿过别的地方
+        pattern: pass through [place]
+        patternMeaning: 穿过某地
+        direction: zh_to_en
+        items:
+          - zh: 这班车经过市中心。
+            answer: This bus passes through the city center.
+            hint: the city center
+          - zh: 我们只是穿过这个村，没有停。
+            answer: We just passed through this village without stopping.
+            hint: without stopping
+          - zh: 河水从这里流过整座城市。
+            answer: The river passes through the whole city here.
+            hint: The river；the whole city
+      - key: pass-on-other
+        type: pattern_drill
+        title: 说传递别的信息
+        pattern: pass on [information]
+        patternMeaning: 转告消息
+        direction: zh_to_en
+        items:
+          - zh: 请把这个好消息告诉大家。
+            answer: Please pass the good news on to everyone.
+            hint: the good news
+          - zh: 他一收到消息就转告了我。
+            answer: He passed the message on to me as soon as he got it.
+            hint: as soon as he got it
+          - zh: 别忘了把细节转达给团队。
+            answer: Don't forget to pass the details on to the team.
+            hint: the details
+      - key: pass-time-listen
+        type: pattern_drill
+        title: 听懂对方说经过和消磨时间
+        pattern: pass [place] / pass away / pass out
+        patternMeaning: 经过 / 去世 / 昏倒
+        direction: en_to_zh
+        items:
+          - en: The train passes through several small towns.
+            answer: 这趟火车经过几个小镇。
+            hint: several small towns
+          - en: He passed out from the heat.
+            answer: 他因为高温昏倒了。
+            hint: from the heat
+          - en: His grandfather passed away last year.
+            answer: 他的祖父去年去世了。
+            hint: last year
+      - key: pass-salt-build
+        type: sentence_decomposition
+        title: 把递盐这件事说完整
+        sourceKind: chunk
+        sourceText: pass the salt to me
+        fullSentence: Could you pass the salt to me, please?
+        fullSentenceZh: 请你把盐递给我，好吗？
+        levels:
+          - level: 1
+            label: 核心句
+            en: Could you pass me the salt?
+            zh: 你能把盐递给我吗？
+            highlight: ''
+            hint: 先说递盐
+          - level: 2
+            label: 加礼貌
+            en: Could you pass me the salt, please?
+            zh: 你能把盐递给我吗，麻烦了？
+            highlight: please
+            hint: 补上 please
+          - level: 3
+            label: 完整句
+            en: Could you pass the salt to me, please?
+            zh: 请你把盐递给我，好吗？
+            highlight: to me
+            hint: 换成 to 结构
+      - key: pass-town-build
+        type: sentence_decomposition
+        title: 把火车经过小镇说完整
+        sourceKind: vocab
+        sourceText: pass
+        fullSentence: The train passes through several small towns before it reaches the city.
+        fullSentenceZh: 这趟火车在到达城市之前会经过几个小镇。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The train passes through several small towns.
+            zh: 这趟火车经过几个小镇。
+            highlight: ''
+            hint: 先说经过小镇
+          - level: 2
+            label: 加数量
+            en: The train passes through three small towns.
+            zh: 这趟火车经过三个小镇。
+            highlight: three
+            hint: 补上三个
+          - level: 3
+            label: 完整句
+            en: The train passes through several small towns before it reaches the city.
+            zh: 这趟火车在到达城市之前会经过几个小镇。
+            highlight: before it reaches the city
+            hint: 补上到达城市之前

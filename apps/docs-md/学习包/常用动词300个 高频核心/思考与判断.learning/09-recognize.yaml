@@ -1,0 +1,402 @@
+learning:
+  exercises:
+    pipeline:
+      - key: recognize-him
+        kind: chunk
+        type: chunk_substitution
+        title: 说认出是他
+        chunk: recognize him
+        chunkMeaning: 认出他
+        direction: zh_to_en
+        items:
+          - zh: 我一眼就认出是他。
+            answer: I recognized him right away.
+            hint: right away
+          - zh: 她在人群里没认出他来。
+            answer: She didn't recognize him in the crowd.
+            hint: in the crowd
+          - zh: 你能在照片里认出他来吗？
+            answer: Can you recognize him in the photo?
+            hint: Can you；in the photo
+      - key: recognize-faces
+        kind: chunk
+        type: chunk_substitution
+        title: 说认得出人脸
+        chunk: recognize faces
+        chunkMeaning: 辨认面孔
+        direction: zh_to_en
+        items:
+          - zh: 她擅长认脸，见过一次就记得。
+            answer: She's good at recognizing faces—she remembers after one meeting.
+            hint: good at recognizing faces；after one meeting
+          - zh: 戴口罩以后，我很难认出别人的脸。
+            answer: With masks on, I find it hard to recognize faces.
+            hint: With masks on；find it hard
+          - zh: 这孩子还太小，认不出几张脸。
+            answer: The child is still too young to recognize many faces.
+            hint: too young；many faces
+      - key: recognize-him-as-a-friend
+        kind: chunk
+        type: chunk_substitution
+        title: 说认出他是朋友
+        chunk: recognize him as a friend
+        chunkMeaning: 认出他是朋友
+        direction: zh_to_en
+        items:
+          - zh: 她立刻认出他是自己以前的同学兼朋友。
+            answer: She quickly recognized him as an old classmate and friend.
+            hint: quickly recognized him as；old classmate
+          - zh: 保安没把他当朋友，只当陌生访客。
+            answer: The guard didn't recognize him as a friend—only as a stranger.
+            hint: didn't recognize him as；as a stranger
+          - zh: 我一看背影就认出他是老朋友。
+            answer: I recognized him as an old friend the moment I saw his back.
+            hint: the moment I saw his back
+      - key: recognize-that-situation-changed
+        kind: chunk
+        type: chunk_substitution
+        title: 说意识到情况变了
+        chunk: recognize that the situation has changed
+        chunkMeaning: 认识到情况已经改变
+        direction: zh_to_en
+        items:
+          - zh: 我们必须承认形势已经不同了。
+            answer: We must recognize that the situation has changed.
+            hint: We must recognize that
+          - zh: 领导层终于意识到市场环境变了。
+            answer: Leadership finally recognized that the situation has changed in the market.
+            hint: finally recognized；in the market
+          - zh: 你还在按老办法做事，没意识到局面已经变了。
+            answer: You're still doing things the old way and haven't recognized that the situation has changed.
+            hint: the old way；haven't recognized
+      - key: widely-recognized-as-an-expert
+        kind: chunk
+        type: chunk_substitution
+        title: 说被公认为专家
+        chunk: widely recognized as an expert
+        chunkMeaning: 被广泛认可为专家
+        direction: zh_to_en
+        items:
+          - zh: 她在业内被公认为专家。
+            answer: She is widely recognized as an expert in the field.
+            hint: in the field
+          - zh: 这位医生在心脏病领域广受认可。
+            answer: This doctor is widely recognized as an expert in cardiology.
+            hint: in cardiology
+          - zh: 他的作品让他在国际上被当作权威。
+            answer: His work made him widely recognized as an expert internationally.
+            hint: His work made him；internationally
+      - key: instantly-recognize-his-voice
+        kind: chunk
+        type: chunk_substitution
+        title: 说一听就认出他的声音
+        chunk: instantly recognize his voice
+        chunkMeaning: 立刻听出他的声音
+        direction: zh_to_en
+        items:
+          - zh: 电话一响，我立刻听出是他的声音。
+            answer: The phone rang, and I instantly recognized his voice.
+            hint: The phone rang；and
+          - zh: 在嘈杂的酒吧里，她居然还能立刻认出他的嗓音。
+            answer: In the noisy bar, she could still instantly recognize his voice.
+            hint: In the noisy bar；could still
+          - zh: 哪怕多年没联系，我还是能马上听出他来。
+            answer: Even after years out of touch, I can instantly recognize his voice.
+            hint: years out of touch；can
+      - key: barely-recognize-the-place
+        kind: chunk
+        type: chunk_substitution
+        title: 说几乎认不出这地方
+        chunk: barely recognize the place
+        chunkMeaning: 几乎认不出这个地方
+        direction: zh_to_en
+        items:
+          - zh: 十年没回来，我几乎认不出这座城市了。
+            answer: After ten years away, I barely recognize the city.
+            hint: After ten years away
+          - zh: 老家那条街改造后，我差一点认不出来。
+            answer: After the renovation, I barely recognize that street in my hometown.
+            hint: After the renovation；in my hometown
+          - zh: 故地重游，他感慨自己都快认不出童年住过的地方了。
+            answer: Revisiting the old neighborhood, he said he could barely recognize the place where he grew up.
+            hint: Revisiting；where he grew up
+      - key: recognize-importance-of-sleep
+        kind: chunk
+        type: chunk_substitution
+        title: 说认识到睡眠很重要
+        chunk: recognize the importance of sleep
+        chunkMeaning: 认识到睡眠的重要性
+        direction: zh_to_en
+        items:
+          - zh: 很多人嘴上知道，但真正意识到睡眠有多重要的人却不多。
+            answer: Many people talk about it, but few truly recognize the importance of sleep.
+            hint: truly recognize；few
+          - zh: 生病之后，我才开始重视睡眠的价值。
+            answer: After I got sick, I began to recognize the importance of sleep.
+            hint: After I got sick；began to
+          - zh: 医生希望家长能明白充足睡眠对孩子有多关键。
+            answer: Doctors hope parents will recognize the importance of sleep for their children.
+            hint: hope parents will；for their children
+      - key: recognize-a-pattern
+        kind: chunk
+        type: chunk_substitution
+        title: 说看出规律
+        chunk: recognize a pattern
+        chunkMeaning: 识别出一种规律
+        direction: zh_to_en
+        items:
+          - zh: 分析师从中看出了一种规律。
+            answer: The analyst recognized a pattern in the data.
+            hint: in the data
+          - zh: 你什么时候意识到问题在重复出现？
+            answer: When did you recognize a pattern in the problems?
+            hint: When did you；in the problems
+          - zh: 看准趋势以后，投资就容易多了。
+            answer: Once you recognize a pattern, investing gets much easier.
+            hint: Once you recognize；gets much easier
+      - key: recognize-her-contribution
+        kind: chunk
+        type: chunk_substitution
+        title: 说认可她的贡献
+        chunk: recognize her contribution
+        chunkMeaning: 承认她的贡献
+        direction: zh_to_en
+        items:
+          - zh: 公司应该正式表彰她的贡献。
+            answer: The company should formally recognize her contribution.
+            hint: formally；should
+          - zh: 谢幕时，全场都在感谢她的付出。
+            answer: At the curtain call, everyone recognized her contribution.
+            hint: At the curtain call；everyone
+          - zh: 他终于公开承认她在这项目里功不可没。
+            answer: He finally recognized her contribution to the project in public.
+            hint: finally；to the project；in public
+      - key: recognize-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说意识到什么
+        chunk: recognize that
+        chunkMeaning: 认识到……
+        direction: en_to_zh
+        items:
+          - en: I recognize that I made a mistake.
+            answer: 我承认我犯了个错。
+            hint: made a mistake
+          - en: They don't recognize that the rules have changed.
+            answer: 他们没意识到规则已经变了。
+            hint: the rules have changed
+          - en: Do you recognize that this affects everyone?
+            answer: 你意识到这事会影响所有人吗？
+            hint: affects everyone
+      - key: recognize-as-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂被认出或公认为什么
+        chunk: recognize as
+        chunkMeaning: 认出是……；公认为……
+        direction: en_to_zh
+        items:
+          - en: She was recognized as the best newcomer of the year.
+            answer: 她被评为年度最佳新人。
+            hint: best newcomer；of the year
+          - en: I didn't recognize you with your new haircut.
+            answer: 你换了发型，我差点没认出你。
+            hint: with your new haircut
+          - en: The industry recognizes him as a leading voice on climate policy.
+            answer: 业内公认他是气候政策方面的权威声音。
+            hint: leading voice；climate policy
+      - key: recognize-state
+        type: vocab_sentence_building
+        title: 说认出与承认
+        vocabWord: recognize
+        vocabMeaning: 认出；承认；认可
+        direction: zh_to_en
+        patterns:
+          - chunk: recognize that
+            items:
+              - zh: 我开始承认自己也需要帮助。
+                answer: I'm starting to recognize that I need help too.
+                hint: I'm starting to；need help too
+              - zh: 他必须正视团队已精疲力尽。
+                answer: He has to recognize that the team is exhausted.
+                hint: the team is exhausted
+          - chunk: recognize someone
+            items:
+              - zh: 隔着口罩我也能认出你。
+                answer: I can recognize you even through a mask.
+                hint: even through a mask
+              - zh: 电视上的主持人她一眼就认出来了。
+                answer: She recognized the host on TV right away.
+                hint: the host on TV；right away
+          - chunk: recognize as
+            items:
+              - zh: 这座城市被联合国列为世界遗产。
+                answer: The city is recognized as a UNESCO World Heritage site.
+                hint: UNESCO World Heritage site
+              - zh: 我们应该公开肯定她的领导作用。
+                answer: We should publicly recognize her role as a leader.
+                hint: publicly；role as a leader
+      - key: recognize-that-other
+        type: pattern_drill
+        title: 说意识到别的事实
+        pattern: recognize that [clause]
+        patternMeaning: 认识到……
+        direction: zh_to_en
+        items:
+          - zh: 我渐渐明白坚持并不等于蛮干。
+            answer: I'm gradually recognizing that persistence isn't the same as stubbornness.
+            hint: persistence；stubbornness
+          - zh: 管理者要承认错误沟通会毁了信任。
+            answer: Managers must recognize that poor communication destroys trust.
+            hint: poor communication；destroys trust
+          - zh: 她不愿面对自己已经累到透支了。
+            answer: She doesn't want to recognize that she's already burned out.
+            hint: doesn't want to；burned out
+      - key: recognize-someone-other
+        type: pattern_drill
+        title: 说认出别的人
+        pattern: recognize [someone]
+        patternMeaning: 认出某人
+        direction: zh_to_en
+        items:
+          - zh: 我在机场认出了一位老朋友。
+            answer: I recognized an old friend at the airport.
+            hint: at the airport
+          - zh: 恭喜你，终于有人把你当明星认出来了。
+            answer: Congrats—someone finally recognized you as a celebrity.
+            hint: finally；as a celebrity
+          - zh: 天黑以后，我几乎认不出路上的人了。
+            answer: After dark, I can hardly recognize people on the street.
+            hint: After dark；on the street
+      - key: recognize-as-other
+        type: pattern_drill
+        title: 说公认为或认出身份
+        pattern: recognize [someone/something] as [noun]
+        patternMeaning: 认定为；公认为
+        direction: zh_to_en
+        items:
+          - zh: 法院正式承认这笔赔款是合理的。
+            answer: The court recognized the compensation as fair.
+            hint: The court；compensation as fair
+          - zh: 他把新来的实习生当成自己的学生。
+            answer: He recognized the new intern as his student.
+            hint: the new intern；as his student
+          - zh: 社区把这家小店当作集体记忆的一部分。
+            answer: The community recognizes the little shop as part of its collective memory.
+            hint: little shop；collective memory
+      - key: recognize-noun-other
+        type: pattern_drill
+        title: 说辨认别的事物
+        pattern: recognize [noun]
+        patternMeaning: 认出；识别
+        direction: zh_to_en
+        items:
+          - zh: 你能认出这种鸟叫吗？
+            answer: Can you recognize this bird call?
+            hint: this bird call
+          - zh: 软件可以自动识别手写字迹。
+            answer: The software can automatically recognize handwriting.
+            hint: automatically；handwriting
+          - zh: 她花了几周才分清这两款包装。
+            answer: It took her weeks to recognize the difference between the two packages.
+            hint: weeks；difference between the two packages
+      - key: barely-recognize-other
+        type: pattern_drill
+        title: 说几乎认不出别的东西
+        pattern: barely recognize [something]
+        patternMeaning: 几乎认不出
+        direction: zh_to_en
+        items:
+          - zh: 镜子里的我瘦得自己都认不出来了。
+            answer: In the mirror, I barely recognize myself after losing so much weight.
+            hint: after losing so much weight
+          - zh: 火灾过后，他们几乎认不出曾经的家。
+            answer: After the fire, they could barely recognize what used to be their home.
+            hint: what used to be their home
+          - zh: 大学毕业二十年，老同学见面都快不认识了。
+            answer: Twenty years after graduation, old classmates can barely recognize each other.
+            hint: Twenty years after graduation；each other
+      - key: widely-recognized-other
+        type: pattern_drill
+        title: 说在别的领域被公认
+        pattern: be widely recognized as [noun]
+        patternMeaning: 被广泛公认为
+        direction: zh_to_en
+        items:
+          - zh: 这座博物馆被公认为世界级建筑。
+            answer: The museum is widely recognized as a world-class building.
+            hint: world-class building
+          - zh: 她的书使她成为伦理学方面的权威。
+            answer: Her books made her widely recognized as an authority on ethics.
+            hint: made her；authority on ethics
+          - zh: 这款芯片在业界享有标杆地位。
+            answer: This chip is widely recognized as the industry benchmark.
+            hint: industry benchmark
+      - key: instantly-recognize-other
+        type: pattern_drill
+        title: 说立刻认出别的东西
+        pattern: instantly recognize [something]
+        patternMeaning: 立刻认出
+        direction: zh_to_en
+        items:
+          - zh: 我一进门就听出是你的琴声。
+            answer: I instantly recognized your piano playing as soon as I walked in.
+            hint: your piano playing；as soon as I walked in
+          - zh: 她还不知道能不能马上认出新款 logo。
+            answer: She's not sure whether she can instantly recognize the new logo.
+            hint: the new logo；whether
+          - zh: 训练有素的医生能瞬间识别这种皮疹。
+            answer: A trained doctor can instantly recognize this kind of rash.
+            hint: this kind of rash
+      - key: recognize-pattern-build
+        type: sentence_decomposition
+        title: 把看出规律说完整
+        sourceKind: chunk
+        sourceText: recognize a pattern
+        fullSentence: After reviewing three months of sales data, we finally recognized a pattern that explained the drop.
+        fullSentenceZh: 审阅三个月的销售数据后，我们终于看出了一种能解释下滑的规律。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We recognized a pattern.
+            zh: 我们看出了一种规律。
+            highlight: ''
+            hint: 先说出看出了一种规律
+          - level: 2
+            label: 加背景
+            en: After reviewing three months of sales data, we recognized a pattern.
+            zh: 审阅三个月的销售数据后，我们看出了一种规律。
+            highlight: After reviewing three months of sales data
+            hint: 补上审阅三个月数据后
+          - level: 3
+            label: 完整句
+            en: After reviewing three months of sales data, we finally recognized a pattern that explained the drop.
+            zh: 审阅三个月的销售数据后，我们终于看出了一种能解释下滑的规律。
+            highlight: that explained the drop
+            hint: 补上终于以及能解释下滑
+      - key: recognize-contribution-build
+        type: sentence_decomposition
+        title: 把认可她的贡献说完整
+        sourceKind: chunk
+        sourceText: recognize her contribution
+        fullSentence: At the annual meeting, the CEO publicly recognized her contribution to the product launch.
+        fullSentenceZh: 年会上，CEO 公开表彰了她对产品发布所做的贡献。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We recognized her contribution.
+            zh: 我们认可了她的贡献。
+            highlight: ''
+            hint: 先说我们认可了她的贡献
+          - level: 2
+            label: 加场合
+            en: At the annual meeting, we recognized her contribution.
+            zh: 年会上，我们认可了她的贡献。
+            highlight: At the annual meeting
+            hint: 补上在年会上
+          - level: 3
+            label: 完整句
+            en: At the annual meeting, the CEO publicly recognized her contribution to the product launch.
+            zh: 年会上，CEO 公开表彰了她对产品发布所做的贡献。
+            highlight: to the product launch
+            hint: 补上 CEO 公开以及产品发布

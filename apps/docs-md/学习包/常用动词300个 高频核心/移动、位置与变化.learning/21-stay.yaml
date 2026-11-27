@@ -1,0 +1,361 @@
+learning:
+  exercises:
+    pipeline:
+      - key: stay-here
+        kind: chunk
+        type: chunk_substitution
+        title: 让对方待在原地
+        chunk: stay here
+        chunkMeaning: 待在这里
+        direction: zh_to_en
+        items:
+          - zh: 待在这里，我马上回来。
+            answer: Stay here. I'll be back in a minute.
+            hint: I'll be back in a minute
+          - zh: 你想的话可以留在这里。
+            answer: You can stay here if you want.
+            hint: if you want
+          - zh: 你待在这儿别动，我去问问。
+            answer: Stay here and don't move; I'll go and ask.
+            hint: don't move
+      - key: stay-hotel
+        kind: chunk
+        type: chunk_substitution
+        title: 说我们住在一家小酒店
+        chunk: stay at a small hotel
+        chunkMeaning: 住在一家小酒店
+        direction: zh_to_en
+        items:
+          - zh: 我们住在一家小酒店。
+            answer: We're staying at a small hotel.
+            hint: 进行时
+          - zh: 这次出差我们住在公司附近。
+            answer: This trip we're staying near the office.
+            hint: This trip
+          - zh: 我上次来就住这家酒店。
+            answer: I stayed at this hotel last time I came.
+            hint: last time I came
+      - key: stay-here-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说待在原地
+        chunk: stay here
+        chunkMeaning: 待在这里
+        direction: en_to_zh
+        items:
+          - en: Stay here. I'll be back in a minute.
+            answer: 待在这里，我马上回来。
+            hint: in a minute
+          - en: You can stay here if you want.
+            answer: 你想的话可以留在这里。
+            hint: if you want
+          - en: Stay here and don't move; I'll go and ask.
+            answer: 你待在这儿别动，我去问问。
+            hint: don't move
+      - key: stay-state
+        type: vocab_sentence_building
+        title: 说保持冷静、熬夜、待在室内
+        vocabWord: stay
+        vocabMeaning: 停留；保持
+        direction: zh_to_en
+        patterns:
+          - chunk: stay calm
+            items:
+              - zh: 保持冷静，仔细听。
+                answer: Stay calm and listen carefully.
+                hint: listen carefully
+              - zh: 不管发生什么，都要冷静。
+                answer: Whatever happens, stay calm.
+                hint: Whatever happens
+              - zh: 医生让他保持冷静，多休息。
+                answer: The doctor told him to stay calm and rest more.
+                hint: The doctor
+          - chunk: stay up late
+            items:
+              - zh: 我们昨晚熬到了两点。
+                answer: We stayed up late until two last night.
+                hint: until two
+              - zh: 我熬夜完成了报告。
+                answer: I stayed up late to finish the report.
+                hint: to finish the report
+              - zh: 别熬夜，明天还要早起。
+                answer: Don't stay up late; we have to get up early tomorrow.
+                hint: get up early
+          - chunk: stay in for the evening
+            items:
+              - zh: 下雨了，我们今晚就待在家吧。
+                answer: It's raining, so let's stay in tonight.
+                hint: It's raining
+              - zh: 太冷了，我们决定晚上不出门。
+                answer: It's too cold, so we decided to stay in for the evening.
+                hint: decided to
+              - zh: 他昨晚在外面待到十二点。
+                answer: He stayed out until twelve last night.
+                hint: until twelve
+      - key: stay-with-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说你能陪我一会儿吗
+        chunk: stay with me
+        chunkMeaning: 陪着我
+        direction: zh_to_en
+        items:
+          - zh: 你能陪我一会儿吗？
+            answer: Can you stay with me for a while?
+            hint: for a while
+          - zh: 手术的时候家人一直陪着他。
+            answer: His family stayed with him during the operation.
+            hint: during the operation
+          - zh: 你今晚住在我这儿吧。
+            answer: You can stay with me tonight.
+            hint: tonight
+      - key: stay-up-late
+        kind: chunk
+        type: chunk_substitution
+        title: 说我昨晚熬夜了
+        chunk: stay up late
+        chunkMeaning: 熬夜
+        direction: zh_to_en
+        items:
+          - zh: 我昨晚熬夜了。
+            answer: I stayed up late last night.
+            hint: last night
+          - zh: 他为了赶工熬到半夜。
+            answer: He stayed up late to meet the deadline.
+            hint: to meet the deadline
+          - zh: 孩子们熬夜玩到很晚。
+            answer: The kids stayed up late playing games.
+            hint: playing games
+      - key: stay-away-from
+        kind: chunk
+        type: chunk_substitution
+        title: 说离那个区域远一点
+        chunk: stay away from that area
+        chunkMeaning: 远离那个区域
+        direction: zh_to_en
+        items:
+          - zh: 离那个区域远一点。
+            answer: Stay away from that area.
+            hint: that area
+          - zh: 这些天最好别去河边。
+            answer: You should stay away from the river these days.
+            hint: these days
+          - zh: 医生建议他远离酒精。
+            answer: The doctor advised him to stay away from alcohol.
+            hint: advised him to
+      - key: stay-in
+        kind: chunk
+        type: chunk_substitution
+        title: 说今晚我们待在家里
+        chunk: stay in
+        chunkMeaning: 待在家里
+        direction: zh_to_en
+        items:
+          - zh: 今晚我们待在家里吧。
+            answer: Let's stay in tonight.
+            hint: tonight
+          - zh: 周末我一般都在家。
+            answer: I usually stay in on weekends.
+            hint: usually；on weekends
+          - zh: 感冒了就别出门了。
+            answer: If you have a cold, you should stay in.
+            hint: If you have a cold
+      - key: stay-on
+        kind: chunk
+        type: chunk_substitution
+        title: 说她会后继续留了下来
+        chunk: stay on after the meeting
+        chunkMeaning: 会后继续留下
+        direction: zh_to_en
+        items:
+          - zh: 她会后继续留下来了。
+            answer: She stayed on after the meeting.
+            hint: stayed on
+          - zh: 退休以后他还在公司做顾问。
+            answer: He stayed on as a consultant after retiring.
+            hint: as a consultant
+          - zh: 很多人会后留下来继续讨论。
+            answer: Many people stayed on to keep discussing.
+            hint: keep discussing
+      - key: stay-in-touch
+        kind: chunk
+        type: chunk_substitution
+        title: 说我们保持联系
+        chunk: stay in touch
+        chunkMeaning: 保持联系
+        direction: zh_to_en
+        items:
+          - zh: 我们保持联系。
+            answer: Let's stay in touch.
+            hint: Let's
+          - zh: 你走了以后，我们一直保持联系。
+            answer: We've stayed in touch since you left.
+            hint: since you left
+          - zh: 记得常联系。
+            answer: Remember to stay in touch.
+            hint: Remember to
+      - key: stay-on-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说继续留下
+        chunk: stay on
+        chunkMeaning: 继续留下
+        direction: en_to_zh
+        items:
+          - en: She stayed on after the meeting.
+            answer: 她会后继续留下来了。
+            hint: after the meeting
+          - en: He stayed on as a consultant after retiring.
+            answer: 退休以后他还在公司做顾问。
+            hint: after retiring
+          - en: Many people stayed on to keep discussing.
+            answer: 很多人会后留下来继续讨论。
+            hint: keep discussing
+      - key: stay-place
+        type: pattern_drill
+        title: 说待在或住在某处
+        pattern: stay at / in [place]
+        patternMeaning: 住在、待在某处
+        direction: zh_to_en
+        items:
+          - zh: 我们住在车站附近。
+            answer: We're staying near the station.
+            hint: near the station
+          - zh: 你可以在房间里等。
+            answer: You can stay in the room and wait.
+            hint: in the room
+          - zh: 上周他们住在我家。
+            answer: They stayed at my place last week.
+            hint: at my place
+      - key: stay-adjective
+        type: pattern_drill
+        title: 说保持某种状态
+        pattern: stay [adjective]
+        patternMeaning: 保持某状态
+        direction: zh_to_en
+        items:
+          - zh: 再集中注意力十分钟。
+            answer: Try to stay focused for another ten minutes.
+            hint: stay focused
+          - zh: 门一直开着。
+            answer: The door stayed open.
+            hint: stayed open
+          - zh: 请保持安静，我们在录音。
+            answer: Please stay quiet; we're recording.
+            hint: we're recording
+      - key: stay-away-other
+        type: pattern_drill
+        title: 说远离别的东西
+        pattern: stay away from [something]
+        patternMeaning: 远离某处
+        direction: zh_to_en
+        items:
+          - zh: 离那台机器远点。
+            answer: Stay away from that machine.
+            hint: that machine
+          - zh: 施工期间请不要靠近。
+            answer: Please stay away during construction.
+            hint: during construction
+          - zh: 我一直刻意不参与这些争论。
+            answer: I've been staying away from these arguments.
+            hint: staying away from
+      - key: stay-with-other
+        type: pattern_drill
+        title: 陪着别人
+        pattern: stay with [someone]
+        patternMeaning: 陪着某人
+        direction: zh_to_en
+        items:
+          - zh: 今晚我陪你在医院。
+            answer: I'll stay with you at the hospital tonight.
+            hint: at the hospital
+          - zh: 他生病的时候，朋友一直陪着他。
+            answer: His friends stayed with him while he was sick.
+            hint: while he was sick
+          - zh: 你能不能多陪我一会儿？
+            answer: Could you stay with me a little longer?
+            hint: a little longer
+      - key: stay-out-other
+        type: pattern_drill
+        title: 说在外面待着
+        pattern: stay out
+        patternMeaning: 在外面待着
+        direction: zh_to_en
+        items:
+          - zh: 别在外面待得太晚。
+            answer: Don't stay out too late.
+            hint: too late
+          - zh: 孩子昨晚在外面待到很晚。
+            answer: The kids stayed out late last night.
+            hint: last night
+          - zh: 这么晚了，别在外面了。
+            answer: It's so late; don't stay out.
+            hint: It's so late
+      - key: stay-listen
+        type: pattern_drill
+        title: 听懂对方说停留和保持
+        pattern: stay up late / stay in touch / stay [adjective]
+        patternMeaning: 熬夜 / 保持联系 / 保持状态
+        direction: en_to_zh
+        items:
+          - en: I stayed up late to finish the report.
+            answer: 我熬夜完成了报告。
+            hint: to finish the report
+          - en: Let's stay in touch.
+            answer: 我们保持联系。
+            hint: Let's
+          - en: The door stayed open.
+            answer: 门一直开着。
+            hint: stayed open
+      - key: stay-here-build
+        type: sentence_decomposition
+        title: 把待在原地等我说完整
+        sourceKind: chunk
+        sourceText: stay here
+        fullSentence: Stay here and wait for me, and I'll be back in ten minutes.
+        fullSentenceZh: 你待在这里等我，我十分钟就回来。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Stay here.
+            zh: 待在这里。
+            highlight: ''
+            hint: 先说待在这里
+          - level: 2
+            label: 加动作
+            en: Stay here and wait for me.
+            zh: 你待在这里等我。
+            highlight: and wait for me
+            hint: 补上等我
+          - level: 3
+            label: 完整句
+            en: Stay here and wait for me, and I'll be back in ten minutes.
+            zh: 你待在这里等我，我十分钟就回来。
+            highlight: I'll be back in ten minutes
+            hint: 补上十分钟就回来
+      - key: stay-touch-build
+        type: sentence_decomposition
+        title: 把保持联系说完整
+        sourceKind: vocab
+        sourceText: stay
+        fullSentence: We've stayed in touch since you moved to another city.
+        fullSentenceZh: 你搬到另一个城市以后，我们一直保持联系。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We've stayed in touch.
+            zh: 我们一直保持联系。
+            highlight: ''
+            hint: 先说保持联系
+          - level: 2
+            label: 加时间
+            en: We've stayed in touch since last year.
+            zh: 我们从去年开始一直保持联系。
+            highlight: since last year
+            hint: 补上从去年开始
+          - level: 3
+            label: 完整句
+            en: We've stayed in touch since you moved to another city.
+            zh: 你搬到另一个城市以后，我们一直保持联系。
+            highlight: since you moved to another city
+            hint: 补上你搬走以后

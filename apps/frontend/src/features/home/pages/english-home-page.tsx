@@ -17,6 +17,8 @@ import { useHomeStore } from '@/stores/home.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { toast } from 'sonner'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { DesktopLearningPage } from '@/features/home/pages/desktop-learning-page'
+import { MobileSectionParamRedirect } from '@/features/home/components/desktop-section-redirect'
 
 function useClock() {
   const { t } = useTranslation()
@@ -119,6 +121,49 @@ export function EnglishHomePage() {
     )
   }
 
+  // 桌面：单页学习壳；移动端若带 section 参数则跳到对应多路由
+  if (!isMobile) {
+    return <DesktopLearningPage />
+  }
+
+  return (
+    <MobileSectionParamRedirect>
+      <EnglishHomeMobileScene
+        t={t}
+        isDark={isDark}
+        isMobile={isMobile}
+        clock={clock}
+        sentenceLoading={sentenceLoading}
+        dailySentence={dailySentence}
+        checkInStatus={checkInStatus}
+        checkInLoading={checkInLoading}
+        handleCheckIn={handleCheckIn}
+      />
+    </MobileSectionParamRedirect>
+  )
+}
+
+function EnglishHomeMobileScene({
+  t,
+  isDark,
+  isMobile,
+  clock,
+  sentenceLoading,
+  dailySentence,
+  checkInStatus,
+  checkInLoading,
+  handleCheckIn,
+}: {
+  t: ReturnType<typeof useTranslation>['t']
+  isDark: boolean
+  isMobile: boolean
+  clock: { hours: string; minutes: string; period: string }
+  sentenceLoading: boolean
+  dailySentence: { quote: string; translation: string; author: string }
+  checkInStatus: { checkedIn?: boolean } | null
+  checkInLoading: boolean
+  handleCheckIn: () => Promise<void>
+}) {
   return (
     <div className={cn(isMobile ? 'w-full max-w-none overflow-hidden' : 'mx-auto max-w-2xl overflow-hidden')}>
       <motion.section

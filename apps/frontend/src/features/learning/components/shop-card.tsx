@@ -2,7 +2,7 @@ import { showRequestError } from '@/lib/request-feedback'
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
+import { Lock, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, RotateCcw, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -40,17 +40,27 @@ function contentModeLabel(t: (key: string) => string, mode?: LearningUnitSummary
   return t('learning.contentModePractice')
 }
 
-interface Props {
-  unit: LearningUnitSummary & { categoryName?: string }
-  onMemberOpen: () => void
+export type ShopUnitCardUnit = LearningUnitSummary & { categoryName?: string }
+
+interface ShopUnitDetailPanelProps {
+  unit: ShopUnitCardUnit
   onEnroll?: (id: string) => Promise<boolean>
-  [key: `data-${string}`]: string | undefined
+  onClose?: () => void
+  /** rail=桌面右栏（可关）；dialog=弹层内嵌 */
+  variant?: 'dialog' | 'rail'
+  className?: string
 }
 
-export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
+/** 学习包详情：封面/介绍/CTA 固定，仅话题列表滚动 */
+export function ShopUnitDetailPanel({
+  unit,
+  onEnroll,
+  onClose,
+  variant = 'dialog',
+  className,
+}: ShopUnitDetailPanelProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
   const [restarting, setRestarting] = useState(false)
   const [restartAfterDownload, setRestartAfterDownload] = useState(false)
@@ -62,10 +72,8 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
   const planUnit = useLearningStore((s) => s.myUnits.find((myUnit) => myUnit.id === unit.id))
   const isJoinedInPlan = Boolean(planUnit)
-
-  // 下载进度
   const downloadTask = useLearningStore((s) =>
-    s.downloadTasks.find((t) => t.packId === unit.id),
+    s.downloadTasks.find((task) => task.packId === unit.id),
   )
   const installedPack = useLearningStore((s) =>
     s.downloadedPacks.find((pack) => pack.packId === unit.id && pack.status === 'installed'),
@@ -73,12 +81,16 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const isDownloading = downloadTask?.status === 'downloading' || downloadTask?.status === 'extracting'
   const isPackReady = Boolean(installedPack || downloadTask?.status === 'done')
   const isJoined = isJoinedInPlan && isPackReady
-  // Store summaries are account-backed and therefore remain authoritative even
-  // when the user has removed this device's downloaded package.
   const progressUnit = planUnit ?? unit
   const isCompleted = progressUnit.status === 'completed' || (progressUnit.completionPercent ?? 0) >= 100
   const displayLocation = displayLearningUnitLocation(unit.location, contentModeLabel(t, unit.contentMode))
   const downloadProgress = downloadTask?.progress ?? 0
+
+  useEffect(() => {
+    setTopicPage(1)
+    setJustEnrolled(false)
+    setRestartAfterDownload(false)
+  }, [unit.id])
 
   const handleAcquire = useCallback(async () => {
     if (acquiring || !unit.isUnlocked || unit.isLocked) return
@@ -87,11 +99,11 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
       const enrolled = await onEnroll?.(unit.id)
       if (enrolled) setJustEnrolled(true)
     } catch {
-      // 学习计划 store 已展示具体错误；保留这里以防调用方异常中断卡片状态。
+      // 学习计划 store 已展示具体错误
     } finally {
       setAcquiring(false)
     }
-  }, [unit.id, unit.isUnlocked, acquiring, onEnroll])
+  }, [unit.id, unit.isUnlocked, unit.isLocked, acquiring, onEnroll])
 
   const restartLearning = useCallback(async () => {
     if (restarting) return
@@ -115,13 +127,12 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
       await restartLearning()
       return
     }
-
     setAcquiring(true)
     try {
       const enrolled = await onEnroll?.(unit.id)
       if (enrolled) setRestartAfterDownload(true)
     } catch {
-      // 学习计划 store 已展示具体错误。
+      // 学习计划 store 已展示具体错误
     } finally {
       setAcquiring(false)
     }
@@ -132,19 +143,205 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
     void restartLearning().finally(() => setRestartAfterDownload(false))
   }, [installedPack, restartAfterDownload, restartLearning, restarting])
 
+  const goContinue = () => {
+    onClose?.()
+    navigate(`/learning/units/${unit.id}`)
+  }
+
+  return (
+    <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
+      <div className={cn('flex shrink-0 gap-3 bg-muted/30 p-4', variant === 'rail' && 'relative rounded-xl')}>
+        <UnitCover unit={unit} icon={Icon} className="size-20" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{packageTypeLabel(t, unit.packageType)}</Badge>
+            <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{contentModeLabel(t, unit.contentMode)}</Badge>
+            {isCompleted && (
+              <Badge className="rounded-full border-0 bg-emerald-500/10 text-[10px] text-emerald-600 shadow-none hover:bg-emerald-500/10 dark:text-emerald-400">
+                <CheckCircle2 className="mr-1 size-3" />
+                {t('learning.done')}
+              </Badge>
+            )}
+            {(!unit.isUnlocked || unit.isLocked) && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('learning.locked')}</Badge>}
+          </div>
+          <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLocation}</p>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+            <span>{unit.vocabCount} {t('learning.vocab')}</span>
+            <span>{unit.chunkCount} {t('learning.chunks')}</span>
+            <span>{unit.topicCount} {t('learning.topics')}</span>
+          </div>
+        </div>
+        {variant === 'rail' && onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-background/70 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            aria-label={t('common.close')}
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
+
+      {unit.description && (
+        <div className="shrink-0 border-b border-border/50 px-4 py-3">
+          <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground">基本介绍</p>
+          <div className={cn(variant === 'rail' ? 'max-h-28 overflow-y-auto scrollbar-hide' : 'max-h-20 overflow-hidden')}>
+            <MarkdownRenderer
+              content={unit.description}
+              className="text-xs leading-5 text-muted-foreground [&_p]:my-0 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="shrink-0 p-4">
+        {isDownloading ? (
+          <div className="flex items-center gap-3">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${downloadProgress}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">{downloadProgress}%</span>
+          </div>
+        ) : downloadTask?.status === 'queued' ? (
+          <Button className="w-full gap-2" disabled>
+            <Spinner data-icon="inline-start" />
+            {t('learning.waitingDownload')}
+          </Button>
+        ) : downloadTask?.status === 'error' ? (
+          <Button className="w-full gap-2" variant="destructive" onClick={handleAcquire}>
+            {t('learning.downloadFailedRetry')}
+          </Button>
+        ) : isCompleted ? (
+          <Button className="w-full gap-2" disabled={acquiring || restarting} onClick={handleRestart}>
+            {acquiring || restarting ? <Spinner data-icon="inline-start" /> : <RotateCcw className="size-4" />}
+            {acquiring
+              ? t('learning.downloading')
+              : restarting
+                ? t('learning.learnAgain')
+                : isPackReady ? t('learning.learnAgain') : t('learning.redownloadPack')}
+          </Button>
+        ) : downloadTask?.status === 'done' || justEnrolled || isJoined ? (
+          <Button variant="secondary" className="w-full gap-2 border-0 shadow-none" onClick={goContinue}>
+            <ArrowRight className="size-4" />
+            {t('learning.continue')}
+          </Button>
+        ) : (
+          <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">
+            {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
+            {acquiring ? t('learning.downloading') : unit.isUnlocked && !unit.isLocked ? t('learning.start') : t('learning.unlock')}
+          </Button>
+        )}
+      </div>
+
+      <div className="shrink-0 bg-muted/30 px-4 py-2.5">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <p className="text-xs font-medium text-foreground">{t('learning.topicList')}</p>
+          {totalTopicPages > 1 && (
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                aria-label="上一页话题"
+                disabled={topicPage === 1}
+                onClick={() => setTopicPage((p) => Math.max(1, p - 1))}
+                className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35"
+              >
+                <ChevronLeft className="size-3.5" />
+              </button>
+              <span className="min-w-9 text-center text-[11px] tabular-nums text-muted-foreground">{topicPage}/{totalTopicPages}</span>
+              <button
+                type="button"
+                aria-label="下一页话题"
+                disabled={topicPage === totalTopicPages}
+                onClick={() => setTopicPage((p) => Math.min(totalTopicPages, p + 1))}
+                className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35"
+              >
+                <ChevronRight className="size-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="scrollbar-hide min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2 pb-4">
+        {pagedTopics.length > 0 ? (
+          <div className="space-y-1.5">
+            {pagedTopics.map((topic, index) => (
+              <div key={topic.id} className="flex min-w-0 items-center gap-3 overflow-hidden rounded-lg bg-muted/25 px-3 py-3">
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
+                  {(topicPage - 1) * pageSize + index + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
+                  <p className="mt-1 truncate text-[11px] leading-4 text-muted-foreground">
+                    {topic.description?.trim() || '暂无说明'}
+                  </p>
+                </div>
+                <Badge variant="outline" className="shrink-0 rounded-full text-[10px]">{topic.difficulty}</Badge>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">{t('learning.noTopics')}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface Props {
+  unit: ShopUnitCardUnit
+  onMemberOpen: () => void
+  onEnroll?: (id: string) => Promise<boolean>
+  /** 桌面：点选后由父级在右栏展示详情，不再弹 Dialog */
+  onSelect?: (unit: ShopUnitCardUnit) => void
+  selected?: boolean
+  [key: `data-${string}`]: string | undefined
+}
+
+export function ShopCard({ unit, onMemberOpen, onEnroll, onSelect, selected, ...rest }: Props) {
+  const { t } = useTranslation()
+  const [detailOpen, setDetailOpen] = useState(false)
+  const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
+  const planUnit = useLearningStore((s) => s.myUnits.find((myUnit) => myUnit.id === unit.id))
+  const downloadTask = useLearningStore((s) =>
+    s.downloadTasks.find((task) => task.packId === unit.id),
+  )
+  const installedPack = useLearningStore((s) =>
+    s.downloadedPacks.find((pack) => pack.packId === unit.id && pack.status === 'installed'),
+  )
+  const isDownloading = downloadTask?.status === 'downloading' || downloadTask?.status === 'extracting'
+  const isPackReady = Boolean(installedPack || downloadTask?.status === 'done')
+  const isJoined = Boolean(planUnit) && isPackReady
+  const progressUnit = planUnit ?? unit
+  const isCompleted = progressUnit.status === 'completed' || (progressUnit.completionPercent ?? 0) >= 100
+  const displayLocation = displayLearningUnitLocation(unit.location, contentModeLabel(t, unit.contentMode))
+  const downloadProgress = downloadTask?.progress ?? 0
+  const useRail = Boolean(onSelect)
+
   return (
     <>
       <button
         type="button"
         onClick={() => {
           if (!unit.isUnlocked || unit.isLocked) { onMemberOpen(); return }
-          setTopicPage(1); setDetailOpen(true)
+          if (onSelect) {
+            onSelect(unit)
+            return
+          }
+          setDetailOpen(true)
         }}
         className={cn(
           'flex w-full gap-3 rounded-lg p-3 text-left transition-colors',
-          isCompleted
-            ? 'bg-muted/25 text-muted-foreground hover:bg-muted/35'
-            : 'bg-muted/30 hover:bg-muted/50',
+          selected
+            ? 'bg-primary/[0.08]'
+            : isCompleted
+              ? 'bg-muted/25 text-muted-foreground hover:bg-muted/35'
+              : 'bg-muted/30 hover:bg-muted/50',
         )}
         {...rest}
       >
@@ -209,148 +406,22 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
         </div>
       </button>
 
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="flex max-h-[88dvh] w-[90vw] min-w-0 flex-col gap-0 overflow-y-auto overscroll-contain rounded-2xl p-0 sm:max-w-md">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{unit.title}</DialogTitle>
-            <DialogDescription>{displayLocation}</DialogDescription>
-          </DialogHeader>
-          <div className="flex min-w-0 flex-col">
-            <div className="flex gap-3 bg-muted/30 p-4">
-              <UnitCover unit={unit} icon={Icon} className="size-20" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{packageTypeLabel(t, unit.packageType)}</Badge>
-                  <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{contentModeLabel(t, unit.contentMode)}</Badge>
-                  {isCompleted && (
-                    <Badge className="rounded-full border-0 bg-emerald-500/10 text-[10px] text-emerald-600 shadow-none hover:bg-emerald-500/10 dark:text-emerald-400">
-                      <CheckCircle2 className="mr-1 size-3" />
-                      {t('learning.done')}
-                    </Badge>
-                  )}
-                  {(!unit.isUnlocked || unit.isLocked) && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('learning.locked')}</Badge>}
-                </div>
-                <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLocation}</p>
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                  <span>{unit.vocabCount} {t('learning.vocab')}</span>
-                  <span>{unit.chunkCount} {t('learning.chunks')}</span>
-                  <span>{unit.topicCount} {t('learning.topics')}</span>
-                </div>
-              </div>
-            </div>
-
-            {unit.description && (
-              <div className="border-b border-border/50 px-4 py-3">
-                <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground">基本介绍</p>
-                <MarkdownRenderer
-                  content={unit.description}
-                  className="text-xs leading-5 text-muted-foreground [&_p]:my-0 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0"
-                />
-              </div>
-            )}
-
-            <div className="p-4">
-              {isDownloading ? (
-                <div className="flex items-center gap-3">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all duration-300"
-                      style={{ width: `${downloadProgress}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">{downloadProgress}%</span>
-                </div>
-              ) : downloadTask?.status === 'queued' ? (
-                <Button className="w-full gap-2" disabled>
-                  <Spinner data-icon="inline-start" />
-                  {t('learning.waitingDownload')}
-                </Button>
-              ) : downloadTask?.status === 'error' ? (
-                <Button className="w-full gap-2" variant="destructive" onClick={handleAcquire}>
-                  {t('learning.downloadFailedRetry')}
-                </Button>
-              ) : isCompleted ? (
-                <Button className="w-full gap-2" disabled={acquiring || restarting} onClick={handleRestart}>
-                  {acquiring || restarting ? <Spinner data-icon="inline-start" /> : <RotateCcw className="size-4" />}
-                  {acquiring
-                    ? t('learning.downloading')
-                    : restarting
-                      ? t('learning.learnAgain')
-                      : isPackReady ? t('learning.learnAgain') : t('learning.redownloadPack')}
-                </Button>
-              ) : downloadTask?.status === 'done' || justEnrolled ? (
-                <Button variant="secondary" className="w-full gap-2 border-0 shadow-none" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
-                  <ArrowRight className="size-4" />
-                  {t('learning.continue')}
-                </Button>
-              ) : isJoined ? (
-                <Button variant="secondary" className="w-full gap-2 border-0 shadow-none" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
-                  <ArrowRight className="size-4" />
-                  {t('learning.continue')}
-                </Button>
-              ) : (
-                <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">
-                  {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                  {acquiring ? t('learning.downloading') : unit.isUnlocked && !unit.isLocked ? t('learning.start') : t('learning.unlock')}
-                </Button>
-              )}
-            </div>
-
-            <div className="bg-muted/30 px-4 py-2.5">
-              <div className="flex min-w-0 items-center justify-between gap-2">
-                <p className="text-xs font-medium text-foreground">{t('learning.topicList')}</p>
-                {totalTopicPages > 1 && (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      type="button"
-                      aria-label="上一页话题"
-                      disabled={topicPage === 1}
-                      onClick={() => setTopicPage((p) => Math.max(1, p - 1))}
-                      className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35"
-                    >
-                      <ChevronLeft className="size-3.5" />
-                    </button>
-                    <span className="min-w-9 text-center text-[11px] tabular-nums text-muted-foreground">{topicPage}/{totalTopicPages}</span>
-                    <button
-                      type="button"
-                      aria-label="下一页话题"
-                      disabled={topicPage === totalTopicPages}
-                      onClick={() => setTopicPage((p) => Math.min(totalTopicPages, p + 1))}
-                      className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35"
-                    >
-                      <ChevronRight className="size-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="px-4 py-2 pb-4">
-              {pagedTopics.length > 0 ? (
-                <div className="space-y-1.5">
-                  {pagedTopics.map((topic, index) => (
-                    <div key={topic.id} className="flex min-w-0 items-center gap-3 overflow-hidden rounded-lg bg-muted/25 px-3 py-3">
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
-                        {(topicPage - 1) * pageSize + index + 1}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
-                        <p className="mt-1 truncate text-[11px] leading-4 text-muted-foreground">
-                          {topic.description?.trim() || '暂无说明'}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0 rounded-full text-[10px]">{topic.difficulty}</Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="py-8 text-center text-sm text-muted-foreground">{t('learning.noTopics')}</p>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {!useRail && (
+        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+          <DialogContent className="flex max-h-[88dvh] w-[90vw] min-h-0 min-w-0 flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-md">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{unit.title}</DialogTitle>
+              <DialogDescription>{displayLocation}</DialogDescription>
+            </DialogHeader>
+            <ShopUnitDetailPanel
+              unit={unit}
+              onEnroll={onEnroll}
+              onClose={() => setDetailOpen(false)}
+              variant="dialog"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

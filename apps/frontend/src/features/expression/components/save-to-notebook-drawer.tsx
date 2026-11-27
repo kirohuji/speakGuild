@@ -13,11 +13,20 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { type LearningNotebook } from '@/features/practice/api/english-practice-api'
 import { cn } from '@/lib/cn'
 import { learningNotebookRepository } from '@/lib/offline'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const LAST_NOTEBOOK_KEY = 'learning-library:last-notebook-id'
 
@@ -35,6 +44,7 @@ export function SaveToNotebookDrawer({
   onSave: (notebookIds: string[]) => Promise<void>
 }) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [notebooks, setNotebooks] = useState<LearningNotebook[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [lastNotebookId, setLastNotebookId] = useState<string | null>(null)
@@ -137,95 +147,120 @@ export function SaveToNotebookDrawer({
     }
   }
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-      <DrawerContent
-        overlayClassName="!z-[10001]"
-        className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] bg-background drawer-surface"
-      >
-        <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
-          <DrawerTitle>{removing ? t('learningNotebooks.removeTitle') : creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>
-          <DrawerDescription>
-            {removing ? t('learningNotebooks.removeHint') : creating ? t('learningNotebooks.description') : t('learningNotebooks.chooseDescription')}
-          </DrawerDescription>
-        </DrawerHeader>
+  const title = removing ? t('learningNotebooks.removeTitle') : creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')
+  const description = removing ? t('learningNotebooks.removeHint') : creating ? t('learningNotebooks.description') : t('learningNotebooks.chooseDescription')
 
-        {creating ? (
-          <div className="px-4">
-            <Label htmlFor="new-learning-notebook">{t('learningNotebooks.name')}</Label>
-            <Input
-              id="new-learning-notebook"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t('learningNotebooks.namePlaceholder')}
-              maxLength={30}
-              autoFocus
-              className="mt-2 border-0 bg-muted/45 shadow-none"
-            />
-          </div>
-        ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
-            <div className="flex flex-col gap-2">
-              {notebooks.map((notebook) => {
-                const checked = selectedSet.has(notebook.id)
-                return (
-                  <button
-                    key={notebook.id}
-                    type="button"
-                    onClick={() => toggle(notebook.id)}
-                    className={cn(
-                      'flex min-h-14 items-center gap-3 rounded-xl px-3 text-left transition-colors',
-                      checked ? 'bg-primary/5' : 'bg-muted/40',
-                    )}
-                  >
-                    <span className={cn(
-                      'flex size-5 shrink-0 items-center justify-center rounded-md border',
-                      checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border',
-                    )}>
-                      {checked && <Check className="size-3.5" />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium">{notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name}</span>
-                        {notebook.id === lastNotebookId && notebook.kind === 'custom' && (
-                          <span className="text-[10px] text-muted-foreground">{t('learningNotebooks.lastUsed')}</span>
-                        )}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts?.total ?? 0 })}</span>
-                    </span>
-                  </button>
-                )
-              })}
-              {!removing && <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setCreating(true)}>
-                <Plus data-icon="inline-start" />
-                {t('learningNotebooks.createNew')}
-              </Button>}
-            </div>
-          </div>
+  const body = creating ? (
+    <div className="px-4">
+      <Label htmlFor="new-learning-notebook">{t('learningNotebooks.name')}</Label>
+      <Input
+        id="new-learning-notebook"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder={t('learningNotebooks.namePlaceholder')}
+        maxLength={30}
+        autoFocus
+        className="mt-2 border-0 bg-muted/45 shadow-none"
+      />
+    </div>
+  ) : (
+    <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+      <div className="flex flex-col gap-2">
+        {notebooks.map((notebook) => {
+          const checked = selectedSet.has(notebook.id)
+          return (
+            <button
+              key={notebook.id}
+              type="button"
+              onClick={() => toggle(notebook.id)}
+              className={cn(
+                'flex min-h-14 items-center gap-3 rounded-xl px-3 text-left transition-colors',
+                checked ? 'bg-primary/5' : 'bg-muted/40',
+              )}
+            >
+              <span className={cn(
+                'flex size-5 shrink-0 items-center justify-center rounded-md border',
+                checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border',
+              )}>
+                {checked && <Check className="size-3.5" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="truncate text-sm font-medium">{notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name}</span>
+                  {notebook.id === lastNotebookId && notebook.kind === 'custom' && (
+                    <span className="text-[10px] text-muted-foreground">{t('learningNotebooks.lastUsed')}</span>
+                  )}
+                </span>
+                <span className="text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts?.total ?? 0 })}</span>
+              </span>
+            </button>
+          )
+        })}
+        {!removing && (
+          <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setCreating(true)}>
+            <Plus data-icon="inline-start" />
+            {t('learningNotebooks.createNew')}
+          </Button>
         )}
+      </div>
+    </div>
+  )
 
-        <DrawerFooter className="shrink-0 flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
-          {creating ? (
-            <>
-              <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setCreating(false)}>
-                {t('learningNotebooks.back')}
-              </Button>
-              <Button className="flex-1" onClick={() => void createNotebook()} disabled={submitting}>
-                {t('learningNotebooks.createAndSelect')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="secondary" className="flex-1 border-0 bg-secondary shadow-none hover:bg-secondary/80" onClick={() => onOpenChange(false)}>
-                {t('learningNotebooks.cancel')}
-              </Button>
-              <Button className="flex-1" onClick={() => void save()} disabled={submitting || listLoading || (removing && selectedIds.length === 0)}>
-                {removing ? t('learningNotebooks.confirmRemove') : selectedIds.length === 0 ? t('learningNotebooks.saveUncategorized') : t('learningNotebooks.save')}
-              </Button>
-            </>
-          )}
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+  const footer = creating ? (
+    <>
+      <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setCreating(false)}>
+        {t('learningNotebooks.back')}
+      </Button>
+      <Button className="flex-1" onClick={() => void createNotebook()} disabled={submitting}>
+        {t('learningNotebooks.createAndSelect')}
+      </Button>
+    </>
+  ) : (
+    <>
+      <Button variant="secondary" className="flex-1 border-0 bg-secondary shadow-none hover:bg-secondary/80" onClick={() => onOpenChange(false)}>
+        {t('learningNotebooks.cancel')}
+      </Button>
+      <Button className="flex-1" onClick={() => void save()} disabled={submitting || listLoading || (removing && selectedIds.length === 0)}>
+        {removing ? t('learningNotebooks.confirmRemove') : selectedIds.length === 0 ? t('learningNotebooks.saveUncategorized') : t('learningNotebooks.save')}
+      </Button>
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+        <DrawerContent
+          overlayClassName="!z-[10001]"
+          className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] bg-background drawer-surface"
+        >
+          <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
+            <DrawerTitle>{title}</DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
+          </DrawerHeader>
+          {body}
+          <DrawerFooter className="shrink-0 flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
+            {footer}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        overlayClassName="!z-[10001]"
+        className="!z-[10002] flex max-h-[min(86vh,720px)] max-w-md flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl"
+      >
+        <DialogHeader className="shrink-0 px-4 pb-2 pt-4 text-left">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {body}
+        <DialogFooter className="shrink-0 flex-row gap-3 border-t border-border/60 bg-transparent px-4 py-3 sm:space-x-0">
+          {footer}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

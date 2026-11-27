@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import type { PracticeRecord } from '@/features/profile/api'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { learningRepository } from '@/lib/offline'
 import { getTopicSessionForReview } from '@/lib/offline/topic-session-draft.repository'
 import type { TopicSession, TrainingTopicItem } from '../api/learning-api'
@@ -28,6 +30,7 @@ export function TopicSessionReadonlyReviewDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [session, setSession] = useState<TopicSession | null>(null)
   const [topic, setTopic] = useState<TrainingTopicItem | null>(null)
   const [unitTitle, setUnitTitle] = useState('')
@@ -75,45 +78,59 @@ export function TopicSessionReadonlyReviewDrawer({
 
   const response = (session?.submissions?.[0]?.response ?? {}) as Record<string, unknown>
   const close = () => onOpenChange(false)
+  const title = record?.recordType === 'reading' ? t('learning.readingPractice') : t('learning.writingPractice')
+
+  const body = loading ? (
+    <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
+  ) : !session || !topic ? (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <p className="text-sm text-muted-foreground">{t('profile.reviewLoadFailed')}</p>
+      <Button variant="outline" size="sm" onClick={close}>{t('common.close')}</Button>
+    </div>
+  ) : record?.recordType === 'reading' ? (
+    <ReadingSessionReview
+      topic={topic}
+      unitTitle={unitTitle}
+      onClose={close}
+      review={{
+        answers: normalizeReadingAnswers(response.answers),
+        analysis: session.analysisResult ?? null,
+        analysisError: session.analysisError ?? null,
+        hideRetry: true,
+      }}
+    />
+  ) : (
+    <WritingSessionReview
+      topic={topic}
+      unitTitle={unitTitle}
+      onClose={close}
+      review={{
+        response,
+        analysis: session.analysisResult ?? null,
+        analysisError: session.analysisError ?? null,
+      }}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{title}</DrawerTitle>
+          </DrawerHeader>
+          {body}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>{record?.recordType === 'reading' ? t('learning.readingPractice') : t('learning.writingPractice')}</DrawerTitle>
-        </DrawerHeader>
-        {loading ? (
-          <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
-        ) : !session || !topic ? (
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-muted-foreground">{t('profile.reviewLoadFailed')}</p>
-            <Button variant="outline" size="sm" onClick={close}>{t('common.close')}</Button>
-          </div>
-        ) : record?.recordType === 'reading' ? (
-          <ReadingSessionReview
-            topic={topic}
-            unitTitle={unitTitle}
-            onClose={close}
-            review={{
-              answers: normalizeReadingAnswers(response.answers),
-              analysis: session.analysisResult ?? null,
-              analysisError: session.analysisError ?? null,
-              hideRetry: true,
-            }}
-          />
-        ) : (
-          <WritingSessionReview
-            topic={topic}
-            unitTitle={unitTitle}
-            onClose={close}
-            review={{
-              response,
-              analysis: session.analysisResult ?? null,
-              analysisError: session.analysisError ?? null,
-            }}
-          />
-        )}
-      </DrawerContent>
-    </Drawer>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex h-[min(92vh,900px)] max-w-5xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        <div className="min-h-0 flex-1 overflow-hidden">{body}</div>
+      </DialogContent>
+    </Dialog>
   )
 }

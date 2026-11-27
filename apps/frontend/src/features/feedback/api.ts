@@ -22,11 +22,22 @@ export function submitAnonymousFeedback(data: { email: string; content: string }
   return post<{ id: string }>('/feedbacks/anonymous', data)
 }
 
+/** TestFlight 内测申请（无需登录） */
+export function submitTestflightRequest(data: { appleId: string; note?: string }) {
+  return post<{ id: string }>('/feedbacks/testflight', data)
+}
+
 export function getMyFeedbacks(page = 1, pageSize = 20) {
   return get<{ items: FeedbackResult[]; total: number }>('/feedbacks/mine', { page, pageSize })
 }
 
-export function getAllFeedbacks(params?: { status?: string; isCritical?: boolean; page?: number; pageSize?: number }) {
+export function getAllFeedbacks(params?: {
+  status?: string
+  type?: string
+  isCritical?: boolean
+  page?: number
+  pageSize?: number
+}) {
   return get<{ items: (FeedbackResult & { user?: { name: string; email: string } })[]; total: number }>('/feedbacks', params)
 }
 

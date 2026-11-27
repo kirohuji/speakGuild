@@ -1,0 +1,344 @@
+learning:
+  exercises:
+    pipeline:
+      - key: enter-room
+        kind: chunk
+        type: chunk_substitution
+        title: 说她一言不发走进房间
+        chunk: enter the room
+        chunkMeaning: 走进房间
+        direction: zh_to_en
+        items:
+          - zh: 她一言不发地走进了房间。
+            answer: She entered the room without saying a word.
+            hint: without saying a word
+          - zh: 他安静地走进了房间。
+            answer: He entered the room quietly.
+            hint: quietly
+          - zh: 进房间前请先敲门。
+            answer: Please knock before you enter the room.
+            hint: knock；before
+      - key: enter-building
+        kind: chunk
+        type: chunk_substitution
+        title: 说进大楼前的规定
+        chunk: enter the building
+        chunkMeaning: 进入大楼
+        direction: zh_to_en
+        items:
+          - zh: 访客进入大楼前必须出示票。
+            answer: Visitors must show their tickets before entering the building.
+            hint: Visitors；show their tickets
+          - zh: 没有工牌不能进大楼。
+            answer: You can't enter the building without a badge.
+            hint: without a badge
+          - zh: 他八点进了大楼，一直待到下午。
+            answer: He entered the building at eight and stayed until the afternoon.
+            hint: entered；stayed until
+      - key: enter-room-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说进房间
+        chunk: enter the room
+        chunkMeaning: 走进房间
+        direction: en_to_zh
+        items:
+          - en: She entered the room without saying a word.
+            answer: 她一言不发地走进了房间。
+            hint: without saying a word
+          - en: Please knock before you enter the room.
+            answer: 进房间前请先敲门。
+            hint: knock；before
+          - en: He entered the room and sat down by the window.
+            answer: 他走进房间，坐在窗边。
+            hint: sat down by the window
+      - key: enter-state
+        type: vocab_sentence_building
+        title: 说进入某个阶段或时期
+        vocabWord: enter
+        vocabMeaning: 进入；输入
+        direction: zh_to_en
+        patterns:
+          - chunk: enter a new stage
+            items:
+              - zh: 项目进入了一个新阶段。
+                answer: The project has entered a new stage.
+                hint: has entered
+              - zh: 公司正进入新的增长阶段。
+                answer: The company is entering a new stage of growth.
+                hint: is entering；of growth
+              - zh: 我们进入了一个很关键的阶段。
+                answer: We've entered a very important stage.
+                hint: a very important stage
+          - chunk: enter a difficult phase
+            items:
+              - zh: 经济正进入一个困难阶段。
+                answer: The economy is entering a difficult phase.
+                hint: is entering
+              - zh: 这段感情进入了一个很难的阶段。
+                answer: The relationship has entered a difficult phase.
+                hint: The relationship；has entered
+              - zh: 公司进入了调整期。
+                answer: The company entered a period of change.
+                hint: a period of change
+          - chunk: enter the market
+            items:
+              - zh: 几家新公司进入了市场。
+                answer: Several new companies have entered the market.
+                hint: Several；have entered
+              - zh: 我们明年打算进入这个市场。
+                answer: We're planning to enter this market next year.
+                hint: planning to
+              - zh: 现在进入市场的成本太高了。
+                answer: It's too expensive to enter the market now.
+                hint: too expensive
+      - key: enter-competition
+        kind: chunk
+        type: chunk_substitution
+        title: 说她参加了比赛
+        chunk: enter the competition
+        chunkMeaning: 参加比赛
+        direction: zh_to_en
+        items:
+          - zh: 他去年参加了这项比赛。
+            answer: He entered the competition last year.
+            hint: entered；last year
+          - zh: 她没怎么准备就参加了比赛。
+            answer: She entered the competition without much preparation.
+            hint: without much preparation
+          - zh: 你打算参加这个比赛吗？
+            answer: Are you planning to enter the competition?
+            hint: Are you planning to
+      - key: enter-agreement
+        kind: chunk
+        type: chunk_substitution
+        title: 说两家公司签订了协议
+        chunk: enter into an agreement
+        chunkMeaning: 订立协议；签订协议
+        direction: zh_to_en
+        items:
+          - zh: 两家公司签订了协议。
+            answer: The companies entered into an agreement.
+            hint: entered into
+          - zh: 我们和一家本地公司签了协议。
+            answer: We entered into an agreement with a local company.
+            hint: with a local company
+          - zh: 签协议之前，请仔细读一遍条款。
+            answer: Read the terms carefully before you enter into an agreement.
+            hint: the terms；before
+      - key: enter-name
+        kind: chunk
+        type: chunk_substitution
+        title: 说在下面输入姓名
+        chunk: enter your name
+        chunkMeaning: 输入你的姓名
+        direction: zh_to_en
+        items:
+          - zh: 请在下面输入你的姓名。
+            answer: Please enter your name below.
+            hint: below
+          - zh: 在这里输入你的邮箱地址。
+            answer: Enter your email address here.
+            hint: email address；here
+          - zh: 我刚才忘了填名字。
+            answer: I forgot to enter my name just now.
+            hint: forgot to
+      - key: enter-negotiations
+        kind: chunk
+        type: chunk_substitution
+        title: 说他们开始了谈判
+        chunk: enter into negotiations
+        chunkMeaning: 开始正式谈判
+        direction: zh_to_en
+        items:
+          - zh: 他们开始了谈判。
+            answer: They entered into negotiations.
+            hint: entered into
+          - zh: 两家公司下个月开始谈判。
+            answer: The two companies will enter into negotiations next month.
+            hint: will；next month
+          - zh: 我们还没开始正式谈判。
+            answer: We haven't entered into negotiations yet.
+            hint: haven't；yet
+      - key: enter-building-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说进大楼的规定
+        chunk: enter the building
+        chunkMeaning: 进入大楼
+        direction: en_to_zh
+        items:
+          - en: Visitors must show their tickets before entering the building.
+            answer: 访客进入大楼前必须出示票。
+            hint: before entering
+          - en: Staff can enter the building with this card.
+            answer: 员工用这张卡就能进大楼。
+            hint: with this card
+          - en: We entered the building through the back door.
+            answer: 我们是从后门进的大楼。
+            hint: through the back door
+      - key: enter-into-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说签协议、开谈判
+        chunk: enter into an agreement
+        chunkMeaning: 订立协议
+        direction: en_to_zh
+        items:
+          - en: The companies entered into an agreement last month.
+            answer: 两家公司上个月签订了协议。
+            hint: last month
+          - en: They entered into negotiations without a clear plan.
+            answer: 他们在没有清楚计划的情况下开始了谈判。
+            hint: without a clear plan
+          - en: We're ready to enter into a new contract.
+            answer: 我们准备好签新合同了。
+            hint: ready to；a new contract
+      - key: enter-place
+        type: pattern_drill
+        title: 换个地点说进入
+        pattern: enter [place]
+        patternMeaning: 进入某处；enter 直接接地点
+        direction: zh_to_en
+        items:
+          - zh: 她轻轻地进了厨房。
+            answer: She entered the kitchen quietly.
+            hint: 不加 into；quietly
+          - zh: 别在没敲门的情况下进办公室。
+            answer: Don't enter the office without knocking.
+            hint: without knocking
+          - zh: 我们走进大厅的时候，所有人都在等。
+            answer: Everyone was waiting when we entered the hall.
+            hint: Everyone was waiting
+      - key: enter-building-other
+        type: pattern_drill
+        title: 说进建筑或区域的规定
+        pattern: enter [building/area]
+        patternMeaning: 进入建筑或区域
+        direction: zh_to_en
+        items:
+          - zh: 施工期间请勿进入这个区域。
+            answer: Please don't enter this area during construction.
+            hint: during construction
+          - zh: 只有员工可以进这个仓库。
+            answer: Only staff can enter this warehouse.
+            hint: Only staff
+          - zh: 他们从侧门进了大厅。
+            answer: They entered the hall through the side door.
+            hint: through the side door
+      - key: enter-competition-other
+        type: pattern_drill
+        title: 说参加别的比赛
+        pattern: enter [competition]
+        patternMeaning: 参加比赛
+        direction: zh_to_en
+        items:
+          - zh: 我想报名参加这个写作比赛。
+            answer: I want to enter this writing competition.
+            hint: writing competition
+          - zh: 她才十五岁就参加了全国比赛。
+            answer: She entered a national competition at fifteen.
+            hint: a national competition；at fifteen
+          - zh: 报名截止前你得决定要不要参加。
+            answer: You need to decide whether to enter before the deadline.
+            hint: whether to；before the deadline
+      - key: enter-into-other
+        type: pattern_drill
+        title: 说正式进入某种关系
+        pattern: enter into [agreement/negotiations]
+        patternMeaning: 订立协议；开始谈判等正式活动
+        direction: zh_to_en
+        items:
+          - zh: 我们和供应商签了长期协议。
+            answer: We entered into a long-term agreement with the supplier.
+            hint: a long-term agreement
+          - zh: 双方下周开始谈判。
+            answer: The two sides will enter into negotiations next week.
+            hint: will；next week
+          - zh: 签约前最好先咨询律师。
+            answer: It's better to talk to a lawyer before you enter into an agreement.
+            hint: a lawyer；before
+      - key: enter-market-other
+        type: pattern_drill
+        title: 说进入别的市场
+        pattern: enter the market
+        patternMeaning: 进入市场
+        direction: zh_to_en
+        items:
+          - zh: 我们想进入中国市场。
+            answer: We want to enter the Chinese market.
+            hint: the Chinese market
+          - zh: 他们去年进入了这个行业。
+            answer: They entered the industry last year.
+            hint: the industry；last year
+          - zh: 现在进入市场太冒险了。
+            answer: It's too risky to enter the market now.
+            hint: too risky
+      - key: enter-name-other
+        type: pattern_drill
+        title: 说输入别的内容
+        pattern: enter [information]
+        patternMeaning: 输入资料
+        direction: zh_to_en
+        items:
+          - zh: 请在这里输入你的密码。
+            answer: Please enter your password here.
+            hint: password；here
+          - zh: 你在系统里输入的数据不对。
+            answer: The data you entered in the system is wrong.
+            hint: The data；in the system
+          - zh: 记得把邮编也输进去。
+            answer: Remember to enter the postcode as well.
+            hint: Remember to；as well
+      - key: enter-room-build
+        type: sentence_decomposition
+        title: 把进房间前敲门说完整
+        sourceKind: chunk
+        sourceText: enter the room
+        fullSentence: Please knock before you enter the room, because the baby is sleeping.
+        fullSentenceZh: 进房间前请先敲门，因为宝宝在睡觉。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Please knock before you enter the room.
+            zh: 进房间前请先敲门。
+            highlight: ''
+            hint: 先说进门先敲门
+          - level: 2
+            label: 加细节
+            en: Please knock twice before you enter the room.
+            zh: 进房间前请先敲两下门。
+            highlight: twice
+            hint: 补上敲两下
+          - level: 3
+            label: 完整句
+            en: Please knock before you enter the room, because the baby is sleeping.
+            zh: 进房间前请先敲门，因为宝宝在睡觉。
+            highlight: because the baby is sleeping
+            hint: 补上因为宝宝在睡觉
+      - key: enter-stage-build
+        type: sentence_decomposition
+        title: 把公司进入新阶段说完整
+        sourceKind: vocab
+        sourceText: enter
+        fullSentence: The company is entering a new stage of growth, and we need more people.
+        fullSentenceZh: 这家公司正进入新的增长阶段，我们需要更多人。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The company is entering a new stage.
+            zh: 这家公司正进入一个新阶段。
+            highlight: ''
+            hint: 先说进入新阶段
+          - level: 2
+            label: 加性质
+            en: The company is entering a new stage of growth.
+            zh: 这家公司正进入新的增长阶段。
+            highlight: of growth
+            hint: 补上增长
+          - level: 3
+            label: 完整句
+            en: The company is entering a new stage of growth, and we need more people.
+            zh: 这家公司正进入新的增长阶段，我们需要更多人。
+            highlight: and we need more people
+            hint: 补上需要更多人

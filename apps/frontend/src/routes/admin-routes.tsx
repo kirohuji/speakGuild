@@ -7,6 +7,7 @@ import { AdminMembersPage } from '@/features/admin/pages/admin-members-page'
 import { AdminBillingPage } from '@/features/admin/pages/admin-billing-page'
 import { AdminNotificationsPage } from '@/features/admin/pages/admin-notifications-page'
 import { AdminFeedbacksPage } from '@/features/admin/pages/admin-feedbacks-page'
+import { AdminTestflightPage } from '@/features/admin/pages/admin-testflight-page'
 import { AdminSettingsPage } from '@/features/admin/pages/admin-settings-page'
 import { AdminAnalyticsPage } from '@/features/admin/pages/admin-analytics-page'
 import { AdminScenesPage } from '@/features/admin/pages/admin-scenes-page'
@@ -44,6 +45,7 @@ export default function AdminRoutes() {
         <Route path="billing" element={<AdminBillingPage />} />
         <Route path="notifications" element={<AdminNotificationsPage />} />
         <Route path="feedbacks" element={<AdminFeedbacksPage />} />
+        <Route path="testflight" element={<AdminTestflightPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="learning-content" element={<AdminScenesPage />} />

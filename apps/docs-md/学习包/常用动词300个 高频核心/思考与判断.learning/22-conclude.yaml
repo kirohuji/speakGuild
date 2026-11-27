@@ -1,0 +1,369 @@
+learning:
+  exercises:
+    pipeline:
+      - key: conclude-plan-too-risky
+        kind: chunk
+        type: chunk_substitution
+        title: 说断定计划太冒险
+        chunk: conclude that the plan was too risky
+        chunkMeaning: 得出结论：计划风险太大
+        direction: zh_to_en
+        items:
+          - zh: 审查后我们断定这个计划太冒险。
+            answer: After the review, we concluded that the plan was too risky.
+            hint: After the review
+          - zh: 她最后认定方案风险过高。
+            answer: In the end, she concluded that the plan was too risky.
+            hint: In the end
+          - zh: 分析师认定该计划太过冒险。
+            answer: The analyst concluded that the plan was too risky.
+            hint: The analyst
+      - key: conclude-from-the-data
+        kind: chunk
+        type: chunk_substitution
+        title: 说从数据得出结论
+        chunk: conclude from the data
+        chunkMeaning: 从数据中得出结论
+        direction: zh_to_en
+        items:
+          - zh: 你能从数据里得出什么结论？
+            answer: What can you conclude from the data?
+            hint: What can you
+          - zh: 我们从数据断定需求在下降。
+            answer: We concluded from the data that demand is falling.
+            hint: that demand is falling
+          - zh: 别过度解读，从数据谨慎下结论。
+            answer: Don't overread it—conclude carefully from the data.
+            hint: Don't overread it；carefully
+      - key: conclude-with-discussion
+        kind: chunk
+        type: chunk_substitution
+        title: 说以简短讨论收尾
+        chunk: conclude with a short discussion
+        chunkMeaning: 以简短讨论作结
+        direction: zh_to_en
+        items:
+          - zh: 讲座最后会以简短讨论收尾。
+            answer: The talk will conclude with a short discussion.
+            hint: The talk will
+          - zh: 请以简短讨论结束本场活动。
+            answer: Please conclude with a short discussion.
+            hint: Please
+          - zh: 报告以小组讨论收尾。
+            answer: The report session concluded with a short discussion.
+            hint: The report session
+      - key: conclude-by-thanking
+        kind: chunk
+        type: chunk_substitution
+        title: 说以致谢结束
+        chunk: conclude by thanking everyone
+        chunkMeaning: 最后感谢大家
+        direction: zh_to_en
+        items:
+          - zh: 他以感谢大家结束了致辞。
+            answer: He concluded by thanking everyone.
+            hint: He concluded
+          - zh: 咱们最后谢谢大家今天的付出吧。
+            answer: Let's conclude by thanking everyone for today.
+            hint: for today
+          - zh: 主持人以感谢各位嘉宾收尾。
+            answer: The host concluded by thanking everyone.
+            hint: The host
+      - key: conclude-the-meeting
+        kind: chunk
+        type: chunk_substitution
+        title: 说结束会议
+        chunk: conclude the meeting
+        chunkMeaning: 结束会议
+        direction: zh_to_en
+        items:
+          - zh: 如果没有别的问题，我们就结束会议吧。
+            answer: If there are no more questions, let's conclude the meeting.
+            hint: If there are no more questions
+          - zh: 主席宣布散会。
+            answer: The chair concluded the meeting.
+            hint: The chair
+          - zh: 五点半准时结束会议。
+            answer: We'll conclude the meeting at five thirty sharp.
+            hint: at five thirty sharp
+      - key: reasonably-conclude
+        kind: chunk
+        type: chunk_substitution
+        title: 说有理由地推断
+        chunk: reasonably conclude
+        chunkMeaning: 有理由地断定
+        direction: zh_to_en
+        items:
+          - zh: 从这些事实可以合理推断他知情。
+            answer: From these facts, we can reasonably conclude he knew.
+            hint: From these facts；he knew
+          - zh: 调查人员合理断定事故可避免。
+            answer: Investigators reasonably concluded the accident was preventable.
+            hint: Investigators；was preventable
+          - zh: 没有证据就别轻易下结论。
+            answer: Without evidence, you can't reasonably conclude anything.
+            hint: can't；anything
+      - key: conclude-too-quickly
+        kind: chunk
+        type: chunk_substitution
+        title: 说结论下得太快
+        chunk: conclude too quickly
+        chunkMeaning: 过快下结论
+        direction: zh_to_en
+        items:
+          - zh: 别在听完一面就下结论。
+            answer: Don't conclude too quickly after one interview.
+            hint: after one interview
+          - zh: 法官提醒陪审团勿草率定论。
+            answer: The judge warned the jury not to conclude too quickly.
+            hint: the jury not to
+          - zh: 我们当时结论下得太快了。
+            answer: We concluded too quickly back then.
+            hint: back then
+      - key: conclude-an-agreement
+        kind: chunk
+        type: chunk_substitution
+        title: 说达成协议
+        chunk: conclude an agreement
+        chunkMeaning: 达成协议
+        direction: zh_to_en
+        items:
+          - zh: 双方连夜谈成了协议。
+            answer: Both sides concluded an agreement overnight.
+            hint: Both sides；overnight
+          - zh: 谈判有望在周五达成协议。
+            answer: Talks may conclude an agreement by Friday.
+            hint: by Friday
+          - zh: 他们终于达成了贸易协定。
+            answer: They finally concluded an agreement on trade.
+            hint: finally；on trade
+      - key: conclude-successfully
+        kind: chunk
+        type: chunk_substitution
+        title: 说圆满收尾
+        chunk: conclude successfully
+        chunkMeaning: 圆满结束
+        direction: zh_to_en
+        items:
+          - zh: 峰会圆满落幕。
+            answer: The summit concluded successfully.
+            hint: The summit
+          - zh: 我们希望项目能顺利收官。
+            answer: We hope the project will conclude successfully.
+            hint: We hope；will
+          - zh: 活动今晚顺利结束。
+            answer: The event concluded successfully tonight.
+            hint: tonight
+      - key: conclude-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方下了什么结论
+        chunk: conclude that
+        chunkMeaning: 断定；得出结论
+        direction: en_to_zh
+        items:
+          - en: Researchers concluded that the treatment is effective.
+            answer: 研究者断定该疗法有效。
+            hint: the treatment is effective
+          - en: I concluded that we needed a different approach.
+            answer: 我得出的结论是我们需要换种做法。
+            hint: a different approach
+          - en: The report concludes that costs will keep rising.
+            answer: 报告结论是成本还会继续涨。
+            hint: costs will keep rising
+      - key: conclude-from-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂从何处得出判断
+        chunk: conclude from
+        chunkMeaning: 从……得出结论
+        direction: en_to_zh
+        items:
+          - en: What did you conclude from the customer interviews?
+            answer: 你从客户访谈里得出了什么结论？
+            hint: customer interviews
+          - en: From the charts alone, you can't conclude much.
+            answer: 单看图表得不出多少结论。
+            hint: the charts alone
+          - en: She concluded from his silence that he disagreed.
+            answer: 她从他的沉默断定他不同意。
+            hint: his silence；he disagreed
+      - key: conclude-state
+        type: vocab_sentence_building
+        title: 说下结论与收尾
+        vocabWord: conclude
+        vocabMeaning: 断定；结束
+        direction: zh_to_en
+        patterns:
+          - chunk: conclude the meeting
+            items:
+              - zh: 时间到了，该散会了。
+                answer: Time's up—let's conclude the meeting.
+                hint: Time's up
+              - zh: 他总结了要点后宣布结束会议。
+                answer: He summarized the points and then concluded the meeting.
+                hint: summarized the points
+          - chunk: conclude from the data
+            items:
+              - zh: 科学家从数据得出新假设。
+                answer: Scientists concluded a new hypothesis from the data.
+                hint: a new hypothesis
+              - zh: 我们还不能从现有数据下定论。
+                answer: We can't conclude much from the data we have yet.
+                hint: can't conclude much
+          - chunk: conclude an agreement
+            items:
+              - zh: 两党终于谈妥了协议。
+                answer: The two parties finally concluded an agreement.
+                hint: finally
+              - zh: 他们计划在月底达成协议。
+                answer: They plan to conclude an agreement by the end of the month.
+                hint: by the end of the month
+      - key: conclude-that-other
+        type: pattern_drill
+        title: 说对别的情况下结论
+        pattern: conclude that [clause]
+        patternMeaning: 断定……
+        direction: zh_to_en
+        items:
+          - zh: 证据表明我们得改策略，可以这样断定。
+            answer: The evidence suggests we should change strategy—we can conclude that it's time to pivot.
+            hint: it's time to pivot
+          - zh: 审查后断定产品已准备好发布。
+            answer: After review, they concluded that the product was ready to launch.
+            hint: was ready to launch
+          - zh: 她断定他不会回来了。
+            answer: She concluded that he wasn't coming back.
+            hint: he wasn't coming back
+      - key: conclude-with-other
+        type: pattern_drill
+        title: 说以别的方式收尾
+        pattern: conclude with [noun/doing]
+        patternMeaning: 以……结束
+        direction: zh_to_en
+        items:
+          - zh: 课程以问答环节结束。
+            answer: The course concludes with a Q&A session.
+            hint: a Q&A session
+          - zh: 电影以感人一幕收尾。
+            answer: The film concludes with a moving scene.
+            hint: a moving scene
+          - zh: 婚礼以敬酒结束这一晚。
+            answer: The wedding concluded with toasts that night.
+            hint: toasts
+      - key: conclude-by-other
+        type: pattern_drill
+        title: 说以别的动作作结
+        pattern: conclude by [doing]
+        patternMeaning: 以做某事结束
+        direction: zh_to_en
+        items:
+          - zh: 他以呼吁大家投票结束了演讲。
+            answer: He concluded by asking everyone to vote.
+            hint: asking everyone to vote
+          - zh: 文章以总结要点收尾。
+            answer: The article concludes by summarizing the key points.
+            hint: summarizing the key points
+          - zh: 她用一句名言结束了信。
+            answer: She concluded by quoting a famous line.
+            hint: quoting a famous line
+      - key: reasonably-conclude-other
+        type: pattern_drill
+        title: 说对别的事有根据地推断
+        pattern: reasonably conclude [something]
+        patternMeaning: 合理地断定
+        direction: zh_to_en
+        items:
+          - zh: 从趋势看可以合理断定市场在复苏。
+            answer: From the trend, we can reasonably conclude the market is recovering.
+            hint: the market is recovering
+          - zh: 没有对照组就很难合理下结论。
+            answer: Without a control group, you can't reasonably conclude much.
+            hint: a control group
+          - zh: 评委合理认定作品原创。
+            answer: The judges reasonably concluded the work was original.
+            hint: the work was original
+      - key: conclude-agreement-other
+        type: pattern_drill
+        title: 说就别的事项达成协议
+        pattern: conclude an agreement on [topic]
+        patternMeaning: 就……达成协议
+        direction: zh_to_en
+        items:
+          - zh: 两国就边界问题达成协议。
+            answer: The two countries concluded an agreement on the border.
+            hint: the border
+          - zh: 工会与资方谈妥了加薪协议。
+            answer: The union and management concluded an agreement on pay raises.
+            hint: pay raises
+          - zh: 各方希望年底前就气候条款达成一致。
+            answer: Parties hope to conclude an agreement on climate terms by year end.
+            hint: climate terms；by year end
+      - key: conclude-too-quickly-other
+        type: pattern_drill
+        title: 说在别的事上仓促定论
+        pattern: conclude too quickly
+        patternMeaning: 过快下结论
+        direction: zh_to_en
+        items:
+          - zh: 看到一条推特就定论太草率。
+            answer: Don't conclude too quickly from a single tweet.
+            hint: from a single tweet
+          - zh: 别因为一次失败就断定自己不行。
+            answer: Don't conclude too quickly that you're no good after one failure.
+            hint: that you're no good
+          - zh: 媒体有时对初步结果反应过快。
+            answer: The media sometimes conclude too quickly on early results.
+            hint: on early results
+      - key: conclude-data-build
+        type: sentence_decomposition
+        title: 把从数据下结论说完整
+        sourceKind: chunk
+        sourceText: conclude from the data
+        fullSentence: From the data, we can reasonably conclude that users prefer shorter videos during the workweek.
+        fullSentenceZh: 从数据来看，我们有理由断定工作日里用户更喜欢短视频。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We can conclude from the data.
+            zh: 我们可以从这些数据得出结论。
+            highlight: ''
+            hint: 先说能从数据得出结论
+          - level: 2
+            label: 加合理性
+            en: We can reasonably conclude from the data.
+            zh: 我们可以有理由地从数据下结论。
+            highlight: reasonably
+            hint: 补上合理地
+          - level: 3
+            label: 完整句
+            en: From the data, we can reasonably conclude that users prefer shorter videos during the workweek.
+            zh: 从数据来看，我们有理由断定工作日里用户更喜欢短视频。
+            highlight: users prefer shorter videos during the workweek
+            hint: 说出具体结论内容
+      - key: conclude-meeting-build
+        type: sentence_decomposition
+        title: 把结束会议说完整
+        sourceKind: chunk
+        sourceText: conclude the meeting
+        fullSentence: Let's conclude the meeting now, send out the notes, and follow up on open items tomorrow.
+        fullSentenceZh: 咱们现在散会，把纪要发出去，明天再跟未决事项。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let's conclude the meeting now.
+            zh: 咱们现在散会吧。
+            highlight: ''
+            hint: 先说现在结束会议
+          - level: 2
+            label: 加后续
+            en: Let's conclude the meeting and send out the notes.
+            zh: 散会并把纪要发出去。
+            highlight: and send out the notes
+            hint: 补上发纪要
+          - level: 3
+            label: 完整句
+            en: Let's conclude the meeting now, send out the notes, and follow up on open items tomorrow.
+            zh: 咱们现在散会，把纪要发出去，明天再跟未决事项。
+            highlight: follow up on open items tomorrow
+            hint: 补上明天跟进未决事项

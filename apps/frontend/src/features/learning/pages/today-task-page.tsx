@@ -1,6 +1,7 @@
 import { sentenceBuildingPrompts } from '@/features/practice/lib/warmup-reference'
 import { showRequestError } from '@/lib/request-feedback'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -40,6 +41,7 @@ import { offlineSyncService, practiceRepository } from '@/lib/offline'
 import { syncOutbox } from '@/lib/offline/sync-outbox'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { localDateKey } from '@/lib/date/calendar-date'
@@ -199,6 +201,7 @@ export function TodayTaskPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
   const isMobile = useIsMobile()
+  const todayAsideSlot = useDesktopAsideSlot()
   const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
   const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
@@ -1220,7 +1223,7 @@ export function TodayTaskPage() {
   // ── 加载态：登录恢复中，或无缓存数据时展示 ──
   if ((loginRestorePending || loading) && !plan) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
+      <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3' : 'w-full pb-2', isMobile && 'md:pb-24')} data-spotlight="today-overview">
         <div className="rounded-lg bg-muted/30 px-5 py-6">
           <div className="flex items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -1243,7 +1246,7 @@ export function TodayTaskPage() {
   // ── 空态 ──
   if (error || (!loading && !loginRestorePending && !plan)) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
+      <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3' : 'w-full pb-2', isMobile && 'md:pb-24')} data-spotlight="today-overview">
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Target className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-muted-foreground">
@@ -1268,7 +1271,7 @@ export function TodayTaskPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24" data-spotlight="today-overview">
+    <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] pt-3 md:pb-24' : 'w-full pb-2')} data-spotlight="today-overview">
       {/* ── Header ── */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -1282,39 +1285,37 @@ export function TodayTaskPage() {
             </Link>
           )}
         </div>
-        {isMobile && (
-          <div className="flex shrink-0 items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
-            <button
-              type="button"
-              onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-              data-spotlight="today-records"
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-              aria-label={t('todayTask.practiceRecords')}
-            >
-              <ClipboardList className="size-[18px]" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
-              disabled={manualSyncing || !isOnline}
-              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
-              aria-label={isOnline ? '同步今日任务' : t('common.offline')}
-              title={isOnline ? '同步今日任务' : t('common.offline')}
-            >
-              <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
-              {!isOnline && (
-                <span className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
-                  <WifiOff className="size-2.5" />
-                </span>
-              )}
-              {isOnline && hasPendingSync && !manualSyncing && (
-                <span className="absolute -right-0.5 -top-0.5">
-                  <AlertCircle className="size-3.5 text-amber-500" />
-                </span>
-              )}
-            </button>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
+          <button
+            type="button"
+            onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+            data-spotlight="today-records"
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+            aria-label={t('todayTask.practiceRecords')}
+          >
+            <ClipboardList className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
+            disabled={manualSyncing || !isOnline}
+            className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed"
+            aria-label={isOnline ? '同步今日任务' : t('common.offline')}
+            title={isOnline ? '同步今日任务' : t('common.offline')}
+          >
+            <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
+            {!isOnline && (
+              <span className="absolute bottom-0 left-0 flex size-4 items-center justify-center rounded-full bg-muted-foreground/75 text-background shadow-sm ring-1 ring-background">
+                <WifiOff className="size-2.5" />
+              </span>
+            )}
+            {isOnline && hasPendingSync && !manualSyncing && (
+              <span className="absolute -right-0.5 -top-0.5">
+                <AlertCircle className="size-3.5 text-amber-500" />
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ── 进度条 ── */}
@@ -1597,24 +1598,30 @@ export function TodayTaskPage() {
         })}
       </div>
 
-      {/* ── 今日话题快捷入口（按当前模式过滤）── */}
-      {filteredTopics.length > 0 && (() => {
+      {/* ── 今日话题：移动端中栏；桌面挂右栏 ── */}
+      {(() => {
         const isReviewMode = plan.mode === 'review'
-        const displayedTopics = topicsExpanded ? topicPageItems.items : filteredTopics.slice(0, 3)
+        const useDesktopRail = !isMobile
+        const showExpanded = useDesktopRail || topicsExpanded
+        const displayedTopics = showExpanded ? topicPageItems.items : filteredTopics.slice(0, 3)
 
-        return (
-          <>
-            <Separator className="my-6" />
-            <section>
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
-                  </h2>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
-                  </span>
-                </div>
+        const topicsBody = filteredTopics.length === 0 ? (
+          <div className={cn('flex flex-col items-center justify-center px-2 py-10 text-center', useDesktopRail && 'flex-1')}>
+            <Target className="size-9 text-muted-foreground/35" />
+            <p className="mt-3 text-sm text-muted-foreground">{t('todayTask.noTopics', { defaultValue: '暂无学习话题' })}</p>
+          </div>
+        ) : (
+          <section className={cn(useDesktopRail && 'flex min-h-0 flex-1 flex-col')}>
+            <div className={cn('mb-3 flex items-center justify-between gap-3', useDesktopRail && 'shrink-0')}>
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
+                </h2>
+                <span className="truncate text-xs text-muted-foreground">
+                  {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
+                </span>
+              </div>
+              {!useDesktopRail && (
                 <button
                   type="button"
                   onClick={() => {
@@ -1626,41 +1633,42 @@ export function TodayTaskPage() {
                 >
                   <ChevronDown className={cn('size-4 transition-transform duration-200', !topicsExpanded && '-rotate-90')} />
                 </button>
-              </div>
-              <div className="space-y-1.5">
-                {displayedTopics.map((topic, index) => {
-                  const absoluteIndex = topicsExpanded ? topicPageItems.startIndex + index : index
-                  const detail = isReviewMode
-                    ? [
-                        topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
-                        topic.todayReviewCount > 0 ? `${t('todayTask.statusReview')} ${topic.todayReviewCount}` : null,
-                        topic.todayNewCount > 0 ? `${t('todayTask.statusNew')} ${topic.todayNewCount}` : null,
-                      ].filter(Boolean).join(' · ')
-                    : null
-                  const unPracticed = topic.totalCount - topic.practicedCount
-                  const assetSummary = [
-                    topic.vocabCount > 0 ? `${topic.vocabCount} ${t('learning.vocab')}` : null,
-                    topic.chunkCount > 0 ? `${topic.chunkCount} ${t('learning.chunks')}` : null,
-                    topic.patternCount > 0 ? `${topic.patternCount} ${t('learning.patterns')}` : null,
-                  ].filter(Boolean).join(' · ')
-                  return (
-                    <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-accent/[0.06] transition-colors hover:bg-accent/[0.1]">
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => { void openTopicTeaching(topic.topicId, topic.packId) }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            void openTopicTeaching(topic.topicId, topic.packId)
-                          }
-                        }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-3 active:scale-[0.99]"
-                      >
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
-                          {absoluteIndex + 1}
-                        </div>
-                        <div className="min-w-0 flex-1">
+              )}
+            </div>
+            <div className={cn('space-y-1.5', useDesktopRail && 'min-h-0 flex-1 overflow-y-auto overscroll-contain')}>
+              {displayedTopics.map((topic, index) => {
+                const absoluteIndex = showExpanded ? topicPageItems.startIndex + index : index
+                const detail = isReviewMode
+                  ? [
+                      topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
+                      topic.todayReviewCount > 0 ? `${t('todayTask.statusReview')} ${topic.todayReviewCount}` : null,
+                      topic.todayNewCount > 0 ? `${t('todayTask.statusNew')} ${topic.todayNewCount}` : null,
+                    ].filter(Boolean).join(' · ')
+                  : null
+                const unPracticed = topic.totalCount - topic.practicedCount
+                const assetSummary = [
+                  topic.vocabCount > 0 ? `${topic.vocabCount} ${t('learning.vocab')}` : null,
+                  topic.chunkCount > 0 ? `${topic.chunkCount} ${t('learning.chunks')}` : null,
+                  topic.patternCount > 0 ? `${topic.patternCount} ${t('learning.patterns')}` : null,
+                ].filter(Boolean).join(' · ')
+                return (
+                  <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-accent/[0.06] transition-colors hover:bg-accent/[0.1]">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { void openTopicTeaching(topic.topicId, topic.packId) }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          void openTopicTeaching(topic.topicId, topic.packId)
+                        }
+                      }}
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-3 active:scale-[0.99]"
+                    >
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
+                        {absoluteIndex + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-2">
                           <p className="line-clamp-1 flex-1 text-sm font-medium text-foreground">{topic.topicTitle}</p>
                         </div>
@@ -1689,50 +1697,69 @@ export function TodayTaskPage() {
                             }
                           </span>
                         </div>
-                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => openTopicPractice(topic.topicId)}
-                        className="flex w-10 shrink-0 items-center justify-center text-muted-foreground/60 transition-colors hover:text-foreground"
-                        aria-label={`${topic.topicTitle} ${t('todayTask.practice')}`}
-                      >
-                        <ChevronRight className="size-4" />
-                      </button>
                     </div>
-                  )
-                })}
-              </div>
-              {filteredTopics.length > 3 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTopicsExpanded((expanded) => !expanded)
-                    setTopicPage(1)
-                  }}
-                  className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                >
-                  <ChevronDown className={cn('size-3.5 transition-transform duration-200', topicsExpanded && 'rotate-180')} />
-                  {topicsExpanded ? t('common.collapse') : t('common.expand')}
-                </button>
-              )}
-              {topicsExpanded && topicPageItems.totalPages > 1 && (
-                <div className="mt-1 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
-                  <span className="text-[11px] text-muted-foreground">
-                    {t('common.total')} {filteredTopics.length} {t('learning.items')}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
-                      {t('common.prevPage')}
-                    </Button>
-                    <span className="min-w-10 text-center text-[11px] text-muted-foreground">{topicPage}/{topicPageItems.totalPages}</span>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
-                      {t('common.nextPage')}
-                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => openTopicPractice(topic.topicId)}
+                      className="flex w-10 shrink-0 items-center justify-center text-muted-foreground/60 transition-colors hover:text-foreground"
+                      aria-label={`${topic.topicTitle} ${t('todayTask.practice')}`}
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
                   </div>
+                )
+              })}
+            </div>
+            {!useDesktopRail && filteredTopics.length > 3 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTopicsExpanded((expanded) => !expanded)
+                  setTopicPage(1)
+                }}
+                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              >
+                <ChevronDown className={cn('size-3.5 transition-transform duration-200', topicsExpanded && 'rotate-180')} />
+                {topicsExpanded ? t('common.collapse') : t('common.expand')}
+              </button>
+            )}
+            {showExpanded && topicPageItems.totalPages > 1 && (
+              <div className={cn('mt-2 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2', useDesktopRail && 'shrink-0')}>
+                <span className="text-[11px] text-muted-foreground">
+                  {t('common.total')} {filteredTopics.length} {t('learning.items')}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
+                    {t('common.prevPage')}
+                  </Button>
+                  <span className="min-w-10 text-center text-[11px] text-muted-foreground">{topicPage}/{topicPageItems.totalPages}</span>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
+                    {t('common.nextPage')}
+                  </Button>
                 </div>
-              )}
-            </section>
+              </div>
+            )}
+          </section>
+        )
+
+        if (useDesktopRail) {
+          return todayAsideSlot
+            ? createPortal(
+              <div className="scrollbar-hide flex h-full min-h-0 flex-col overflow-hidden px-4 py-4">
+                {topicsBody}
+              </div>,
+              todayAsideSlot,
+            )
+            : null
+        }
+
+        if (filteredTopics.length === 0) return null
+
+        return (
+          <>
+            <Separator className="my-6" />
+            {topicsBody}
           </>
         )
       })()}
@@ -1829,28 +1856,16 @@ export function TodayTaskPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── 题目列表 Drawer ── */}
-      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent showHandle={false} className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
-          <div className="flex items-center justify-between px-5 pb-2 pt-1">
-            <DrawerTitle className="text-lg">{plan.mode === 'review' ? t('todayTask.todayReviewQuestions') : t('todayTask.todayPracticeQuestions')}</DrawerTitle>
-            <button
-              type="button"
-              onClick={() => setPlaylistOpen(false)}
-              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-            >
-              <ChevronDown className="size-5" />
-            </button>
-          </div>
+      {/* ── 题目列表：移动 Drawer / 桌面 Dialog ── */}
+      {(() => {
+        const playlistTitle = plan.mode === 'review' ? t('todayTask.todayReviewQuestions') : t('todayTask.todayPracticeQuestions')
+        const playlistInner = (
           <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
             <div className="space-y-5">
               {playlistGroups.map((group) => {
                 const Icon = group.meta.icon
                 return (
-                  <section
-                    key={group.type}
-                    className="space-y-1"
-                  >
+                  <section key={group.type} className="space-y-1">
                     <div className="flex items-center gap-2 px-2.5 pb-1 pt-0.5 text-muted-foreground">
                       <Icon className="size-4 shrink-0" />
                       <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{group.meta.label}</p>
@@ -1900,8 +1915,40 @@ export function TodayTaskPage() {
               })}
             </div>
           </ScrollArea>
-        </DrawerContent>
-      </Drawer>
+        )
+        if (isMobile) {
+          return (
+            <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+              <DrawerContent showHandle={false} className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
+                <div className="flex items-center justify-between px-5 pb-2 pt-1">
+                  <DrawerTitle className="text-lg">{playlistTitle}</DrawerTitle>
+                  <button
+                    type="button"
+                    onClick={() => setPlaylistOpen(false)}
+                    className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                  >
+                    <ChevronDown className="size-5" />
+                  </button>
+                </div>
+                {playlistInner}
+              </DrawerContent>
+            </Drawer>
+          )
+        }
+        return (
+          <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
+            <DialogContent
+              overlayClassName="!z-[10001]"
+              className="!z-[10001] flex h-[min(80vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+                <DialogTitle className="text-lg">{playlistTitle}</DialogTitle>
+              </div>
+              {playlistInner}
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
 
       {/* ── 练习记录 Drawer ── */}
       <Dialog

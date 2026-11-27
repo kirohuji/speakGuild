@@ -16,6 +16,7 @@ import { learningRepository } from '@/lib/offline'
 import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
 import { useLearningStore } from '@/stores/learning.store'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
 import { displayLearningUnitLocation } from '../lib/learning-unit-display'
@@ -114,6 +115,7 @@ export function MyLearningView({
   onSetActivePracticePack,
 }: Props) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const downloadedPackIdSet = useMemo(() => new Set(downloadedPackIds), [downloadedPackIds])
   const updatePackIdSet = useMemo(() => new Set(updatePackIds), [updatePackIds])
   const installingPackIdSet = useMemo(() => new Set(installingPackIds), [installingPackIds])
@@ -159,7 +161,7 @@ export function MyLearningView({
           <span>{t('learning.refreshingPlan')}</span>
         </div>
       )}
-      <LearningWeekTracker />
+      {isMobile && <LearningWeekTracker />}
 
       {inProgress.length > 0 && (
         <section>

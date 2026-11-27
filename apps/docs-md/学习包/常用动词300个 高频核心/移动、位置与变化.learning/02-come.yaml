@@ -1,0 +1,470 @@
+learning:
+  exercises:
+    pipeline:
+      - key: come-to-office
+        kind: chunk
+        type: chunk_substitution
+        title: 问对方明天来不来办公室
+        chunk: come to the office
+        chunkMeaning: 来办公室
+        direction: zh_to_en
+        items:
+          - zh: 你明天来办公室吗？
+            answer: Are you coming to the office tomorrow?
+            hint: 疑问句；进行时表将来
+          - zh: 他每天早上九点来办公室。
+            answer: He comes to the office at nine every morning.
+            hint: comes；every morning
+          - zh: 今天为什么没人来办公室？
+            answer: Why isn't anyone coming to the office today?
+            hint: Why isn't；anyone
+      - key: come-here
+        kind: chunk
+        type: chunk_substitution
+        title: 叫对方过来一下
+        chunk: come here
+        chunkMeaning: 过来这里
+        direction: zh_to_en
+        items:
+          - zh: 过来一下。
+            answer: Come here for a second.
+            hint: for a second
+          - zh: 你能过来一下吗？
+            answer: Can you come here for a minute?
+            hint: for a minute
+          - zh: 别站在门口，进来这边。
+            answer: Don't stand at the door; come here.
+            hint: stand at the door
+      - key: come-in-other
+        kind: chunk
+        type: chunk_substitution
+        title: 招呼对方进来坐
+        chunk: come in
+        chunkMeaning: 进来
+        direction: zh_to_en
+        items:
+          - zh: 进来坐吧。
+            answer: Come in and have a seat.
+            hint: have a seat
+          - zh: 门开着，你进来就行。
+            answer: The door is open, so just come in.
+            hint: just
+          - zh: 请他进来一下。
+            answer: Ask him to come in for a minute.
+            hint: Ask him to
+      - key: come-here-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方叫你过去
+        chunk: come here
+        chunkMeaning: 过来这里
+        direction: en_to_zh
+        items:
+          - en: Come here for a second. I need your help.
+            answer: 过来一下，我需要你帮忙。
+            hint: for a second；I need your help
+          - en: She came here to say goodbye.
+            answer: 她过来是为了道别。
+            hint: came here；to say goodbye
+          - en: Could you come here when you're free?
+            answer: 你有空的时候能过来一下吗？
+            hint: when you're free
+      - key: come-from
+        type: vocab_sentence_building
+        title: 问对方从哪里来
+        vocabWord: come
+        vocabMeaning: 来；来自
+        direction: zh_to_en
+        patterns:
+          - chunk: come from
+            items:
+              - zh: 你从哪里来的？
+                answer: Where did you come from?
+                hint: Where；did you
+              - zh: 我是从北京来的。
+                answer: I come from Beijing.
+                hint: from Beijing
+              - zh: 这趟火车是下午两点从上海开来的。
+                answer: This train came from Shanghai at two in the afternoon.
+                hint: came from；at two in the afternoon
+          - chunk: come from a family
+            items:
+              - zh: 她来自一个很小的家庭。
+                answer: She comes from a small family.
+                hint: comes from
+              - zh: 我们都来自同一个地方。
+                answer: We all come from the same place.
+                hint: the same place
+              - zh: 这个习惯来自我的奶奶。
+                answer: This habit comes from my grandmother.
+                hint: This habit；my grandmother
+          - chunk: Where do you come from?
+            items:
+              - zh: 你是哪里人？
+                answer: Where do you come from?
+                hint: Where do you
+              - zh: 请问，这附近的水果是从哪儿来的？
+                answer: Excuse me, where do these fruits come from?
+                hint: Excuse me；these fruits
+              - zh: 你听出来我是哪里人了吗？
+                answer: Did you hear where I come from?
+                hint: Did you hear
+      - key: come-from-beijing
+        kind: chunk
+        type: chunk_substitution
+        title: 说火车从北京来
+        chunk: come from Beijing
+        chunkMeaning: 从北京来
+        direction: zh_to_en
+        items:
+          - zh: 这趟火车是从北京来的。
+            answer: This train comes from Beijing.
+            hint: comes from
+          - zh: 这班飞机是从北京来的吗？
+            answer: Does this flight come from Beijing?
+            hint: 疑问句；Does
+          - zh: 刚从北京来的那批货到了吗？
+            answer: Has the shipment that just came from Beijing arrived yet?
+            hint: came from；arrived yet
+      - key: come-over
+        kind: chunk
+        type: chunk_substitution
+        title: 邀请对方过来一趟
+        chunk: come over after dinner
+        chunkMeaning: 吃完饭后过来
+        direction: zh_to_en
+        items:
+          - zh: 我吃完饭后过去找你。
+            answer: I'll come over after dinner.
+            hint: I'll；after dinner
+          - zh: 你有空过来一趟。
+            answer: Come over when you have time.
+            hint: when you have time
+          - zh: 他们昨晚来我们家了。
+            answer: They came over to our place last night.
+            hint: came over；to our place
+      - key: come-with-us
+        kind: chunk
+        type: chunk_substitution
+        title: 邀请对方一起去
+        chunk: come with us
+        chunkMeaning: 和我们一起去
+        direction: zh_to_en
+        items:
+          - zh: 你想和我们一起去吗？
+            answer: Do you want to come with us?
+            hint: Do you want to
+          - zh: 我们明天去城里，你要一起来吗？
+            answer: We're going downtown tomorrow. Do you want to come with us?
+            hint: downtown；Do you want to
+          - zh: 太好了，和我们一起来吧。
+            answer: Great, come with us.
+            hint: Great
+      - key: come-up
+        kind: chunk
+        type: chunk_substitution
+        title: 说出现了新问题
+        chunk: come up
+        chunkMeaning: 突然出现；被提出
+        direction: zh_to_en
+        items:
+          - zh: 今天早上出现了一个新问题。
+            answer: A new problem came up this morning.
+            hint: came up；this morning
+          - zh: 要是有别的事出现，请告诉我。
+            answer: Let me know if anything else comes up.
+            hint: if；anything else
+          - zh: 会议里提出来一个挺有意思的问题。
+            answer: An interesting question came up in the meeting.
+            hint: came up；in the meeting
+      - key: come-out
+        kind: chunk
+        type: chunk_substitution
+        title: 说结果出来了
+        chunk: come out
+        chunkMeaning: 出来；公布
+        direction: zh_to_en
+        items:
+          - zh: 结果昨天出来了。
+            answer: The results came out yesterday.
+            hint: came out；yesterday
+          - zh: 他们的新游戏什么时候出？
+            answer: When does their new game come out?
+            hint: When does
+          - zh: 这次的照片拍出来很好。
+            answer: The photos came out really well this time.
+            hint: came out；really well
+      - key: come-across-article
+        kind: chunk
+        type: chunk_substitution
+        title: 说偶然看到一篇文章
+        chunk: come across an interesting article
+        chunkMeaning: 偶然看到一篇有意思的文章
+        direction: zh_to_en
+        items:
+          - zh: 我偶然看到了一篇有意思的文章。
+            answer: I came across an interesting article.
+            hint: came across
+          - zh: 我在网上偶然发现了这篇文章。
+            answer: I came across this article online.
+            hint: this article；online
+          - zh: 你有没有偶然碰到过他？
+            answer: Did you ever come across him?
+            hint: Did you ever
+      - key: come-along
+        kind: chunk
+        type: chunk_substitution
+        title: 问项目进展
+        chunk: come along
+        chunkMeaning: 进展；一起过来
+        direction: zh_to_en
+        items:
+          - zh: 项目进展得怎么样？
+            answer: How's the project coming along?
+            hint: How's；进行时
+          - zh: 事情进展得很顺利。
+            answer: Things are coming along well.
+            hint: coming along；well
+          - zh: 我们走吧，你也一起来吧。
+            answer: Let's go; come along with us.
+            hint: Let's go；along with us
+      - key: come-to-mind
+        kind: chunk
+        type: chunk_substitution
+        title: 说一开始什么也没想到
+        chunk: come to mind
+        chunkMeaning: 想到；浮现在脑海
+        direction: zh_to_en
+        items:
+          - zh: 一开始我什么也没想到。
+            answer: Nothing came to mind at first.
+            hint: Nothing；at first
+          - zh: 我最后终于想到了答案。
+            answer: The answer finally came to me.
+            hint: finally；came to me
+          - zh: 你能想到谁可以帮忙吗？
+            answer: Can anyone come to mind who could help?
+            hint: come to mind；who could help
+      - key: come-out-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说结果出来了
+        chunk: come out
+        chunkMeaning: 出来；公布
+        direction: en_to_zh
+        items:
+          - en: When will the results come out?
+            answer: 结果什么时候出来？
+            hint: When will
+          - en: Her new book came out last month.
+            answer: 她的新书上个月出版了。
+            hint: came out；last month
+          - en: It didn't come out the way we planned.
+            answer: 事情没有按我们计划的那样发展。
+            hint: the way we planned
+      - key: come-mind-build
+        type: sentence_decomposition
+        title: 把突然想到主意说完整
+        sourceKind: vocab
+        sourceText: come
+        fullSentence: A good idea came to mind while I was walking home.
+        fullSentenceZh: 我走回家的路上想到了一个好主意。
+        levels:
+          - level: 1
+            label: 核心句
+            en: An idea came to mind.
+            zh: 我想到了一个主意。
+            highlight: ''
+            hint: 先说想到主意
+          - level: 2
+            label: 加评价
+            en: A good idea came to mind.
+            zh: 我想到了一个好主意。
+            highlight: good
+            hint: 补上好主意
+          - level: 3
+            label: 完整句
+            en: A good idea came to mind while I was walking home.
+            zh: 我走回家的路上想到了一个好主意。
+            highlight: while I was walking home
+            hint: 补上走回家的路上
+      - key: come-to-place
+        type: pattern_drill
+        title: 换个地点说来某地
+        pattern: come to [place]
+        patternMeaning: 来到某地
+        direction: zh_to_en
+        items:
+          - zh: 他昨天来我们家了。
+            answer: He came to our place yesterday.
+            hint: came to；yesterday
+          - zh: 请你今晚来我家一趟。
+            answer: Please come to my place tonight.
+            hint: my place；tonight
+          - zh: 因为下雨，来公园的人很少。
+            answer: Few people came to the park because of the rain.
+            hint: Few people；because of the rain
+      - key: come-over-other
+        type: pattern_drill
+        title: 邀请别人过来
+        pattern: come over
+        patternMeaning: 过来拜访
+        direction: zh_to_en
+        items:
+          - zh: 你今晚要不要过来吃饭？
+            answer: Do you want to come over for dinner tonight?
+            hint: for dinner；tonight
+          - zh: 我周末过来帮你。
+            answer: I'll come over to help you this weekend.
+            hint: to help you；this weekend
+          - zh: 他们随时都可以过来。
+            answer: They can come over any time.
+            hint: any time
+      - key: come-with-other
+        type: pattern_drill
+        title: 叫别人一起来
+        pattern: come with [someone]
+        patternMeaning: 和某人一起来
+        direction: zh_to_en
+        items:
+          - zh: 你想和我一起来吗？
+            answer: Do you want to come with me?
+            hint: Do you want to
+          - zh: 他带他弟弟一起来了。
+            answer: He came with his brother.
+            hint: came with
+          - zh: 我们可以带孩子一起来吗？
+            answer: Can we come with our kids?
+            hint: Can we；our kids
+      - key: come-up-other
+        type: pattern_drill
+        title: 说别的事情冒出来
+        pattern: come up
+        patternMeaning: 突然出现或被提出
+        direction: zh_to_en
+        items:
+          - zh: 昨天出了一个急事。
+            answer: Something urgent came up yesterday.
+            hint: Something urgent；yesterday
+          - zh: 开会时提起了一个新想法。
+            answer: A new idea came up during the meeting.
+            hint: came up；during the meeting
+          - zh: 如果有什么临时情况，就给我打电话。
+            answer: If something comes up, just call me.
+            hint: If；just call me
+      - key: come-across-other
+        type: pattern_drill
+        title: 说偶然碰到别的东西
+        pattern: come across [something]
+        patternMeaning: 偶然发现某物
+        direction: zh_to_en
+        items:
+          - zh: 我在旧盒子里偶然发现了这张照片。
+            answer: I came across this photo in an old box.
+            hint: came across；in an old box
+          - zh: 我昨天在路上偶然认识了她的朋友。
+            answer: I came across her friend on the street yesterday.
+            hint: came across；on the street
+          - zh: 你查资料的时候可能会偶然找到答案。
+            answer: You might come across the answer while searching.
+            hint: might；while searching
+      - key: come-along-other
+        type: pattern_drill
+        title: 问别的事情进展
+        pattern: come along
+        patternMeaning: 一起来或进展
+        direction: zh_to_en
+        items:
+          - zh: 你的中文进步得怎么样？
+            answer: How's your Chinese coming along?
+            hint: How's；Chinese
+          - zh: 新房子的装修进展得不错。
+            answer: The new house is coming along nicely.
+            hint: coming along；nicely
+          - zh: 你先走吧，我一会儿跟上来。
+            answer: You go ahead; I'll come along in a minute.
+            hint: go ahead；in a minute
+      - key: come-mind-other
+        type: pattern_drill
+        title: 说想到别的事情
+        pattern: come to mind
+        patternMeaning: 浮现在脑海
+        direction: zh_to_en
+        items:
+          - zh: 有几个名字浮现在我脑海里。
+            answer: A few names came to mind.
+            hint: A few names
+          - zh: 你有什么想推荐的吗？
+            answer: Does anything come to mind?
+            hint: anything
+          - zh: 我突然想到了一个好主意。
+            answer: A good idea came to mind.
+            hint: A good idea
+      - key: come-from-listen
+        type: pattern_drill
+        title: 听懂对方说从哪里来
+        pattern: come from [place]
+        patternMeaning: 来自某地
+        direction: en_to_zh
+        items:
+          - en: Where did you come from?
+            answer: 你从哪里来的？
+            hint: Where
+          - en: This package came from Shanghai.
+            answer: 这个包裹是从上海寄来的。
+            hint: This package；Shanghai
+          - en: My family comes from a small town in the south.
+            answer: 我家来自南方的一个小镇。
+            hint: My family；in the south
+      - key: come-over-build
+        type: sentence_decomposition
+        title: 把请对方过来吃饭说完整
+        sourceKind: chunk
+        sourceText: come over after dinner
+        fullSentence: Come over after dinner if you're free; I'll make some tea.
+        fullSentenceZh: 你吃完饭后有空就过来，我泡点茶。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Come over.
+            zh: 你过来吧。
+            highlight: ''
+            hint: 先说过来
+          - level: 2
+            label: 加时间
+            en: Come over after dinner.
+            zh: 你吃完饭后过来吧。
+            highlight: after dinner
+            hint: 补上吃完饭后
+          - level: 3
+            label: 完整句
+            en: Come over after dinner if you're free; I'll make some tea.
+            zh: 你吃完饭后有空就过来，我泡点茶。
+            highlight: if you're free; I'll make some tea
+            hint: 补上有空就过来和泡茶
+      - key: come-project-build
+        type: sentence_decomposition
+        title: 把项目进展说完整
+        sourceKind: vocab
+        sourceText: come
+        fullSentence: The project is coming along well, but we need two more weeks.
+        fullSentenceZh: 项目进展得不错，不过我们还需要两周。
+        levels:
+          - level: 1
+            label: 核心句
+            en: The project is coming along.
+            zh: 项目有进展。
+            highlight: ''
+            hint: 先说项目有进展
+          - level: 2
+            label: 加程度
+            en: The project is coming along well.
+            zh: 项目进展得不错。
+            highlight: well
+            hint: 补上不错
+          - level: 3
+            label: 完整句
+            en: The project is coming along well, but we need two more weeks.
+            zh: 项目进展得不错，不过我们还需要两周。
+            highlight: but we need two more weeks
+            hint: 补上不过还需要两周

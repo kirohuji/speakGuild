@@ -1,0 +1,361 @@
+learning:
+  exercises:
+    pipeline:
+      - key: drop-phone
+        kind: chunk
+        type: chunk_substitution
+        title: 说我把手机掉地上了
+        chunk: drop my phone
+        chunkMeaning: 把手机掉了
+        direction: zh_to_en
+        items:
+          - zh: 我把手机掉在地上了。
+            answer: I dropped my phone on the floor.
+            hint: dropped；on the floor
+          - zh: 我差点把手机摔了。
+            answer: I almost dropped my phone.
+            hint: almost
+          - zh: 别把杯子掉了，里面有热水。
+            answer: Don't drop the cup; there's hot water in it.
+            hint: hot water in it
+      - key: drop-keys
+        kind: chunk
+        type: chunk_substitution
+        title: 说回家路上把钥匙掉了
+        chunk: drop the keys on the floor
+        chunkMeaning: 把钥匙掉在地上
+        direction: zh_to_en
+        items:
+          - zh: 我回家的路上不知道把钥匙掉在哪里了。
+            answer: I dropped my keys somewhere on the way home.
+            hint: somewhere；on the way home
+          - zh: 他没注意，钥匙掉在了地上。
+            answer: He wasn't paying attention, and the keys dropped on the floor.
+            hint: wasn't paying attention
+          - zh: 我好像把钥匙丢在出租车上了。
+            answer: I think I dropped my keys in the taxi.
+            hint: in the taxi
+      - key: drop-phone-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说掉了东西
+        chunk: drop something
+        chunkMeaning: 把某物掉了
+        direction: en_to_zh
+        items:
+          - en: I dropped my phone on the floor.
+            answer: 我把手机掉在地上了。
+            hint: on the floor
+          - en: I dropped my keys somewhere on the way home.
+            answer: 我回家的路上不知道把钥匙掉在哪里了。
+            hint: somewhere
+          - en: Don't drop the cup; there's hot water in it.
+            answer: 别把杯子掉了，里面有热水。
+            hint: hot water in it
+      - key: drop-state
+        type: vocab_sentence_building
+        title: 说下降到某水平、下降某幅度
+        vocabWord: drop
+        vocabMeaning: 掉落；下降
+        direction: zh_to_en
+        patterns:
+          - chunk: drop to ten degrees
+            items:
+              - zh: 夜里气温降到了零下。
+                answer: The temperature dropped to below zero at night.
+                hint: dropped to；below zero
+              - zh: 晚上气温降到了十度。
+                answer: The temperature dropped to ten degrees at night.
+                hint: at night
+              - zh: 价格已经降到了我买得起的水平。
+                answer: The price has dropped to a level I can afford.
+                hint: a level I can afford
+          - chunk: drop by 20 percent
+            items:
+              - zh: 销量下降了10%。
+                answer: Sales dropped by ten percent.
+                hint: dropped by
+              - zh: 成本下降了大约一成。
+                answer: The cost has dropped by about ten percent.
+                hint: about ten percent
+              - zh: 今年招聘人数减少了三成。
+                answer: Hiring dropped by thirty percent this year.
+                hint: Hiring；this year
+          - chunk: drop out of school
+            items:
+              - zh: 他上了两年大学后退学了。
+                answer: He dropped out of college after two years.
+                hint: dropped out of
+              - zh: 别因为一点挫折就放弃学业。
+                answer: Don't drop out of school over one setback.
+                hint: over one setback
+              - zh: 她中途退出了比赛。
+                answer: She dropped out of the competition.
+                hint: the competition
+      - key: drop-temperature
+        kind: chunk
+        type: chunk_substitution
+        title: 说气温降到零度
+        chunk: drop to zero
+        chunkMeaning: 降到零度
+        direction: zh_to_en
+        items:
+          - zh: 气温降到了零度。
+            answer: The temperature dropped to zero.
+            hint: dropped to
+          - zh: 明天温度会降到零下五度。
+            answer: The temperature will drop to five below zero tomorrow.
+            hint: five below zero
+          - zh: 一到晚上气温就降到零下。
+            answer: The temperature drops to below zero at night.
+            hint: drops to；below zero
+      - key: drop-percent
+        kind: chunk
+        type: chunk_substitution
+        title: 说价格下降20%
+        chunk: drop by 20 percent
+        chunkMeaning: 下降20%
+        direction: zh_to_en
+        items:
+          - zh: 价格下降了20%。
+            answer: The price has dropped by twenty percent.
+            hint: has dropped by
+          - zh: 销量比去年少了15%。
+            answer: Sales dropped by fifteen percent compared with last year.
+            hint: compared with last year
+          - zh: 油价一下子跌了百分之十。
+            answer: Oil prices dropped by ten percent all at once.
+            hint: Oil prices；all at once
+      - key: drop-off-car
+        kind: chunk
+        type: chunk_substitution
+        title: 说送你到入口处
+        chunk: drop you off at the station
+        chunkMeaning: 顺路送你去车站
+        direction: zh_to_en
+        items:
+          - zh: 我送你到入口处。
+            answer: I'll drop you off at the entrance.
+            hint: drop you off；the entrance
+          - zh: 我送你到车站。
+            answer: I'll drop you off at the station.
+            hint: at the station
+          - zh: 你能顺路送我去机场吗？
+            answer: Could you drop me off at the airport?
+            hint: Could you
+      - key: drop-by
+        kind: chunk
+        type: chunk_substitution
+        title: 说今天下午随时可以过来
+        chunk: drop by
+        chunkMeaning: 顺路来访
+        direction: zh_to_en
+        items:
+          - zh: 今天下午随时可以过来坐坐。
+            answer: Drop by anytime this afternoon.
+            hint: anytime；this afternoon
+          - zh: 我路过你家的时候顺便来一趟。
+            answer: I'll drop by your place on the way.
+            hint: your place；on the way
+          - zh: 不好意思没打招呼就来了。
+            answer: Sorry for dropping by without calling first.
+            hint: without calling first
+      - key: drop-subject
+        kind: chunk
+        type: chunk_substitution
+        title: 说暂时别谈这个话题
+        chunk: drop the subject
+        chunkMeaning: 不再谈这个话题
+        direction: zh_to_en
+        items:
+          - zh: 这个话题我们暂时别谈了。
+            answer: Let's drop the subject for now.
+            hint: for now
+          - zh: 他不想再聊这件事，我们就没再说。
+            answer: He didn't want to talk about it, so we dropped the subject.
+            hint: didn't want to
+          - zh: 换个话题吧。
+            answer: Let's drop this subject and talk about something else.
+            hint: something else
+      - key: drop-by-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说顺路来访
+        chunk: drop by
+        chunkMeaning: 顺路来访
+        direction: en_to_zh
+        items:
+          - en: Drop by anytime this afternoon.
+            answer: 今天下午随时可以过来坐坐。
+            hint: anytime
+          - en: I'll drop by your place on the way.
+            answer: 我路过你家的时候顺便来一趟。
+            hint: your place
+          - en: Sorry for dropping by without calling first.
+            answer: 不好意思没打招呼就来了。
+            hint: without calling first
+      - key: drop-subject-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说换个话题
+        chunk: drop the subject
+        chunkMeaning: 不再谈这个话题
+        direction: en_to_zh
+        items:
+          - en: Let's drop the subject for now.
+            answer: 这个话题我们暂时别谈了。
+            hint: for now
+          - en: He didn't want to talk about it, so we dropped the subject.
+            answer: 他不想再聊这件事，我们就没再说。
+            hint: didn't want to
+          - en: Let's drop this subject and talk about something else.
+            answer: 换个话题聊聊吧。
+            hint: something else
+      - key: drop-place
+        type: pattern_drill
+        title: 说把某物掉在某处
+        pattern: drop [something] on [place]
+        patternMeaning: 把某物掉在某处
+        direction: zh_to_en
+        items:
+          - zh: 我把咖啡洒在桌子上了。
+            answer: I dropped coffee on the table.
+            hint: coffee；on the table
+          - zh: 小孩把饼干掉在了地毯上。
+            answer: The child dropped a cookie on the carpet.
+            hint: The child；the carpet
+          - zh: 别把东西掉在地上，很难打扫。
+            answer: Don't drop things on the floor; it's hard to clean.
+            hint: it's hard to clean
+      - key: drop-to-level
+        type: pattern_drill
+        title: 说降到某个水平
+        pattern: drop to [level]
+        patternMeaning: 下降到某水平
+        direction: zh_to_en
+        items:
+          - zh: 股价跌到了三年来的最低点。
+            answer: The share price dropped to its lowest in three years.
+            hint: its lowest in three years
+          - zh: 销量一下子降到了平时的三分之一。
+            answer: Sales dropped to a third of the usual level.
+            hint: a third of
+          - zh: 夜里温度会降到零下。
+            answer: The temperature will drop to below zero at night.
+            hint: below zero
+      - key: drop-by-amount
+        type: pattern_drill
+        title: 说下降某个幅度
+        pattern: drop by [amount]
+        patternMeaning: 下降某幅度
+        direction: zh_to_en
+        items:
+          - zh: 收入比上个月减少了8%。
+            answer: Income dropped by eight percent compared with last month.
+            hint: compared with last month
+          - zh: 游客人数下降了将近一半。
+            answer: The number of visitors dropped by nearly half.
+            hint: nearly half
+          - zh: 成本降了大约两成。
+            answer: The cost dropped by about twenty percent.
+            hint: about
+      - key: drop-off-other
+        type: pattern_drill
+        title: 说顺路送别的东西
+        pattern: drop [someone] off at [place]
+        patternMeaning: 顺路送某人去某地
+        direction: zh_to_en
+        items:
+          - zh: 我送孩子去学校，然后去上班。
+            answer: I drop the kids off at school and then go to work.
+            hint: the kids；then
+          - zh: 你能把我放在前面的路口吗？
+            answer: Could you drop me off at the next crossing?
+            hint: the next crossing
+          - zh: 我顺路把包裹放到了快递点。
+            answer: I dropped the parcel off on the way.
+            hint: the parcel；on the way
+      - key: drop-out-other
+        type: pattern_drill
+        title: 说中途退出
+        pattern: drop out of [activity]
+        patternMeaning: 中途退出
+        direction: zh_to_en
+        items:
+          - zh: 他大三的时候退学了。
+            answer: He dropped out of university in his third year.
+            hint: in his third year
+          - zh: 因为受伤，她退出了训练。
+            answer: She dropped out of training because of an injury.
+            hint: because of an injury
+          - zh: 中途退出的人比去年多。
+            answer: More people dropped out than last year.
+            hint: More people；than last year
+      - key: drop-listen
+        type: pattern_drill
+        title: 听懂对方说下降和顺路送
+        pattern: drop to [level] / drop by [amount] / drop [someone] off
+        patternMeaning: 降到 / 下降幅度 / 顺路送
+        direction: en_to_zh
+        items:
+          - en: The temperature dropped to zero.
+            answer: 气温降到了零度。
+            hint: to zero
+          - en: Sales dropped by ten percent.
+            answer: 销量下降了10%。
+            hint: by ten percent
+          - en: I'll drop you off at the entrance.
+            answer: 我送你到入口处。
+            hint: at the entrance
+      - key: drop-phone-build
+        type: sentence_decomposition
+        title: 把手机掉地上说完整
+        sourceKind: chunk
+        sourceText: drop my phone
+        fullSentence: I dropped my phone on the floor, but luckily the screen didn't break.
+        fullSentenceZh: 我把手机掉在地上，幸好屏幕没坏。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I dropped my phone.
+            zh: 我把手机掉了。
+            highlight: ''
+            hint: 先说手机掉了
+          - level: 2
+            label: 加地点
+            en: I dropped my phone on the floor.
+            zh: 我把手机掉在地上。
+            highlight: on the floor
+            hint: 补上在地上
+          - level: 3
+            label: 完整句
+            en: I dropped my phone on the floor, but luckily the screen didn't break.
+            zh: 我把手机掉在地上，幸好屏幕没坏。
+            highlight: but luckily the screen didn't break
+            hint: 补上幸好屏幕没坏
+      - key: drop-percent-build
+        type: sentence_decomposition
+        title: 把销量下降说完整
+        sourceKind: vocab
+        sourceText: drop
+        fullSentence: Sales dropped by ten percent this quarter, which is worse than we expected.
+        fullSentenceZh: 这个季度销量下降了10%，比我们预想的还要糟。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Sales dropped by ten percent.
+            zh: 销量下降了10%。
+            highlight: ''
+            hint: 先说下降了10%
+          - level: 2
+            label: 加时间
+            en: Sales dropped by ten percent this quarter.
+            zh: 这个季度销量下降了10%。
+            highlight: this quarter
+            hint: 补上这个季度
+          - level: 3
+            label: 完整句
+            en: Sales dropped by ten percent this quarter, which is worse than we expected.
+            zh: 这个季度销量下降了10%，比我们预想的还要糟。
+            highlight: which is worse than we expected
+            hint: 补上比预想更糟

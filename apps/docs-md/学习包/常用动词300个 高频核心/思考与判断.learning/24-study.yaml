@@ -1,0 +1,386 @@
+learning:
+  exercises:
+    pipeline:
+      - key: study-biology
+        kind: chunk
+        type: chunk_substitution
+        title: 说学生物
+        chunk: study biology
+        chunkMeaning: 学生物
+        direction: zh_to_en
+        items:
+          - zh: 她大学学生物。
+            answer: She studied biology in college.
+            hint: in college
+          - zh: 我一直想学海洋生物。
+            answer: I've always wanted to study marine biology.
+            hint: marine biology
+          - zh: 孩子对生物学很感兴趣，正在自学。
+            answer: The kid loves science and is studying biology on his own.
+            hint: on his own
+      - key: study-for-exam
+        kind: chunk
+        type: chunk_substitution
+        title: 说备考
+        chunk: study for an exam
+        chunkMeaning: 为考试而学习
+        direction: zh_to_en
+        items:
+          - zh: 我今晚得备考。
+            answer: I need to study for an exam tonight.
+            hint: tonight
+          - zh: 他们周末一起备考。
+            answer: They're studying for an exam together this weekend.
+            hint: together；this weekend
+          - zh: 别熬夜，早点开始备考。
+            answer: Don't cram—start studying for an exam early.
+            hint: Don't cram；early
+      - key: study-at-university
+        kind: chunk
+        type: chunk_substitution
+        title: 说上大学
+        chunk: study at a university
+        chunkMeaning: 在大学求学
+        direction: zh_to_en
+        items:
+          - zh: 他想出国留学读大学。
+            answer: He wants to study at a university abroad.
+            hint: abroad
+          - zh: 她在一所综合性大学学传媒。
+            answer: She studies at a university majoring in media.
+            hint: majoring in media
+          - zh: 我弟明年将入读大学。
+            answer: My brother will study at a university next year.
+            hint: My brother；next year
+      - key: study-effect-sleep-memory
+        kind: chunk
+        type: chunk_substitution
+        title: 说研究睡眠对记忆的影响
+        chunk: study the effect of sleep on memory
+        chunkMeaning: 研究睡眠对记忆的影响
+        direction: zh_to_en
+        items:
+          - zh: 课题是研究睡眠怎样影响记忆。
+            answer: The project studies the effect of sleep on memory.
+            hint: The project
+          - zh: 他们用实验研究睡眠与记忆的关系。
+            answer: They study the effect of sleep on memory through experiments.
+            hint: through experiments
+          - zh: 这篇论文专门研究睡眠对记忆的作用。
+            answer: This paper studies the effect of sleep on memory.
+            hint: This paper
+      - key: study-how-users-interacted
+        kind: chunk
+        type: chunk_substitution
+        title: 说研究用户如何使用系统
+        chunk: study how users interacted with the system
+        chunkMeaning: 研究用户如何与系统交互
+        direction: zh_to_en
+        items:
+          - zh: 我们分析了用户怎么用这个系统。
+            answer: We studied how users interacted with the system.
+            hint: We studied
+          - zh: 数据团队在研究用户与系统的交互方式。
+            answer: The data team is studying how users interacted with the system.
+            hint: The data team is
+          - zh: 论文研究了用户如何操作系统界面。
+            answer: The thesis studies how users interacted with the system interface.
+            hint: the system interface
+      - key: study-hard
+        kind: chunk
+        type: chunk_substitution
+        title: 说用功学习
+        chunk: study hard
+        chunkMeaning: 努力学习
+        direction: zh_to_en
+        items:
+          - zh: 想进好学校就得用功。
+            answer: You have to study hard to get into a good school.
+            hint: to get into a good school
+          - zh: 她为了奖学金拼命学习。
+            answer: She studied hard for the scholarship.
+            hint: for the scholarship
+          - zh: 别偷懒，好好学。
+            answer: Don't slack off—study hard.
+            hint: Don't slack off
+      - key: study-in-detail
+        kind: chunk
+        type: chunk_substitution
+        title: 说详细研究
+        chunk: study in detail
+        chunkMeaning: 详细研究
+        direction: zh_to_en
+        items:
+          - zh: 我们会详细研究这份合同。
+            answer: We'll study the contract in detail.
+            hint: the contract
+          - zh: 历史学家详细研究了那段时期。
+            answer: Historians studied that period in detail.
+            hint: that period
+          - zh: 需要花时间把问题细究一遍。
+            answer: We need time to study the issue in detail.
+            hint: the issue
+      - key: study-closely
+        kind: chunk
+        type: chunk_substitution
+        title: 说仔细研究
+        chunk: study closely
+        chunkMeaning: 仔细研究
+        direction: zh_to_en
+        items:
+          - zh: 科学家们正在密切研究这种病毒。
+            answer: Scientists are studying the virus closely.
+            hint: the virus
+          - zh: 投资者会仔细研究财报。
+            answer: Investors study earnings reports closely.
+            hint: earnings reports
+          - zh: 请仔细观察图画里的细节。
+            answer: Please study the painting closely for hidden details.
+            hint: the painting；hidden details
+      - key: study-abroad
+        kind: chunk
+        type: chunk_substitution
+        title: 说出国留学
+        chunk: study abroad
+        chunkMeaning: 出国留学
+        direction: zh_to_en
+        items:
+          - zh: 她高中毕业后出国留学。
+            answer: She studied abroad after high school.
+            hint: after high school
+          - zh: 你想去哪个国家留学？
+            answer: Which country do you want to study abroad in?
+            hint: Which country
+          - zh: 留学经历开阔了他的眼界。
+            answer: Studying abroad broadened his horizons.
+            hint: broadened his horizons
+      - key: study-the-data
+        kind: chunk
+        type: chunk_substitution
+        title: 说研读数据
+        chunk: study the data
+        chunkMeaning: 研究数据
+        direction: zh_to_en
+        items:
+          - zh: 下结论前请先看数据。
+            answer: Study the data before you draw conclusions.
+            hint: before you draw conclusions
+          - zh: 分析师花了一周研究数据。
+            answer: The analyst spent a week studying the data.
+            hint: spent a week
+          - zh: 我们一起把数据过一遍。
+            answer: Let's study the data together.
+            hint: together
+      - key: study-for-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说在备考什么
+        chunk: study for
+        chunkMeaning: 为……而学习
+        direction: en_to_zh
+        items:
+          - en: She's studying for her medical licensing exam.
+            answer: 她在准备医师资格考试。
+            hint: medical licensing exam
+          - en: I can't go out—I'm studying for a quiz tomorrow.
+            answer: 我出不去，明天有小测要复习。
+            hint: a quiz tomorrow
+          - en: They studied for weeks before the final.
+            answer: 他们在期末考前复习了好几周。
+            hint: weeks；the final
+      - key: study-how-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂在研究什么现象
+        chunk: study how
+        chunkMeaning: 研究如何/怎样……
+        direction: en_to_zh
+        items:
+          - en: The team studies how customers decide what to buy.
+            answer: 团队研究顾客如何决定买什么。
+            hint: customers decide；what to buy
+          - en: We studied how the policy changed behavior.
+            answer: 我们研究了政策怎样改变了行为。
+            hint: the policy；changed behavior
+          - en: Researchers study how plants respond to drought.
+            answer: 研究者研究植物如何应对干旱。
+            hint: plants respond；drought
+      - key: study-state
+        type: vocab_sentence_building
+        title: 说学习与钻研
+        vocabWord: study
+        vocabMeaning: 学习；研究
+        direction: zh_to_en
+        patterns:
+          - chunk: study for an exam
+            items:
+              - zh: 图书馆里到处是备考的学生。
+                answer: The library is full of students studying for an exam.
+                hint: full of students
+              - zh: 她每天晚饭后备考一小时。
+                answer: She studies for an exam for an hour after dinner.
+                hint: after dinner
+          - chunk: study the data
+            items:
+              - zh: 科学家仔细研究数据后才发表论文。
+                answer: Scientists study the data carefully before publishing.
+                hint: before publishing
+              - zh: 我们得先研究数据再改产品。
+                answer: We need to study the data before changing the product.
+                hint: before changing the product
+          - chunk: study abroad
+            items:
+              - zh: 他获得奖学金出国留学。
+                answer: He won a scholarship to study abroad.
+                hint: won a scholarship
+              - zh: 出国留学改变了她的人生规划。
+                answer: Studying abroad changed her life plans.
+                hint: her life plans
+      - key: study-subject-other
+        type: pattern_drill
+        title: 说学习别的学科
+        pattern: study [subject]
+        patternMeaning: 学/研究某学科
+        direction: zh_to_en
+        items:
+          - zh: 他在研究生阶段学经济学。
+            answer: He studied economics in graduate school.
+            hint: economics；graduate school
+          - zh: 她对天文学很感兴趣。
+            answer: She's interested in studying astronomy.
+            hint: astronomy
+          - zh: 学校鼓励学生学两门语言。
+            answer: The school encourages students to study two languages.
+            hint: two languages
+      - key: study-for-other
+        type: pattern_drill
+        title: 说为别的考试或目标而学
+        pattern: study for [exam/goal]
+        patternMeaning: 为……备考
+        direction: zh_to_en
+        items:
+          - zh: 我在为驾照笔试复习。
+            answer: I'm studying for the written driving test.
+            hint: written driving test
+          - zh: 全班都在准备口语考试。
+            answer: The whole class is studying for the speaking test.
+            hint: speaking test
+          - zh: 他忙着准备认证考试。
+            answer: He's busy studying for a certification exam.
+            hint: certification exam
+      - key: study-how-other
+        type: pattern_drill
+        title: 说研究别的现象如何发生
+        pattern: study how [clause]
+        patternMeaning: 研究……如何
+        direction: zh_to_en
+        items:
+          - zh: 我们研究算法怎样影响推荐结果。
+            answer: We study how the algorithm affects recommendations.
+            hint: the algorithm；recommendations
+          - zh: 心理学家研究儿童如何习得语言。
+            answer: Psychologists study how children acquire language.
+            hint: acquire language
+          - zh: 工程团队研究热量如何在设备中传导。
+            answer: Engineers study how heat moves through the device.
+            hint: heat moves
+      - key: study-effect-other
+        type: pattern_drill
+        title: 说研究别因素的影响
+        pattern: study the effect of [A] on [B]
+        patternMeaning: 研究 A 对 B 的影响
+        direction: zh_to_en
+        items:
+          - zh: 文章研究饮食对情绪的影响。
+            answer: The article studies the effect of diet on mood.
+            hint: diet；mood
+          - zh: 他们研究噪音对专注力的影响。
+            answer: They study the effect of noise on concentration.
+            hint: noise；concentration
+          - zh: 课题组研究光照对植物生长的作用。
+            answer: The lab studies the effect of light on plant growth.
+            hint: light；plant growth
+      - key: study-in-detail-other
+        type: pattern_drill
+        title: 说把别的事物细究清楚
+        pattern: study [something] in detail
+        patternMeaning: 详细研究
+        direction: zh_to_en
+        items:
+          - zh: 律师会逐条细究合同。
+            answer: Lawyers study contracts in detail.
+            hint: contracts
+          - zh: 请把安全报告仔细研究一遍。
+            answer: Please study the safety report in detail.
+            hint: safety report
+          - zh: 考古学家详细研究了出土文物。
+            answer: Archaeologists studied the artifacts in detail.
+            hint: the artifacts
+      - key: study-abroad-other
+        type: pattern_drill
+        title: 说在别处留学深造
+        pattern: study abroad in [place]
+        patternMeaning: 去某地留学
+        direction: zh_to_en
+        items:
+          - zh: 我姐姐在加拿大留学。
+            answer: My sister studied abroad in Canada.
+            hint: in Canada
+          - zh: 很多人选择在欧洲留学。
+            answer: Many people choose to study abroad in Europe.
+            hint: in Europe
+          - zh: 他计划去日本学设计。
+            answer: He plans to study abroad in Japan and learn design.
+            hint: in Japan；learn design
+      - key: study-exam-build
+        type: sentence_decomposition
+        title: 把备考说完整
+        sourceKind: chunk
+        sourceText: study for an exam
+        fullSentence: I have to study for an exam this weekend, so I might miss the party.
+        fullSentenceZh: 我这周末得备考，搞不好去不了聚会了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I have to study for an exam this weekend.
+            zh: 我这周末得备考。
+            highlight: ''
+            hint: 先说周末要备考
+          - level: 2
+            label: 加影响
+            en: I have to study for an exam, so I might be busy.
+            zh: 我得备考，可能会很忙。
+            highlight: so I might be busy
+            hint: 补上所以可能很忙
+          - level: 3
+            label: 完整句
+            en: I have to study for an exam this weekend, so I might miss the party.
+            zh: 我这周末得备考，搞不好去不了聚会了。
+            highlight: miss the party
+            hint: 点出可能错过聚会
+      - key: study-data-build
+        type: sentence_decomposition
+        title: 把研究数据说完整
+        sourceKind: chunk
+        sourceText: study the data
+        fullSentence: Before we change the pricing, let's study the data and see how customers react.
+        fullSentenceZh: 调价之前我们先研究数据，看看客户反应如何。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Let's study the data first.
+            zh: 我们先研究一下数据。
+            highlight: ''
+            hint: 先说先研究数据
+          - level: 2
+            label: 加时机
+            en: Before we change pricing, let's study the data.
+            zh: 改价格前先研究数据。
+            highlight: Before we change pricing
+            hint: 补上改价之前
+          - level: 3
+            label: 完整句
+            en: Before we change the pricing, let's study the data and see how customers react.
+            zh: 调价之前我们先研究数据，看看客户反应如何。
+            highlight: see how customers react
+            hint: 加上看客户反应

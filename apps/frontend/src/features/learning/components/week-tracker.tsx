@@ -6,6 +6,7 @@ import { pointsApi, type CheckInCalendar } from '@/features/points/api'
 import { makeupAvailability } from '@/features/points/makeup-policy'
 import { useUserStore } from '@/stores/user.store'
 import { useHomeStore } from '@/stores/home.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -77,13 +78,29 @@ export function LearningWeekTracker() {
   )
 }
 
+export function CheckInCalendarPanel({ className }: { className?: string }) {
+  return (
+    <CheckInCalendarDrawer
+      open
+      onOpenChange={() => {}}
+      variant="inline"
+      className={className}
+    />
+  )
+}
+
 export function CheckInCalendarDrawer({
   open,
   onOpenChange,
+  variant = 'drawer',
+  className,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  variant?: 'drawer' | 'inline'
+  className?: string
 }) {
+  const active = variant === 'inline' || open
   const { t, i18n } = useTranslation()
   const data = useLearningStore((s) => s.checkInData)
   const loading = useLearningStore((s) => s.checkInLoading)
@@ -103,7 +120,7 @@ export function CheckInCalendarDrawer({
   const accountId = useUserStore(state => state.currentUserId)
   useEffect(() => { requestEpoch.current++; setQuote(null); setMakeupBusy(false) }, [accountId])
   useEffect(() => {
-    if (!open) return
+    if (!active) return
     const update = () => { setOnline(navigator.onLine); setToday(startOfDay(new Date())) }
     update()
     const timer = setInterval(update, 60_000)
@@ -111,10 +128,10 @@ export function CheckInCalendarDrawer({
     window.addEventListener('offline', update)
     document.addEventListener('visibilitychange', update)
     return () => { clearInterval(timer); window.removeEventListener('online', update); window.removeEventListener('offline', update); document.removeEventListener('visibilitychange', update) }
-  }, [open])
+  }, [active])
   useEffect(()=>{
-    if(open){const current=startOfDay(new Date());setToday(current);setSelectedDay(current);setMonth(startOfMonth(current));setView('day')}
-  },[open])
+    if(active){const current=startOfDay(new Date());setToday(current);setSelectedDay(current);setMonth(startOfMonth(current));setView('day')}
+  },[active])
   const calendarLocale = i18n.language.startsWith('ja')
     ? ja
     : i18n.language.startsWith('en')
@@ -130,7 +147,7 @@ export function CheckInCalendarDrawer({
       endDate: format(endOfWeek(endOfMonth(month), { locale: calendarLocale, weekStartsOn: 1 }), 'yyyy-MM-dd'),
     }
   }, [calendarLocale, month, view, weekStart, year, selectedDay, todayKey])
-  const { data: statistics } = useLearningStatistics(visibleRange.startDate, visibleRange.endDate, open)
+  const { data: statistics } = useLearningStatistics(visibleRange.startDate, visibleRange.endDate, active)
   const checkedInDates = useMemo<Date[]>(
     () => data?.dates.map((date) => parseISO(date)) ?? [],
     [data],
@@ -151,9 +168,9 @@ export function CheckInCalendarDrawer({
   const dayUnknown=view==='day'&&!focusedStats&&!statistics?.historyComplete
 
   useEffect(() => {
-    if (!open) return
+    if (!active) return
     fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
-  }, [open, visibleRange, fetchCheckInCalendar, todayKey, online])
+  }, [active, visibleRange, fetchCheckInCalendar, todayKey, online])
 
   const changeMonth = useCallback((offset: number) => {
     const nextMonth = startOfMonth(addMonths(month, offset))
@@ -175,10 +192,19 @@ export function CheckInCalendarDrawer({
   const activeCalendar = calendarMatches && (!data?.offlineOnly || data.dates.includes(selectedKey)) ? data : null
   const makeupState = makeupAvailability(selectedKey, activeCalendar, online, todayKey)
   const canOfferMakeup = view === 'day' && selectedKey < todayKey && !activeCalendar?.dates.includes(selectedKey)
+  const canCheckInToday = view === 'day' && selectedKey === todayKey && Boolean(activeCalendar && !activeCalendar.dates.includes(selectedKey))
   const makeupReason = makeupState === 'insufficient'
     ? t('learning.dayDetails.insufficient', { cost: activeCalendar?.makeup?.cost, balance: activeCalendar?.makeup?.pointsBalance })
     : t(`learning.dayDetails.${makeupState}`)
   const invalidateCalendar = useLearningStore(state => state.invalidateCheckInCalendar)
+  const storeCheckIn = useHomeStore((s) => s.checkIn)
+  const checkInLoading = useHomeStore((s) => s.checkInLoading)
+
+  // 签到按钮真正渲染后才尝试分段引导（桌面右栏统计面板）
+  useEffect(() => {
+    if (!canCheckInToday) return
+    useOnboardingStore.getState().tryStartSegment('home-checkin')
+  }, [canCheckInToday])
   const selectDay = useCallback((day?: Date) => {
     if (!day || isAfter(day, today)) return
     setSelectedDay(day)
@@ -218,6 +244,27 @@ export function CheckInCalendarDrawer({
       if (epoch === requestEpoch.current && getCurrentSessionSnapshot()?.user?.id === owner) showMakeupError(error)
     } finally { if (epoch === requestEpoch.current) setMakeupBusy(false) }
   }
+  const doCheckIn = async () => {
+    if (checkInLoading || submittingRef.current) return
+    submittingRef.current = true
+    try {
+      const message = await storeCheckIn()
+      toast.success(message || t('home.checkInSaved'))
+      await invalidateCalendar(useHomeStore.getState().checkInStatus ?? undefined)
+      await fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? '')
+      if (message.includes('已经签到') || /already\s*checked\s*in/i.test(message)) {
+        toast.success(t('home.checkInSaved'))
+        await invalidateCalendar(useHomeStore.getState().checkInStatus ?? undefined)
+        await fetchCheckInCalendar(visibleRange.startDate, visibleRange.endDate)
+      } else {
+        toast.error(message || t('home.checkInFailed'))
+      }
+    } finally {
+      submittingRef.current = false
+    }
+  }
   const confirmMakeup = async () => {
     const owner = getCurrentSessionSnapshot()?.user?.id
     if (!quote || !owner || submittingRef.current) return
@@ -250,21 +297,19 @@ export function CheckInCalendarDrawer({
 
   const monthSwipeStartRef = useRef<{ x: number; y: number } | null>(null)
 
-  return (
-    <>
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] bg-background drawer-surface">
-        <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
-          <div className="flex items-center justify-between gap-3">
-            <DrawerTitle className="text-base font-semibold">{t('learning.myLearning')}</DrawerTitle>
-            <ToggleGroup type="single" value={view} onValueChange={changeView} size="sm" className="rounded-full bg-muted/50 p-0.5">
-              <ToggleGroupItem value="day" aria-label={t('learning.dayChart.dayView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.dayChart.dayShort')}</ToggleGroupItem>
-              <ToggleGroupItem value="month" aria-label={t('learning.monthView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.monthShort')}</ToggleGroupItem>
-              <ToggleGroupItem value="year" aria-label={t('learning.yearView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.yearShort')}</ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        </DrawerHeader>
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+  const panelHeader = (
+    <div className="flex shrink-0 items-center justify-between gap-3 px-4 pb-2 pt-2">
+      <p className="text-base font-semibold">{t('learning.myLearning')}</p>
+      <ToggleGroup type="single" value={view} onValueChange={changeView} size="sm" className="rounded-full bg-muted/50 p-0.5">
+        <ToggleGroupItem value="day" aria-label={t('learning.dayChart.dayView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.dayChart.dayShort')}</ToggleGroupItem>
+        <ToggleGroupItem value="month" aria-label={t('learning.monthView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.monthShort')}</ToggleGroupItem>
+        <ToggleGroupItem value="year" aria-label={t('learning.yearView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.yearShort')}</ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  )
+
+  const panelBody = (
+        <div className={cn('flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4', variant === 'inline' ? 'scrollbar-hide pb-4' : 'pb-[calc(1rem+env(safe-area-inset-bottom,0px))]')}>
           <p className="text-xs text-muted-foreground">
             {view === 'day' ? format(selectedDay ?? today, 'PPP', { locale: calendarLocale }) : view === 'year' ? format(year, 'yyyy') : format(month, 'yyyy MMMM', { locale: calendarLocale })}
             {' · '}{t(view === 'day' ? 'learning.dayChart.daySummary' : view === 'year' ? 'learning.dayDetails.yearSummary' : 'learning.dayDetails.monthSummary')}
@@ -276,10 +321,19 @@ export function CheckInCalendarDrawer({
                 <CalendarCheck className="size-3.5" />
                 {view==='day'?t('learning.dayChart.checkInStatus'):t('learning.activeDays', { defaultValue: '练习天数' })}
               </div>
-              {canOfferMakeup ? <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={!['ready', 'insufficient'].includes(makeupState) || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { if (makeupState === 'insufficient') { toast.error(makeupReason); return } void prepareMakeup() }}>
-                {makeupBusy && <Spinner data-icon="inline-start" />}
-                {t('learning.dayDetails.makeup')}
-              </Button> : <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>}
+              {canOfferMakeup ? (
+                <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={!['ready', 'insufficient'].includes(makeupState) || makeupBusy} title={makeupState === 'ready' ? undefined : makeupReason} aria-description={makeupState === 'ready' ? undefined : makeupReason} onClick={() => { if (makeupState === 'insufficient') { toast.error(makeupReason); return } void prepareMakeup() }}>
+                  {makeupBusy && <Spinner data-icon="inline-start" />}
+                  {t('learning.dayDetails.makeup')}
+                </Button>
+              ) : canCheckInToday ? (
+                <Button type="button" variant="secondary" size="sm" className="mt-1 h-7 px-2 text-xs" disabled={checkInLoading} data-spotlight="home-checkin" onClick={() => void doCheckIn()}>
+                  {checkInLoading && <Spinner data-icon="inline-start" />}
+                  {checkInLoading ? t('home.checkingIn') : t('home.checkIn')}
+                </Button>
+              ) : (
+                <p className={cn('mt-1 tabular-nums', view === 'day' ? 'text-sm font-medium leading-7' : 'text-lg font-bold')}>{view==='day'?(activeCalendar?t(activeCalendar.dates.includes(selectedKey)?(activeCalendar.makeupDates?.includes(selectedKey)?'learning.dayDetails.madeUp':'learning.dayDetails.checkedIn'):'learning.dayDetails.notCheckedIn'):'—'):<>{summary.activeDays}<span className="ml-1 text-xs font-normal text-muted-foreground">{t('learning.days')}</span></>}</p>
+              )}
             </div>
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -364,8 +418,9 @@ export function CheckInCalendarDrawer({
           </div>}
 
         </div>
-      </DrawerContent>
-    </Drawer>
+  )
+
+  const makeupDialog = (
     <Dialog open={Boolean(quote)} onOpenChange={value => { if (!value && !submittingRef.current) setQuote(null) }}>
       <DialogContent className="app-surface drawer-surface w-[90vw] max-w-sm gap-5 rounded-2xl border-0 p-5 shadow-none sm:p-6">
         <DialogHeader className="text-left">
@@ -378,6 +433,30 @@ export function CheckInCalendarDrawer({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+
+  if (variant === 'inline') {
+    return (
+      <div className={cn('flex h-full min-h-0 flex-col', className)}>
+        {panelHeader}
+        {panelBody}
+        {makeupDialog}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] bg-background drawer-surface">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{t('learning.myLearning')}</DrawerTitle>
+          </DrawerHeader>
+          {panelHeader}
+          {panelBody}
+        </DrawerContent>
+      </Drawer>
+      {makeupDialog}
     </>
   )
 }

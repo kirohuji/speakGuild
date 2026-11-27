@@ -1,0 +1,402 @@
+learning:
+  exercises:
+    pipeline:
+      - key: notice-the-difference
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意到差别
+        chunk: notice the difference
+        chunkMeaning: 注意到差别
+        direction: zh_to_en
+        items:
+          - zh: 你注意到差别了吗？
+            answer: Did you notice the difference?
+            hint: Did you notice
+          - zh: 我现在才注意到差别。
+            answer: I'm only noticing the difference now.
+            hint: only noticing；now
+          - zh: 乍一看可能注意不到差别。
+            answer: At first glance, you might not notice the difference.
+            hint: At first glance；might not
+      - key: notice-that-he-looked-tired
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意到他看起来很累
+        chunk: notice that he looked tired
+        chunkMeaning: 注意到他看起来很疲惫
+        direction: zh_to_en
+        items:
+          - zh: 我注意到他今天看起来很疲惫。
+            answer: I noticed that he looked tired today.
+            hint: noticed that；today
+          - zh: 她一进门就注意到他脸色很差。
+            answer: As soon as she walked in, she noticed that he looked tired.
+            hint: As soon as she walked in
+          - zh: 别人可能没注意到，但我看得出来他很累。
+            answer: Others might not have noticed, but I could tell that he looked tired.
+            hint: might not have noticed；could tell
+      - key: notice-him-leave-the-room
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意到他离开了房间（全程）
+        chunk: notice him leave the room
+        chunkMeaning: 注意到他离开了房间
+        direction: zh_to_en
+        items:
+          - zh: 我坐在角落里，注意到他悄悄离开了房间。
+            answer: I was sitting in the corner and noticed him leave the room quietly.
+            hint: noticed him leave；quietly
+          - zh: 没人注意到他什么时候离开的。
+            answer: Nobody noticed him leave the room.
+            hint: Nobody noticed him leave
+          - zh: 她怎么会注意到他溜出房间的？
+            answer: How did she notice him leave the room like that?
+            hint: How did she notice；like that
+      - key: notice-her-looking-at-me
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意到她正在看我（进行中）
+        chunk: notice her looking at me
+        chunkMeaning: 注意到她在看我
+        direction: zh_to_en
+        items:
+          - zh: 我抬头时，注意到她正在看我。
+            answer: When I looked up, I noticed her looking at me.
+            hint: When I looked up；looking at me
+          - zh: 他当然注意到她在打量自己。
+            answer: Of course he noticed her looking at him.
+            hint: Of course；looking at him
+          - zh: 你注意到那边有人在看你吗？
+            answer: Did you notice someone over there looking at you?
+            hint: someone over there
+      - key: be-noticed-immediately
+        kind: chunk
+        type: chunk_substitution
+        title: 说马上被人注意到
+        chunk: be noticed immediately
+        chunkMeaning: 立刻被注意到
+        direction: zh_to_en
+        items:
+          - zh: 穿成这样，你马上就会被人注意到。
+            answer: Dressed like that, you'll be noticed immediately.
+            hint: Dressed like that；you'll be
+          - zh: 她一开口，就被人注意到了。
+            answer: As soon as she spoke, she was noticed immediately.
+            hint: As soon as she spoke；was noticed
+          - zh: 在这个小店里，新面孔很难不立刻被看见。
+            answer: In this small shop, a new face can hardly avoid being noticed immediately.
+            hint: a new face；being noticed
+      - key: hardly-notice-the-noise
+        kind: chunk
+        type: chunk_substitution
+        title: 说几乎没注意到噪音
+        chunk: hardly notice the noise
+        chunkMeaning: 几乎没注意到噪音
+        direction: zh_to_en
+        items:
+          - zh: 我戴了耳机，几乎没注意到噪音。
+            answer: I had headphones on, so I hardly noticed the noise.
+            hint: had headphones on；so
+          - zh: 专心看书时，我几乎注意不到外面的车声。
+            answer: When I'm absorbed in a book, I hardly notice the noise outside.
+            hint: absorbed in a book；outside
+          - zh: 他们聊得太投入，几乎没听到隔壁的施工声。
+            answer: They were so into the conversation that they hardly noticed the construction noise next door.
+            hint: so into the conversation；construction noise
+      - key: immediately-notice-the-difference
+        kind: chunk
+        type: chunk_substitution
+        title: 说一眼就看出差别
+        chunk: immediately notice the difference
+        chunkMeaning: 立刻注意到差别
+        direction: zh_to_en
+        items:
+          - zh: 行家一眼就能看出差别。
+            answer: An expert can immediately notice the difference.
+            hint: An expert；can
+          - zh: 我一闻就察觉味道不一样了。
+            answer: I immediately noticed the difference as soon as I smelled it.
+            hint: as soon as I smelled it
+          - zh: 换了个枕头，她马上就感觉睡眠质量不同了。
+            answer: After changing pillows, she immediately noticed the difference in her sleep.
+            hint: After changing pillows；in her sleep
+      - key: notice-a-change
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意到有变化
+        chunk: notice a change
+        chunkMeaning: 注意到变化
+        direction: zh_to_en
+        items:
+          - zh: 你最近有没有注意到什么变化？
+            answer: Have you noticed a change lately?
+            hint: Have you noticed；lately
+          - zh: 客户开始注意到产品上的变化了。
+            answer: Customers are starting to notice a change in the product.
+            hint: are starting to；in the product
+          - zh: 过了一段时间，我才慢慢察觉到气氛变了。
+            answer: After a while, I gradually noticed a change in the atmosphere.
+            hint: gradually；in the atmosphere
+      - key: notice-something-unusual
+        kind: chunk
+        type: chunk_substitution
+        title: 说注意到不对劲
+        chunk: notice something unusual
+        chunkMeaning: 注意到异常情况
+        direction: zh_to_en
+        items:
+          - zh: 保安注意到一些不寻常的情况。
+            answer: The guard noticed something unusual.
+            hint: The guard
+          - zh: 她走路时总觉得有人在注意异常动静。
+            answer: When she walked, she kept feeling people might notice something unusual.
+            hint: kept feeling；might
+          - zh: 如果你注意到任何不对劲，请立刻报告。
+            answer: If you notice anything unusual, please report it right away.
+            hint: If you notice anything unusual；right away
+      - key: go-unnoticed
+        kind: chunk
+        type: chunk_substitution
+        title: 说事情没被注意到
+        chunk: go unnoticed
+        chunkMeaning: 未被注意到；悄无声息
+        direction: zh_to_en
+        items:
+          - zh: 小错误积累起来，往往会悄然被忽略。
+            answer: Small mistakes can pile up and go unnoticed.
+            hint: pile up；can
+          - zh: 他的贡献多年来几乎没人在意。
+            answer: His contribution went largely unnoticed for years.
+            hint: went largely unnoticed；for years
+          - zh: 我希望这个问题别又被悄悄糊弄过去。
+            answer: I hope this issue doesn't go unnoticed again.
+            hint: doesn't go unnoticed；again
+      - key: notice-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说注意到了什么
+        chunk: notice that
+        chunkMeaning: 注意到……
+        direction: en_to_zh
+        items:
+          - en: I notice that the prices have gone up again.
+            answer: 我注意到价格又涨了。
+            hint: prices have gone up；again
+          - en: Did you notice that she seemed upset?
+            answer: 你注意到她好像不开心吗？
+            hint: seemed upset
+          - en: He didn't notice that the meeting had already started.
+            answer: 他没注意到会议已经开始了。
+            hint: had already started
+      - key: notice-do-vs-doing-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂 notice 全程动作还是进行中
+        chunk: notice someone do / notice someone doing
+        chunkMeaning: 注意到某人做了某事 / 注意到某人正在做
+        direction: en_to_zh
+        items:
+          - en: I noticed him pick up his keys and walk out.
+            answer: 我注意到他拿起钥匙走了出去。
+            hint: pick up his keys；walk out
+          - en: I noticed her texting under the table during the meeting.
+            answer: 我注意到开会时她在桌子底下发消息。
+            hint: texting under the table；during the meeting
+          - en: Nobody noticed the cat slip through the open window.
+            answer: 没人注意到猫从开着的窗户溜了出去。
+            hint: slip through；open window
+      - key: notice-state
+        type: vocab_sentence_building
+        title: 说察觉与注意到
+        vocabWord: notice
+        vocabMeaning: 注意；察觉
+        direction: zh_to_en
+        patterns:
+          - chunk: notice that
+            items:
+              - zh: 我注意到你今天来得特别早。
+                answer: I notice that you arrived especially early today.
+                hint: arrived especially early
+              - zh: 她没注意到我们已经结束了。
+                answer: She didn't notice that we were already done.
+                hint: we were already done
+          - chunk: notice someone doing
+            items:
+              - zh: 老师注意到有学生在偷偷玩手机。
+                answer: The teacher noticed a student secretly using a phone.
+                hint: noticed a student；secretly using
+              - zh: 我注意到邻居正在装修厨房。
+                answer: I noticed my neighbor remodeling the kitchen.
+                hint: remodeling the kitchen
+          - chunk: notice someone do
+            items:
+              - zh: 我注意到他关上门才走。
+                answer: I noticed him close the door before he left.
+                hint: close the door；before he left
+              - zh: 警察注意到那辆车闯红灯。
+                answer: The police noticed the car run a red light.
+                hint: run a red light
+      - key: notice-that-other
+        type: pattern_drill
+        title: 说注意到别的情况（that 从句）
+        pattern: notice that [clause]
+        patternMeaning: 注意到……
+        direction: zh_to_en
+        items:
+          - zh: 我注意到团队士气好像上来了。
+            answer: I notice that team morale seems to be improving.
+            hint: team morale；seems to be improving
+          - zh: 你注意到天气变冷了吗？
+            answer: Have you noticed that the weather has gotten colder?
+            hint: the weather has gotten colder
+          - zh: 她刚注意到老板换了新发型。
+            answer: She just noticed that the boss has a new haircut.
+            hint: just noticed；new haircut
+      - key: notice-someone-do-other
+        type: pattern_drill
+        title: 说注意到某人做完某事（原形）
+        pattern: notice someone [do]
+        patternMeaning: 注意到某人做了（完整动作）
+        direction: zh_to_en
+        items:
+          - zh: 我注意到他把报告放进了抽屉。
+            answer: I noticed him put the report in the drawer.
+            hint: put the report；in the drawer
+          - zh: 她注意到孩子自己穿上了外套。
+            answer: She noticed the child put on the jacket by himself.
+            hint: put on the jacket；by himself
+          - zh: 有人注意到那个人匆匆离开了大楼。
+            answer: Someone noticed the man leave the building in a hurry.
+            hint: leave the building；in a hurry
+      - key: notice-someone-doing-other
+        type: pattern_drill
+        title: 说注意到某人正在做某事（-ing）
+        pattern: notice someone [doing]
+        patternMeaning: 注意到某人正在做
+        direction: zh_to_en
+        items:
+          - zh: 我注意到同事一直在偷瞄手机。
+            answer: I noticed my colleague glancing at her phone again and again.
+            hint: glancing at her phone；again and again
+          - zh: 她注意到狗在门口打转。
+            answer: She noticed the dog pacing at the door.
+            hint: pacing at the door
+          - zh: 老板注意到有人在会议室里打瞌睡。
+            answer: The boss noticed someone dozing off in the meeting room.
+            hint: dozing off；meeting room
+      - key: notice-noun-other
+        type: pattern_drill
+        title: 说注意到别的事物
+        pattern: notice [noun]
+        patternMeaning: 注意到……
+        direction: zh_to_en
+        items:
+          - zh: 你注意到墙上那幅画了吗？
+            answer: Did you notice the painting on the wall?
+            hint: the painting；on the wall
+          - zh: 我刚注意到你换了眼镜。
+            answer: I just noticed your new glasses.
+            hint: just noticed；new glasses
+          - zh: 游客很少会注意到这个小细节。
+            answer: Tourists rarely notice this little detail.
+            hint: rarely；little detail
+      - key: hardly-notice-other
+        type: pattern_drill
+        title: 说几乎没察觉别的动静
+        pattern: hardly notice [something]
+        patternMeaning: 几乎没注意到
+        direction: zh_to_en
+        items:
+          - zh: 太累了，我几乎没感觉到胃痛。
+            answer: I was so tired that I hardly noticed the stomach ache.
+            hint: so tired；stomach ache
+          - zh: 雨下得太大，她几乎听不清电话那头说什么。
+            answer: It was raining so hard that she hardly noticed what the caller was saying.
+            hint: raining so hard；what the caller was saying
+          - zh: 看电视时，孩子们几乎注意不到妈妈在喊他们。
+            answer: While watching TV, the kids hardly notice Mom calling them.
+            hint: While watching TV；calling them
+      - key: go-unnoticed-other
+        type: pattern_drill
+        title: 说别的事没被注意到
+        pattern: go unnoticed
+        patternMeaning: 未被察觉
+        direction: zh_to_en
+        items:
+          - zh: 这种安全隐患不该再被忽视。
+            answer: Safety risks like this shouldn't go unnoticed.
+            hint: Safety risks；shouldn't
+          - zh: 他的努力常常默默无闻。
+            answer: His efforts often go unnoticed.
+            hint: His efforts；often
+          - zh: 只要你不张扬，就能低调进出。
+            answer: As long as you keep a low profile, you can come and go unnoticed.
+            hint: keep a low profile；come and go
+      - key: immediately-notice-other
+        type: pattern_drill
+        title: 说立刻察觉别的变化
+        pattern: immediately notice [something]
+        patternMeaning: 立刻注意到
+        direction: zh_to_en
+        items:
+          - zh: 你一进门，就会立刻闻到海鲜味。
+            answer: As soon as you walk in, you immediately notice the smell of seafood.
+            hint: As soon as you walk in；smell of seafood
+          - zh: 设计师能马上看出配色不协调。
+            answer: Designers can immediately notice when the colors don't match.
+            hint: when the colors don't match
+          - zh: 她立刻感觉到气氛不对。
+            answer: She immediately noticed that something was off in the atmosphere.
+            hint: something was off；atmosphere
+      - key: notice-difference-build
+        type: sentence_decomposition
+        title: 把注意到差别说完整
+        sourceKind: chunk
+        sourceText: notice the difference
+        fullSentence: Once I compared them side by side, I immediately noticed the difference in quality.
+        fullSentenceZh: 把它们并排放在一起比对后，我立刻注意到了质量上的差别。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I noticed the difference.
+            zh: 我注意到了差别。
+            highlight: ''
+            hint: 先说我注意到了差别
+          - level: 2
+            label: 加方式
+            en: Once I compared them side by side, I noticed the difference.
+            zh: 把它们并排比对后，我注意到了差别。
+            highlight: Once I compared them side by side
+            hint: 补上并排比对后
+          - level: 3
+            label: 完整句
+            en: Once I compared them side by side, I immediately noticed the difference in quality.
+            zh: 把它们并排比对后，我立刻注意到了质量上的差别。
+            highlight: in quality
+            hint: 补上立刻以及质量上的差别
+      - key: notice-leave-build
+        type: sentence_decomposition
+        title: 把 notice 全程动作说完整
+        sourceKind: chunk
+        sourceText: notice him leave the room
+        fullSentence: From the hallway, I quietly noticed him leave the room without saying goodbye.
+        fullSentenceZh: 我站在走廊上，悄悄注意到他没打招呼就离开了房间。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I noticed him leave the room.
+            zh: 我注意到他离开了房间。
+            highlight: ''
+            hint: 先说我注意到他离开了房间
+          - level: 2
+            label: 加地点
+            en: From the hallway, I noticed him leave the room.
+            zh: 站在走廊上，我注意到他离开了房间。
+            highlight: From the hallway
+            hint: 补上站在走廊上
+          - level: 3
+            label: 完整句
+            en: From the hallway, I quietly noticed him leave the room without saying goodbye.
+            zh: 我站在走廊上，悄悄注意到他没打招呼就离开了房间。
+            highlight: without saying goodbye
+            hint: 补上悄悄以及没打招呼

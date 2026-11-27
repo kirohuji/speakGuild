@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
@@ -29,6 +30,8 @@ import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { ExpressionPrepSection } from '@/features/learning/components/expression-prep-section'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { DesktopLearningShell, useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
 
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -55,7 +58,21 @@ import {
 } from '../types/practice-session'
 
 export function PracticeSessionPage() {
+  const isMobile = useIsMobile()
+  if (!isMobile) {
+    return (
+      <DesktopLearningShell section="learning" asideMode="slot">
+        <PracticeSessionPageContent />
+      </DesktopLearningShell>
+    )
+  }
+  return <PracticeSessionPageContent />
+}
+
+function PracticeSessionPageContent() {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
+  const asideSlot = useDesktopAsideSlot()
   const { topicId } = useParams<{ topicId: string }>()
   const [searchParams] = useSearchParams()
   const unitId = searchParams.get('unitId')
@@ -1003,6 +1020,53 @@ export function PracticeSessionPage() {
     : Boolean(detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0)
   const hasExamples = detail?.activeChunks?.some(c => c.examples?.length)
 
+  const prepCollapsedEffective = isMobile ? prepCollapsed : false
+  const prepRail = (
+    <section className={cn(!isMobile && 'flex h-full min-h-0 flex-col')}>
+      <div className={cn('mb-3 flex items-end justify-between gap-3 px-1', !isMobile && 'shrink-0')}>
+        <div>
+          <h2 className="text-base font-semibold text-foreground">{t('practiceSession.preparationTitle')}</h2>
+          {!prepCollapsedEffective && (
+            <p className="mt-0.5 text-xs text-muted-foreground">{t('practiceSession.preparationSubtitle')}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">
+            {vocabTotal + chunkTotal + patternTotal} {t('practiceSession.items')}
+          </Badge>
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setPrepCollapsed((prev) => !prev)}
+              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+              aria-label={prepCollapsed ? t('practiceSession.expandPrep') : t('practiceSession.collapsePrep')}
+            >
+              <ChevronDown className={cn('size-4 transition-transform duration-200', prepCollapsed && '-rotate-90')} />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className={cn(!isMobile && 'min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide')}>
+        <ExpressionPrepSection
+          vocabularies={prepMaterials.vocabularies}
+          chunks={prepMaterials.chunks}
+          patterns={prepMaterials.patterns}
+          sceneName={detail.scene.title}
+          collapsed={prepCollapsedEffective}
+          onCollapsedChange={setPrepCollapsed}
+          collapsible={isMobile}
+          onChunkExpand={activateChunk}
+        />
+      </div>
+    </section>
+  )
+  const desktopPrepPortal = !isMobile && asideSlot
+    ? createPortal(
+      <div className="flex h-full min-h-0 flex-col px-4 py-4">{prepRail}</div>,
+      asideSlot,
+    )
+    : null
+
   function renderPracticeButtons() {
     const warmupBtn = (
       <Button className="min-h-11 flex-1 border-0 shadow-none" variant="secondary" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
@@ -1039,9 +1103,9 @@ export function PracticeSessionPage() {
   // ==================== Phase: Prepare ====================
   if (phase === 'prepare') {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
+      <div className={cn(isMobile ? 'mx-auto max-w-2xl px-4 pb-24 pt-3' : 'flex h-full min-h-0 flex-col')}>
         {/* Header */}
-        <div className="mb-4 flex min-h-10 items-center gap-3 md:hidden">
+        <div className={cn('mb-4 flex min-h-10 items-center gap-3', !isMobile ? 'shrink-0' : 'md:hidden')}>
           <button
             type="button"
             onClick={goBackToScene}
@@ -1056,18 +1120,20 @@ export function PracticeSessionPage() {
           </div>
           <Badge variant="secondary" className="shrink-0">{detail.topic.difficulty}</Badge>
         </div>
-        <div className="mb-4 hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="icon" onClick={goBackToScene}>
-            <ArrowLeft className="size-5" />
-          </Button>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
-            <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+        {isMobile && (
+          <div className="mb-4 hidden items-center gap-3 md:flex">
+            <Button variant="ghost" size="icon" onClick={goBackToScene}>
+              <ArrowLeft className="size-5" />
+            </Button>
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+              <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+            </div>
+            <Badge variant="secondary">{detail.topic.difficulty}</Badge>
           </div>
-          <Badge variant="secondary">{detail.topic.difficulty}</Badge>
-        </div>
+        )}
 
-        <div className="space-y-5">
+        <div className={cn('space-y-5', !isMobile && 'min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide')}>
           {(detail.topic.description || detail.topic.knowledgePoints) && (
             <section className="rounded-lg bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2">
@@ -1110,40 +1176,7 @@ export function PracticeSessionPage() {
             topicId={topicId}
           />
 
-          <section>
-            <div className="mb-3 flex items-end justify-between gap-3 px-1">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">{t('practiceSession.preparationTitle')}</h2>
-                {!prepCollapsed && (
-                <p className="mt-0.5 text-xs text-muted-foreground">{t('practiceSession.preparationSubtitle')}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">
-                  {vocabTotal + chunkTotal + patternTotal} {t('practiceSession.items')}
-                </Badge>
-                <button
-                  type="button"
-                  onClick={() => setPrepCollapsed((prev) => !prev)}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-                  aria-label={prepCollapsed ? t('practiceSession.expandPrep') : t('practiceSession.collapsePrep')}
-                >
-                  <ChevronDown className={cn('size-4 transition-transform duration-200', prepCollapsed && '-rotate-90')} />
-                </button>
-              </div>
-            </div>
-
-            <ExpressionPrepSection
-              vocabularies={prepMaterials.vocabularies}
-              chunks={prepMaterials.chunks}
-              patterns={prepMaterials.patterns}
-              sceneName={detail.scene.title}
-              collapsed={prepCollapsed}
-              onCollapsedChange={setPrepCollapsed}
-              collapsible
-              onChunkExpand={activateChunk}
-            />
-          </section>
+          {isMobile ? prepRail : desktopPrepPortal}
 
           <section className="rounded-lg bg-accent/[0.06] p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -1218,9 +1251,10 @@ export function PracticeSessionPage() {
     }
 
     return (<>
-      <div className="app-surface relative flex h-dvh flex-col">
+      {desktopPrepPortal}
+      <div className={cn('app-surface relative flex flex-col', isMobile ? 'h-dvh' : 'h-full min-h-0 overflow-hidden rounded-xl')}>
         {/* Floating minimal top bar */}
-        <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+        <div className={cn('absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2', isMobile ? 'pt-[calc(0.5rem+env(safe-area-inset-top,0px))]' : 'pt-2')}>
           <div className="grid h-9 w-full max-w-[400px] grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-full bg-background/90 px-1.5 text-foreground shadow-none backdrop-blur-2xl">
           <div className="flex items-center justify-start">
             <Button

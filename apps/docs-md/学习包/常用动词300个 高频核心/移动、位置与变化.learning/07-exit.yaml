@@ -1,0 +1,327 @@
+learning:
+  exercises:
+    pipeline:
+      - key: exit-building
+        kind: chunk
+        type: chunk_substitution
+        title: 说请从后门离开大楼
+        chunk: exit the building
+        chunkMeaning: 离开大楼
+        direction: zh_to_en
+        items:
+          - zh: 请从后门离开大楼。
+            answer: Please exit the building through the rear door.
+            hint: through the rear door
+          - zh: 访客必须在六点前离开大楼。
+            answer: Visitors must exit the building by six.
+            hint: must；by six
+          - zh: 火警时请迅速离开大楼。
+            answer: If there's a fire alarm, exit the building quickly.
+            hint: a fire alarm；quickly
+      - key: exit-through-side
+        kind: chunk
+        type: chunk_substitution
+        title: 说大家都从侧门离开
+        chunk: exit through the side door
+        chunkMeaning: 从侧门离开
+        direction: zh_to_en
+        items:
+          - zh: 所有人都从侧门离开了。
+            answer: Everyone exited through the side door.
+            hint: exited；through
+          - zh: 散场后请大家从侧门离场。
+            answer: Please exit through the side door after the show.
+            hint: after the show
+          - zh: 我们是从侧门出去的，没经过大厅。
+            answer: We exited through the side door and didn't go past the hall.
+            hint: didn't go past the hall
+      - key: exit-building-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说怎么离开
+        chunk: exit the building
+        chunkMeaning: 离开大楼
+        direction: en_to_zh
+        items:
+          - en: Please exit the building through the rear door.
+            answer: 请从后门离开大楼。
+            hint: through the rear door
+          - en: Everyone exited through the side door after the fire alarm.
+            answer: 火警后所有人都从侧门离开了。
+            hint: after the fire alarm
+          - en: The building is closed, so we can't exit this way.
+            answer: 大楼已经关了，所以我们不能从这里出去。
+            hint: this way
+      - key: exit-state
+        type: vocab_sentence_building
+        title: 说退出程序、应用或市场
+        vocabWord: exit
+        vocabMeaning: 离开；退出
+        direction: zh_to_en
+        patterns:
+          - chunk: exit the program
+            items:
+              - zh: 退出程序前保存好你的工作。
+                answer: Save your work before you exit the program.
+                hint: Save your work；before
+              - zh: 点击按钮退出程序。
+                answer: Click the button to exit the program.
+                hint: Click the button；to
+              - zh: 程序自己退出了，我什么都没保存。
+                answer: The program exited on its own, and I didn't save anything.
+                hint: on its own；didn't save anything
+          - chunk: exit the app
+            items:
+              - zh: 双击图标就能退出应用。
+                answer: Double-tap the icon to exit the app.
+                hint: Double-tap
+              - zh: 只要退出应用，它就会自动保存。
+                answer: It saves automatically as soon as you exit the app.
+                hint: automatically；as soon as
+              - zh: 我做不完，只能退出应用。
+                answer: I couldn't finish, so I had to exit the app.
+                hint: couldn't finish；had to
+          - chunk: exit the market
+            items:
+              - zh: 他们决定逐步退出市场。
+                answer: They decided to exit the market gradually.
+                hint: gradually
+              - zh: 他们去年退出了亚洲市场。
+                answer: They exited the Asian market last year.
+                hint: the Asian market；last year
+              - zh: 现在退出市场的成本很高。
+                answer: It's expensive to exit the market now.
+                hint: expensive
+      - key: exit-highway
+        kind: chunk
+        type: chunk_substitution
+        title: 说在下一个路口驶离高速
+        chunk: exit the highway
+        chunkMeaning: 驶离高速公路
+        direction: zh_to_en
+        items:
+          - zh: 我们在下一个路口驶离了高速公路。
+            answer: We exited the highway at the next junction.
+            hint: exited；at the next junction
+          - zh: 还有五公里就要下高速了。
+            answer: We'll exit the highway in five kilometers.
+            hint: in five kilometers
+          - zh: 千万别错过出口，不然要多开二十公里。
+            answer: Don't miss the exit, or you'll have to drive twenty more kilometers.
+            hint: miss the exit
+      - key: exit-safely
+        kind: chunk
+        type: chunk_substitution
+        title: 说所有人都安全撤离
+        chunk: exit safely
+        chunkMeaning: 安全撤离
+        direction: zh_to_en
+        items:
+          - zh: 所有人都成功安全撤离了。
+            answer: Everyone managed to exit safely.
+            hint: managed to
+          - zh: 请保持冷静，有序安全撤离。
+            answer: Please stay calm and exit safely.
+            hint: stay calm
+          - zh: 火警响起时，他们是最后两个安全出去的人。
+            answer: When the alarm rang, they were the last two to exit safely.
+            hint: the last two
+      - key: exit-app
+        kind: chunk
+        type: chunk_substitution
+        title: 说点这里退出应用
+        chunk: exit the app
+        chunkMeaning: 退出应用
+        direction: zh_to_en
+        items:
+          - zh: 点这里退出应用。
+            answer: Tap here to exit the app.
+            hint: Tap here
+          - zh: 按两下这个键就能退出应用。
+            answer: Press this button twice to exit the app.
+            hint: twice
+          - zh: 退出应用之前先把密码记好。
+            answer: Save your password before you exit the app.
+            hint: your password；before
+      - key: exit-market
+        kind: chunk
+        type: chunk_substitution
+        title: 说公司决定退出市场
+        chunk: exit the market
+        chunkMeaning: 退出市场
+        direction: zh_to_en
+        items:
+          - zh: 公司决定退出市场。
+            answer: The company decided to exit the market.
+            hint: decided to
+          - zh: 他们为什么退出这个市场？
+            answer: Why did they exit this market?
+            hint: Why did
+          - zh: 退出市场后，公司把重心放回了老家。
+            answer: After exiting the market, the company focused on home again.
+            hint: After exiting；focused on
+      - key: exit-safely-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说撤离情况
+        chunk: exit safely
+        chunkMeaning: 安全撤离
+        direction: en_to_zh
+        items:
+          - en: Everyone managed to exit safely.
+            answer: 所有人都成功安全撤离了。
+            hint: managed to
+          - en: Please stay calm and exit safely.
+            answer: 请保持冷静，安全撤离。
+            hint: stay calm
+          - en: Two people were still inside when the others exited safely.
+            answer: 其他人安全撤出来的时候，还有两个人困在里面。
+            hint: still inside；the others
+      - key: exit-place
+        type: pattern_drill
+        title: 换个地点说离开
+        pattern: exit [place]
+        patternMeaning: 离开某处
+        direction: zh_to_en
+        items:
+          - zh: 请从这边离开大厅。
+            answer: Please exit the hall this way.
+            hint: this way
+          - zh: 他们十点离开了会议室。
+            answer: They exited the meeting room at ten.
+            hint: exited；at ten
+          - zh: 电影结束后观众很难从这边出去。
+            answer: It's hard for the audience to exit this way after the movie.
+            hint: the audience；after the movie
+      - key: exit-road-other
+        type: pattern_drill
+        title: 说驶离某条路
+        pattern: exit [road]
+        patternMeaning: 驶离某条道路
+        direction: zh_to_en
+        items:
+          - zh: 我们在前面那个出口下了高速。
+            answer: We exited the highway at the exit ahead.
+            hint: the exit ahead
+          - zh: 别在这里驶离主路，前面还有更好的出口。
+            answer: Don't exit the main road here; there's a better exit ahead.
+            hint: the main road；a better exit
+          - zh: 我们提前一个路口驶离了高速。
+            answer: We exited the highway one junction early.
+            hint: one junction early
+      - key: exit-program-other
+        type: pattern_drill
+        title: 说退出别的程序
+        pattern: exit [program/app]
+        patternMeaning: 退出程序或应用
+        direction: zh_to_en
+        items:
+          - zh: 保存文件，然后退出软件。
+            answer: Save the file and then exit the program.
+            hint: then
+          - zh: 一按这个键就退出应用了。
+            answer: Pressing this key exits the app.
+            hint: Pressing this key
+          - zh: 我按错了，结果退出了游戏。
+            answer: I pressed the wrong button and exited the game.
+            hint: pressed the wrong button
+      - key: exit-through-other
+        type: pattern_drill
+        title: 说经由别的地方离开
+        pattern: exit through / via [place]
+        patternMeaning: 经由某处离开
+        direction: zh_to_en
+        items:
+          - zh: 请从后门离场。
+            answer: Please exit through the back door.
+            hint: through the back door
+          - zh: 他们是经由地道撤离的。
+            answer: They exited via the tunnel.
+            hint: via the tunnel
+          - zh: 这条路封了，我们只能从另一侧出去。
+            answer: This road is closed, so we have to exit via the other side.
+            hint: have to；the other side
+      - key: exit-market-other
+        type: pattern_drill
+        title: 说退出别的事业
+        pattern: exit the market
+        patternMeaning: 退出市场
+        direction: zh_to_en
+        items:
+          - zh: 他们两年前退出了这个行业。
+            answer: They exited the industry two years ago.
+            hint: the industry；two years ago
+          - zh: 公司正在考虑退出海外市场。
+            answer: The company is thinking about exiting the overseas market.
+            hint: thinking about
+          - zh: 退出市场前，他们先裁了一部分人。
+            answer: Before exiting the market, they cut part of the team.
+            hint: Before exiting；cut part of the team
+      - key: exit-safely-other
+        type: pattern_drill
+        title: 说安全撤离或离开
+        pattern: exit safely
+        patternMeaning: 安全撤离
+        direction: zh_to_en
+        items:
+          - zh: 请保持冷静，安全有序地离开大楼。
+            answer: Please stay calm and exit the building safely.
+            hint: stay calm
+          - zh: 所有人都安全地离开了体育馆。
+            answer: Everyone exited the stadium safely.
+            hint: the stadium
+          - zh: 幸好每个人都安全撤离了出来。
+            answer: Luckily, everyone managed to exit safely.
+            hint: Luckily；managed to
+      - key: exit-alarm-build
+        type: sentence_decomposition
+        title: 把火警时撤离说完整
+        sourceKind: chunk
+        sourceText: exit the building
+        fullSentence: When the fire alarm rang, everyone exited the building through the side door.
+        fullSentenceZh: 火警响起时，所有人都从侧门离开了大楼。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Everyone exited the building.
+            zh: 所有人都离开了大楼。
+            highlight: ''
+            hint: 先说离开大楼
+          - level: 2
+            label: 加时间
+            en: When the fire alarm rang, everyone exited the building.
+            zh: 火警响起时，所有人都离开了大楼。
+            highlight: When the fire alarm rang
+            hint: 补上火警响起时
+          - level: 3
+            label: 完整句
+            en: When the fire alarm rang, everyone exited the building through the side door.
+            zh: 火警响起时，所有人都从侧门离开了大楼。
+            highlight: through the side door
+            hint: 补上从侧门
+      - key: exit-program-build
+        type: sentence_decomposition
+        title: 把退出程序前保存说完整
+        sourceKind: vocab
+        sourceText: exit
+        fullSentence: Save your work before you exit the program, or you'll lose everything.
+        fullSentenceZh: 退出程序前保存好你的工作，不然一切都会丢掉。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Save your work before you exit the program.
+            zh: 退出程序前保存好你的工作。
+            highlight: ''
+            hint: 先说保存工作
+          - level: 2
+            label: 加时间
+            en: Please save your work before you exit the program.
+            zh: 请在退出程序前保存好你的工作。
+            highlight: Please
+            hint: 补上请
+          - level: 3
+            label: 完整句
+            en: Save your work before you exit the program, or you'll lose everything.
+            zh: 退出程序前保存好你的工作，不然一切都会丢掉。
+            highlight: or you'll lose everything
+            hint: 补上不然会丢掉

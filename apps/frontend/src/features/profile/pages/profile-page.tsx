@@ -1,19 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  LayoutDashboard, ClipboardList, BookMarked, IdCard, Settings,
-  ChevronLeft, ChevronRight,
-} from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { UserAvatar } from '@/components/common/user-avatar'
+import { Navigate } from 'react-router-dom'
 import { AppearanceContent } from '@/features/profile/components/appearance-drawer'
 import { useLayoutStore } from '@/stores/layout.store'
-import { useUserStore } from '@/stores/user.store'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
-import { useAuth } from '@/providers/auth-provider'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MobileProfileDetail } from '@/features/profile/components/mobile-profile-detail'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
@@ -24,17 +15,7 @@ import { OverviewTab } from '@/features/profile/components/overview-tab'
 import { RecordsTab } from '@/features/profile/components/records-tab'
 import { WordsTab } from '@/features/profile/components/words-tab'
 import { AccountTab } from '@/features/profile/components/account-tab'
-import { SettingsTab } from '@/features/profile/components/settings-tab'
-
-type Tab = 'overview' | 'records' | 'words' | 'account' | 'settings'
-
-const tabs: { key: Tab; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: 'overview', icon: LayoutDashboard },
-  { key: 'records', icon: ClipboardList },
-  { key: 'words', icon: BookMarked },
-  { key: 'account', icon: IdCard },
-  { key: 'settings', icon: Settings },
-]
+import { desktopLearningHref } from '@/features/home/desktop-learning-section'
 
 const mobileTitles: Record<string, string> = {
   overview: 'profile.overview',
@@ -51,15 +32,13 @@ interface ProfilePageProps {
   onFeedbackOpen?: () => void
 }
 
+/** 仅移动端使用（Header Drawer）。桌面端账户/设置已迁到 Header Dialog。 */
 export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
-  const { session } = useAuth()
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [mobileView, setMobileView] = useState<MobileView>('home')
   const [prevView, setPrevView] = useState<MobileView | null>(null)
-  const userProfile = useUserStore((s) => s.profile)
-  const ensureUserLoaded = useUserStore((s) => s.ensureLoaded)
+  const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
   const goTo = (view: MobileView) => {
     setPrevView(mobileView)
@@ -69,90 +48,39 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
     setMobileView(prevView || 'home')
     setPrevView(null)
   }
-  const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
   useEffect(() => {
-    if (isMobile) return
-    if (session?.user?.id) {
-      void ensureUserLoaded(session.user.id)
-    }
-  }, [isMobile, session?.user?.id, ensureUserLoaded])
-
-  useEffect(() => {
+    if (!isMobile) return
     setBottomNavVisible(mobileView === 'home')
     return () => {
       setBottomNavVisible(true)
     }
-  }, [mobileView, setBottomNavVisible])
+  }, [isMobile, mobileView, setBottomNavVisible])
 
-  const nickname = userProfile?.name || userProfile?.username || t('app.name')
+  if (!isMobile) {
+    return <Navigate to={desktopLearningHref('today')} replace />
+  }
 
   return (
-    <div className={cn(isMobile && 'h-full min-h-0')}>
-      {isMobile ? (
-        <div className="h-full min-h-0">
-          {mobileView === 'home' ? (
-            <div>
-              <MobileProfileHome onNavigate={goTo} onFeedbackOpen={onFeedbackOpen} />
-            </div>
-          ) : (
-            <MobileProfileDetail
-              title={t(mobileTitles[mobileView])}
-              onBack={goBack}
-            >
-              {mobileView === 'overview' && <OverviewTab />}
-              {mobileView === 'records' && <RecordsTab />}
-              {mobileView === 'words' && <WordsTab />}
-              {mobileView === 'account' && <AccountTab />}
-              {mobileView === 'settings' && <MobileSettingsView onNavigate={goTo} />}
-              {mobileView === 'appearance' && <AppearanceContent />}
-              {mobileView === 'member' && <MemberPage compact />}
-              {mobileView === 'storage' && <MobileStorageView />}
-            </MobileProfileDetail>
-          )}
+    <div className={cn('h-full min-h-0')}>
+      {mobileView === 'home' ? (
+        <div>
+          <MobileProfileHome onNavigate={goTo} onFeedbackOpen={onFeedbackOpen} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          {/* 左侧边栏 */}
-          <div className="md:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <div className="mb-4 flex flex-col items-center gap-2 text-center">
-                  <UserAvatar className="h-16 w-16 ring-2 ring-border ring-offset-2 ring-offset-background" fallbackClassName="bg-primary/10 text-primary" />
-                  <p className="font-semibold">{nickname}</p>
-                  <Badge variant="secondary" className="text-xs">{t('member.freeUser')}</Badge>
-                </div>
-                <Separator className="mb-4" />
-                <nav className="space-y-1">
-                  {tabs.map(({ key, icon: Icon }) => (
-                    <button
-                      key={key}
-                      onClick={() => setActiveTab(key)}
-                      className={cn(
-                        'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
-                        activeTab === key
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {t(`profile.${key}`)}
-                    </button>
-                  ))}
-                </nav>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 右侧内容 */}
-          <div className="md:col-span-3">
-            {activeTab === 'overview' && <OverviewTab />}
-            {activeTab === 'records' && <RecordsTab />}
-            {activeTab === 'words' && <WordsTab />}
-            {activeTab === 'account' && <AccountTab desktop />}
-            {activeTab === 'settings' && <SettingsTab />}
-          </div>
-        </div>
+        <MobileProfileDetail
+          title={t(mobileTitles[mobileView])}
+          onBack={goBack}
+        >
+          {mobileView === 'overview' && <OverviewTab />}
+          {mobileView === 'records' && <RecordsTab />}
+          {mobileView === 'words' && <WordsTab />}
+          {mobileView === 'account' && <AccountTab />}
+          {mobileView === 'settings' && <MobileSettingsView onNavigate={goTo} />}
+          {mobileView === 'appearance' && <AppearanceContent />}
+          {mobileView === 'member' && <MemberPage compact />}
+          {mobileView === 'storage' && <MobileStorageView />}
+        </MobileProfileDetail>
       )}
     </div>
   )

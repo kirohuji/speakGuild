@@ -1,0 +1,386 @@
+learning:
+  exercises:
+    pipeline:
+      - key: learn-english
+        kind: chunk
+        type: chunk_substitution
+        title: 说学英语
+        chunk: learn English
+        chunkMeaning: 学习英语
+        direction: zh_to_en
+        items:
+          - zh: 我想学英语。
+            answer: I want to learn English.
+            hint: I want to
+          - zh: 她在北京学英语已经两年了。
+            answer: She's been learning English in Beijing for two years.
+            hint: She's been learning；for two years
+          - zh: 儿童学语言往往更快。
+            answer: Children often learn English faster.
+            hint: Children often；faster
+      - key: learn-to-drive
+        kind: chunk
+        type: chunk_substitution
+        title: 说学开车
+        chunk: learn to drive
+        chunkMeaning: 学开车
+        direction: zh_to_en
+        items:
+          - zh: 我明年打算学开车。
+            answer: I plan to learn to drive next year.
+            hint: plan to；next year
+          - zh: 他十六岁就开始学开车了。
+            answer: He started learning to drive at sixteen.
+            hint: started learning；at sixteen
+          - zh: 学开车需要耐心。
+            answer: Learning to drive takes patience.
+            hint: Learning to drive；takes patience
+      - key: learn-how-explain-clearly
+        kind: chunk
+        type: chunk_substitution
+        title: 说学会清楚解释
+        chunk: learn how to explain this clearly
+        chunkMeaning: 学会如何把这说清楚
+        direction: zh_to_en
+        items:
+          - zh: 我还在学怎么把这事说清楚。
+            answer: I'm still learning how to explain this clearly.
+            hint: I'm still learning
+          - zh: 培训师教我们怎么清楚解释产品。
+            answer: The trainer taught us how to explain this clearly.
+            hint: The trainer taught us
+          - zh: 你得学会清楚地向客户解释。
+            answer: You need to learn how to explain this clearly to clients.
+            hint: to clients
+      - key: learn-that-he-left
+        kind: chunk
+        type: chunk_substitution
+        title: 说得知他已经离开
+        chunk: learn that he had already left
+        chunkMeaning: 得知他已经走了
+        direction: zh_to_en
+        items:
+          - zh: 我后来才知道他已经走了。
+            answer: I learned later that he had already left.
+            hint: I learned later
+          - zh: 她打电话才发现他早就离开了。
+            answer: She learned that he had already left when she called.
+            hint: when she called
+          - zh: 我们是收到邮件才知道他走了的。
+            answer: We learned that he had already left from the email.
+            hint: from the email
+      - key: learn-from-mistakes
+        kind: chunk
+        type: chunk_substitution
+        title: 说从错误中学习
+        chunk: learn from our mistakes
+        chunkMeaning: 从我们的错误中学习
+        direction: zh_to_en
+        items:
+          - zh: 重要的是从错误里吸取教训。
+            answer: What matters is learning from our mistakes.
+            hint: What matters is
+          - zh: 好团队会从失误中成长。
+            answer: Good teams learn from our mistakes.
+            hint: Good teams
+          - zh: 我们必须从上次失败中学习。
+            answer: We must learn from our mistakes after what happened last time.
+            hint: after what happened；last time
+      - key: learn-by-doing
+        kind: chunk
+        type: chunk_substitution
+        title: 说在做中学
+        chunk: learn by doing
+        chunkMeaning: 在实践中学习
+        direction: zh_to_en
+        items:
+          - zh: 编程最好是在做中学。
+            answer: With coding, you learn by doing.
+            hint: With coding
+          - zh: 孩子通过动手玩来学习。
+            answer: Kids learn by doing when they play with their hands.
+            hint: when they play
+          - zh: 别只看书，做中学更快。
+            answer: Don't just read—learn by doing.
+            hint: Don't just read
+      - key: learn-from-experience
+        kind: chunk
+        type: chunk_substitution
+        title: 说从经验中学习
+        chunk: learn from experience
+        chunkMeaning: 从经验中学习
+        direction: zh_to_en
+        items:
+          - zh: 老手都是从经验里学出来的。
+            answer: Veterans learn from experience.
+            hint: Veterans
+          - zh: 我们得从过往经验吸取教训。
+            answer: We need to learn from experience.
+            hint: We need to
+          - zh: 她通过每次项目从经验里成长。
+            answer: She learns from experience on every project.
+            hint: on every project
+      - key: learn-the-hard-way
+        kind: chunk
+        type: chunk_substitution
+        title: 说吃过亏才学会
+        chunk: learn the hard way
+        chunkMeaning: 通过惨痛经历才学会
+        direction: zh_to_en
+        items:
+          - zh: 我备份数据是吃过亏才记住的。
+            answer: I learned the hard way to back up my data.
+            hint: to back up my data
+          - zh: 他借钱给朋友栽过跟头。
+            answer: He learned the hard way about lending money to friends.
+            hint: about lending money
+          - zh: 有时人只有撞了南墙才会学会。
+            answer: Sometimes people learn the hard way.
+            hint: Sometimes people
+      - key: never-stop-learning
+        kind: chunk
+        type: chunk_substitution
+        title: 说活到老学到老
+        chunk: never stop learning
+        chunkMeaning: 永不停止学习
+        direction: zh_to_en
+        items:
+          - zh: 好的程序员永不停止学习。
+            answer: Good programmers never stop learning.
+            hint: Good programmers
+          - zh: 我妈退休后仍然坚持学习。
+            answer: My mom never stopped learning after she retired.
+            hint: after she retired
+          - zh: 别骄傲，学无止境。
+            answer: Don't get complacent—never stop learning.
+            hint: Don't get complacent
+      - key: learn-by-heart
+        kind: chunk
+        type: chunk_substitution
+        title: 说背下来
+        chunk: learn by heart
+        chunkMeaning: 背诵；牢记
+        direction: zh_to_en
+        items:
+          - zh: 小时候我们得背古诗。
+            answer: As kids, we had to learn poems by heart.
+            hint: As kids；poems
+          - zh: 她把演讲稿全背下来了。
+            answer: She learned the speech by heart.
+            hint: the speech
+          - zh: 不必整段死背，理解意思就行。
+            answer: You don't need to learn the whole thing by heart—just understand it.
+            hint: the whole thing；just understand it
+      - key: learn-that-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方说获悉某事
+        chunk: learn that
+        chunkMeaning: 得知；了解到
+        direction: en_to_zh
+        items:
+          - en: I learned that the meeting was moved to Monday.
+            answer: 我得知会议改到周一了。
+            hint: was moved to Monday
+          - en: She learned that her application had been accepted.
+            answer: 她得知申请通过了。
+            hint: her application；accepted
+          - en: We only learned that he was sick yesterday.
+            answer: 我们昨天才知道他病了。
+            hint: he was sick；yesterday
+      - key: learn-from-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂从何处吸取教训
+        chunk: learn from
+        chunkMeaning: 从……学习
+        direction: en_to_zh
+        items:
+          - en: You can learn a lot from working abroad.
+            answer: 出国工作能学到很多。
+            hint: working abroad；a lot
+          - en: He learned from his coach how to stay calm under pressure.
+            answer: 他从教练那里学会了在压力下保持冷静。
+            hint: his coach；stay calm under pressure
+          - en: The company failed to learn from past launches.
+            answer: 公司没有从以往的发布中吸取教训。
+            hint: past launches
+      - key: learn-state
+        type: vocab_sentence_building
+        title: 说学习与获悉
+        vocabWord: learn
+        vocabMeaning: 学习；得知
+        direction: zh_to_en
+        patterns:
+          - chunk: learn English
+            items:
+              - zh: 他决定每天学英语半小时。
+                answer: He decided to learn English for half an hour a day.
+                hint: for half an hour a day
+              - zh: 应用程序帮孩子们学英语。
+                answer: The app helps kids learn English.
+                hint: helps kids
+          - chunk: learn from our mistakes
+            items:
+              - zh: 复盘是为了从错误中学习。
+                answer: Reviews exist so we can learn from our mistakes.
+                hint: Reviews exist so
+              - zh: 她从那次失误中学到了很多。
+                answer: She learned a lot from our mistakes on that project.
+                hint: a lot；on that project
+          - chunk: never stop learning
+            items:
+              - zh: 行业变化快，不能停下学习。
+                answer: The industry changes fast, so never stop learning.
+                hint: changes fast
+              - zh: 他的座右铭是永不停止学习。
+                answer: His motto is to never stop learning.
+                hint: His motto is
+      - key: learn-to-other
+        type: pattern_drill
+        title: 说学会做别的事
+        pattern: learn to [verb]
+        patternMeaning: 学会做某事
+        direction: zh_to_en
+        items:
+          - zh: 我在学游泳。
+            answer: I'm learning to swim.
+            hint: swim
+          - zh: 她学会了在公开场合发言。
+            answer: She learned to speak in public.
+            hint: speak in public
+          - zh: 孩子们要学会自己收拾房间。
+            answer: Kids need to learn to tidy their rooms.
+            hint: tidy their rooms
+      - key: learn-how-other
+        type: pattern_drill
+        title: 说学会别的方法
+        pattern: learn how to [verb]
+        patternMeaning: 学会如何……
+        direction: zh_to_en
+        items:
+          - zh: 你得学会如何管理时间。
+            answer: You need to learn how to manage your time.
+            hint: manage your time
+          - zh: 新员工在学怎么用这套系统。
+            answer: New hires are learning how to use the system.
+            hint: use the system
+          - zh: 我们学了如何给数据做可视化。
+            answer: We learned how to visualize the data.
+            hint: visualize the data
+      - key: learn-from-other
+        type: pattern_drill
+        title: 说从别的人或事中学
+        pattern: learn from [someone/something]
+        patternMeaning: 向/从……学习
+        direction: zh_to_en
+        items:
+          - zh: 多向前辈请教。
+            answer: Learn more from senior colleagues.
+            hint: senior colleagues
+          - zh: 孩子能从失败中学到韧性。
+            answer: Kids can learn resilience from failure.
+            hint: resilience；failure
+          - zh: 我们应从客户反馈里改进产品。
+            answer: We should learn from customer feedback and improve the product.
+            hint: customer feedback
+      - key: learn-by-other
+        type: pattern_drill
+        title: 说用别的方式学
+        pattern: learn by [doing/noun]
+        patternMeaning: 通过……学习
+        direction: zh_to_en
+        items:
+          - zh: 很多人通过看视频学厨艺。
+            answer: Many people learn cooking by watching videos.
+            hint: cooking；watching videos
+          - zh: 她通过听播客学历史。
+            answer: She learns history by listening to podcasts.
+            hint: history；podcasts
+          - zh: 团队通过模拟演练学应急流程。
+            answer: The team learns emergency procedures by running drills.
+            hint: emergency procedures；drills
+      - key: learn-that-other
+        type: pattern_drill
+        title: 说得知别的情况
+        pattern: learn that [clause]
+        patternMeaning: 得知……
+        direction: zh_to_en
+        items:
+          - zh: 我得知航班取消了。
+            answer: I learned that the flight was canceled.
+            hint: the flight was canceled
+          - zh: 他们刚知道合同续签了。
+            answer: They just learned that the contract was renewed.
+            hint: the contract was renewed
+          - zh: 她得知自己中了奖。
+            answer: She learned that she had won the prize.
+            hint: had won the prize
+      - key: learn-by-heart-other
+        type: pattern_drill
+        title: 说把别的东西背下来
+        pattern: learn [something] by heart
+        patternMeaning: 背诵……
+        direction: zh_to_en
+        items:
+          - zh: 演员得把台词背下来。
+            answer: Actors need to learn their lines by heart.
+            hint: their lines
+          - zh: 我背下了所有区号。
+            answer: I learned all the area codes by heart.
+            hint: area codes
+          - zh: 别死记公式，要理解原理。
+            answer: Don't learn the formulas by heart only—understand the idea.
+            hint: the formulas；understand the idea
+      - key: learn-english-build
+        type: sentence_decomposition
+        title: 把学英语说完整
+        sourceKind: chunk
+        sourceText: learn English
+        fullSentence: I want to learn English so I can talk confidently with clients overseas.
+        fullSentenceZh: 我想学英语，这样才能跟海外客户自信沟通。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I want to learn English.
+            zh: 我想学英语。
+            highlight: ''
+            hint: 先说想学英语
+          - level: 2
+            label: 加目的
+            en: I want to learn English so I can talk with clients.
+            zh: 我想学英语，好跟客户交流。
+            highlight: so I can talk with clients
+            hint: 补上好跟客户交流
+          - level: 3
+            label: 完整句
+            en: I want to learn English so I can talk confidently with clients overseas.
+            zh: 我想学英语，这样才能跟海外客户自信沟通。
+            highlight: confidently；overseas
+            hint: 加上自信与海外
+      - key: learn-mistakes-build
+        type: sentence_decomposition
+        title: 把从错误中学习说完整
+        sourceKind: chunk
+        sourceText: learn from our mistakes
+        fullSentence: If we learn from our mistakes, the next launch will go much more smoothly.
+        fullSentenceZh: 要是我们从错误里吸取教训，下次发布就会顺利得多。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We should learn from our mistakes.
+            zh: 我们应该从错误中学习。
+            highlight: ''
+            hint: 先说应该从错误中学习
+          - level: 2
+            label: 加条件
+            en: If we learn from our mistakes, things will improve.
+            zh: 要是吸取教训，情况会好转。
+            highlight: If；things will improve
+            hint: 用条件句承接
+          - level: 3
+            label: 完整句
+            en: If we learn from our mistakes, the next launch will go much more smoothly.
+            zh: 要是我们从错误里吸取教训，下次发布就会顺利得多。
+            highlight: the next launch；much more smoothly
+            hint: 点出下次发布更顺利

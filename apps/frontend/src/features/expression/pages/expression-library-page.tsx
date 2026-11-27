@@ -1,6 +1,7 @@
 import { showRequestError } from '@/lib/request-feedback'
 import { LEARNING_LIBRARY_CHANGED_EVENT } from '@/lib/offline/learning-content.repository'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -33,15 +34,19 @@ import type { LearningNotebook } from '@/features/practice/api/english-practice-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { LearningStatsRail } from '@/features/home/components/learning-stats-rail'
+import { DesktopLearningShell, useDesktopAsideSlot } from '@/layout/desktop-learning-shell'
+import { desktopLearningHref } from '@/features/home/desktop-learning-section'
 import { Virtuoso } from 'react-virtuoso'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { PrepPager } from '@/features/practice/components/prep-pager'
 import {
   PracticeSheetPage,
   PracticeSheetPreviewFrame,
@@ -86,10 +91,23 @@ const PAGE_SIZE = 30
 type ExportMode = PracticeSheetExportMode
 
 export function ExpressionLibraryPage() {
+  const isMobile = useIsMobile()
+  if (!isMobile) {
+    return (
+      <DesktopLearningShell section="expressions" asideMode="slot">
+        <ExpressionLibraryPageContent />
+      </DesktopLearningShell>
+    )
+  }
+  return <ExpressionLibraryPageContent />
+}
+
+function ExpressionLibraryPageContent() {
   const { t, i18n } = useTranslation()
   const { session } = useAuth()
   const { requireMembership, membershipDrawer } = useMembershipPurchase()
   const isMobile = useIsMobile()
+  const asideSlot = useDesktopAsideSlot()
   const setBottomNavVisible = useLayoutStore((state) => state.setBottomNavVisible)
   const { notebookId } = useParams<{ notebookId: string }>()
   const navigate = useNavigate()
@@ -229,6 +247,31 @@ export function ExpressionLibraryPage() {
       setLoadingMore(false)
     }
   }, [loading, loadingMore, localListRequest, notebookId, result.items.length, result.total])
+
+  // 桌面端分页：替换当前页，不做无限追加
+  const goToListPage = useCallback(async (page: number) => {
+    if (!notebookId || loading || loadingMore) return
+    const nextPage = Math.max(1, page)
+    setLoadingMore(true)
+    try {
+      const pageResult = await learningNotebookRepository.listCachedExpressionPage({
+        ...localListRequest,
+        limit: PAGE_SIZE,
+        offset: (nextPage - 1) * PAGE_SIZE,
+      })
+      if (localListKeyRef.current !== JSON.stringify(localListRequest)) return
+      setResult({
+        items: pageResult.items as Expression[],
+        total: pageResult.total,
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+        totalPages: Math.max(1, Math.ceil(pageResult.total / PAGE_SIZE)),
+      })
+      setSelectedIds(new Set())
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [loading, loadingMore, localListRequest, notebookId])
 
   const syncThisNotebook = useCallback(async () => {
     if (!notebookId || !session?.user?.id || notebookSyncing) return
@@ -374,8 +417,9 @@ export function ExpressionLibraryPage() {
       useOnboardingStore.getState().tryStartSegment('expression-immersive')
       return
     }
-    useOnboardingStore.getState().tryStartSegment('expression-export-pdf')
-  }, [loading, result.items.length, libraryTab, onboardingCompletedSegments])
+    // PDF 导出仅移动端有入口
+    if (isMobile) useOnboardingStore.getState().tryStartSegment('expression-export-pdf')
+  }, [loading, result.items.length, libraryTab, onboardingCompletedSegments, isMobile])
 
   // ---- dialog ----
   const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
@@ -916,96 +960,140 @@ export function ExpressionLibraryPage() {
     ])
   }, [groupByDate, i18n.language, t, visibleListItems])
 
-  const renderVirtualList = (immersiveClassName: string) => (
-    <Virtuoso
-      data={virtualRows}
-      className="h-full scrollbar-hide md:h-[calc(100dvh-17rem)]"
-      increaseViewportBy={{ top: 360, bottom: 720 }}
-      endReached={() => { void loadNextPage() }}
-      onScroll={(event) => {
-        const scroller = event.currentTarget
-        const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-        const top = Math.min(maxTop, Math.max(0, scroller.scrollTop))
-        const atTop = top <= 2
-        const atBottom = top >= maxTop - 2
+  const renderListRow = (row: (typeof virtualRows)[number]) => {
+    if (row.kind === 'item') {
+      return <div key={row.id} className="mx-1 pb-2">{renderExpressionItem(row.expression, row.index)}</div>
+    }
+    const groupSelected = row.ids.length > 0 && row.ids.every((id) => selectedIds.has(id))
+    return (
+      <div key={`date-${row.key}`} className="relative mx-1 flex items-center justify-center py-2">
+        <span className="absolute inset-x-0 h-px bg-border/70" />
+        <span className="app-surface relative px-3 text-xs font-medium text-muted-foreground">{row.label}</span>
+        {selectionMode && (
+          <button
+            type="button"
+            className="absolute right-0 pl-3 text-[11px] font-medium text-primary"
+            onClick={() => setSelectedIds((current) => {
+              const next = new Set(current)
+              if (groupSelected) row.ids.forEach((id) => next.delete(id))
+              else row.ids.forEach((id) => next.add(id))
+              return next
+            })}
+          >
+            {groupSelected ? t('expressionLib.clearSelection') : t('expressionLib.selectDateGroup')}
+          </button>
+        )}
+      </div>
+    )
+  }
 
-        // iOS rubber-band scrolling reports tiny reverse deltas at both edges.
-        // Treat an edge as stable and require deliberate travel before changing chrome.
-        if (atTop) {
-          setHeaderCondensed(false)
-          headerScrollIntentRef.current = { down: 0, up: 0 }
-          listScrollTopRef.current = top
-          return
-        }
-        if (atBottom) {
-          listScrollTopRef.current = top
-          return
-        }
-
-        const delta = top - listScrollTopRef.current
-        if (delta > 0.5) {
-          headerScrollIntentRef.current.down += delta
-          headerScrollIntentRef.current.up = 0
-          if (headerScrollIntentRef.current.down >= 24) setHeaderCondensed(true)
-        } else if (delta < -0.5) {
-          headerScrollIntentRef.current.up -= delta
-          headerScrollIntentRef.current.down = 0
-          if (headerScrollIntentRef.current.up >= 24) setHeaderCondensed(false)
-        }
-        listScrollTopRef.current = top
-      }}
-      components={{
-        Header: () => (
-          <div className="mx-2 mb-2 flex items-center justify-between px-0 pt-0">
-            <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
-            {libraryTab === 'words' && (
-              <button
-                type="button"
-                onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
-                data-spotlight="expression-immersive"
-                className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}
-              >
-                <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
-              </button>
-            )}
-          </div>
-        ),
-        Footer: () => (
-          <div className="py-4 text-center text-xs text-muted-foreground">
-            {loadingMore ? <Loader2 className="mx-auto size-4 animate-spin" /> : t('expressionLib.totalItems', { count: result.total })}
-          </div>
-        ),
-      }}
-      itemContent={(_, row) => {
-        if (row.kind === 'item') return <div className="mx-1 pb-2">{renderExpressionItem(row.expression, row.index)}</div>
-        const groupSelected = row.ids.length > 0 && row.ids.every((id) => selectedIds.has(id))
-        return <div className="relative mx-1 flex items-center justify-center py-2">
-          <span className="absolute inset-x-0 h-px bg-border/70" />
-          <span className="app-surface relative px-3 text-xs font-medium text-muted-foreground">{row.label}</span>
-          {selectionMode && <button type="button" className="absolute right-0 pl-3 text-[11px] font-medium text-primary" onClick={() => setSelectedIds((current) => {
-            const next = new Set(current)
-            if (groupSelected) row.ids.forEach((id) => next.delete(id))
-            else row.ids.forEach((id) => next.add(id))
-            return next
-          })}>{groupSelected ? t('expressionLib.clearSelection') : t('expressionLib.selectDateGroup')}</button>}
-        </div>
-      }}
-    />
+  const listHintHeader = (immersiveClassName: string) => (
+    <div className="mx-2 mb-2 flex items-center justify-between px-0 pt-0">
+      <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
+      {libraryTab === 'words' && isMobile && (
+        <button
+          type="button"
+          onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
+          data-spotlight="expression-immersive"
+          className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}
+        >
+          <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
+        </button>
+      )}
+    </div>
   )
 
-  return (
-    <div className={cn('mx-auto max-w-2xl px-4 pt-3 md:h-auto', isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0', selectionMode ? 'md:pb-28' : 'md:pb-10')}>
+  const listFooter = (
+    <div className="py-4 text-center text-xs text-muted-foreground">
+      {loadingMore ? <Loader2 className="mx-auto size-4 animate-spin" /> : t('expressionLib.totalItems', { count: result.total })}
+    </div>
+  )
+
+  const renderVirtualList = (immersiveClassName: string) => {
+    if (!isMobile) {
+      return (
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {listHintHeader(immersiveClassName)}
+            {virtualRows.map((row) => renderListRow(row))}
+            {result.totalPages <= 1 && listFooter}
+          </div>
+          <div className="shrink-0 pt-2">
+            <PrepPager
+              currentPage={result.page}
+              totalPages={Math.max(1, result.totalPages)}
+              totalItems={result.total}
+              onPageChange={(page) => { void goToListPage(page) }}
+            />
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <Virtuoso
+        data={virtualRows}
+        className="h-full scrollbar-hide"
+        increaseViewportBy={{ top: 360, bottom: 720 }}
+        endReached={() => { void loadNextPage() }}
+        onScroll={(event) => {
+          const scroller = event.currentTarget
+          const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+          const top = Math.min(maxTop, Math.max(0, scroller.scrollTop))
+          const atTop = top <= 2
+          const atBottom = top >= maxTop - 2
+
+          // iOS rubber-band scrolling reports tiny reverse deltas at both edges.
+          // Treat an edge as stable and require deliberate travel before changing chrome.
+          if (atTop) {
+            setHeaderCondensed(false)
+            headerScrollIntentRef.current = { down: 0, up: 0 }
+            listScrollTopRef.current = top
+            return
+          }
+          if (atBottom) {
+            listScrollTopRef.current = top
+            return
+          }
+
+          const delta = top - listScrollTopRef.current
+          if (delta > 0.5) {
+            headerScrollIntentRef.current.down += delta
+            headerScrollIntentRef.current.up = 0
+            if (headerScrollIntentRef.current.down >= 24) setHeaderCondensed(true)
+          } else if (delta < -0.5) {
+            headerScrollIntentRef.current.up -= delta
+            headerScrollIntentRef.current.down = 0
+            if (headerScrollIntentRef.current.up >= 24) setHeaderCondensed(false)
+          }
+          listScrollTopRef.current = top
+        }}
+        components={{
+          Header: () => listHintHeader(immersiveClassName),
+          Footer: () => listFooter,
+        }}
+        itemContent={(_, row) => renderListRow(row)}
+      />
+    )
+  }
+
+  const page = (
+    <div className={cn(
+      isMobile ? 'mx-auto max-w-2xl px-4 pt-3 md:h-auto' : 'flex h-full min-h-0 flex-col pt-0',
+      isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0',
+      selectionMode ? 'md:pb-28' : isMobile ? 'md:pb-10' : 'pb-0',
+    )}>
       <header className="mb-4 flex shrink-0 items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate('/expressions')}
+          onClick={() => navigate(isMobile ? '/expressions' : desktopLearningHref('expressions'))}
           className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
           aria-label={t('learningNotebooks.notebooks')}
         >
           <ArrowLeft className="size-4" />
         </button>
         <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-          <p className={cn('text-xs text-muted-foreground transition-opacity duration-200', headerCondensed && 'invisible opacity-0')}>{t('learningNotebooks.notebooks')}</p>
+          <p className={cn('text-xs text-muted-foreground transition-opacity duration-200', isMobile && headerCondensed && 'invisible opacity-0')}>{t('learningNotebooks.notebooks')}</p>
           <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -1020,14 +1108,14 @@ export function ExpressionLibraryPage() {
           <button type="button" onClick={() => { setSelectionMode((value) => !value); setSelectedIds(new Set()) }} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', selectionMode ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')} aria-label={selectionMode ? t('expressionLib.cancelSelection') : t('expressionLib.batchEdit')}><CheckSquare className="size-4" /></button>
         </div>
       </header>
-      <Tabs value={libraryTab} onValueChange={handleLibraryTabChange} className="flex min-h-0 flex-1 flex-col">
-        <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
+      <Tabs value={libraryTab} onValueChange={handleLibraryTabChange} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <TabsList className="mb-3 w-full shrink-0 rounded-full bg-background/54 backdrop-blur-2xl">
           <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
           <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
           <TabsTrigger value="pattern" className="flex-1 rounded-full">{t('expressionLib.patterns')}</TabsTrigger>
         </TabsList>
 
-        <div className={cn('mb-3 flex items-center gap-2 transition-all duration-200', headerCondensed && 'hidden')}>
+        <div className={cn('mb-3 flex shrink-0 items-center gap-2 transition-all duration-200', isMobile && headerCondensed && 'hidden')}>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-0 bg-muted/45 pl-9 text-sm shadow-none focus-visible:bg-background" placeholder={t('expressionLib.searchPlaceholder')} />
@@ -1054,11 +1142,13 @@ export function ExpressionLibraryPage() {
           <button type="button" onClick={() => setGroupByDate((value) => !value)} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20', groupByDate && 'bg-primary/20')} aria-label={t('expressionLib.groupByDate')} aria-pressed={groupByDate}>
             <CalendarDays className="size-4" />
           </button>
-          <button type="button" onClick={() => void openExportPreview()} data-spotlight="expression-export-pdf" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
+          {isMobile && (
+            <button type="button" onClick={() => void openExportPreview()} data-spotlight="expression-export-pdf" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
+          )}
         </div>
 
         {/* ---- 二级状态过滤 ---- */}
-        <div className="mb-4 flex gap-2 overflow-x-auto">
+        <div className="mb-4 flex shrink-0 gap-2 overflow-x-auto">
           {filterPills.map((item) => (
             <button
               key={item.value}
@@ -1079,8 +1169,8 @@ export function ExpressionLibraryPage() {
           ))}
         </div>
 
-        {/* 两个 TabsContent 共享同一套渲染逻辑 */}
-        <TabsContent value="words" forceMount className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
+        {/* 移动端 forceMount 保滑动切 tab；桌面只挂载当前 tab，列表区单独滚动 */}
+        <TabsContent value="words" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1090,7 +1180,7 @@ export function ExpressionLibraryPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="chunk" forceMount className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
+        <TabsContent value="chunk" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1100,7 +1190,7 @@ export function ExpressionLibraryPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="pattern" forceMount className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
+        <TabsContent value="pattern" forceMount={isMobile ? true : undefined} className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
@@ -1230,43 +1320,65 @@ export function ExpressionLibraryPage() {
         </DialogContent>
       </Dialog>
 
-      <Drawer open={batchOpen} onOpenChange={(open) => { setBatchOpen(open); if (!open) setBatchCreatingNotebook(false) }}>
-        <DrawerContent className="max-h-[86svh] rounded-t-[28px] bg-background drawer-surface">
-          <DrawerHeader className="text-left"><DrawerTitle>{t('expressionLib.batchEdit')}</DrawerTitle><DrawerDescription>{t('expressionLib.selectedCount', { count: selectedNotebookItemIds.length })}</DrawerDescription></DrawerHeader>
-          {!batchAction ? (
-            <div className="grid gap-2 px-4">
-              <Button variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchAction('notebook')}>{t('expressionLib.addToNotebook')}</Button>
-              <Button variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchAction('status')}>{t('expressionLib.changeStatus')}</Button>
-            </div>
-          ) : batchAction === 'status' ? (
-            <div className="grid grid-cols-3 gap-2 px-4">
-              {(['learning', 'reviewing', 'mastered'] as MasteryStatus[]).map((status) => <button key={status} type="button" onClick={() => setBatchStatus(status)} className={cn('rounded-xl px-2 py-3 text-xs font-medium transition-colors', batchStatus === status ? 'bg-primary/10 text-primary' : 'bg-muted/40 text-muted-foreground')}>{status === 'learning' ? t('expressionLib.learning') : status === 'reviewing' ? t('expressionLib.reviewing') : t('expressionLib.mastered')}</button>)}
-            </div>
-          ) : batchCreatingNotebook ? (
-            <div className="px-4">
-              <Label htmlFor="new-notebook">{t('learningNotebooks.name')}</Label>
-              <Input id="new-notebook" value={newNotebookName} onChange={(event) => setNewNotebookName(event.target.value)} className="mt-2 border-0 bg-muted/45 shadow-none" maxLength={30} autoFocus placeholder={t('learningNotebooks.namePlaceholder')} />
-            </div>
-          ) : (
-            <div className="min-h-0 overflow-y-auto px-4">
-              <div className="flex flex-col gap-2">
-                {notebooks.map((notebook) => {
-                  const checked = targetNotebookId === notebook.id
-                  return <button key={notebook.id} type="button" onClick={() => setTargetNotebookId(notebook.id)} className={cn('flex min-h-14 items-center gap-3 rounded-xl px-3 text-left transition-colors', checked ? 'bg-primary/5' : 'bg-muted/40')}>
-                    <span className={cn('flex size-5 shrink-0 items-center justify-center rounded-md border', checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>
-                      {checked && <Check className="size-3.5" />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="truncate text-sm font-medium">{notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts?.total ?? 0 })}</span>
-                    </span>
-                  </button>
-                })}
-                <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchCreatingNotebook(true)}><Plus data-icon="inline-start" />{t('learningNotebooks.createNew')}</Button>
+      {(() => {
+        const batchBody = (
+          <>
+            {!batchAction ? (
+              <div className="grid gap-2 px-4">
+                <Button variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchAction('notebook')}>{t('expressionLib.addToNotebook')}</Button>
+                <Button variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchAction('status')}>{t('expressionLib.changeStatus')}</Button>
               </div>
-            </div>
-          )}
-          <DrawerFooter className="flex-row gap-3 border-t border-border/60 bg-muted/10 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            ) : batchAction === 'status' ? (
+              <div className="grid grid-cols-3 gap-2 px-4">
+                {(['learning', 'reviewing', 'mastered'] as MasteryStatus[]).map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setBatchStatus(status)}
+                    className={cn('rounded-xl px-2 py-3 text-xs font-medium transition-colors', batchStatus === status ? 'bg-primary/10 text-primary' : 'bg-muted/40 text-muted-foreground')}
+                  >
+                    {status === 'learning' ? t('expressionLib.learning') : status === 'reviewing' ? t('expressionLib.reviewing') : t('expressionLib.mastered')}
+                  </button>
+                ))}
+              </div>
+            ) : batchCreatingNotebook ? (
+              <div className="px-4">
+                <Label htmlFor="new-notebook">{t('learningNotebooks.name')}</Label>
+                <Input id="new-notebook" value={newNotebookName} onChange={(event) => setNewNotebookName(event.target.value)} className="mt-2 border-0 bg-muted/45 shadow-none" maxLength={30} autoFocus placeholder={t('learningNotebooks.namePlaceholder')} />
+              </div>
+            ) : (
+              <div className="min-h-0 overflow-y-auto px-4">
+                <div className="flex flex-col gap-2">
+                  {notebooks.map((notebook) => {
+                    const checked = targetNotebookId === notebook.id
+                    return (
+                      <button
+                        key={notebook.id}
+                        type="button"
+                        onClick={() => setTargetNotebookId(notebook.id)}
+                        className={cn('flex min-h-14 items-center gap-3 rounded-xl px-3 text-left transition-colors', checked ? 'bg-primary/5' : 'bg-muted/40')}
+                      >
+                        <span className={cn('flex size-5 shrink-0 items-center justify-center rounded-md border', checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>
+                          {checked && <Check className="size-3.5" />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="truncate text-sm font-medium">{notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts?.total ?? 0 })}</span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                  <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setBatchCreatingNotebook(true)}>
+                    <Plus data-icon="inline-start" />
+                    {t('learningNotebooks.createNew')}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )
+        const batchFooter = (
+          <div className={cn('flex flex-row gap-3', isMobile ? 'border-t border-border/60 bg-muted/10 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3' : 'border-t border-border/60 px-4 py-3')}>
             <Button
               variant="secondary"
               className="flex-1 border-0 shadow-none"
@@ -1284,38 +1396,93 @@ export function ExpressionLibraryPage() {
                 {t('learningNotebooks.createAndSelect')}
               </Button>
             )}
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+          </div>
+        )
+        if (isMobile) {
+          return (
+            <Drawer open={batchOpen} onOpenChange={(open) => { setBatchOpen(open); if (!open) setBatchCreatingNotebook(false) }}>
+              <DrawerContent className="max-h-[86svh] rounded-t-[28px] bg-background drawer-surface">
+                <DrawerHeader className="text-left">
+                  <DrawerTitle>{t('expressionLib.batchEdit')}</DrawerTitle>
+                  <DrawerDescription>{t('expressionLib.selectedCount', { count: selectedNotebookItemIds.length })}</DrawerDescription>
+                </DrawerHeader>
+                {batchBody}
+                {batchFooter}
+              </DrawerContent>
+            </Drawer>
+          )
+        }
+        return (
+          <Dialog open={batchOpen} onOpenChange={(open) => { setBatchOpen(open); if (!open) setBatchCreatingNotebook(false) }}>
+            <DialogContent className="flex max-h-[min(86vh,720px)] max-w-md flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl">
+              <DialogHeader className="px-4 pt-4 text-left">
+                <DialogTitle>{t('expressionLib.batchEdit')}</DialogTitle>
+                <DialogDescription>{t('expressionLib.selectedCount', { count: selectedNotebookItemIds.length })}</DialogDescription>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto py-2">{batchBody}</div>
+              {batchFooter}
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
 
-      <LearningInsightDialog
-        items={insightPlaylist.displayItems}
-        index={insightPlaylist.index}
-        open={insightPlaylist.open}
-        onOpenChange={(open) => {
-          if (!open) insightPlaylist.reset()
-          else insightPlaylist.setOpen(true)
-        }}
-        onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
-        total={insightPlaylist.total}
-        windowOffset={insightPlaylist.windowOffset}
-        onLoadMore={() => { void insightPlaylist.loadMore() }}
-        hideSaveActions
-      />
-      <ImmersivePlayerDialog
-        items={immersivePlaylist.immersiveItems}
-        index={Math.min(immersivePlaylist.index, Math.max(immersivePlaylist.immersiveItems.length - 1, 0))}
-        open={immersivePlaylist.open}
-        onOpenChange={(open) => {
-          if (!open) immersivePlaylist.reset()
-          else immersivePlaylist.setOpen(true)
-        }}
-        onIndexChange={(absoluteIndex) => { void immersivePlaylist.handleIndexChange(absoluteIndex) }}
-        total={immersivePlaylist.total}
-        windowOffset={immersivePlaylist.windowOffset}
-        onLoadMore={() => { void immersivePlaylist.loadMore() }}
-      />
+      {isMobile ? (
+        <LearningInsightDialog
+          items={insightPlaylist.displayItems}
+          index={insightPlaylist.index}
+          open={insightPlaylist.open}
+          onOpenChange={(open) => {
+            if (!open) insightPlaylist.reset()
+            else insightPlaylist.setOpen(true)
+          }}
+          onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
+          total={insightPlaylist.total}
+          windowOffset={insightPlaylist.windowOffset}
+          onLoadMore={() => { void insightPlaylist.loadMore() }}
+          hideSaveActions
+        />
+      ) : asideSlot ? createPortal(
+        insightPlaylist.open ? (
+          <div className="flex h-full min-h-0 flex-col px-3 py-3">
+            <LearningInsightDialog
+              items={insightPlaylist.displayItems}
+              index={insightPlaylist.index}
+              open={insightPlaylist.open}
+              onOpenChange={(open) => {
+                if (!open) insightPlaylist.reset()
+                else insightPlaylist.setOpen(true)
+              }}
+              onIndexChange={(absoluteIndex) => { void insightPlaylist.handleIndexChange(absoluteIndex) }}
+              total={insightPlaylist.total}
+              windowOffset={insightPlaylist.windowOffset}
+              onLoadMore={() => { void insightPlaylist.loadMore() }}
+              hideSaveActions
+              presentation="rail"
+            />
+          </div>
+        ) : (
+          <LearningStatsRail />
+        ),
+        asideSlot,
+      ) : null}
+      {isMobile && (
+        <ImmersivePlayerDialog
+          items={immersivePlaylist.immersiveItems}
+          index={Math.min(immersivePlaylist.index, Math.max(immersivePlaylist.immersiveItems.length - 1, 0))}
+          open={immersivePlaylist.open}
+          onOpenChange={(open) => {
+            if (!open) immersivePlaylist.reset()
+            else immersivePlaylist.setOpen(true)
+          }}
+          onIndexChange={(absoluteIndex) => { void immersivePlaylist.handleIndexChange(absoluteIndex) }}
+          total={immersivePlaylist.total}
+          windowOffset={immersivePlaylist.windowOffset}
+          onLoadMore={() => { void immersivePlaylist.loadMore() }}
+        />
+      )}
       {membershipDrawer}
     </div>
   )
+
+  return page
 }

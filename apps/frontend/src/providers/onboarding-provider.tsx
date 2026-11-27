@@ -212,6 +212,14 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           onNext={handleNext}
           onPrev={handlePrev}
           onSkip={handleFinish}
+          onTargetUnavailable={() => {
+            // 分段：不标记完成，下次入口真正出现时还能再提示；Tour：跳过该步继续
+            if (useOnboardingStore.getState().mode === 'segment') {
+              storeCancel()
+              return
+            }
+            handleNext(false)
+          }}
         />
       )}
     </>

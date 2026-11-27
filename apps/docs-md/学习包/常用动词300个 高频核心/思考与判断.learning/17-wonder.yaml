@@ -1,0 +1,385 @@
+learning:
+  exercises:
+    pipeline:
+      - key: wonder-if-hes-still-awake
+        kind: chunk
+        type: chunk_substitution
+        title: 说想知他还没睡吗
+        chunk: wonder if he's still awake
+        chunkMeaning: 想知道他是否还醒着
+        direction: zh_to_en
+        items:
+          - zh: 我想知道他是不是还醒着。
+            answer: I wonder if he's still awake.
+            hint: I wonder if
+          - zh: 她半夜发消息，我在想他会不会还醒着。
+            answer: She texted at midnight, and I wonder if he's still awake.
+            hint: texted at midnight
+          - zh: 宝宝刚哭过，我不知道他还有没有醒着。
+            answer: The baby just cried, and I wonder if he's still awake.
+            hint: The baby just cried
+      - key: wonder-why-she-changed
+        kind: chunk
+        type: chunk_substitution
+        title: 说想知道她为何变卦
+        chunk: wonder why she changed her mind
+        chunkMeaning: 想知道她为何改变主意
+        direction: zh_to_en
+        items:
+          - zh: 我想知道她为什么改变主意。
+            answer: I wonder why she changed her mind.
+            hint: I wonder why
+          - zh: 我们一直在想她为何突然变卦。
+            answer: We've been wondering why she changed her mind.
+            hint: We've been wondering
+          - zh: 同事都好奇她怎么一夜之间就改了态度。
+            answer: Colleagues wonder why she changed her mind so suddenly.
+            hint: so suddenly
+      - key: was-wondering-if-you-could-help
+        kind: chunk
+        type: chunk_substitution
+        title: 说客气地问能否帮忙
+        chunk: I was wondering if you could help
+        chunkMeaning: 不知你是否能帮个忙
+        direction: zh_to_en
+        items:
+          - zh: 不知你能不能帮个忙？
+            answer: I was wondering if you could help.
+            hint: I was wondering if
+          - zh: 我在想你能不能帮我搬一下箱子。
+            answer: I was wondering if you could help me move these boxes.
+            hint: move these boxes
+          - zh: 她轻声问能不能帮她看一下这份文件。
+            answer: She was wondering if you could help her review this document.
+            hint: review this document
+      - key: wonder-about-that
+        kind: chunk
+        type: chunk_substitution
+        title: 说对那件事感到好奇
+        chunk: wonder about that
+        chunkMeaning: 对那事感到好奇
+        direction: zh_to_en
+        items:
+          - zh: 我有时会琢磨那件事。
+            answer: I sometimes wonder about that.
+            hint: I sometimes
+          - zh: 孩子总爱追问那件怪事。
+            answer: Kids always wonder about that.
+            hint: Kids always
+          - zh: 听过传闻后，大家忍不住去想详情。
+            answer: After hearing the rumors, everyone started to wonder about that.
+            hint: After hearing the rumors；started to
+      - key: wonder-what-to-do-next
+        kind: chunk
+        type: chunk_substitution
+        title: 说不知下一步怎么办
+        chunk: wonder what to do next
+        chunkMeaning: 想下一步该怎么办
+        direction: zh_to_en
+        items:
+          - zh: 我们都在想接下来该怎么办。
+            answer: We're all wondering what to do next.
+            hint: We're all wondering
+          - zh: 停电后，我只想弄明白下一步怎么走。
+            answer: After the blackout, I just wondered what to do next.
+            hint: After the blackout
+          - zh: 面试失败后，她反复琢磨今后该做什么。
+            answer: After failing the interview, she kept wondering what to do next.
+            hint: kept wondering；After failing
+      - key: cant-help-wondering
+        kind: chunk
+        type: chunk_substitution
+        title: 说忍不住去想
+        chunk: can't help wondering
+        chunkMeaning: 忍不住想
+        direction: zh_to_en
+        items:
+          - zh: 我忍不住想他是不是忘了。
+            answer: I can't help wondering if he forgot.
+            hint: if he forgot
+          - zh: 看到这个结果，她不禁会想哪里出了问题。
+            answer: Seeing this result, she can't help wondering what went wrong.
+            hint: what went wrong
+          - zh: 读完整篇报道，你还是会忍不住追问真相。
+            answer: After reading the whole report, you can't help wondering about the truth.
+            hint: about the truth
+      - key: begin-to-wonder
+        kind: chunk
+        type: chunk_substitution
+        title: 说开始琢磨起来
+        chunk: begin to wonder
+        chunkMeaning: 开始纳闷
+        direction: zh_to_en
+        items:
+          - zh: 我开始怀疑我们是不是走错了路。
+            answer: I'm beginning to wonder if we took the wrong road.
+            hint: if we took the wrong road
+          - zh: 股价连跌三天，投资者开始犯嘀咕。
+            answer: After three days of losses, investors began to wonder.
+            hint: After three days of losses
+          - zh: 沉默太久，她开始想他是不是生气了。
+            answer: The silence went on so long that she began to wonder if he was upset.
+            hint: The silence；if he was upset
+      - key: wonder-to-yourself
+        kind: chunk
+        type: chunk_substitution
+        title: 说在心里琢磨
+        chunk: wonder to yourself
+        chunkMeaning: 暗自琢磨
+        direction: zh_to_en
+        items:
+          - zh: 你会在心里想值不值得。
+            answer: You'll wonder to yourself whether it's worth it.
+            hint: whether it's worth it
+          - zh: 夜里我常会独自想不通他为什么这么说。
+            answer: At night I often wonder to myself why he said that.
+            hint: At night；why he said that
+          - zh: 做决定前，不妨先在心里问问自己要什么。
+            answer: Before deciding, wonder to yourself what you really want.
+            hint: Before deciding；what you really want
+      - key: wonder-aloud
+        kind: chunk
+        type: chunk_substitution
+        title: 说把疑问说出口
+        chunk: wonder aloud
+        chunkMeaning: 大声琢磨；说出疑惑
+        direction: zh_to_en
+        items:
+          - zh: 她当场就开口问这计划行不行。
+            answer: She wondered aloud whether the plan would work.
+            hint: whether the plan would work
+          - zh: 会议上有人公开质疑预算够不够。
+            answer: Someone wondered aloud if the budget was enough during the meeting.
+            hint: if the budget was enough
+          - zh: 孩子总爱大声问天空为什么是蓝的。
+            answer: Kids love to wonder aloud why the sky is blue.
+            hint: why the sky is blue
+      - key: wonder-if-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在猜会不会
+        chunk: wonder if
+        chunkMeaning: 想知道是否
+        direction: en_to_zh
+        items:
+          - en: I wonder if the store is still open.
+            answer: 我想知道商店还开着吗。
+            hint: still open
+          - en: She wondered if we'd already left.
+            answer: 她在想我们是不是已经走了。
+            hint: already left
+          - en: They keep wondering if it will rain tomorrow.
+            answer: 他们一直在想明天会不会下雨。
+            hint: it will rain tomorrow
+      - key: wonder-why-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方追问原因
+        chunk: wonder why
+        chunkMeaning: 想知道为什么
+        direction: en_to_zh
+        items:
+          - en: I wonder why the meeting was canceled.
+            answer: 我想知道会议为什么取消了。
+            hint: was canceled
+          - en: He wondered aloud why prices keep rising.
+            answer: 他当众追问物价为什么一直涨。
+            hint: prices keep rising
+          - en: Kids wonder why adults need so much coffee.
+            answer: 孩子们纳闷大人为什么需要喝那么多咖啡。
+            hint: need so much coffee
+      - key: wonder-state
+        type: vocab_sentence_building
+        title: 说好奇与琢磨
+        vocabWord: wonder
+        vocabMeaning: 想知道；感到好奇
+        direction: zh_to_en
+        patterns:
+          - chunk: I wonder if
+            items:
+              - zh: 我想知道他有没有收到邮件。
+                answer: I wonder if he got the email.
+                hint: got the email
+              - zh: 我在想我们还能不能改签。
+                answer: I wonder if we can still change the booking.
+                hint: change the booking
+          - chunk: wonder why
+            items:
+              - zh: 我常想人为什么会拖延。
+                answer: I often wonder why people procrastinate.
+                hint: people procrastinate
+              - zh: 她纳闷他干嘛一直不说话。
+                answer: She wonders why he keeps quiet.
+                hint: keeps quiet
+          - chunk: can't help wondering
+            items:
+              - zh: 看见旧照片，我忍不住想起当年。
+                answer: Seeing old photos, I can't help wondering about those years.
+                hint: about those years
+              - zh: 他升职后，同事忍不住猜背后有没有内幕。
+                answer: After his promotion, colleagues can't help wondering if there's more to the story.
+                hint: if there's more to the story
+      - key: wonder-if-other
+        type: pattern_drill
+        title: 说猜别的事会不会
+        pattern: wonder if [clause]
+        patternMeaning: 想知道是否……
+        direction: zh_to_en
+        items:
+          - zh: 我想知道火车会不会晚点。
+            answer: I wonder if the train will be late.
+            hint: will be late
+          - zh: 她琢磨他会不会来参加派对。
+            answer: She wonders if he'll come to the party.
+            hint: come to the party
+          - zh: 我们都在想这个笑话他听没听懂。
+            answer: We all wonder if he got the joke.
+            hint: got the joke
+      - key: wonder-why-other
+        type: pattern_drill
+        title: 说追问别的原因
+        pattern: wonder why [clause]
+        patternMeaning: 想知道为什么……
+        direction: zh_to_en
+        items:
+          - zh: 我想知道他们为什么沉默。
+            answer: I wonder why they stayed silent.
+            hint: stayed silent
+          - zh: 读者忍不住问作者为什么这样结局。
+            answer: Readers wonder why the author ended the story this way.
+            hint: ended the story this way
+          - zh: 他常琢磨自己为什么对这事这么敏感。
+            answer: He often wonders why he's so sensitive about this.
+            hint: so sensitive about this
+      - key: wondering-if-other
+        type: pattern_drill
+        title: 用客气语气开口求助
+        pattern: I was wondering if [clause]
+        patternMeaning: 不知是否……
+        direction: zh_to_en
+        items:
+          - zh: 不知你今晚有没有空见面聊聊。
+            answer: I was wondering if you're free to meet tonight.
+            hint: you're free；tonight
+          - zh: 我在想能不能借你的充电器用一下。
+            answer: I was wondering if I could borrow your charger.
+            hint: borrow your charger
+          - zh: 她礼貌地问我们愿不愿意参加调研。
+            answer: She was wondering if we'd be willing to join the survey.
+            hint: be willing to join the survey
+      - key: wonder-about-other
+        type: pattern_drill
+        title: 说对别的事好奇
+        pattern: wonder about [something]
+        patternMeaning: 对……感到好奇
+        direction: zh_to_en
+        items:
+          - zh: 孩子们对太空充满好奇。
+            answer: Kids wonder about space.
+            hint: space
+          - zh: 换工作前，我反复琢磨将来的生活方式。
+            answer: Before changing jobs, I kept wondering about my future lifestyle.
+            hint: my future lifestyle
+          - zh: 旅行结束后，他仍会想起沿途的风土人情。
+            answer: After the trip, he still wonders about the local culture along the way.
+            hint: the local culture
+      - key: wonder-what-other
+        type: pattern_drill
+        title: 说琢磨别的怎么办
+        pattern: wonder what to do next
+        patternMeaning: 想下一步怎么办
+        direction: zh_to_en
+        items:
+          - zh: 被拒稿后，作者不知道接下来怎么办。
+            answer: After the rejection, the author wondered what to do next.
+            hint: After the rejection
+          - zh: 团队暂停项目，都在想下面怎么推进。
+            answer: The team paused the project and wondered what to do next.
+            hint: paused the project
+          - zh: 毕业时她也一度不知该留城还是回家。
+            answer: At graduation she also wondered what to do next for a while.
+            hint: for a while
+      - key: cant-help-wondering-other
+        type: pattern_drill
+        title: 说忍不住想别的事
+        pattern: can't help wondering [clause]
+        patternMeaning: 忍不住想……
+        direction: zh_to_en
+        items:
+          - zh: 看到那份合同，我忍不住想有没有陷阱。
+            answer: Reading that contract, I can't help wondering if there's a catch.
+            hint: if there's a catch
+          - zh: 老友多年不见，他不自觉地想起彼此变了多少。
+            answer: Seeing an old friend after years, he can't help wondering how much they've both changed.
+            hint: how much they've both changed
+          - zh: 数据好得不真实，分析师忍不住质疑。
+            answer: The numbers look too good, and analysts can't help wondering if they're inflated.
+            hint: if they're inflated
+      - key: wonder-aloud-other
+        type: pattern_drill
+        title: 说把别的疑问说出口
+        pattern: wonder aloud
+        patternMeaning: 当众提出疑问
+        direction: zh_to_en
+        items:
+          - zh: 他在会上大声问目标现不现实。
+            answer: He wondered aloud in the meeting whether the goal was realistic.
+            hint: whether the goal was realistic
+          - zh: 学生常当众追问规则为什么那样定。
+            answer: Students often wonder aloud why the rules are set that way.
+            hint: why the rules are set that way
+          - zh: 她没忍住在群里问Deadline 能不能延。
+            answer: She couldn't resist wondering aloud in the group chat if the deadline could be extended.
+            hint: in the group chat；deadline could be extended
+      - key: wonder-awake-build
+        type: sentence_decomposition
+        title: 把担心他是否醒着说完整
+        sourceKind: chunk
+        sourceText: wonder if he's still awake
+        fullSentence: It's past midnight, and I wonder if he's still awake because he said he'd call me.
+        fullSentenceZh: 已过午夜了，他说会打电话给我，我在想他是不是还醒着。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I wonder if he's still awake.
+            zh: 我想知道他是不是还醒着。
+            highlight: ''
+            hint: 先说想知道他是否还醒着
+          - level: 2
+            label: 加时间背景
+            en: It's past midnight, and I wonder if he's still awake.
+            zh: 已过午夜了，我想知道他是不是还醒着。
+            highlight: It's past midnight
+            hint: 补上过午夜这一背景
+          - level: 3
+            label: 完整句
+            en: It's past midnight, and I wonder if he's still awake because he said he'd call me.
+            zh: 已过午夜了，他说会打电话给我，我在想他是不是还醒着。
+            highlight: because he said he'd call me
+            hint: 补上他说会打电话的原因
+      - key: wondering-help-build
+        type: sentence_decomposition
+        title: 把礼貌求助说完整
+        sourceKind: chunk
+        sourceText: I was wondering if you could help
+        fullSentence: I was wondering if you could help me set up the projector before the talk starts.
+        fullSentenceZh: 讲座开始前，不知你能不能帮我弄一下投影仪。
+        levels:
+          - level: 1
+            label: 核心句
+            en: I was wondering if you could help.
+            zh: 不知你能不能帮个忙。
+            highlight: ''
+            hint: 先用客气语气开口
+          - level: 2
+            label: 说清帮什么
+            en: I was wondering if you could help me set up the projector.
+            zh: 不知你能不能帮我弄一下投影仪。
+            highlight: set up the projector
+            hint: 补上具体要帮的事
+          - level: 3
+            label: 完整句
+            en: I was wondering if you could help me set up the projector before the talk starts.
+            zh: 讲座开始前，不知你能不能帮我弄一下投影仪。
+            highlight: before the talk starts
+            hint: 补上时间——讲座开始前

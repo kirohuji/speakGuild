@@ -1,0 +1,402 @@
+learning:
+  exercises:
+    pipeline:
+      - key: consider-every-option
+        kind: chunk
+        type: chunk_substitution
+        title: 说要考虑每个选项
+        chunk: consider every option
+        chunkMeaning: 考虑每个选项
+        direction: zh_to_en
+        items:
+          - zh: 做决定前要考虑每个选项。
+            answer: Consider every option before you decide.
+            hint: before you decide
+          - zh: 我们得把每个选项都考虑一遍。
+            answer: We need to consider every option.
+            hint: We need to
+          - zh: 你有没有考虑过每个选项的利弊？
+            answer: Have you considered every option?
+            hint: Have you
+      - key: consider-moving-closer-to-work
+        kind: chunk
+        type: chunk_substitution
+        title: 说考虑住得离上班近一点
+        chunk: consider moving closer to work
+        chunkMeaning: 考虑搬得离上班更近
+        direction: zh_to_en
+        items:
+          - zh: 她在考虑搬得离上班更近。
+            answer: She's considering moving closer to work.
+            hint: She's considering
+          - zh: 你有没有考虑过住得离公司近一点？
+            answer: Have you considered moving closer to work?
+            hint: Have you
+          - zh: 为了省通勤时间，我们在考虑搬近一点上班。
+            answer: To save commute time, we're considering moving closer to work.
+            hint: To save commute time；we're
+      - key: consider-this-important
+        kind: chunk
+        type: chunk_substitution
+        title: 说认为这件事很重要
+        chunk: consider this important
+        chunkMeaning: 认为这很重要
+        direction: zh_to_en
+        items:
+          - zh: 我认为这件事很重要。
+            answer: I consider this important.
+            hint: I consider this
+          - zh: 老板认为这点很重要。
+            answer: The boss considers this important.
+            hint: The boss considers
+          - zh: 如果你也认为这是重要的，我们就应该认真对待。
+            answer: If you also consider this important, we should take it seriously.
+            hint: If you also；take it seriously
+      - key: consider-him-a-good-leader
+        kind: chunk
+        type: chunk_substitution
+        title: 说觉得他是好领导
+        chunk: consider him a good leader
+        chunkMeaning: 认为他是好领导
+        direction: zh_to_en
+        items:
+          - zh: 大家都觉得他是好领导。
+            answer: Everyone considers him a good leader.
+            hint: Everyone considers
+          - zh: 我从来不觉得他是好领导。
+            answer: I've never considered him a good leader.
+            hint: I've never considered
+          - zh: 你会把他看成好领导吗？
+            answer: Do you consider him a good leader?
+            hint: Do you consider
+      - key: consider-whether-plan-realistic
+        kind: chunk
+        type: chunk_substitution
+        title: 说要考虑计划是否现实
+        chunk: consider whether the plan is realistic
+        chunkMeaning: 考虑计划是否现实
+        direction: zh_to_en
+        items:
+          - zh: 我们得考虑这个计划现不现实。
+            answer: We need to consider whether the plan is realistic.
+            hint: We need to；whether
+          - zh: 你有没有想过计划到底现不现实？
+            answer: Have you considered whether the plan is realistic?
+            hint: Have you considered
+          - zh: 在批准之前，委员会会考虑计划是否现实。
+            answer: Before approval, the committee will consider whether the plan is realistic.
+            hint: Before approval；the committee
+      - key: carefully-consider-consequences
+        kind: chunk
+        type: chunk_substitution
+        title: 说要慎重考虑后果
+        chunk: carefully consider the consequences
+        chunkMeaning: 慎重考虑后果
+        direction: zh_to_en
+        items:
+          - zh: 签字前要慎重考虑后果。
+            answer: Carefully consider the consequences before you sign.
+            hint: before you sign
+          - zh: 我们应该仔细考虑一下后果。
+            answer: We should carefully consider the consequences.
+            hint: We should
+          - zh: 她从没认真想过后果。
+            answer: She never carefully considered the consequences.
+            hint: never；carefully considered
+      - key: consider-the-possibility
+        kind: chunk
+        type: chunk_substitution
+        title: 说考虑某种可能
+        chunk: consider the possibility
+        chunkMeaning: 考虑这种可能
+        direction: zh_to_en
+        items:
+          - zh: 我们也要考虑这种可能。
+            answer: We should also consider the possibility.
+            hint: We should also
+          - zh: 你有没有考虑过这种可能？
+            answer: Have you considered the possibility?
+            hint: Have you considered
+          - zh: 他们正在考虑推迟会议的可能。
+            answer: They're considering the possibility of postponing the meeting.
+            hint: They're considering；of postponing
+      - key: all-things-considered
+        kind: chunk
+        type: chunk_substitution
+        title: 说总体来看还算可以
+        chunk: all things considered
+        chunkMeaning: 总体来看；综合考虑
+        direction: zh_to_en
+        items:
+          - zh: 总体来看，这次项目还算成功。
+            answer: All things considered, the project went pretty well.
+            hint: the project went pretty well
+          - zh: 综合考虑，他做得不错。
+            answer: All things considered, he did a good job.
+            hint: he did a good job
+          - zh: 出了点岔子，但总体看还不坏。
+            answer: Things went wrong, but all things considered, it's not bad.
+            hint: Things went wrong；it's not bad
+      - key: considered-to-be-very-safe
+        kind: chunk
+        type: chunk_substitution
+        title: 说被认为很安全
+        chunk: considered to be very safe
+        chunkMeaning: 被认为很安全
+        direction: zh_to_en
+        items:
+          - zh: 这个地区被认为很安全。
+            answer: This area is considered to be very safe.
+            hint: This area is；is considered
+          - zh: 这种药长期被认为很安全。
+            answer: This medicine has long been considered to be very safe.
+            hint: has long been
+          - zh: 新线路被认为非常安全。
+            answer: The new route is considered to be very safe.
+            hint: The new route is
+      - key: worth-considering
+        kind: chunk
+        type: chunk_substitution
+        title: 说值得考虑
+        chunk: worth considering
+        chunkMeaning: 值得考虑
+        direction: zh_to_en
+        items:
+          - zh: 这个建议值得考虑。
+            answer: This suggestion is worth considering.
+            hint: This suggestion is
+          - zh: 我觉得那个方案值得认真考虑。
+            answer: I think that plan is worth considering seriously.
+            hint: I think；seriously
+          - zh: 不值一虑，别浪费时间了。
+            answer: It's not worth considering—don't waste your time.
+            hint: It's not；don't waste your time
+      - key: consider-whether-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂对方在斟酌是否可行
+        chunk: consider whether
+        chunkMeaning: 考虑是否
+        direction: en_to_zh
+        items:
+          - en: We need to consider whether the deadline is too tight.
+            answer: 我们得考虑截止日期是不是太紧了。
+            hint: the deadline；too tight
+          - en: She's considering whether to accept the offer.
+            answer: 她在考虑要不要接受这个 offer。
+            hint: to accept the offer
+          - en: Have you considered whether it's worth the risk?
+            answer: 你考虑过这事值不值得冒这个险吗？
+            hint: worth the risk
+      - key: considered-worth-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂综合评价和是否值得考虑
+        chunk: all things considered
+        chunkMeaning: 总体来看
+        direction: en_to_zh
+        items:
+          - en: All things considered, we're in a good position.
+            answer: 总体来看，我们局面还不错。
+            hint: we're in a good position
+          - en: The backup plan is worth considering if costs rise.
+            answer: 要是成本上涨，备选方案值得考虑。
+            hint: The backup plan；if costs rise
+          - en: This method is considered to be very safe for beginners.
+            answer: 这种方法被认为对初学者很安全。
+            hint: considered to be very safe；beginners
+      - key: consider-state
+        type: vocab_sentence_building
+        title: 说斟酌选项和评价
+        vocabWord: consider
+        vocabMeaning: 考虑；认为
+        direction: zh_to_en
+        patterns:
+          - chunk: consider every option
+            items:
+              - zh: 别急着定，先把每个方案都过一遍。
+                answer: Don't rush—consider every option first.
+                hint: Don't rush；first
+              - zh: 经理要求团队考虑每一个选项。
+                answer: The manager asked the team to consider every option.
+                hint: asked the team to
+          - chunk: consider this important
+            items:
+              - zh: 请把客户反馈看作很重要的事。
+                answer: Please consider this feedback important.
+                hint: this feedback
+              - zh: 我不认为这些细节那么重要。
+                answer: I don't consider these details that important.
+                hint: I don't consider；these details
+          - chunk: worth considering
+            items:
+              - zh: 远程办公对身体有好处，这点值得想想。
+                answer: Working remotely can help your health—that's worth considering.
+                hint: Working remotely；that's
+              - zh: 他们的报价略高，但仍然值得考虑。
+                answer: Their quote is a bit high, but it's still worth considering.
+                hint: a bit high；still
+      - key: consider-option-other
+        type: pattern_drill
+        title: 说考虑别的选择
+        pattern: consider every [option/choice]
+        patternMeaning: 考虑每一个选项
+        direction: zh_to_en
+        items:
+          - zh: 选课时要考虑每一种选择。
+            answer: When choosing courses, consider every option.
+            hint: When choosing courses
+          - zh: 他没有认真考虑所有备选方案。
+            answer: He didn't seriously consider every alternative.
+            hint: didn't seriously；every alternative
+          - zh: 律师建议我们考虑每一种法律途径。
+            answer: The lawyer advised us to consider every option legally available.
+            hint: advised us to；legally available
+      - key: consider-doing-other
+        type: pattern_drill
+        title: 说考虑做别的事
+        pattern: consider [doing]
+        patternMeaning: 考虑做某事
+        direction: zh_to_en
+        items:
+          - zh: 我在考虑换一部新手机。
+            answer: I'm considering buying a new phone.
+            hint: buying a new phone
+          - zh: 公司正在考虑扩大海外市场。
+            answer: The company is considering expanding overseas.
+            hint: expanding overseas
+          - zh: 你有没有考虑过早点退休？
+            answer: Have you considered retiring early?
+            hint: retiring early
+      - key: consider-adj-other
+        type: pattern_drill
+        title: 说把别的事看得很重要
+        pattern: consider [something] [adjective]
+        patternMeaning: 认为……（形容词）
+        direction: zh_to_en
+        items:
+          - zh: 她认为准时非常重要。
+            answer: She considers punctuality very important.
+            hint: punctuality
+          - zh: 别把小事看得太严重。
+            answer: Don't consider small issues too serious.
+            hint: Don't；small issues
+          - zh: 现在很多人把灵活性看得很重要。
+            answer: Many people now consider flexibility essential.
+            hint: flexibility；essential
+      - key: consider-sb-noun-other
+        type: pattern_drill
+        title: 说把别人看成某种人
+        pattern: consider [someone] a [noun]
+        patternMeaning: 把某人视为……
+        direction: zh_to_en
+        items:
+          - zh: 同事们都把她当专家。
+            answer: Her colleagues consider her an expert.
+            hint: Her colleagues；an expert
+          - zh: 我从来不把你当外人。
+            answer: I've never considered you an outsider.
+            hint: I've never；an outsider
+          - zh: 你会把他当成朋友还是对手？
+            answer: Do you consider him a friend or a rival?
+            hint: a friend or a rival
+      - key: consider-whether-other
+        type: pattern_drill
+        title: 说斟酌别的情况是否成立
+        pattern: consider whether [clause]
+        patternMeaning: 考虑是否……
+        direction: zh_to_en
+        items:
+          - zh: 得考虑预算够不够。
+            answer: We need to consider whether the budget is enough.
+            hint: the budget is enough
+          - zh: 她在想团队是否准备好了。
+            answer: She's considering whether the team is ready.
+            hint: the team is ready
+          - zh: 董事会将考虑这项投资是否明智。
+            answer: The board will consider whether the investment is wise.
+            hint: The board；the investment is wise
+      - key: carefully-consider-other
+        type: pattern_drill
+        title: 说慎重考虑别的影响
+        pattern: carefully consider [something]
+        patternMeaning: 慎重考虑
+        direction: zh_to_en
+        items:
+          - zh: 改合同条款前请慎重考虑风险。
+            answer: Carefully consider the risks before changing the contract terms.
+            hint: the risks；before changing
+          - zh: 政客们应该仔细考虑公众的反应。
+            answer: Politicians should carefully consider public reaction.
+            hint: public reaction
+          - zh: 他花了一整晚仔细考虑这个决定。
+            answer: He spent the whole night carefully considering the decision.
+            hint: spent the whole night；the decision
+      - key: considered-to-be-other
+        type: pattern_drill
+        title: 说别的事物被认为如何
+        pattern: be considered to be [adjective]
+        patternMeaning: 被认为是……
+        direction: zh_to_en
+        items:
+          - zh: 这座古城被认为历史悠久。
+            answer: This ancient city is considered to be historically significant.
+            hint: historically significant
+          - zh: 这种饮食方式被认为对健康有益。
+            answer: This diet is considered to be good for your health.
+            hint: good for your health
+          - zh: 那次讲话曾被认为极具争议。
+            answer: That speech was once considered to be highly controversial.
+            hint: was once；highly controversial
+      - key: consider-move-build
+        type: sentence_decomposition
+        title: 把考虑搬近上班说完整
+        sourceKind: chunk
+        sourceText: consider moving closer to work
+        fullSentence: We're considering moving closer to work so we can spend more time with the kids.
+        fullSentenceZh: 我们在考虑搬得离上班更近，这样就能多陪孩子。
+        levels:
+          - level: 1
+            label: 核心句
+            en: We're considering moving closer to work.
+            zh: 我们在考虑搬得离上班更近。
+            highlight: ''
+            hint: 先说在考虑搬近上班
+          - level: 2
+            label: 加目的
+            en: We're considering moving closer to work so we can have more time.
+            zh: 我们在考虑搬近上班，这样就能有更多时间。
+            highlight: so we can have more time
+            hint: 补上这样就能有更多时间
+          - level: 3
+            label: 完整句
+            en: We're considering moving closer to work so we can spend more time with the kids.
+            zh: 我们在考虑搬得离上班更近，这样就能多陪孩子。
+            highlight: spend more time with the kids
+            hint: 把时间具体说成陪孩子
+      - key: consider-consequences-build
+        type: sentence_decomposition
+        title: 把慎重考虑后果说完整
+        sourceKind: chunk
+        sourceText: carefully consider the consequences
+        fullSentence: Before you quit, carefully consider the consequences for your team and your savings.
+        fullSentenceZh: 辞职前请慎重考虑对团队和存款的影响。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Carefully consider the consequences before you quit.
+            zh: 辞职前请慎重考虑后果。
+            highlight: ''
+            hint: 先说辞职前要慎重考虑后果
+          - level: 2
+            label: 点出对象
+            en: Carefully consider the consequences for your team before you quit.
+            zh: 辞职前要慎重考虑对团队的影响。
+            highlight: for your team
+            hint: 补上对团队的影响
+          - level: 3
+            label: 完整句
+            en: Before you quit, carefully consider the consequences for your team and your savings.
+            zh: 辞职前请慎重考虑对团队和存款的影响。
+            highlight: and your savings
+            hint: 再加上对存款的影响

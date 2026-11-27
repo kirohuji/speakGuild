@@ -1,0 +1,402 @@
+learning:
+  exercises:
+    pipeline:
+      - key: suppose-already-left
+        kind: chunk
+        type: chunk_substitution
+        title: 说猜想他已经走了
+        chunk: suppose he's already left
+        chunkMeaning: 猜想他已经走了
+        direction: zh_to_en
+        items:
+          - zh: 我猜他已经走了。
+            answer: I suppose he's already left.
+            hint: I suppose
+          - zh: 她大概以为他已经离开了。
+            answer: She supposes he's already left.
+            hint: She supposes
+          - zh: 要是他已经走了，我们就别等了。
+            answer: Suppose he's already left—we shouldn't wait.
+            hint: Suppose；we shouldn't wait
+      - key: suppose-plan-fails
+        kind: chunk
+        type: chunk_substitution
+        title: 说假设计划失败
+        chunk: suppose that the plan fails
+        chunkMeaning: 假设计划失败
+        direction: zh_to_en
+        items:
+          - zh: 假设计划失败了，我们怎么办？
+            answer: Suppose that the plan fails—what do we do?
+            hint: what do we do
+          - zh: 你先假设计划会失败，再想对策。
+            answer: Suppose that the plan fails, then think of a backup.
+            hint: then think of a backup
+          - zh: 如果计划失败，成本会很高。
+            answer: Suppose that the plan fails and the cost will be high.
+            hint: and the cost will be high
+      - key: supposed-to-be-here-nine
+        kind: chunk
+        type: chunk_substitution
+        title: 说本该九点到这里
+        chunk: supposed to be here at nine
+        chunkMeaning: 本该九点到
+        direction: zh_to_en
+        items:
+          - zh: 他本该九点到的。
+            answer: He was supposed to be here at nine.
+            hint: He was supposed to
+          - zh: 我们说好九点到这儿见面。
+            answer: We're supposed to be here at nine.
+            hint: We're supposed to
+          - zh: 客人本该九点到场，现在都九点半了。
+            answer: The guests were supposed to be here at nine, and it's already half past nine.
+            hint: The guests were；half past nine
+      - key: not-supposed-use-phones
+        kind: chunk
+        type: chunk_substitution
+        title: 说这里不准用手机
+        chunk: not supposed to use phones here
+        chunkMeaning: 不该/不准在这里用手机
+        direction: zh_to_en
+        items:
+          - zh: 这里不准用手机。
+            answer: You're not supposed to use phones here.
+            hint: You're not supposed to
+          - zh: 考试期间学生不该用手机。
+            answer: Students aren't supposed to use phones during the exam.
+            hint: during the exam
+          - zh: 飞机上本来就不该开手机。
+            answer: You're not supposed to use phones on the plane anyway.
+            hint: on the plane anyway
+      - key: what-do-you-suppose-happened
+        kind: chunk
+        type: chunk_substitution
+        title: 问你觉得发生了什么
+        chunk: What do you suppose happened?
+        chunkMeaning: 你觉得发生了什么？
+        direction: zh_to_en
+        items:
+          - zh: 你觉得发生了什么？
+            answer: What do you suppose happened?
+            hint: What do you suppose
+          - zh: 他们俩吵完架之后，你觉得怎么样了？
+            answer: After they argued, what do you suppose happened?
+            hint: After they argued
+          - zh: 门开着，灯还亮着——你觉得出什么事了？
+            answer: The door's open and the lights are on—what do you suppose happened?
+            hint: The door's open；the lights are on
+      - key: i-suppose-so
+        kind: chunk
+        type: chunk_substitution
+        title: 说大概是这样吧
+        chunk: I suppose so
+        chunkMeaning: 我想是吧；大概是这样
+        direction: zh_to_en
+        items:
+          - zh: 明天会下雨吗？—我想是吧。
+            answer: Will it rain tomorrow? — I suppose so.
+            hint: Will it rain tomorrow
+          - zh: 他说得对吗？—嗯，大概吧。
+            answer: Is he right? — I suppose so.
+            hint: Is he right
+          - zh: 项目还能按期完成吗？—我觉得应该可以吧。
+            answer: Can the project still finish on time? — I suppose so.
+            hint: finish on time
+      - key: i-suppose-not
+        kind: chunk
+        type: chunk_substitution
+        title: 说大概不是吧
+        chunk: I suppose not
+        chunkMeaning: 我想不会；大概不是
+        direction: zh_to_en
+        items:
+          - zh: 他还会来吗？—我想不会了。
+            answer: Will he still come? — I suppose not.
+            hint: Will he still come
+          - zh: 这算不算违规？—大概不算吧。
+            answer: Does this count as a violation? — I suppose not.
+            hint: count as a violation
+          - zh: 她同意这个方案吗？—我猜她不会。
+            answer: Does she agree with the plan? — I suppose not.
+            hint: agree with the plan
+      - key: suppose-for-a-moment
+        kind: chunk
+        type: chunk_substitution
+        title: 说姑且想一下
+        chunk: suppose for a moment
+        chunkMeaning: 姑且想一想；假设一下
+        direction: zh_to_en
+        items:
+          - zh: 你姑且想一想，如果预算减半会怎样。
+            answer: Suppose for a moment the budget is cut in half.
+            hint: the budget is cut in half
+          - zh: 假设一下，你突然失业了。
+            answer: Suppose for a moment you suddenly lost your job.
+            hint: you suddenly lost your job
+          - zh: 咱们先假定客户明天就撤单。
+            answer: Let's suppose for a moment the client cancels tomorrow.
+            hint: Let's；the client cancels tomorrow
+      - key: supposed-to-mean
+        kind: chunk
+        type: chunk_substitution
+        title: 说本应是这个意思
+        chunk: supposed to mean
+        chunkMeaning: 本意是；应该是这个意思
+        direction: zh_to_en
+        items:
+          - zh: 这句话本意不是那个意思。
+            answer: That sentence isn't supposed to mean that.
+            hint: isn't supposed to mean
+          - zh: 绿色按钮按理应该是「开始」的意思。
+            answer: The green button is supposed to mean "start."
+            hint: The green button is
+          - zh: 你以为这符号应该表示同意吗？
+            answer: Do you think this symbol is supposed to mean agreement?
+            hint: this symbol is
+      - key: supposed-to-happen-next
+        kind: chunk
+        type: chunk_substitution
+        title: 说接下来本该怎样
+        chunk: supposed to happen next
+        chunkMeaning: 接下来本该发生……
+        direction: zh_to_en
+        items:
+          - zh: 接下来本该发确认邮件的。
+            answer: A confirmation email is supposed to happen next.
+            hint: A confirmation email is
+          - zh: 照流程，下一步本该是面试。
+            answer: According to the process, an interview is supposed to happen next.
+            hint: According to the process；an interview
+          - zh: 你说接下来本来应该发生什么？
+            answer: What do you think is supposed to happen next?
+            hint: What do you think is
+      - key: suppose-opinion-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂含糊认同或猜测
+        chunk: I suppose
+        chunkMeaning: 我想；大概（看法不紧）
+        direction: en_to_zh
+        items:
+          - en: I suppose we could try again tomorrow.
+            answer: 我想我们明天可以再试一次。
+            hint: we could try again；tomorrow
+          - en: 'Will the meeting run late? — I suppose so.'
+            answer: 会议会拖晚吗？我想会的吧。
+            hint: run late；I suppose so
+          - en: What do you suppose happened after the power went out?
+            answer: 停电之后你觉得发生了什么？
+            hint: after the power went out
+      - key: supposed-to-listen
+        kind: chunk
+        type: chunk_substitution
+        title: 听懂规矩和本该怎样
+        chunk: be supposed to
+        chunkMeaning: 应该（按规定）；本该
+        direction: en_to_zh
+        items:
+          - en: You were supposed to be here at nine, not ten.
+            answer: 你本该九点到，不是十点。
+            hint: at nine, not ten
+          - en: We're not supposed to use phones here during the show.
+            answer: 演出期间我们这里不准用手机。
+            hint: during the show
+          - en: "That's supposed to mean 'save,' not 'delete.'"
+            answer: 那本意应该是「保存」，不是「删除」。
+            hint: save；not delete
+      - key: suppose-state
+        type: vocab_sentence_building
+        title: 分清猜想和按规定该做
+        vocabWord: suppose
+        vocabMeaning: 猜想；我想（I suppose）／应该（be supposed to）
+        direction: zh_to_en
+        patterns:
+          - chunk: I suppose so
+            items:
+              - zh: 还会再降价吗？—我想会的吧。
+                answer: Will the price drop again? — I suppose so.
+                hint: Will the price drop again
+              - zh: 这事严重吗？—大概不算太严重吧。
+                answer: Is it serious? — I suppose not, not really.
+                hint: I suppose not；not really
+          - chunk: be supposed to
+            items:
+              - zh: 药应该一天吃两次。
+                answer: You're supposed to take the medicine twice a day.
+                hint: take the medicine；twice a day
+              - zh: 实习生不该单独见客户。
+                answer: Interns aren't supposed to meet clients alone.
+                hint: Interns aren't；alone
+          - chunk: suppose that
+            items:
+              - zh: 就算计划失败，我们也有 B 方案。
+                answer: Suppose that the plan fails—we still have Plan B.
+                hint: we still have Plan B
+              - zh: 你试想一下，他其实已经知道了。
+                answer: Suppose for a moment he already knows.
+                hint: Suppose for a moment；he already knows
+      - key: suppose-clause-other
+        type: pattern_drill
+        title: 说别的猜测情境
+        pattern: suppose (that) [clause]
+        patternMeaning: 假设；猜想
+        direction: zh_to_en
+        items:
+          - zh: 假设他拒绝了，你怎么回应？
+            answer: Suppose he refuses—how would you respond?
+            hint: he refuses；how would you respond
+          - zh: 要是火车又晚点了，我们就打车。
+            answer: Suppose the train is late again—we'll take a taxi.
+            hint: the train is late again
+          - zh: 我想她可能已经看到消息了。
+            answer: I suppose she's already seen the message.
+            hint: she's already seen the message
+      - key: supposed-to-other
+        type: pattern_drill
+        title: 说别的按规定该做的事
+        pattern: be supposed to [verb]
+        patternMeaning: 应该；本该
+        direction: zh_to_en
+        items:
+          - zh: 报告本该周五交。
+            answer: The report is supposed to be handed in on Friday.
+            hint: be handed in on Friday
+          - zh: 你本应该早点告诉我的。
+            answer: You were supposed to tell me earlier.
+            hint: tell me earlier
+          - zh: 这些数据应该每周更新一次。
+            answer: This data is supposed to be updated every week.
+            hint: be updated every week
+      - key: not-supposed-other
+        type: pattern_drill
+        title: 说别的不准或不该做的事
+        pattern: not supposed to [verb]
+        patternMeaning: 不该；不准
+        direction: zh_to_en
+        items:
+          - zh: 池边不该奔跑。
+            answer: You're not supposed to run by the pool.
+            hint: run by the pool
+          - zh: 员工不该把密码告诉外人。
+            answer: Employees aren't supposed to share passwords with outsiders.
+            hint: share passwords；outsiders
+          - zh: 小孩不该看这个频道的节目。
+            answer: Kids aren't supposed to watch this channel.
+            hint: Kids aren't；this channel
+      - key: what-suppose-other
+        type: pattern_drill
+        title: 问别的可能发生什么
+        pattern: What do you suppose [clause]?
+        patternMeaning: 你觉得……怎么样？
+        direction: zh_to_en
+        items:
+          - zh: 你觉得他为什么辞职？
+            answer: What do you suppose made him quit?
+            hint: made him quit
+          - zh: 你觉得他们现在在哪儿？
+            answer: What do you suppose they're doing right now?
+            hint: they're doing right now
+          - zh: 你觉得接下来会发生什么？
+            answer: What do you suppose will happen next?
+            hint: will happen next
+      - key: suppose-moment-other
+        type: pattern_drill
+        title: 用别的假想推演一下
+        pattern: suppose for a moment [clause]
+        patternMeaning: 姑且假设
+        direction: zh_to_en
+        items:
+          - zh: 试想一下，公司明天就倒闭了。
+            answer: Suppose for a moment the company collapsed tomorrow.
+            hint: the company collapsed tomorrow
+          - zh: 先假定你中了彩票。
+            answer: Suppose for a moment you won the lottery.
+            hint: you won the lottery
+          - zh: 咱们假设团队里少了一个人。
+            answer: Suppose for a moment we lost one person on the team.
+            hint: we lost one person on the team
+      - key: supposed-mean-happen-other
+        type: pattern_drill
+        title: 说别的本意和下一步
+        pattern: be supposed to mean / happen
+        patternMeaning: 本意是；接下来本该
+        direction: zh_to_en
+        items:
+          - zh: 红灯按理说应该表示停止。
+            answer: A red light is supposed to mean stop.
+            hint: A red light is
+          - zh: 勾选这个框本应该表示同意条款。
+            answer: Checking this box is supposed to mean you agree to the terms.
+            hint: you agree to the terms
+          - zh: 培训结束之后本该有测验。
+            answer: A quiz is supposed to happen after the training ends.
+            hint: after the training ends
+      - key: i-suppose-other
+        type: pattern_drill
+        title: 用别的含糊认同或否定
+        pattern: I suppose (so / not / clause)
+        patternMeaning: 我想是吧／大概不是／我想……
+        direction: zh_to_en
+        items:
+          - zh: 周末还会加班吗？—我想应该会吧。
+            answer: Will we work this weekend? — I suppose so.
+            hint: work this weekend
+          - zh: 他生气了吗？—大概没有吧。
+            answer: Is he angry? — I suppose not.
+            hint: Is he angry
+          - zh: 我想他们大概已经知道了。
+            answer: I suppose they've already found out.
+            hint: they've already found out
+      - key: suppose-nine-build
+        type: sentence_decomposition
+        title: 把本该九点到场说完整
+        sourceKind: chunk
+        sourceText: supposed to be here at nine
+        fullSentence: He was supposed to be here at nine, but his flight was delayed.
+        fullSentenceZh: 他本该九点到，但航班延误了。
+        levels:
+          - level: 1
+            label: 核心句
+            en: He was supposed to be here at nine.
+            zh: 他本该九点到。
+            highlight: ''
+            hint: 先说他本该九点到
+          - level: 2
+            label: 加转折
+            en: He was supposed to be here at nine, but he wasn't.
+            zh: 他本该九点到，但他没来。
+            highlight: but he wasn't
+            hint: 加上但他没来
+          - level: 3
+            label: 完整句
+            en: He was supposed to be here at nine, but his flight was delayed.
+            zh: 他本该九点到，但航班延误了。
+            highlight: his flight was delayed
+            hint: 把原因说成航班延误
+      - key: suppose-plan-build
+        type: sentence_decomposition
+        title: 把假设计划失败说完整
+        sourceKind: chunk
+        sourceText: suppose that the plan fails
+        fullSentence: Suppose that the plan fails—we need a clear backup before Friday.
+        fullSentenceZh: 假设计划失败，我们得在周五前定好明确的备选方案。
+        levels:
+          - level: 1
+            label: 核心句
+            en: Suppose that the plan fails.
+            zh: 假设计划失败。
+            highlight: ''
+            hint: 先说假设计划失败
+          - level: 2
+            label: 加应对
+            en: Suppose that the plan fails—we need a backup.
+            zh: 假设计划失败，我们需要备选方案。
+            highlight: we need a backup
+            hint: 补上我们需要备选方案
+          - level: 3
+            label: 完整句
+            en: Suppose that the plan fails—we need a clear backup before Friday.
+            zh: 假设计划失败，我们得在周五前定好明确的备选方案。
+            highlight: a clear backup before Friday
+            hint: 把备选方案说具体并加上周五前

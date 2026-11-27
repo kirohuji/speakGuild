@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Lightbulb, ListMusic, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { isIOS } from '@/lib/native'
 import { practiceRepository } from '@/lib/offline'
@@ -66,6 +68,7 @@ export function GuidedWarmupPhase({
   onComplete: () => void
 }) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'admin'
   const storageKey = `guided-progress:${sessionId ?? topicId}`
@@ -771,19 +774,10 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
         </div>
       </div>
 
-      {/* Playlist drawer */}
-      <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent showHandle={false} className="h-[80dvh] w-full max-w-full overflow-hidden rounded-t-2xl !z-[10001]" overlayClassName="!z-[10001]">
-          <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-3">
-            <DrawerTitle className="min-w-0 truncate text-lg">{t('todayTask.questionList')}</DrawerTitle>
-            <button
-              onClick={() => setPlaylistOpen(false)}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-            >
-              <ChevronDown className="size-5" />
-            </button>
-          </div>
-          <ScrollArea className={cn('min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8', isIOS() && 'pb-safe')}>
+      {/* 题目列表：移动 Drawer / 桌面 Dialog */}
+      {(() => {
+        const playlistInner = (
+          <ScrollArea className={cn('min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8', isMobile && isIOS() && 'pb-safe')}>
             <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
               {flatSteps.map((step, i) => {
                 const isDone = doneIds.has(step.id)
@@ -794,6 +788,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                 return (
                   <button
                     key={step.id}
+                    type="button"
                     onClick={() => { setCurrentIdx(i); setPlaylistOpen(false) }}
                     className={cn(
                       'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
@@ -832,8 +827,42 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               })}
             </div>
           </ScrollArea>
-        </DrawerContent>
-      </Drawer>
+        )
+
+        if (isMobile) {
+          return (
+            <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
+              <DrawerContent showHandle={false} className="h-[80dvh] w-full max-w-full overflow-hidden rounded-t-2xl !z-[10001]" overlayClassName="!z-[10001]">
+                <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-3">
+                  <DrawerTitle className="min-w-0 truncate text-lg">{t('todayTask.questionList')}</DrawerTitle>
+                  <button
+                    type="button"
+                    onClick={() => setPlaylistOpen(false)}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                  >
+                    <ChevronDown className="size-5" />
+                  </button>
+                </div>
+                {playlistInner}
+              </DrawerContent>
+            </Drawer>
+          )
+        }
+
+        return (
+          <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
+            <DialogContent
+              overlayClassName="!z-[10001]"
+              className="!z-[10001] flex h-[min(80vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl"
+            >
+              <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-3">
+                <DialogTitle className="text-lg">{t('todayTask.questionList')}</DialogTitle>
+              </div>
+              {playlistInner}
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
     </div>
   )
 }
