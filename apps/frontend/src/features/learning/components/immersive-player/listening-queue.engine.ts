@@ -157,6 +157,22 @@ export class ListeningQueueEngine {
   private lastKnownQueueIndex = -1
   /** True while runItemLoop / softRestart owns the playback generation. */
   private playbackLoopActive = false
+  /**
+   * Next learning-item first segment, resolved early so trailing-gap pre-arm
+   * can write NP @0 during silence (cross-item flash fix).
+   */
+  private nextItemPreArm: {
+    generation: number
+    assetId: string
+    fileUrl: string
+    title: string
+    artist?: string
+    album?: string
+    segmentId: string
+  } | null = null
+  private preArmInFlight: Promise<void> | null = null
+  /** Avoid double preArm (queueChange + post-queueNext sync) rewriting @0 twice. */
+  private trailingPreArmCommittedKey: string | null = null
 
   constructor(options: ListeningQueueEngineOptions) {
     this.transport = options.transport
@@ -198,13 +214,12 @@ export class ListeningQueueEngine {
             queueIndex: this.transport.getQueueIndex(),
             windowLength: this.windowLength,
           })
-          // windowLength===0 → rebuild in flight; ignore until a real window exists.
+          // Capgo queue edge only emits queueChange (index unchanged). playbackState
+          // remoteNext is for single-track windows / legacy remoteNextTrack.
+          // Multi-track cross-item is owned by queueChange below — do NOT use
+          // "index >= last" here (landing on last content via skip_gaps would
+          // wrongly jump learning items).
           if (this.windowLength === 1) {
-            fireAndForget(this.next(true))
-          } else if (
-            this.windowLength > 1
-            && this.transport.getQueueIndex() >= this.windowLength - 1
-          ) {
             fireAndForget(this.next(true))
           }
         } else if (event.reason === 'remotePreviousTrack' || event.reason === 'remotePrevious') {
@@ -214,11 +229,8 @@ export class ListeningQueueEngine {
             queueIndex: this.transport.getQueueIndex(),
             windowLength: this.windowLength,
           })
-          // Only cross learning items at a real window head. windowLength===0 means
-          // rebuild in flight — do not treat as edge (that stacked seekTo bugs).
-          if (this.windowLength > 1 && this.transport.getQueueIndex() <= 0) {
-            fireAndForget(this.prev(true))
-          } else if (this.windowLength === 1) {
+          // Same as next: multi-track edge is queueChange (index unchanged).
+          if (this.windowLength === 1) {
             fireAndForget(this.prev(true))
           }
         }
@@ -243,15 +255,16 @@ export class ListeningQueueEngine {
       this.syncFromQueueIndex(event.index)
 
       // Cross learning-item when remote skip cannot move within the native window (R5).
+      // Native edge notify keeps the same index (no next/prev content after skip_gaps).
+      // Important for next: last *content* (example) before trailing gap is also an edge —
+      // requiring index === windowLength-1 missed that and made lock-screen next a no-op.
       if (isNext && event.reason === 'remoteNext' && this.windowLength > 0) {
-        if (event.index >= this.windowLength - 1 && prevQueueIndex >= this.windowLength - 1) {
+        if (event.index === prevQueueIndex) {
           fireAndForget(this.next(true))
         }
       }
       if (isPrev && event.reason === 'remotePrevious' && this.windowLength > 0) {
-        // Edge only when already on first content slot (native skip_gaps may jump
-        // example→main without index 0→0). Mid-window remotePrevious is native-only.
-        if (event.index <= 0 && prevQueueIndex <= 0) {
+        if (event.index === prevQueueIndex) {
           fireAndForget(this.prev(true))
         }
       }
@@ -426,6 +439,20 @@ export class ListeningQueueEngine {
       this.gapPaused = false
       this.patchState({ status: 'playing' })
       this.gapResume?.()
+      this.releasePauseGate()
+      return true
+    }
+
+    // Native silence gap is already playing — foreground flaps must not call
+    // NativeAudio.resume (that used to restart NP from 0→100% on the content card).
+    const activeId = this.transport.getActiveAssetId()
+    if (
+      this.state.gapActive &&
+      !this.timerGapRunning &&
+      this.state.status === 'playing' &&
+      ListeningQueueEngine.isGapQueueAsset(activeId)
+    ) {
+      immersiveLog('engine.resume.skip_gap_already_playing', { assetId: activeId })
       this.releasePauseGate()
       return true
     }
@@ -610,6 +637,11 @@ export class ListeningQueueEngine {
         gapActive: meta.kind === 'gap',
       })
     }
+    // Trailing silence has no next content in the native window — native
+    // gapPreArm.skip. Pre-arm the *next learning item* so end→0 lands in silence.
+    if (meta.kind === 'gap' && queueIndex === this.windowMeta.length - 1) {
+      this.maybePreArmDuringTrailingGap(this.generation)
+    }
   }
 
   private absoluteIndexOf(binding: PlaylistBinding) {
@@ -620,6 +652,9 @@ export class ListeningQueueEngine {
     this.generation += 1
     this.scheduler.cancel()
     this.releasePauseGate()
+    this.nextItemPreArm = null
+    this.preArmInFlight = null
+    this.trailingPreArmCommittedKey = null
   }
 
   private isCurrent(generation: number) {
@@ -798,6 +833,105 @@ export class ListeningQueueEngine {
     return willRepeat || willAdvance
   }
 
+  private willAdvanceAfterWindow(): boolean {
+    const settings = this.getSettings()
+    if (!settings.autoNext) return false
+    const binding = this.binding
+    if (!binding) return false
+    const absolute = this.absoluteIndexOf(binding)
+    const total = Math.max(binding.total, binding.items.length)
+    return absolute < total - 1 || settings.loopQueue
+  }
+
+  /** Resolve next item's first segment early (while current window still plays). */
+  private prepareNextItemPreArm(generation: number) {
+    fireAndForget(this.prepareNextItemPreArmPayload(generation))
+  }
+
+  private async prepareNextItemPreArmPayload(generation: number) {
+    if (!this.isCurrent(generation)) return
+    if (!this.willAdvanceAfterWindow()) return
+    const binding = this.binding
+    if (!binding) return
+    const settings = this.getSettings()
+    const absolute = this.absoluteIndexOf(binding)
+    const total = Math.max(binding.total, binding.items.length)
+    const hasNext = absolute < total - 1
+    const nextAbsolute = hasNext ? absolute + 1 : 0
+    const nextLocal = nextAbsolute - (binding.windowOffset ?? 0)
+    const nextItem = binding.items[nextLocal]
+    if (!nextItem) {
+      immersiveLog('engine.nextItemPreArm.skip', {
+        nextAbsolute,
+        note: 'next_item_not_in_window',
+      })
+      return
+    }
+
+    const segments = buildPlaybackSegments(nextItem, settings)
+    const first = segments[0]
+    if (!first) return
+    const fileUrl = await this.transport.resolve(first, { allowTts: !this.isBackground() })
+    if (!fileUrl || !this.isCurrent(generation)) return
+
+    this.nextItemPreArm = {
+      generation,
+      assetId: toQueueAssetId(first.id),
+      fileUrl,
+      title: first.title,
+      artist: first.subtitle || this.mediaLabels?.artist,
+      album: this.mediaLabels?.album,
+      segmentId: first.id,
+    }
+    immersiveLog('engine.nextItemPrepared', {
+      assetId: this.nextItemPreArm.assetId,
+      nextAbsolute,
+    })
+  }
+
+  private maybePreArmDuringTrailingGap(generation: number) {
+    if (!this.isCurrent(generation)) return
+    if (!this.willAdvanceAfterWindow()) return
+    if (this.preArmInFlight) return
+
+    this.preArmInFlight = this.ensureTrailingPreArm(generation).finally(() => {
+      this.preArmInFlight = null
+    })
+  }
+
+  /** Awaitable: used before queueNext into the trailing gap so end→0 is not mid-silence. */
+  private async ensureTrailingPreArm(generation: number) {
+    if (!this.isCurrent(generation)) return
+    if (!this.willAdvanceAfterWindow()) return
+    if (!this.nextItemPreArm || this.nextItemPreArm.generation !== generation) {
+      await this.prepareNextItemPreArmPayload(generation)
+    }
+    await this.commitTrailingGapPreArm(generation)
+  }
+
+  private async commitTrailingGapPreArm(generation: number) {
+    const payload = this.nextItemPreArm
+    if (!payload || payload.generation !== generation || !this.isCurrent(generation)) return
+    const key = `${generation}:${payload.assetId}`
+    if (this.trailingPreArmCommittedKey === key) {
+      immersiveLog('engine.preArmTrailingGap.skip', { assetId: payload.assetId, note: 'already_committed' })
+      return
+    }
+    immersiveLog('engine.preArmTrailingGap', { assetId: payload.assetId })
+    await this.transport.preArmCard({
+      assetId: payload.assetId,
+      fileUrl: payload.fileUrl,
+      title: payload.title,
+      artist: payload.artist,
+      album: payload.album,
+      segmentId: payload.segmentId,
+      kind: 'segment',
+    })
+    if (this.isCurrent(generation)) {
+      this.trailingPreArmCommittedKey = key
+    }
+  }
+
   /**
    * Build a native queue of content + silence-file gap tracks, then play through.
    *
@@ -949,6 +1083,11 @@ export class ListeningQueueEngine {
       timerFallbacks: pendingTimerGaps.length,
     })
 
+    // Warm next-item URL while this window plays so trailing-gap pre-arm is ready.
+    if (needTrailingGap && this.willAdvanceAfterWindow()) {
+      this.prepareNextItemPreArm(generation)
+    }
+
     if (windowItems.length === 0) {
       return true
     }
@@ -996,6 +1135,17 @@ export class ListeningQueueEngine {
       if (!(await this.holdWhilePaused(generation))) return false
 
       const before = windowPos
+      const nextSlot = before + 1
+      // Trailing gap has no native next content — pre-arm the next learning item
+      // *before* leaving the content end pin, so 100%→0 is not mid-gap / late.
+      if (
+        nextSlot === windowItems.length - 1
+        && windowMeta[nextSlot]?.kind === 'gap'
+      ) {
+        await this.ensureTrailingPreArm(generation)
+        if (!this.isCurrent(generation)) return false
+      }
+
       const advanced = await this.transport.queueNext()
       if (!this.isCurrent(generation)) return false
 

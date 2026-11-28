@@ -267,6 +267,12 @@ export function ImmersivePlayerDialog({
       }
       const engine = engineRef.current
       if (!engine) return
+      // During native silence gap, visual often stays idle until playbackState arrives.
+      // Resume would hit gap asset and (before native gapSkipNp) flash NP 0→100%.
+      if (engine.getState().gapActive && currentStatus === 'playing') {
+        immersiveLog('dialog.foregroundResume.skip_gap_active')
+        return
+      }
       void (async () => {
         immersiveLog('dialog.foregroundResume', {
           status: currentStatus,

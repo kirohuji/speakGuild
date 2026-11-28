@@ -112,6 +112,12 @@ export type ImmersiveAudioTransport = {
     options?: { startIndex?: number; playbackRate?: number },
   ): Promise<void>
   /**
+   * During trailing silence (no next content in the native window), write the
+   * next learning-item card @0 without stopping gap audio. Next setQueue then
+   * reuses the pre-arm (rateOnly) so end→0 does not flash with new speech.
+   */
+  preArmCard(item: QueuePlayItem): Promise<void>
+  /**
    * Advance to the next queue item and wait for it to complete.
    * Returns false when there is no next item.
    */

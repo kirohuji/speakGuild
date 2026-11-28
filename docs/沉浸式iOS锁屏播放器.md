@@ -127,19 +127,22 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 | `armPlaying(@0)` | 开播同帧 playing@0；每段独立 duration，从 0 起 |
 | `armPlaying(resumePin)` | 仅 resume 路径：等 player ≥ pin 再 rate>0 |
 | `setRate` | 仅 `playing` 时 visual rebase + 新 rate；否则只改 AVAudioPlayer |
-| `pause` | 可选 bridge 后 rate=0；再 pause/seek player |
-| `resume` | pin+rate 后出声 |
+| `pause` | 冻结在 **visual**（条所在位置），禁止往回钉到 player；pause 不 seek |
+| `resume` | 按冻结 pin 写 rate，必要时把 player seek 到 pin 再出声 |
 | `complete` | 钉 duration；keep playing glyph 若队列未空 |
 | `clear` | nil 卡 |
 
 ### 硬约定
 
-1. **每段独立卡**：duration=本段；开播 `armPlaying.atZero`；gap 钉住上一段结尾。暂停钉 **visual/系统插值**，禁止短轨把条拽回 player（会闪）。
-2. Artwork 合并 **只改 artwork**，不改 elapsed/rate。
-3. JS progress **不得**写 NP；`setRate` 在 hold/ended 时不抢 arm。
-4. 锁屏 remote play/pause 仍 coalesce（`remoteDesiredPlaying`）。
-5. **禁止**在 `audioQueue` 里 `main.sync`。
-6. 日志统一：`native.np.commit reason=… from=… to=…`（tick / artworkOnly / cancelPending 亦走此前缀）。
+1. **每段独立卡**；静音 gap 内 `gapPreArm` @0；无 gap 时 complete 只钉 end，next 用 `keepEndedUntilArm`→`armPlaying.atZero`（禁止 complete 时 `replaceAtZero`）。
+2. **窗尾 trailing gap**（native `gapPreArm.skip no_next_content`）：JS 在 **queueNext 进 trailing gap 之前** 调 `preArmNowPlaying`（`replaceAtZeroInPlace`，不整卡 wipe）；随后 `setQueue` 走 `reusePreArm` / `armPlaying.rateOnly`。同窗 gap 的 `gapPreArm` 同样 in-place，避免锁屏卡闪白。
+3. **`clearQueue` 默认不清 NP**；仅关 Immersive（`clearNowPlaying:true`）才 `np.clear`。跨词 `clear→showArmed@0` 是 100%→空白→0 闪的根因。
+4. **`immersive:gap:*` 永不写 NP**；JS `gapActive` 时 skip foreground resume。
+5. 暂停冻结 **visual**，禁止往回钉 player。
+6. **EOT**：AVAudioPlayer 结束时常 `currentTime≈0`；tick/`setRate` 必须忽略该回零并钉 `duration`（否则「闪到前面 → complete 再闪回 100%」）。
+7. Artwork 合并只改 artwork；JS progress 不得写 NP。
+8. **禁止**在 `audioQueue` 里 `main.sync`。
+9. 日志：`tick.eotPin` / `setRate.eotPin` / `gapPreArm` / `reusePreArm`；JS `configure npPipeline=` 用于确认不是旧包。
 
 目标：连贯如系统播放器；暂停不闪；切轨不回闪。
 
@@ -155,7 +158,7 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 | `immersive-session.store.ts` | 持久化会话：`notebookId` / `absoluteIndex` / `uiOpen` / `active` / `libraryTab` + 列表筛选 |
 | `immersive-session-host.tsx` | 根层 Host：playlist + Dialog；冷启动 navigate + `openAt`；关窗清会话 |
 | `immersive-notebook-playlist.ts` | 从 notebookId 构造 lean `fetchPage` / `fetchDetail` |
-| `immersive-player-dialog.tsx` | UI；`open` 时 warmup + `resume`（有资源）或 `arm`；回前台若已 `playing` 则 skip 二次 resume |
+| `immersive-player-dialog.tsx` | UI；`open` 时 warmup + `resume`（有资源）或 `arm`；回前台若已 `playing` / `gapActive` 则 skip 二次 resume |
 | `immersive-audio-pad.ts` | `Filesystem.readFile` 解码 → 拼静音 → Cache WAV `file://`；倍速补偿采样 |
 | `immersive-silence.ts` | 纯静音 WAV 工具（pad 失败时 timer gap 仍可用其语义） |
 | `patches/@capgo__capacitor-native-audio@…` | `NowPlayingClock` 单写；arm / queue / remote；**关闭 ±15**；artwork-only 合并 |
@@ -225,6 +228,7 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 
 - **现象**：窗尾 next 或整窗 `clear + setQueue` 时卡空白、title/进度与音频错位。
 - **修法（必做）**：优先 `addTracks` 滑窗、少整窗重建；remote 一律 `Engine.next`/`prev`；换窗前备好下一段 `file://` + metadata，保证无空卡。硬验收见 §9。
+- **锁屏下一首**：native `skip_gaps` 找不到下一个 **content** 时发 `queueChange(remoteNext)` 且 **index 不变**（含停在例句、其后还有 trailing gap 的情况）。JS 用 `index === prevQueueIndex` 判定 edge → `Engine.next`（与上一首对称；勿要求 `index === windowLength-1`）。
 
 ### R6 — 回前台 / UI ↔ 锁屏同拍（本阶段不优先）
 

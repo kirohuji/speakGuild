@@ -9,7 +9,7 @@ overrides:
 
 patchedDependencies:
   '@capgo/capacitor-native-audio@8.5.4':
-    hash: 9fb1eebb3322a5c3246122249dd275db4abad88049e26bddda2f63b2b218da85
+    hash: 798ec2fbfa0b3ada8290242e5dfb350bf49e5e812368e61baa5d409b79146f2a
     path: patches/@capgo__capacitor-native-audio@8.5.4.patch
   '@capgo/capacitor-wechat@8.0.32':
     hash: 643906a9ef3a7af4556b2c68af41c9bb36f8f69637556eaa5fdc206a772fd1e5
@@ -24,7 +24,7 @@ importers:
     dependencies:
       '@capgo/capacitor-native-audio':
         specifier: ^8.5.4
-        version: 8.5.4(patch_hash=9fb1eebb3322a5c3246122249dd275db4abad88049e26bddda2f63b2b218da85)(@capacitor/core@8.3.1)
+        version: 8.5.4(patch_hash=798ec2fbfa0b3ada8290242e5dfb350bf49e5e812368e61baa5d409b79146f2a)(@capacitor/core@8.3.1)
     devDependencies:
       typescript:
         specifier: ^5.9.0
@@ -252,7 +252,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^4.5.0
-        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
+        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
       autoprefixer:
         specifier: ^10.4.27
         version: 10.5.0(postcss@8.5.10)
@@ -267,7 +267,7 @@ importers:
         version: 5.5.4
       vite:
         specifier: ^6.3.0
-        version: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
+        version: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)
 
   apps/frontend:
     dependencies:
@@ -342,7 +342,7 @@ importers:
         version: 8.1.11(@capacitor/core@8.3.1)
       '@capgo/capacitor-native-audio':
         specifier: ^8.5.4
-        version: 8.5.4(patch_hash=9fb1eebb3322a5c3246122249dd275db4abad88049e26bddda2f63b2b218da85)(@capacitor/core@8.3.1)
+        version: 8.5.4(patch_hash=798ec2fbfa0b3ada8290242e5dfb350bf49e5e812368e61baa5d409b79146f2a)(@capacitor/core@8.3.1)
       '@capgo/capacitor-social-login':
         specifier: ^8.3.22
         version: 8.3.22(@capacitor/core@8.3.1)
@@ -601,7 +601,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^4.5.0
-        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
@@ -622,10 +622,10 @@ importers:
         version: 5.5.4
       vite:
         specifier: ^6.3.0
-        version: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)
+        version: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
 
 packages:
 
@@ -7964,7 +7964,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.1
 
-  '@capgo/capacitor-native-audio@8.5.4(patch_hash=9fb1eebb3322a5c3246122249dd275db4abad88049e26bddda2f63b2b218da85)(@capacitor/core@8.3.1)':
+  '@capgo/capacitor-native-audio@8.5.4(patch_hash=798ec2fbfa0b3ada8290242e5dfb350bf49e5e812368e61baa5d409b79146f2a)(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
@@ -10195,6 +10195,14 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
+  '@vitest/mocker@4.1.9(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))':
+    dependencies:
+      '@vitest/spy': 4.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
+
   '@vitest/mocker@4.1.9(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))':
     dependencies:
       '@vitest/spy': 4.1.9
@@ -10558,7 +10566,7 @@ snapshots:
       prisma: 6.19.3(typescript@5.5.4)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
-      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
@@ -14757,6 +14765,36 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.6.1
       terser: 5.46.2
+
+  vitest@4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)):
+    dependencies:
+      '@vitest/expect': 4.1.9
+      '@vitest/mocker': 4.1.9(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
+      '@vitest/pretty-format': 4.1.9
+      '@vitest/runner': 4.1.9
+      '@vitest/snapshot': 4.1.9
+      '@vitest/spy': 4.1.9
+      '@vitest/utils': 4.1.9
+      es-module-lexer: 2.1.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.3
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.1.0
+      tinybench: 2.9.0
+      tinyexec: 1.1.1
+      tinyglobby: 0.2.16
+      tinyrainbow: 3.1.0
+      vite: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.0
+      '@types/node': 22.19.17
+      '@vitest/coverage-v8': 4.1.9(vitest@4.1.9)
+      jsdom: 29.1.1(@noble/hashes@2.2.0)
+    transitivePeerDependencies:
+      - msw
 
   vitest@4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)):
     dependencies:

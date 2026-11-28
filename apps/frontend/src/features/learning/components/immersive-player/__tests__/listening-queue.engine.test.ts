@@ -65,6 +65,7 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
   const calls = {
     resolve: [] as string[],
     armQueue: [] as Array<{ count: number; startIndex: number; assetIds: string[] }>,
+    preArmCard: [] as string[],
     playQueue: [] as Array<{
       count: number
       startIndex: number
@@ -107,6 +108,9 @@ function createFakeTransport(options?: { resumeResult?: boolean }) {
         startIndex,
         assetIds: items.map((entry) => entry.assetId),
       })
+    },
+    async preArmCard(item) {
+      calls.preArmCard.push(item.assetId)
     },
     async playQueue(items, options) {
       const startIndex = options?.startIndex ?? 0
@@ -334,6 +338,8 @@ describe('ListeningQueueEngine', () => {
     expect(fakeTransport.calls.playQueue[0].fileUrls[1]).toContain('silence://')
     fakeTransport.complete() // main
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    // Trailing gap: pre-arm next item's first segment during silence (cross-item flash fix).
+    await vi.waitFor(() => expect(fakeTransport.calls.preArmCard).toContain('immersive:w2:main:0'))
     fakeTransport.complete() // trailing gap
     await vi.waitFor(() => expect(indexChanges[0]).toBe(1))
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(2))
@@ -633,6 +639,23 @@ describe('ListeningQueueEngine', () => {
     fakeTransport.complete() // example
   })
 
+  it('skips transport.resume during an already-playing native silence gap', async () => {
+    settings.autoNext = false
+    settings.playExample = true
+    const word = item('w1', 'hello')
+    word.examples = [{ en: 'ex', audioUrl: 'file://ex.mp3' }]
+    bind([word])
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    fakeTransport.complete() // main → gap
+    await vi.waitFor(() => expect(engine.getState().gapActive).toBe(true))
+    expect(engine.getState().status).toBe('playing')
+    const resumesBefore = fakeTransport.calls.resume
+    const ok = await engine.resume()
+    expect(ok).toBe(true)
+    expect(fakeTransport.calls.resume).toBe(resumesBefore)
+  })
+
   it('falls back to timer gap when silence file is missing', async () => {
     await engine.dispose()
     engine = new ListeningQueueEngine({
@@ -668,14 +691,44 @@ describe('ListeningQueueEngine', () => {
     bind(items)
     void engine.play()
     await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
-    // Advance onto trailing gap (last native slot), then remoteNext at edge.
+    // Advance onto trailing gap (last native slot), then remoteNext edge
+    // (native keeps the same index when skip_gaps finds no next content).
     fakeTransport.complete() // main
     await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    const gapIndex = fakeTransport.getQueueIndex()
     fakeTransport.emit({
-      type: 'playbackState',
+      type: 'queueChange',
       reason: 'remoteNext',
       assetId: 'immersive:gap:2s:r1:after:w1:main:0',
-      state: 'playing',
+      index: gapIndex,
+    })
+    await vi.waitFor(() => expect(indexChanges).toContain(1))
+  })
+
+  it('remoteNext on last content (before trailing gap) seeks next learning item', async () => {
+    settings.playExample = true
+    const w1 = item('w1', 'one')
+    w1.examples = [{ en: 'ex1', audioUrl: 'file://ex1.mp3' }]
+    const w2 = item('w2', 'two')
+    w2.examples = [{ en: 'ex2', audioUrl: 'file://ex2.mp3' }]
+    bind([w1, w2])
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    // main → gap → example (last content; trailing gap is index 3)
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(1))
+    fakeTransport.complete()
+    await vi.waitFor(() => expect(fakeTransport.calls.queueNext).toBe(2))
+    expect(engine.getState().currentSegment?.role).toBe('example')
+    const exampleIndex = fakeTransport.getQueueIndex()
+    expect(exampleIndex).toBe(2)
+
+    // Native edge: on example, skip_gaps finds only trailing gap → no content → same index.
+    fakeTransport.emit({
+      type: 'queueChange',
+      reason: 'remoteNext',
+      assetId: 'immersive:w1:example:0',
+      index: exampleIndex,
     })
     await vi.waitFor(() => expect(indexChanges).toContain(1))
   })
@@ -723,14 +776,30 @@ describe('ListeningQueueEngine', () => {
     ;(engine as unknown as { windowLength: number }).windowLength = 0
     const playCount = fakeTransport.calls.playQueue.length
     fakeTransport.emit({
-      type: 'playbackState',
+      type: 'queueChange',
       reason: 'remotePrevious',
-      assetId: 'immersive:gap:1s:r1:after:w1:main:0',
-      state: 'playing',
+      assetId: 'immersive:w1:main:0',
+      index: 0,
     })
     await Promise.resolve()
     expect(fakeTransport.calls.playQueue.length).toBe(playCount)
     expect(indexChanges).not.toContain(0)
+  })
+
+  it('remotePrevious at first content seeks previous learning item', async () => {
+    const items = [item('w1', 'one'), item('w2', 'two')]
+    bind(items, 1)
+    void engine.play()
+    await vi.waitFor(() => expect(fakeTransport.calls.playQueue.length).toBe(1))
+    expect(engine.getState().absoluteIndex).toBe(1)
+    // Edge: already on first content, native keeps index 0.
+    fakeTransport.emit({
+      type: 'queueChange',
+      reason: 'remotePrevious',
+      assetId: 'immersive:w2:main:0',
+      index: 0,
+    })
+    await vi.waitFor(() => expect(indexChanges).toContain(0))
   })
 
   it('remotePause / remotePlay sync Engine state without double transport pause/resume', async () => {

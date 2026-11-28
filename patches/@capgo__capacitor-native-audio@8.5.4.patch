@@ -1,3 +1,78 @@
+diff --git a/dist/esm/definitions.d.ts b/dist/esm/definitions.d.ts
+index 9ae793f3d8c3fcb5ae7c310c093a645f522c6aac..4b0260de295a818a42d7d8d502819b71954d84ee 100644
+--- a/dist/esm/definitions.d.ts
++++ b/dist/esm/definitions.d.ts
+@@ -430,6 +430,22 @@ export interface SetQueueOptions {
+      */
+     autoPlay?: boolean;
+ }
++/**
++ * NP-only pre-arm during trailing silence (MANYU patch). Does not stop the current player.
++ */
++export interface PreArmNowPlayingOptions {
++    assetId: string;
++    assetPath?: string;
++    isUrl?: boolean;
++    /** Fallback when the asset is not yet loaded. */
++    duration?: number;
++    notificationMetadata?: {
++        title?: string;
++        artist?: string;
++        album?: string;
++        artworkUrl?: string;
++    };
++}
+ export interface QueueState {
+     /**
+      * Asset Id of the currently selected queue item, or empty when the queue is cleared.
+@@ -639,6 +655,14 @@ export interface NativeAudio {
+      * @since 8.5.0
+      */
+     setQueue(options: SetQueueOptions): Promise<QueueState>;
++    /**
++     * Write Now Playing at elapsed=0 rate=0 without changing the active queue/player.
++     * Used during trailing silence gaps to move the cross-item scrubber jump into silence.
++     *
++     * @platform iOS
++     * @since 8.5.4 (MANYU patch)
++     */
++    preArmNowPlaying(options: PreArmNowPlayingOptions): Promise<void>;
+     /**
+      * @since 8.5.0
+      */
+diff --git a/dist/esm/web.d.ts b/dist/esm/web.d.ts
+index 1478370272e26a1da923e71289ec4f117c0bb636..d00276938b8f1a0bccd8310e4fbc7e550a89acd9 100644
+--- a/dist/esm/web.d.ts
++++ b/dist/esm/web.d.ts
+@@ -1,5 +1,5 @@
+ import { WebPlugin } from '@capacitor/core';
+-import type { Assets, AssetPauseOptions, AssetPlayOptions, AssetRate, AssetResumeOptions, AssetSetTime, AssetStopOptions, AssetVolume, AudioRouteValue, ConfigureOptions, GetPlaybackStateOptions, PlaybackStateEvent, PlayOnceOptions, PlayOnceResult, PreloadOptions, QueueState, SetQueueOptions } from './definitions';
++import type { Assets, AssetPauseOptions, AssetPlayOptions, AssetRate, AssetResumeOptions, AssetSetTime, AssetStopOptions, AssetVolume, AudioRouteValue, ConfigureOptions, GetPlaybackStateOptions, PlaybackStateEvent, PlayOnceOptions, PlayOnceResult, PreArmNowPlayingOptions, PreloadOptions, QueueState, SetQueueOptions } from './definitions';
+ import { NativeAudio } from './definitions';
+ export declare class NativeAudioWeb extends WebPlugin implements NativeAudio {
+     private static readonly LOG_TAG;
+@@ -64,6 +64,7 @@ export declare class NativeAudioWeb extends WebPlugin implements NativeAudio {
+     }>;
+     getPlaybackState(options?: GetPlaybackStateOptions): Promise<PlaybackStateEvent>;
+     setQueue(options: SetQueueOptions): Promise<QueueState>;
++    preArmNowPlaying(options: PreArmNowPlayingOptions): Promise<void>;
+     clearQueue(): Promise<void>;
+     getQueueState(): Promise<QueueState>;
+     queueNext(): Promise<QueueState>;
+diff --git a/dist/esm/web.js b/dist/esm/web.js
+index d9a8beebb76de62e850dd7073b117e30cb1e36c8..720ab62c0f44cfc01402321f513d495f27fb758a 100644
+--- a/dist/esm/web.js
++++ b/dist/esm/web.js
+@@ -475,6 +475,9 @@ export class NativeAudioWeb extends WebPlugin {
+         }
+         return this.buildQueueState();
+     }
++    async preArmNowPlaying(_options) {
++        // Web has no lock-screen Now Playing; no-op.
++    }
+     async clearQueue() {
+         this.playbackQueue = [];
+         this.playbackQueueIndex = -1;
 diff --git a/ios/Sources/NativeAudioPlugin/AudioAsset+Fade.swift b/ios/Sources/NativeAudioPlugin/AudioAsset+Fade.swift
 index 6635ab0777c4832aedfb08c3c68954b9dad7a5d9..d3bc3688950dc4e7bff456318fb64148e673b405 100644
 --- a/ios/Sources/NativeAudioPlugin/AudioAsset+Fade.swift
@@ -57,7 +132,7 @@ index dce80b5cf9c8f17eb7d09a4b4bb2a9e9d8ac4637..28fb86c7f464ea00c051fe3974bf618a
      }
  
 diff --git a/ios/Sources/NativeAudioPlugin/NativeAudio+Queue.swift b/ios/Sources/NativeAudioPlugin/NativeAudio+Queue.swift
-index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb5787d36e 100644
+index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..5113cc9a032fed9cdaf6892ef7557e24a37f658f 100644
 --- a/ios/Sources/NativeAudioPlugin/NativeAudio+Queue.swift
 +++ b/ios/Sources/NativeAudioPlugin/NativeAudio+Queue.swift
 @@ -32,6 +32,19 @@ extension NativeAudio {
@@ -80,28 +155,48 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
              let cappedStart = min(startIndex, self.playbackQueueIds.count - 1)
              self.preloadQueueItemIfNeeded(assetId: self.playbackQueueIds[cappedStart]) { [weak self] success in
                  guard let self else { return }
-@@ -43,8 +56,37 @@ extension NativeAudio {
+@@ -43,8 +56,57 @@ extension NativeAudio {
                  let assetId = self.playbackQueueIds[cappedStart]
                  self.refreshQueueRemoteCommands()
                  if autoPlay {
 +                    print("[MANYU_IMMERSIVE] native.queue.autoPlay assetId=\(assetId) index=\(cappedStart) count=\(self.playbackQueueIds.count)")
                      self.playQueueAsset(assetId: assetId, reason: "setQueue")
                  } else {
-+                    // MANYU arm: write paused Now Playing before any play (docs §3.1).
++                    // Arm path (docs §3.1). If we already have an ended/holding card from the
++                    // previous clip, do NOT showArmed@0 — that flashes 100%→0 before play.
++                    // keepEndedUntilArm holds the end pin until play → armPlaying.atZero.
 +                    self.currentlyPlayingAssetId = assetId
 +                    if self.showNotification, let asset = self.audioList[assetId] as? AudioAsset {
-+                        let armElapsed = asset.getCurrentTime()
 +                        let armDuration = asset.getDuration()
-+                        var data = self.audioAssetData[assetId] ?? [:]
-+                        data["timeBeforePause"] = armElapsed
-+                        self.audioAssetData[assetId] = data
-+                        print("[MANYU_IMMERSIVE] native.queue.arm assetId=\(assetId) elapsed=\(armElapsed) duration=\(armDuration) rate=0")
-+                        _ = self.npClock.showArmed(
-+                            assetId: assetId,
-+                            duration: armDuration,
-+                            metadata: self.npMeta(for: assetId),
-+                            elapsed: armElapsed
-+                        )
++                        let preserveEnd = self.npClock.state == .ended
++                            || self.npClock.state == .holding
++                            || self.npClock.state == .frozen
++                        if preserveEnd {
++                            print(
++                                "[MANYU_IMMERSIVE] native.queue.armHold assetId=\(assetId) " +
++                                "duration=\(armDuration) keepElapsed=\(self.npClock.lastElapsed) " +
++                                "note=preserve_end_until_play"
++                            )
++                            _ = self.npClock.beginTrack(
++                                assetId: assetId,
++                                duration: armDuration,
++                                metadata: self.npMeta(for: assetId),
++                                policy: .keepEndedUntilArm,
++                                reason: "setQueue.armHold"
++                            )
++                        } else {
++                            let armElapsed = asset.getCurrentTime()
++                            var data = self.audioAssetData[assetId] ?? [:]
++                            data["timeBeforePause"] = armElapsed
++                            self.audioAssetData[assetId] = data
++                            print("[MANYU_IMMERSIVE] native.queue.arm assetId=\(assetId) elapsed=\(armElapsed) duration=\(armDuration) rate=0")
++                            _ = self.npClock.showArmed(
++                                assetId: assetId,
++                                duration: armDuration,
++                                metadata: self.npMeta(for: assetId),
++                                elapsed: armElapsed
++                            )
++                        }
 +                        if let artworkUrl = self.notificationMetadataMap[assetId]?["artworkUrl"] {
 +                            let targetId = assetId
 +                            self.loadArtwork(from: artworkUrl) { [weak self] image in
@@ -118,11 +213,116 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
                      self.notifyQueueChange(assetId: assetId, index: cappedStart, reason: "setQueue")
                  }
                  call.resolve(self.buildQueueStateDictionary())
-@@ -54,10 +96,20 @@ extension NativeAudio {
+@@ -52,12 +114,124 @@ extension NativeAudio {
+         }
+     }
  
++    /// Publish a Now Playing card at elapsed=0 rate=0 for `assetId` without changing the
++    /// active queue or stopping the current player. Used by JS during the *trailing*
++    /// silence gap (no next content in the native window) so the end→0 scrubber jump
++    /// happens in silence; the following `setQueue` then hits `reusePreArm` / rateOnly.
++    @objc func preArmNowPlaying(_ call: CAPPluginCall) {
++        guard let assetId = call.getString("assetId"), !assetId.isEmpty else {
++            call.reject("assetId required")
++            return
++        }
++        let assetPath = call.getString("assetPath") ?? ""
++        let isUrl = call.getBool("isUrl") ?? true
++        let durationHint = call.getDouble("duration") ?? 0
++        var metadataDict: [String: String] = [:]
++        if let metadata = call.getObject("notificationMetadata") {
++            for key in ["title", "artist", "album", "artworkUrl"] {
++                if let value = metadata[key] as? String, !value.isEmpty {
++                    metadataDict[key] = value
++                }
++            }
++        }
++
++        executeOnAudioQueue {
++            guard self.showNotification else {
++                call.resolve()
++                return
++            }
++
++            let publish: (TimeInterval) -> Void = { duration in
++                if !metadataDict.isEmpty {
++                    self.notificationMetadataMap[assetId] = metadataDict
++                }
++                let resolvedDuration = duration > 0 ? duration : max(0, durationHint)
++                _ = self.npClock.beginTrack(
++                    assetId: assetId,
++                    duration: resolvedDuration,
++                    metadata: self.npMeta(for: assetId),
++                    // In-place: avoid blanking the whole lock-screen card (visible 闪).
++                    policy: .replaceAtZeroInPlace,
++                    reason: "preArmNowPlaying"
++                )
++                print(
++                    "[MANYU_IMMERSIVE] native.preArmNowPlaying assetId=\(assetId) " +
++                    "duration=\(resolvedDuration) note=cross_item_trailing_gap"
++                )
++                if let artworkUrl = metadataDict["artworkUrl"] {
++                    let targetId = assetId
++                    self.loadArtwork(from: artworkUrl) { [weak self] image in
++                        guard let self, let image else { return }
++                        self.audioQueue.async {
++                            guard self.npClock.assetId == targetId else { return }
++                            DispatchQueue.main.async {
++                                self.npClock.mergeArtwork(image, forAssetId: targetId)
++                            }
++                        }
++                    }
++                }
++                call.resolve()
++            }
++
++            if let existing = self.audioList[assetId] as? AudioAsset {
++                publish(existing.getDuration())
++                return
++            }
++
++            if !assetPath.isEmpty {
++                // Register for preload without appending to playbackQueueIds — gap keeps playing.
++                var item: [String: Any] = [
++                    "assetId": assetId,
++                    "assetPath": assetPath,
++                    "isUrl": isUrl
++                ]
++                if !metadataDict.isEmpty {
++                    item["notificationMetadata"] = metadataDict
++                }
++                self.playbackQueueItemById[assetId] = item
++                self.preloadQueueItemIfNeeded(assetId: assetId) { [weak self] success in
++                    guard let self else { return }
++                    let loaded = (self.audioList[assetId] as? AudioAsset)?.getDuration() ?? 0
++                    if !success && loaded <= 0 && durationHint <= 0 {
++                        print("[MANYU_IMMERSIVE] native.preArmNowPlaying.fail assetId=\(assetId) note=preload_failed")
++                        call.reject("Failed to preload asset for preArmNowPlaying")
++                        return
++                    }
++                    publish(loaded)
++                }
++                return
++            }
++
++            if durationHint > 0 {
++                publish(durationHint)
++                return
++            }
++
++            call.reject("assetPath or duration required")
++        }
++    }
++
      @objc func clearQueue(_ call: CAPPluginCall) {
++        // Optional: only Immersive *close* may wipe the lock-screen card.
++        // Window / item swaps must NOT clear NP — that caused 100%→blank→0 flash.
++        let clearNowPlaying = call.getBool("clearNowPlaying") ?? false
          executeOnAudioQueue {
-+            print("[MANYU_IMMERSIVE] native.queue.clear wasIndex=\(self.playbackQueueIndex) count=\(self.playbackQueueIds.count)")
++            print(
++                "[MANYU_IMMERSIVE] native.queue.clear wasIndex=\(self.playbackQueueIndex) " +
++                "count=\(self.playbackQueueIds.count) clearNowPlaying=\(clearNowPlaying)"
++            )
 +            self.playbackEpoch += 1
 +            self.cancelAllPendingCompleteNotify(reason: "clearQueue")
 +            self.cancelScrubResume(reason: "clearQueue")
@@ -132,14 +332,13 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
              self.playbackQueueIndex = -1
 +            self.currentlyPlayingAssetId = nil
              self.refreshQueueRemoteCommands()
-+            // MANYU: closing Immersive must drop the lock-screen card.
-+            if self.showNotification {
++            if clearNowPlaying && self.showNotification {
 +                self.clearNowPlayingInfo()
 +            }
              call.resolve()
          }
      }
-@@ -171,18 +223,45 @@ extension NativeAudio {
+@@ -171,18 +345,45 @@ extension NativeAudio {
      }
  
      internal func refreshQueueRemoteCommands() {
@@ -189,7 +388,7 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
          }
      }
  
-@@ -194,9 +273,11 @@ extension NativeAudio {
+@@ -194,9 +395,11 @@ extension NativeAudio {
              }
              let nextIndex = self.playbackQueueIndex + delta
              guard nextIndex >= 0, nextIndex < self.playbackQueueIds.count else {
@@ -201,7 +400,7 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
              self.selectQueueIndex(nextIndex, call: call, reason: reason)
          }
      }
-@@ -210,28 +291,90 @@ extension NativeAudio {
+@@ -210,28 +413,162 @@ extension NativeAudio {
                  return
              }
              self.playbackQueueIndex = index
@@ -235,34 +434,65 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
 +        let duration = asset.getDuration()
 +        print("[MANYU_IMMERSIVE] native.queue.playAsset reason=\(reason) assetId=\(assetId) duration=\(duration) index=\(playbackQueueIndex)")
 +
-+        // Silence gap tracks: play audio but do NOT rewrite Now Playing.
-+        // Scrubber stays frozen at the previous content end for the full pause.
++        // Silence gap: keep playing silence, but PRE-PUBLISH the next content card @0
++        // during the pause. That moves the end→0 scrubber jump into silence time so the
++        // following content play only flips rate (armPlaying.rateOnly) — no flash with audio.
++        // Next content is often not in audioList yet (setQueue only preloads startIndex),
++        // so preload it before gapPreArm — otherwise prePublish silently no-ops.
 +        if assetId.hasPrefix("immersive:gap:") {
-+            print("[MANYU_IMMERSIVE] native.queue.playAsset.gapSkipNp assetId=\(assetId) duration=\(duration) reason=\(reason)")
-+            asset.play(time: 0)
-+            notifyPlaybackState(assetId: assetId, reason: reason, state: .playing, audioAsset: asset)
-+            notifyQueueChange(assetId: assetId, index: playbackQueueIndex, reason: reason)
++            let gapIndex = playbackQueueIndex
++            let startGapAudio: () -> Void = { [weak self] in
++                guard let self else { return }
++                guard self.currentlyPlayingAssetId == assetId else { return }
++                print("[MANYU_IMMERSIVE] native.queue.playAsset.gapSkipNp assetId=\(assetId) duration=\(duration) reason=\(reason)")
++                asset.play(time: 0)
++                self.notifyPlaybackState(assetId: assetId, reason: reason, state: .playing, audioAsset: asset)
++                self.notifyQueueChange(assetId: assetId, index: self.playbackQueueIndex, reason: reason)
++            }
++            if showNotification, let nextContentId = nextContentAssetId(afterIndex: gapIndex) {
++                preloadQueueItemIfNeeded(assetId: nextContentId) { [weak self] success in
++                    guard let self else { return }
++                    if success {
++                        self.prePublishNextContentCardDuringGap(afterIndex: gapIndex)
++                    } else {
++                        print("[MANYU_IMMERSIVE] native.queue.gapPreArm.skip next=\(nextContentId) note=preload_failed")
++                    }
++                    startGapAudio()
++                }
++            } else {
++                if showNotification {
++                    prePublishNextContentCardDuringGap(afterIndex: gapIndex)
++                }
++                startGapAudio()
++            }
 +            return
 +        }
 +
 +        if showNotification {
-+            // Per-clip card: duration=this asset, start @0.
-+            // keepEndedUntilArm holds previous end until play; one armPlaying.atZero commit
-+            // replaces the card (no intermediate holding@0 write, no window timeline).
-+            let policy: NowPlayingClock.BeginTrackPolicy = .keepEndedUntilArm
-+            let gen = self.npClock.beginTrack(
-+                assetId: assetId,
-+                duration: duration,
-+                metadata: self.npMeta(for: assetId),
-+                policy: policy,
-+                reason: reason
-+            )
++            // Reuse gap pre-arm when the card is already holding @0 for this asset.
++            let preArmed = npClock.assetId == assetId
++                && (npClock.state == .holding || npClock.state == .armed)
++                && npClock.lastElapsed <= 0.02
++            let gen: UInt64
++            if preArmed {
++                gen = npClock.generation
++                print("[MANYU_IMMERSIVE] native.queue.playAsset.reusePreArm assetId=\(assetId) gen=\(gen)")
++            } else {
++                // First content / setQueue: keep previous end until the play frame, then @0.
++                gen = self.npClock.beginTrack(
++                    assetId: assetId,
++                    duration: duration,
++                    metadata: self.npMeta(for: assetId),
++                    policy: .keepEndedUntilArm,
++                    reason: reason
++                )
++            }
 +            let delay = trackSwitchPlayDelay(reason: reason)
-+            print("[MANYU_IMMERSIVE] native.queue.playAsset.schedule reason=\(reason) delay=\(delay) gen=\(gen) policy=\(policy) clip=\(duration)")
++            print("[MANYU_IMMERSIVE] native.queue.playAsset.schedule reason=\(reason) delay=\(delay) gen=\(gen) preArmed=\(preArmed) clip=\(duration)")
 +            let start: () -> Void = { [weak self] in
 +                guard let self else { return }
 +                guard self.currentlyPlayingAssetId == assetId else { return }
-+                guard gen == self.npClock.generation else {
++                if !preArmed, gen != self.npClock.generation {
 +                    print("[MANYU_IMMERSIVE] native.queue.playAsset.dropStale gen=\(gen) current=\(self.npClock.generation)")
 +                    return
 +                }
@@ -289,7 +519,47 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
          notifyQueueChange(assetId: assetId, index: playbackQueueIndex, reason: reason)
 -        if showNotification {
 -            updateNowPlayingInfo(audioId: assetId, audioAsset: asset)
--        }
++    }
++
++    /// First non-gap asset id after `afterIndex`, if any.
++    internal func nextContentAssetId(afterIndex: Int) -> String? {
++        var i = afterIndex + 1
++        while i < playbackQueueIds.count {
++            let nextId = playbackQueueIds[i]
++            if !nextId.hasPrefix("immersive:gap:") {
++                return nextId
++            }
++            i += 1
++        }
++        return nil
++    }
++
++    /// Publish the *next content* Now Playing card at elapsed=0 rate=0.
++    /// Used during silence gaps and on complete→next when there is no gap track —
++    /// moves the end→0 scrubber jump into the await-advance window so content play
++    /// only flips rate (`armPlaying.rateOnly`).
++    internal func prePublishNextContentCardDuringGap(afterIndex: Int) {
++        guard let nextId = nextContentAssetId(afterIndex: afterIndex) else {
++            print("[MANYU_IMMERSIVE] native.queue.gapPreArm.skip fromGapIndex=\(afterIndex) note=no_next_content")
++            return
+         }
++        guard let nextAsset = audioList[nextId] as? AudioAsset else {
++            print("[MANYU_IMMERSIVE] native.queue.gapPreArm.skip next=\(nextId) note=not_loaded")
++            return
++        }
++        let nextDuration = nextAsset.getDuration()
++        _ = npClock.beginTrack(
++            assetId: nextId,
++            duration: nextDuration,
++            metadata: npMeta(for: nextId),
++            // In-place: end→0 during silence without wiping the card dictionary.
++            policy: .replaceAtZeroInPlace,
++            reason: "gapPreArm"
++        )
++        print(
++            "[MANYU_IMMERSIVE] native.queue.gapPreArm next=\(nextId) " +
++            "duration=\(nextDuration) fromGapIndex=\(afterIndex)"
++        )
      }
  
 -    private func notifyQueueChange(assetId: String, index: Int, reason: String) {
@@ -297,12 +567,21 @@ index 4351b75330dd9bcd3a01e5c3a4aebba1022d4a10..337de9d36c942c9be047d2a3fdc8d4bb
          notifyListeners("queueChange", data: [
              "assetId": assetId,
              "index": index,
+@@ -253,7 +590,7 @@ extension NativeAudio {
+         return result
+     }
+ 
+-    private func preloadQueueItemIfNeeded(assetId: String, completion: @escaping (Bool) -> Void) {
++    internal func preloadQueueItemIfNeeded(assetId: String, completion: @escaping (Bool) -> Void) {
+         if audioList[assetId] != nil {
+             completion(true)
+             return
 diff --git a/ios/Sources/NativeAudioPlugin/NowPlayingClock.swift b/ios/Sources/NativeAudioPlugin/NowPlayingClock.swift
 new file mode 100644
-index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad0c6db3e4
+index 0000000000000000000000000000000000000000..e83e4422363ad0361e2594252c479bed20e2b190
 --- /dev/null
 +++ b/ios/Sources/NativeAudioPlugin/NowPlayingClock.swift
-@@ -0,0 +1,563 @@
+@@ -0,0 +1,611 @@
 +import Foundation
 +import MediaPlayer
 +import UIKit
@@ -324,13 +603,18 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +
 +    enum BeginTrackPolicy: CustomStringConvertible {
 +        /// Replace card with new title/duration at elapsed=0 (setQueue / remote skip).
++        /// Wipes MPNowPlayingInfo first — can blink the whole lock-screen card.
 +        case replaceAtZero
++        /// Same as replaceAtZero but updates the existing info dict in place.
++        /// Used for gap / trailing pre-arm so end→0 does not blank the card.
++        case replaceAtZeroInPlace
 +        /// Keep previous ended card until armPlaying (same-title segment next).
 +        case keepEndedUntilArm
 +
 +        var description: String {
 +            switch self {
 +            case .replaceAtZero: return "replaceAtZero"
++            case .replaceAtZeroInPlace: return "replaceAtZeroInPlace"
 +            case .keepEndedUntilArm: return "keepEndedUntilArm"
 +            }
 +        }
@@ -492,15 +776,16 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +        stopTick()
 +        self.assetId = assetId
 +        switch policy {
-+        case .replaceAtZero:
++        case .replaceAtZero, .replaceAtZeroInPlace:
++            let wipe = policy == .replaceAtZero
 +            return commit(
 +                elapsed: 0,
 +                rate: 0,
 +                duration: duration,
 +                metadata: metadata,
 +                glyphPlaying: true,
-+                reason: "beginTrack.replaceAtZero.\(reason)",
-+                replaceCard: true,
++                reason: "beginTrack.\(policy).\(reason)",
++                replaceCard: wipe,
 +                to: .holding
 +            )
 +        case .keepEndedUntilArm:
@@ -526,6 +811,7 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +    }
 +
 +    /// First rate>0 write. Fresh content play must arm @0 (per-clip card), never catch-up to live t.
++    /// If the card is already holding @0 (gap pre-arm), only flip rate — no elapsed rewrite.
 +    @discardableResult
 +    func armPlaying(
 +        liveElapsed: TimeInterval,
@@ -549,8 +835,15 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +        if duration.isFinite && duration > 0 {
 +            pinned = min(duration, pinned)
 +        }
++        // Gap already published this card @0: only start the clock (no scrubber jump).
++        let alreadyAtZero = (state == .holding || state == .armed)
++            && lastElapsed <= 0.02
++            && pinned <= 0.02
++            && !replaceCard
 +        let armReason: String
-+        if let floor = resumePinFloor, floor <= 0, pinned <= 0 {
++        if alreadyAtZero {
++            armReason = "armPlaying.rateOnly"
++        } else if let floor = resumePinFloor, floor <= 0, pinned <= 0 {
 +            armReason = "armPlaying.atZero"
 +        } else if resumePinFloor != nil {
 +            armReason = "armPlaying.resumePin"
@@ -558,13 +851,13 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +            armReason = "armPlaying.live"
 +        }
 +        let gen = commit(
-+            elapsed: pinned,
++            elapsed: alreadyAtZero ? 0 : pinned,
 +            rate: effectivePlayingRate(),
-+            duration: armDuration,
-+            metadata: metadata,
++            duration: alreadyAtZero ? nil : armDuration,
++            metadata: alreadyAtZero ? nil : metadata,
 +            glyphPlaying: true,
 +            reason: armReason,
-+            replaceCard: replaceCard,
++            replaceCard: alreadyAtZero ? false : replaceCard,
 +            to: .playing
 +        )
 +        startTick()
@@ -590,20 +883,18 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +        return gen
 +    }
 +
-+    /// Pause: freeze the bar where the user sees it (visual / system), never snap back to
-+    /// player — short-clip "pin=player" was the first-pause flash (sys~0.53 → player 0.50).
++    /// Pause: freeze the scrubber where it already is (visual). Never pull it back to
++    /// the player — that caused the "pause jumps backward" regression. Do not seek the
++    /// player forward on pause either; resume may catch audio up to the frozen pin.
 +    @discardableResult
 +    func pause(playerElapsed: TimeInterval) -> (gen: UInt64, pin: TimeInterval, willSeek: Bool) {
 +        stopTick()
-+        let visual = visualElapsed(fallback: playerElapsed)
-+        let sysElapsed = MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyElapsedPlaybackTime] as? Double
-+        // Prefer whatever Control Center is already showing so rate→0 does not jump backward.
-+        var pin = max(visual, sysElapsed ?? visual)
-+        // Only trust player when the clock is clearly stale (EOT rewind / huge desync).
-+        let deltaVisual = visual - playerElapsed
-+        let staleClock = (playerElapsed < 0.08 && deltaVisual > 0.15) || abs(deltaVisual) > 0.35
-+        if staleClock {
-+            pin = max(0, playerElapsed)
++        let visual = visualElapsed(fallback: max(lastElapsed, playerElapsed))
++        // Prefer the higher of last committed / visual so we never rewind the bar.
++        var pin = max(lastElapsed, visual)
++        // If player is slightly ahead of visual, meet it (no backward jump).
++        if playerElapsed > pin {
++            pin = playerElapsed
 +        }
 +        let pinClamped: TimeInterval
 +        if duration.isFinite && duration > 0 {
@@ -612,8 +903,9 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +            pinClamped = max(0, pin)
 +        }
 +
-+        let delta = pinClamped - playerElapsed
-+        let willSeek = abs(delta) > 0.05
++        // Never seek on pause. Forward catch-up (if any) happens on resume.
++        let willSeek = false
++        _ = playerElapsed
 +
 +        let gen = commit(
 +            elapsed: pinClamped,
@@ -654,7 +946,7 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +        )
 +    }
 +
-+    /// Rate change while playing — rebase visual then new rate.
++    /// Rate change while playing — rebase near the player so wall-clock cannot race ahead.
 +    @discardableResult
 +    func setRate(_ rate: Double) -> UInt64? {
 +        playingRate = rate
@@ -662,9 +954,25 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +            print("[MANYU_IMMERSIVE] native.np.commit reason=setRate.skip state=\(state.rawValue) note=await_arm")
 +            return nil
 +        }
-+        let visual = visualElapsed()
++        var elapsed = visualElapsed()
++        if let sample = playerTimeSample?() {
++            let nearEnd = duration.isFinite && duration > 0
++                && max(elapsed, lastElapsed) > max(0.15, duration * 0.35)
++            // EOT: AVAudioPlayer rewinds to ≈0 before complete() pins duration.
++            // Writing that 0 here is the "闪到前面 → 又闪回100%" flash.
++            if nearEnd && sample.time < 0.08 {
++                elapsed = duration
++                print("[MANYU_IMMERSIVE] native.np.setRate.eotPin elapsed=\(String(format: "%.4f", elapsed)) note=ignore_player_rewind")
++            } else if sample.playing {
++                let maxLead: TimeInterval = 0.05
++                elapsed = max(sample.time, min(elapsed, sample.time + maxLead))
++                if duration.isFinite && duration > 0 {
++                    elapsed = min(duration, elapsed)
++                }
++            }
++        }
 +        let gen = commit(
-+            elapsed: visual,
++            elapsed: elapsed,
 +            rate: effectivePlayingRate(),
 +            glyphPlaying: true,
 +            reason: "setRate",
@@ -811,39 +1119,58 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +        guard assetId == expectedAssetId else { return }
 +
 +        var writeElapsed = visualElapsed()
++        var writeRate = effectivePlayingRate()
++        var stopAfterWrite = false
 +        if let sample = playerTimeSample?() {
-+            if !sample.playing {
-+                // Player stopped mid-tick — complete intent will follow; don't rewind.
-+                return
-+            }
 +            let nearEnd = duration.isFinite && duration > 0
 +                && max(writeElapsed, lastElapsed) > max(0.15, duration * 0.35)
-+            // EOT wins: player≈0 must never follow into the scrubber.
-+            if nearEnd && sample.time < 0.08 {
++            // EOT: player rewinds to ≈0 (and often isPlaying=false) before complete().
++            // Pin duration + rate=0 immediately — do NOT return early with rate still 1,
++            // and never publish player≈0 (that is 闪到前面 → complete 再闪回100%).
++            if nearEnd && (sample.time < 0.08 || !sample.playing) {
 +                writeElapsed = duration
-+            } else if duration.isFinite && duration > 0 && duration < 1.5 && !nearEnd {
-+                // Short clips early/mid: keep visual near player so bar does not race ahead.
-+                let maxLead = min(0.04, duration * 0.05)
-+                writeElapsed = min(duration, max(sample.time, min(writeElapsed, sample.time + maxLead)))
++                writeRate = 0
++                stopAfterWrite = true
++                print(
++                    "[MANYU_IMMERSIVE] native.np.tick.eotPin assetId=\(assetId ?? "nil") " +
++                    "elapsed=\(String(format: "%.4f", writeElapsed)) player=\(String(format: "%.4f", sample.time)) " +
++                    "playing=\(sample.playing)"
++                )
++            } else if !sample.playing {
++                // Mid-track pause/stop — complete/pause intent owns the next write.
++                return
++            } else {
++                // Keep visual near player for all clip lengths — wall clock races ahead
++                // otherwise, and pause used to snap back (往回闪).
++                let maxLead: TimeInterval = 0.05
++                writeElapsed = max(sample.time, min(writeElapsed, sample.time + maxLead))
++                if duration.isFinite && duration > 0 {
++                    writeElapsed = min(duration, writeElapsed)
++                }
 +            }
 +        }
 +
 +        // Tick does NOT bump generation — pause/complete cancel by bumping.
-+        let rate = effectivePlayingRate()
 +        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
 +        if duration.isFinite && duration > 0 {
 +            info[MPMediaItemPropertyPlaybackDuration] = duration
 +        }
 +        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = writeElapsed
-+        info[MPNowPlayingInfoPropertyPlaybackRate] = rate
++        info[MPNowPlayingInfoPropertyPlaybackRate] = writeRate
 +        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
 +        lastElapsed = writeElapsed
-+        lastRate = rate
++        lastRate = writeRate
 +        lastWallTime = CFAbsoluteTimeGetCurrent()
 +        print(
 +            "[MANYU_IMMERSIVE] native.np.commit reason=tick assetId=\(assetId ?? "nil") " +
-+            "elapsed=\(String(format: "%.4f", writeElapsed)) rate=\(rate) gen=\(generation)"
++            "elapsed=\(String(format: "%.4f", writeElapsed)) rate=\(writeRate) gen=\(generation)"
 +        )
++
++        if stopAfterWrite {
++            // Stay in playing until complete() flips to ended; just stop interpolating.
++            tickScheduled = false
++            return
++        }
 +
 +        let nextGen = generation
 +        let nextId = assetId
@@ -867,10 +1194,19 @@ index 0000000000000000000000000000000000000000..b508400346ba98822a234fbde7dfa8ad
 +    }
 +}
 diff --git a/ios/Sources/NativeAudioPlugin/Plugin.swift b/ios/Sources/NativeAudioPlugin/Plugin.swift
-index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1ff7c44da 100644
+index 471e7718b6b978f58f8d15505e7891d698925e12..8e211656ab6d5bf5305774c123aebea52c60857b 100644
 --- a/ios/Sources/NativeAudioPlugin/Plugin.swift
 +++ b/ios/Sources/NativeAudioPlugin/Plugin.swift
-@@ -96,7 +96,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -50,6 +50,8 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+         CAPPluginMethod(name: "queueNext", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "queuePrevious", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "queueSelect", returnType: CAPPluginReturnPromise),
++        // MANYU: NP-only write @0 during trailing silence (cross-item); does not touch queue/player.
++        CAPPluginMethod(name: "preArmNowPlaying", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "setSpeaker", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "setEarpiece", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "getAudioRoute", returnType: CAPPluginReturnPromise)
+@@ -96,7 +98,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      internal var playOnceAssets: Set<String> = []
  
      private var pendingPlayTasks: [String: DispatchWorkItem] = [:]
@@ -879,7 +1215,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
      var isRunningTests = false
      internal var playbackQueueIds: [String] = []
      internal var playbackQueueIndex: Int = -1
-@@ -104,6 +104,67 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -104,6 +106,67 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      internal var configuredProgressInterval: Double = 0.5
      private var lastProgressEmitByAsset: [String: TimeInterval] = [:]
  
@@ -947,7 +1283,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
      /// Initialize plugin state and audio-related handlers, and register background behavior for session management.
      ///
      /// Performs initial plugin setup after the plugin is loaded.
-@@ -217,7 +278,13 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -217,7 +280,13 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          return .stopped
      }
  
@@ -962,7 +1298,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          let emit = {
              let asset = audioAsset ?? self.audioList[assetId] as? AudioAsset
              let resolvedState = state ?? self.resolvePlaybackState(assetId: assetId, audioAsset: asset)
-@@ -228,7 +295,17 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -228,7 +297,17 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  "isPlaying": resolvedState == .playing
              ]
              if let asset {
@@ -981,7 +1317,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                  let duration = asset.getDuration()
                  if duration.isFinite {
                      data["duration"] = duration
-@@ -244,10 +321,249 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -244,10 +323,261 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          }
      }
  
@@ -1224,6 +1560,18 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +                        "idx=\(idx) queueCount=\(queueCount) hasNext=\(hasNextInNativeQueue) " +
 +                        "endPin=\(npClock.lastElapsed) player=\(player)"
 +                    )
++                    // Do NOT gapPreArm(replaceAtZero) here. Without a silence track the
++                    // end→0 write is visible (and with gapSeconds=0 it lands on the next
++                    // audible frame). Next content play uses keepEndedUntilArm → armPlaying.atZero
++                    // in one commit; silence gaps still pre-arm in playQueueAsset.
++                    if hasNextInNativeQueue,
++                       let nextId = nextContentAssetId(afterIndex: idx),
++                       !nextId.hasPrefix("immersive:gap:") {
++                        // Warm the next asset so queueNext does not stall, but keep end pin.
++                        if audioList[nextId] as? AudioAsset == nil {
++                            preloadQueueItemIfNeeded(assetId: nextId) { _ in }
++                        }
++                    }
 +                } else {
 +                    currentlyPlayingAssetId = nil
 +                    clearNowPlayingInfo()
@@ -1233,7 +1581,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          }
          notifyPlaybackState(assetId: assetId, reason: "complete", state: .stopped, audioAsset: audioAsset)
      }
-@@ -255,6 +571,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -255,6 +585,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      /// Must be called on `audioQueue`. If `timeBeforePause` is stored, clears it and seeks (async for remote) before running `resume` + Now Playing refresh.
      /// Mirrors `resume(_:)` (non–fade-in path): restores `volumeBeforePause` via `setVolume`, clears that key from `audioAssetData`, then `resume()`.
      private func resumeAssetFromStoredPausePositionIfNeeded(assetId: String, asset: AudioAsset, reason: String = "resume") {
@@ -1252,7 +1600,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          var restoredTime: TimeInterval?
          if var data = audioAssetData[assetId],
             let time = data["timeBeforePause"] as? TimeInterval {
-@@ -268,8 +596,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -268,8 +610,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              restoredVolume = volume
          }
  
@@ -1273,7 +1621,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
              if let volume = restoredVolume {
                  asset.setVolume(volume: NSNumber(value: volume), fadeDuration: 0)
              }
-@@ -277,12 +617,46 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -277,12 +631,46 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  data.removeValue(forKey: "volumeBeforePause")
                  self.audioAssetData[assetId] = data
              }
@@ -1323,7 +1671,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          }
          if let resumeTime = restoredTime {
              asset.setCurrentTime(time: resumeTime) { [weak self] in
-@@ -294,50 +668,213 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -294,50 +682,213 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          }
      }
  
@@ -1406,7 +1754,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +                    "note": "already_playing"
 +                ])
 +                return
-             }
++            }
 +            self.immersiveLog("native.remote.play.enter", [
 +                "assetId": assetId,
 +                "note": "will_resume_then_hold_np"
@@ -1416,11 +1764,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +        }
 +        return .success
 +    }
- 
--            self.audioQueue.sync {
--                guard let asset = self.audioList[assetId] as? AudioAsset else {
--                    return
--                }
++
 +    /// Lock-screen / headset pause. Coalesces while resume is still settling.
 +    private func handleRemotePauseCommand(source: String) -> MPRemoteCommandHandlerStatus {
 +        guard let assetId = currentlyPlayingAssetId else { return .noSuchContent }
@@ -1465,12 +1809,13 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +                    duration: duration,
 +                    reason: "remotePause"
 +                )
-+            }
+             }
 +            return .success
 +        }
  
--                if !asset.isPlaying() {
--                    self.resumeAssetFromStoredPausePositionIfNeeded(assetId: assetId, asset: asset, reason: "remotePlay")
+-            self.audioQueue.sync {
+-                guard let asset = self.audioList[assetId] as? AudioAsset else {
+-                    return
 +        // Gap never owns the Now Playing card. Pausing mid-gap must NOT rewrite the
 +        // content end pin with gap.currentTime (log flash: endPin=0.86 → elapsed=0.44).
 +        if assetId.hasPrefix("immersive:gap:") {
@@ -1479,7 +1824,10 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +            audioQueue.sync {
 +                if let asset = self.audioList[assetId] as? AudioAsset, asset.isPlaying() {
 +                    asset.pause()
-+                }
+                 }
+-
+-                if !asset.isPlaying() {
+-                    self.resumeAssetFromStoredPausePositionIfNeeded(assetId: assetId, asset: asset, reason: "remotePlay")
 +                // Keep content NP frozen at its end pin; only stop the silence track.
 +                if self.showNotification, self.npClock.state == .ended || self.npClock.state == .holding {
 +                    let pin = self.npClock.lastElapsed
@@ -1568,7 +1916,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          }
  
          // Stop command
-@@ -370,51 +907,29 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -370,51 +921,29 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              return .success
          }
  
@@ -1608,8 +1956,12 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +                playing = (self.audioList[assetId] as? AudioAsset)?.isPlaying() ?? false
              }
 -            return .success
--        }
--
++            if playing {
++                return self.handleRemotePauseCommand(source: "toggle")
++            }
++            return self.handleRemotePlayCommand()
+         }
+ 
 -        // Skip forward command
 -        commandCenter.skipForwardCommand.preferredIntervals = [NSNumber(value: 15)]
 -        commandCenter.skipForwardCommand.isEnabled = true
@@ -1617,12 +1969,8 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 -            guard let self else { return .commandFailed }
 -            guard let skipEvent = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
 -            return self.handleSeekCommand(delta: skipEvent.interval)
-+            if playing {
-+                return self.handleRemotePauseCommand(source: "toggle")
-+            }
-+            return self.handleRemotePlayCommand()
-         }
- 
+-        }
+-
 -        // Skip backward command
 -        commandCenter.skipBackwardCommand.preferredIntervals = [NSNumber(value: 15)]
 -        commandCenter.skipBackwardCommand.isEnabled = true
@@ -1637,7 +1985,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
  
          // Scrub / change position command
          commandCenter.changePlaybackPositionCommand.isEnabled = true
-@@ -426,20 +941,84 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -426,20 +955,84 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      }
      // swiftlint:enable function_body_length
  
@@ -1724,7 +2072,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          let duration = audioAsset.getDuration()
          let currentTime = audioAsset.getCurrentTime()
          let requestedTime: TimeInterval
-@@ -459,26 +1038,50 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -459,26 +1052,50 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              clampedTime = max(requestedTime, 0)
          }
  
@@ -1787,7 +2135,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          }
  
          return .success
-@@ -820,8 +1423,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -820,8 +1437,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  // Update notification center if enabled
                  if self.showNotification {
                      self.currentlyPlayingAssetId = assetId
@@ -1802,7 +2150,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                  }
                  self.notifyPlaybackState(assetId: assetId, reason: "playOnce", state: .playing, audioAsset: asset)
              }
-@@ -915,14 +1522,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -915,14 +1536,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  return false
              }
  
@@ -1826,7 +2174,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
              }
          }
      }
-@@ -982,8 +1595,9 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -982,8 +1609,9 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
  
                          if self.showNotification {
                              self.currentlyPlayingAssetId = audioId
@@ -1838,7 +2186,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                          }
                          self.notifyPlaybackState(assetId: audioId, reason: "play", state: .playing, audioAsset: audioAsset)
                          call.resolve()
-@@ -1029,9 +1643,36 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1029,9 +1657,36 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              }
  
              cancelPendingPlay(for: audioAsset.assetId)
@@ -1877,13 +2225,36 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                  call.resolve()
              }
          }
-@@ -1096,6 +1737,36 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1096,6 +1751,59 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
  
              let finishResume: () -> Void = { [weak self] in
                  guard let self else { return }
 +                if var data = self.audioAssetData[audioAsset.assetId] {
 +                    data.removeValue(forKey: "volumeBeforePause")
 +                    self.audioAssetData[audioAsset.assetId] = data
++                }
++                // Silence gap never owns Now Playing. JS foregroundResume often hits
++                // during gap (visual still idle after complete) — npClock.resume would
++                // restart the content card from 0 and tick toward 100% during silence.
++                if audioId.hasPrefix("immersive:gap:") {
++                    if let volume = restoredVolume {
++                        audioAsset.setVolume(volume: NSNumber(value: volume), fadeDuration: 0)
++                    }
++                    print(
++                        "[MANYU_IMMERSIVE] native.resume.gapSkipNp assetId=\(audioId) " +
++                        "note=resume_silence_keep_np"
++                    )
++                    if fadeIn {
++                        let targetVolume = restoredVolume ?? (audioAsset.channels.first?.volume ?? audioAsset.initialVolume)
++                        audioAsset.setVolume(volume: 0, fadeDuration: 0)
++                        audioAsset.resume()
++                        audioAsset.setVolume(volume: NSNumber(value: targetVolume), fadeDuration: fadeInDuration)
++                    } else {
++                        audioAsset.resume()
++                    }
++                    self.notifyPlaybackState(assetId: audioId, reason: "resume", state: .playing, audioAsset: audioAsset)
++                    call.resolve()
++                    return
 +                }
 +                // Immersive / Now Playing: arm rate=1 @ pin first, then resume audio
 +                // (same as remote play — avoids scrubber flash from audio running during hold).
@@ -1914,7 +2285,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                  if fadeIn {
                      let targetVolume = restoredVolume ?? (audioAsset.channels.first?.volume ?? audioAsset.initialVolume)
                      audioAsset.setVolume(volume: 0, fadeDuration: 0)
-@@ -1107,14 +1778,6 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1107,14 +1815,6 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                      }
                      audioAsset.resume()
                  }
@@ -1929,7 +2300,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                  self.notifyPlaybackState(assetId: audioId, reason: "resume", state: .playing, audioAsset: audioAsset)
                  call.resolve()
              }
-@@ -1131,6 +1794,10 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1131,6 +1831,10 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
      }
  
      @objc func pause(_ call: CAPPluginCall) {
@@ -1940,7 +2311,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          audioQueue.sync {
              self.audioQueue.setSpecific(key: self.audioQueueContextKey, value: true)
              defer { self.audioQueue.setSpecific(key: self.audioQueueContextKey, value: nil) }
-@@ -1145,28 +1812,50 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1145,28 +1849,65 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              var data = audioAssetData[audioAsset.assetId] ?? [:]
              data["volumeBeforePause"] = currentVolume
  
@@ -1958,6 +2329,21 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
 +                print("[MANYU_IMMERSIVE] native.pause.fadeStart assetId=\(audioAsset.assetId) actual=\(actual) duration=\(pauseDuration)")
                  audioAsset.stopWithFade(fadeOutDuration: fadeOutDuration, toPause: true)
 +                self.endSession()
++                call.resolve()
++            } else if audioAsset.assetId.hasPrefix("immersive:gap:") {
++                // Gap does not own NP — pause silence only; leave content card as-is.
++                print(
++                    "[MANYU_IMMERSIVE] native.pause.gapSkipNp assetId=\(audioAsset.assetId) " +
++                    "note=pause_silence_keep_np"
++                )
++                audioAsset.pause()
++                self.notifyPlaybackState(
++                    assetId: audioAsset.assetId,
++                    reason: "pause",
++                    state: .paused,
++                    audioAsset: audioAsset,
++                    currentTimeOverride: actual
++                )
 +                call.resolve()
 +            } else if self.showNotification {
 +                // Freeze NP first (on main), then pause player — see freezeNowPlayingThenPause.
@@ -2006,7 +2392,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          }
      }
  
-@@ -1248,8 +1937,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1248,8 +1989,12 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              audioAsset.loop()
              if self.showNotification {
                  self.currentlyPlayingAssetId = audioAsset.assetId
@@ -2021,7 +2407,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
              }
              self.notifyPlaybackState(assetId: audioAsset.assetId, reason: "loop", state: .playing, audioAsset: audioAsset)
              call.resolve()
-@@ -1337,7 +2030,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1337,7 +2082,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              }
  
              let rate = min(max(call.getFloat(Constant.Rate) ?? Constant.DefaultRate, Constant.MinRate), Constant.MaxRate)
@@ -2042,7 +2428,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
              call.resolve()
          }
      }
-@@ -1640,6 +2346,8 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1640,6 +2398,8 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                      "duration": duration
                  ])
              }
@@ -2051,7 +2437,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
  
              if let fadeData = audioAssetData[asset.assetId],
                 let fadeOut = fadeData["fadeOut"] as? Bool, fadeOut,
-@@ -1695,78 +2403,406 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1695,78 +2455,406 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          call.resolve()
      }
  
@@ -2514,7 +2900,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
      internal func recordPausePositionAfterFade(assetId: String, elapsedTime: TimeInterval, duration: TimeInterval) {
          audioQueue.async { [weak self] in
              guard let self else { return }
-@@ -1774,6 +2810,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1774,6 +2862,7 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
              data["timeBeforePause"] = elapsedTime
              self.audioAssetData[assetId] = data
              if self.showNotification && self.currentlyPlayingAssetId == assetId {
@@ -2522,7 +2908,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
                  self.updatePlaybackState(isPlaying: false, elapsedTime: elapsedTime, duration: duration)
              }
              if let audioAsset = self.audioList[assetId] as? AudioAsset {
-@@ -1784,7 +2821,6 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1784,7 +2873,6 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          }
      }
  
@@ -2530,7 +2916,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
      internal func recordStoppedPlaybackStateAfterFade(assetId: String, elapsedTime: TimeInterval, duration: TimeInterval) {
          audioQueue.async { [weak self] in
              guard let self else { return }
-@@ -1799,25 +2835,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1799,25 +2887,20 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
          }
      }
  
@@ -2564,7 +2950,7 @@ index 471e7718b6b978f58f8d15505e7891d698925e12..3466bd30994ff38e5d66395492b079a1
          // Check if it's a local file path or URL
          if let url = URL(string: urlString) {
              if url.scheme == nil || url.isFileURL {
-@@ -1825,14 +2856,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
+@@ -1825,14 +2908,18 @@ public class NativeAudio: CAPPlugin, AVAudioPlayerDelegate, CAPBridgedPlugin {
                  let path = url.path
                  if FileManager.default.fileExists(atPath: path) {
                      if let image = UIImage(contentsOfFile: path) {

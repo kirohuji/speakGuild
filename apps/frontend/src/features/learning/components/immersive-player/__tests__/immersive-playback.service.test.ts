@@ -28,6 +28,7 @@ vi.mock('@capgo/capacitor-native-audio', () => {
       count: options.items.length,
       assetIds: options.items.map((item) => item.assetId),
     })),
+    preArmNowPlaying: vi.fn(async () => undefined),
     clearQueue: vi.fn(async () => undefined),
     queueNext: vi.fn(async () => ({ assetId: 'immersive:next', index: 1, count: 2, assetIds: ['a', 'b'] })),
     queuePrevious: vi.fn(async () => ({ assetId: 'immersive:prev', index: 0, count: 2, assetIds: ['a', 'b'] })),
@@ -208,6 +209,28 @@ describe('immersivePlaybackService setQueue transport', () => {
     }))
   })
 
+  it('preArmCard writes NP via preArmNowPlaying without touching the queue', async () => {
+    await immersivePlaybackService.preArmCard({
+      assetId: 'immersive:next-main',
+      fileUrl: 'file://next.mp3',
+      title: 'next',
+      artist: 'app',
+      album: 'album',
+      segmentId: 'next-main',
+    })
+    expect(NativeAudio.preArmNowPlaying).toHaveBeenCalledWith(expect.objectContaining({
+      assetId: 'immersive:next-main',
+      assetPath: 'file://next.mp3',
+      isUrl: true,
+      notificationMetadata: expect.objectContaining({
+        title: 'next',
+        artworkUrl: LOGO_FILE_URI,
+      }),
+    }))
+    expect(NativeAudio.setQueue).not.toHaveBeenCalled()
+    expect(NativeAudio.clearQueue).not.toHaveBeenCalled()
+  })
+
   it('stop invalidates in-flight playQueue and clearQueue', async () => {
     const playPromise = immersivePlaybackService.playQueue([
       {
@@ -220,7 +243,9 @@ describe('immersivePlaybackService setQueue transport', () => {
     await vi.waitFor(() => expect(NativeAudio.setQueue).toHaveBeenCalled())
     await immersivePlaybackService.stop({ clearSession: true })
     await expect(playPromise).resolves.toBeUndefined()
-    expect(NativeAudio.clearQueue).toHaveBeenCalled()
+    expect(NativeAudio.clearQueue).toHaveBeenCalledWith(
+      expect.objectContaining({ clearNowPlaying: true }),
+    )
   })
 
   it('queueNext waits for the next track complete', async () => {
@@ -257,7 +282,9 @@ describe('immersivePlaybackService setQueue transport', () => {
     expect(NativeAudio.resume).toHaveBeenCalledWith({ assetId: 'immersive:a' })
     await immersivePlaybackService.stop({ clearSession: true })
     await expect(playPromise).resolves.toBeUndefined()
-    expect(NativeAudio.clearQueue).toHaveBeenCalled()
+    expect(NativeAudio.clearQueue).toHaveBeenCalledWith(
+      expect.objectContaining({ clearNowPlaying: true }),
+    )
   })
 
   it('progress does not write Now Playing; seekTo sets current time', async () => {

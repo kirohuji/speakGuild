@@ -124,7 +124,12 @@ async function configureNativeAudio() {
   if (configured || !isNative()) return
   configured = true
   // Single-plugin Now Playing: Capgo owns the lock-screen card (docs §2 / §6).
-  immersiveLog('configure', { showNotification: true, backgroundPlayback: true })
+  immersiveLog('configure', {
+    showNotification: true,
+    backgroundPlayback: true,
+    // Bump when diagnosing stale Live Reload / Capgo updater bundles.
+    npPipeline: 'v6-eot-no-rewind-flash',
+  })
   await NativeAudio.configure({
     focus: true,
     background: true,
@@ -236,10 +241,14 @@ async function ensureNativeListeners() {
   })
 }
 
-async function clearNativeQueue() {
+/** Clear native playlist. Pass `clearNowPlaying` only when closing Immersive — never on item swap. */
+async function clearNativeQueue(options?: { clearNowPlaying?: boolean }) {
   if (!isNative()) return
-  immersiveLog('clearQueue')
-  await NativeAudio.clearQueue().catch(() => undefined)
+  const clearNowPlaying = options?.clearNowPlaying === true
+  immersiveLog('clearQueue', { clearNowPlaying })
+  // Capgo types omit clearNowPlaying; native patch reads it (default false = keep NP card).
+  const clear = NativeAudio.clearQueue as (opts?: { clearNowPlaying?: boolean }) => Promise<void>
+  await clear({ clearNowPlaying }).catch(() => undefined)
 }
 
 async function detachNativeListeners() {
@@ -415,6 +424,29 @@ function createTransport(): ImmersiveAudioTransport {
       lastKnownDuration = 0
       activePlaybackRate = 1
       publishVisualState({ state: 'paused', media: null })
+    },
+
+    async preArmCard(item) {
+      if (!isNative()) return
+      immersiveLog('preArmCard', { assetId: item.assetId })
+      await configureNativeAudio()
+      await ensureArtworkUri()
+      await NativeAudio.preArmNowPlaying({
+        assetId: item.assetId,
+        assetPath: item.fileUrl,
+        isUrl: true,
+        notificationMetadata: {
+          title: item.title,
+          artist: item.artist,
+          album: item.album,
+          artworkUrl: artworkUri ?? undefined,
+        },
+      }).catch((error) => {
+        immersiveLog('preArmCard.fail', {
+          assetId: item.assetId,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      })
     },
 
     async playQueue(items, options) {
@@ -605,7 +637,8 @@ function createTransport(): ImmersiveAudioTransport {
           await NativeAudio.stop({ assetId: activeAssetId }).catch(() => undefined)
         }
         if (options?.clearSession !== false) {
-          await clearNativeQueue()
+          // Closing session: drop the lock-screen card.
+          await clearNativeQueue({ clearNowPlaying: true })
           await detachNativeListeners()
         }
       }
@@ -691,7 +724,7 @@ function createTransport(): ImmersiveAudioTransport {
       lastKnownPosition = 0
       lastKnownDuration = 0
       if (isNative()) {
-        await clearNativeQueue()
+        await clearNativeQueue({ clearNowPlaying: true })
       }
       publishVisualState({ state: 'idle', media: null })
     },
