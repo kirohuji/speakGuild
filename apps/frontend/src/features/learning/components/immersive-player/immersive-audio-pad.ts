@@ -43,15 +43,13 @@ export function bakeSilenceDurationSeconds(silenceSeconds: number, playbackRate:
 
 /**
  * Leading silence before a content segment (wall-clock target seconds).
- * - background → 0
  * - example after same-item main → 1s (word → sentence pause lives on the example)
+ * Lock-screen / background still applies pads (local bake only; TTS stays gated elsewhere).
  */
 export function computeLeadingSilenceSeconds(options: {
   segment: PlaybackSegment
   prevSegment: PlaybackSegment | undefined
-  background: boolean
 }): number {
-  if (options.background) return 0
   const { segment, prevSegment } = options
   const afterSameItemMain =
     segment.role === 'example' &&
@@ -62,9 +60,9 @@ export function computeLeadingSilenceSeconds(options: {
 
 /**
  * Trailing silence after a content segment (wall-clock target seconds).
- * - background → 0
  * - next segment / trailing item gap → `pauseGapSeconds`
  * - word→example pause is **not** here (see leading on example)
+ * Applied in foreground and lock-screen background alike.
  */
 export function computeTrailingSilenceSeconds(options: {
   segment: PlaybackSegment
@@ -72,9 +70,7 @@ export function computeTrailingSilenceSeconds(options: {
   isLastInResolvedWindow: boolean
   needTrailingGap: boolean
   pauseGapSeconds: number
-  background: boolean
 }): number {
-  if (options.background) return 0
   const { segment, nextSegment } = options
   // Word → example: pause is leading on the example, not trailing on main.
   const nextIsSameItemExample =
@@ -202,12 +198,42 @@ function bytesToBase64(bytes: Uint8Array) {
   return result
 }
 
-async function decodeAudioFromUrl(fileUrl: string): Promise<AudioBuffer> {
-  const response = await fetch(fileUrl)
-  if (!response.ok) {
-    throw new Error(`failed to fetch audio (${response.status})`)
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
   }
-  const arrayBuffer = await response.arrayBuffer()
+  return bytes.buffer
+}
+
+/**
+ * Read local audio bytes for OfflineAudioContext decode.
+ * Live Reload serves JS from `http://LAN:5173`, so `convertFileSrc` + `fetch`
+ * fails with "Load failed (localhost)". Capgo still plays raw `file://`.
+ */
+async function readNativeAudioBytes(fileUrl: string): Promise<ArrayBuffer> {
+  const { data } = await Filesystem.readFile({ path: fileUrl })
+  if (typeof Blob !== 'undefined' && data instanceof Blob) {
+    return await data.arrayBuffer()
+  }
+  if (typeof data === 'string') {
+    return base64ToArrayBuffer(data)
+  }
+  throw new Error('unexpected Filesystem.readFile payload')
+}
+
+async function decodeAudioFromUrl(fileUrl: string): Promise<AudioBuffer> {
+  let arrayBuffer: ArrayBuffer
+  if (isNative() && (fileUrl.startsWith('file://') || fileUrl.startsWith('/'))) {
+    arrayBuffer = await readNativeAudioBytes(fileUrl)
+  } else {
+    const response = await fetch(fileUrl)
+    if (!response.ok) {
+      throw new Error(`failed to fetch audio (${response.status})`)
+    }
+    arrayBuffer = await response.arrayBuffer()
+  }
   const ctx = new AudioContext()
   try {
     return await ctx.decodeAudioData(arrayBuffer.slice(0))

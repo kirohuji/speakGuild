@@ -227,3 +227,21 @@ export function resetAppLogoArtworkCache() {
 export function toQueueAssetId(segmentId: string) {
   return `immersive:${segmentId}`
 }
+
+/**
+ * Capgo caches AudioAsset by assetId and will not reload when only assetPath
+ * changes. Arm uses the bare id (unpadded); play must use a distinct id whenever
+ * leading/trailing silence is baked, or the padded file never reaches the player.
+ */
+export function toPaddedQueueAssetId(
+  segmentId: string,
+  leadingSilenceSec: number,
+  trailingSilenceSec: number,
+  playbackRate: number,
+) {
+  const lead = Math.max(0, leadingSilenceSec)
+  const trail = Math.max(0, trailingSilenceSec)
+  if (lead <= 0 && trail <= 0) return toQueueAssetId(segmentId)
+  const rate = normalizeImmersivePlaybackRate(playbackRate)
+  return `immersive:${segmentId}:pad:L${lead}:T${trail}:r${rate}`
+}

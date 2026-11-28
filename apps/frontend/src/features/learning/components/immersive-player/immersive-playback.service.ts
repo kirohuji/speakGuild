@@ -33,6 +33,7 @@ let completeHandle: PluginListenerHandle | null = null
 let stateHandle: PluginListenerHandle | null = null
 let queueChangeHandle: PluginListenerHandle | null = null
 let progressHandle: PluginListenerHandle | null = null
+let currentTimeHandle: PluginListenerHandle | null = null
 
 let nativeEventHandler: ((event: ImmersiveNativeEvent) => void) | null = null
 
@@ -160,6 +161,14 @@ async function ensureNativeListeners() {
       state: event.state,
       reason: event.reason,
     })
+    // Keep JS pin in sync with native (pause/seek/resume). Never "restore" an
+    // older lastKnownPosition on remotePlay — that undoes lock-screen scrub-to-0.
+    if (typeof event.currentTime === 'number' && event.currentTime >= 0) {
+      lastKnownPosition = event.currentTime
+    }
+    if (typeof event.duration === 'number' && event.duration > 0) {
+      lastKnownDuration = event.duration
+    }
     emitNativeEvent({
       type: 'playbackState',
       reason: event.reason,
@@ -207,6 +216,24 @@ async function ensureNativeListeners() {
     lastKnownPosition = event.position
     if (event.duration > 0) lastKnownDuration = event.duration
   })
+
+  // Lock-screen scrub emits `currentTime` (not always progress). Must update the
+  // JS pin so a later remotePlay does not think we are still at the pause point.
+  currentTimeHandle = await NativeAudio.addListener('currentTime', (event) => {
+    if (activeAssetId && event.assetId && event.assetId !== activeAssetId) return
+    if (typeof event.currentTime === 'number' && event.currentTime >= 0) {
+      const prev = lastKnownPosition
+      lastKnownPosition = event.currentTime
+      // Timer fires ~10Hz; only log scrub-sized jumps to avoid log spam.
+      if (Math.abs(event.currentTime - prev) >= 0.25) {
+        immersiveLog('currentTime.sync', {
+          assetId: event.assetId,
+          currentTime: event.currentTime,
+          from: prev,
+        })
+      }
+    }
+  })
 }
 
 async function clearNativeQueue() {
@@ -220,10 +247,12 @@ async function detachNativeListeners() {
   await stateHandle?.remove().catch(() => undefined)
   await queueChangeHandle?.remove().catch(() => undefined)
   await progressHandle?.remove().catch(() => undefined)
+  await currentTimeHandle?.remove().catch(() => undefined)
   completeHandle = null
   stateHandle = null
   queueChangeHandle = null
   progressHandle = null
+  currentTimeHandle = null
   listenersReady = false
 }
 
@@ -515,10 +544,8 @@ function createTransport(): ImmersiveAudioTransport {
         jsDuration: lastKnownDuration,
         visualState: visualState.state,
       })
-      if (visualState.state === 'paused') {
-        immersiveLog('transport.pause.skip', { reason: 'already_paused', assetId: activeAssetId })
-        return
-      }
+      // Always call native pause — visualState can lag arm/meta and incorrectly
+      // skip while AVAudioPlayer is still playing (user hears "pause ignored").
       if (isNative() && activeAssetId) {
         await NativeAudio.pause({ assetId: activeAssetId }).catch(() => undefined)
         immersiveLog('transport.pause.nativeDone', { assetId: activeAssetId, queueIndex })

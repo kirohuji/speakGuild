@@ -21,7 +21,7 @@ import { type MasteryStatus } from '@/features/practice/api/english-practice-api
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { useLeanInsightPlaylist } from '@/features/practice/hooks/use-lean-insight-playlist'
 import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
-import { ImmersivePlayerDialog } from '@/features/learning/components/immersive-player'
+import { useImmersiveSessionStore } from '@/features/learning/components/immersive-player'
 import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
@@ -518,10 +518,6 @@ function ExpressionLibraryPageContent() {
     fetchPage: fetchLeanPage,
     fetchDetail: fetchLeanDetail,
   })
-  const immersivePlaylist = useLeanInsightPlaylist({
-    fetchPage: fetchLeanPage,
-    fetchDetail: fetchLeanDetail,
-  })
 
   const openDialog = useCallback((_items: LearningInsightItem[], startIndex: number) => {
     void insightPlaylist.openAt(startIndex)
@@ -529,8 +525,16 @@ function ExpressionLibraryPageContent() {
 
   const openImmersivePlayer = useCallback((_items: LearningInsightItem[], startIndex: number) => {
     if (!requireMembership()) return
-    void immersivePlaylist.openAt(startIndex)
-  }, [immersivePlaylist, requireMembership])
+    if (!notebookId) return
+    useImmersiveSessionStore.getState().startSession({
+      notebookId,
+      absoluteIndex: Math.max(0, startIndex),
+      libraryTab,
+      reviewState,
+      search: search.trim(),
+      sort: listSort,
+    })
+  }, [libraryTab, listSort, notebookId, requireMembership, reviewState, search])
 
   useEffect(() => {
     if (!deepLinkKind || !deepLinkValue || loading) return
@@ -1470,21 +1474,6 @@ function ExpressionLibraryPageContent() {
         ),
         asideSlot,
       ) : null}
-      {isMobile && (
-        <ImmersivePlayerDialog
-          items={immersivePlaylist.immersiveItems}
-          index={Math.min(immersivePlaylist.index, Math.max(immersivePlaylist.immersiveItems.length - 1, 0))}
-          open={immersivePlaylist.open}
-          onOpenChange={(open) => {
-            if (!open) immersivePlaylist.reset()
-            else immersivePlaylist.setOpen(true)
-          }}
-          onIndexChange={(absoluteIndex) => { void immersivePlaylist.handleIndexChange(absoluteIndex) }}
-          total={immersivePlaylist.total}
-          windowOffset={immersivePlaylist.windowOffset}
-          onLoadMore={() => { void immersivePlaylist.loadMore() }}
-        />
-      )}
       {membershipDrawer}
     </div>
   )

@@ -24,6 +24,7 @@ import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { isDevHost } from '@/lib/dev-host'
 import { useOnlineStatus } from '@/hooks/use-online-status'
+import { ImmersiveSessionHost } from '@/features/learning/components/immersive-player/immersive-session-host'
 
 const ROUTE_SCROLL_POSITIONS_KEY = 'manyu:route-scroll-positions:v1'
 
@@ -219,6 +220,7 @@ export function RootLayout() {
       {!isAuthPage && !isMobile && !immersiveMode && !isDesktopLearningShell && <Footer />}
       {!isAuthPage && showBottomNav && <BottomNav />}
       {!isAuthPage && <AppUpdateDialog />}
+      {!isAuthPage && <ImmersiveSessionHost />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
         <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] bg-background app-surface">
           <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">

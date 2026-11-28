@@ -37,8 +37,10 @@ export function normalizePauseGapSeconds(seconds: number): ImmersivePauseGapSeco
     : 2
 }
 
-export function toGapAssetId(afterSegmentId: string, seconds: number) {
-  return `immersive:gap:${seconds}s:after:${afterSegmentId}`
+export function toGapAssetId(afterSegmentId: string, seconds: number, playbackRate = 1) {
+  const sec = Number(Math.max(0, seconds).toFixed(3))
+  const rate = Number(Math.max(0.01, playbackRate).toFixed(2))
+  return `immersive:gap:${sec}s:r${rate}:after:${afterSegmentId}`
 }
 
 export function isGapAssetId(assetId: string) {
@@ -90,7 +92,8 @@ function bytesToBase64(bytes: Uint8Array) {
 }
 
 async function materializeNativeSilenceUri(seconds: number): Promise<string> {
-  const path = `${SILENCE_CACHE_DIR}/${seconds}s.wav`
+  const stamp = Number(seconds.toFixed(3)).toString().replace('.', 'p')
+  const path = `${SILENCE_CACHE_DIR}/${stamp}s.wav`
   try {
     await Filesystem.stat({ path, directory: Directory.Cache })
     const cached = await Filesystem.getUri({ path, directory: Directory.Cache })
@@ -111,45 +114,39 @@ async function materializeNativeSilenceUri(seconds: number): Promise<string> {
   return written.uri
 }
 
-function materializeWebSilenceUrl(seconds: number): string {
-  const cached = webBlobUrlCache.get(seconds)
-  if (cached) return cached
-  const bytes = buildSilentWavBytes(seconds)
-  const url = URL.createObjectURL(new Blob([bytes.slice()], { type: 'audio/wav' }))
-  webBlobUrlCache.set(seconds, url)
-  return url
-}
-
 /**
- * Resolve a playable silence URL for the given gap length.
+ * Resolve a playable silence URL for an exact duration (may be rate-compensated).
  * Native → Cache `file://` WAV; Web → blob: WAV.
- * Returns null when materialization fails (caller should fall back to timer gap).
+ * Returns null when materialization fails (caller may fall back to timer gap).
  */
-export async function resolveSilenceFileUrl(seconds: number): Promise<string | null> {
-  const normalized = normalizePauseGapSeconds(seconds)
+export async function resolveSilenceFileUrlForDuration(seconds: number): Promise<string | null> {
+  const duration = Math.max(0.05, Number(seconds.toFixed(3)))
   if (silenceUrlOverride) {
-    return silenceUrlOverride(normalized)
+    return silenceUrlOverride(duration)
   }
 
+  // Cache key in centiseconds so 2.5s / 3s stay distinct.
+  const cacheKey = Math.round(duration * 100)
+
   if (isNative()) {
-    let pending = fileUriCache.get(normalized)
+    let pending = fileUriCache.get(cacheKey)
     if (!pending) {
-      pending = materializeNativeSilenceUri(normalized)
+      pending = materializeNativeSilenceUri(duration)
         .then((uri) => {
-          immersiveLog('silence.nativeUri', { seconds: normalized, uri })
+          immersiveLog('silence.nativeUri', { seconds: duration, uri })
           return uri
         })
         .catch((error) => {
-          fileUriCache.delete(normalized)
+          fileUriCache.delete(cacheKey)
           throw error
         })
-      fileUriCache.set(normalized, pending)
+      fileUriCache.set(cacheKey, pending)
     }
     try {
       return await pending
     } catch (error) {
       immersiveLog('silence.nativeFailed', {
-        seconds: normalized,
+        seconds: duration,
         message: error instanceof Error ? error.message : String(error),
       })
       return null
@@ -157,14 +154,30 @@ export async function resolveSilenceFileUrl(seconds: number): Promise<string | n
   }
 
   try {
-    const url = materializeWebSilenceUrl(normalized)
-    immersiveLog('silence.webUrl', { seconds: normalized })
+    // Web: reuse exact-duration blob cache via Map keyed by centiseconds.
+    const cached = webBlobUrlCache.get(cacheKey)
+    if (cached) {
+      immersiveLog('silence.webUrl', { seconds: duration, cached: true })
+      return cached
+    }
+    const bytes = buildSilentWavBytes(duration)
+    const url = URL.createObjectURL(new Blob([bytes.slice()], { type: 'audio/wav' }))
+    webBlobUrlCache.set(cacheKey, url)
+    immersiveLog('silence.webUrl', { seconds: duration })
     return url
   } catch (error) {
     immersiveLog('silence.webFailed', {
-      seconds: normalized,
+      seconds: duration,
       message: error instanceof Error ? error.message : String(error),
     })
     return null
   }
+}
+
+/**
+ * Resolve silence for a settings gap value (1/2/3/5s).
+ * Prefer {@link resolveSilenceFileUrlForDuration} when rate-compensating.
+ */
+export async function resolveSilenceFileUrl(seconds: number): Promise<string | null> {
+  return resolveSilenceFileUrlForDuration(normalizePauseGapSeconds(seconds))
 }

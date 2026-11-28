@@ -14,9 +14,15 @@
 
 | 是 | 不是 |
 |----|------|
-| 学习本「练听力」→ `ImmersivePlayerDialog` | 听力学习包会话页（WebView `<audio>`，锁屏弱） |
+| 学习本「练听力」→ **App 级 Immersive 会话**（`ImmersiveSessionHost` + `ImmersivePlayerDialog`） | 听力学习包会话页（WebView `<audio>`，锁屏弱） |
 | iOS `MPNowPlayingInfoCenter` + `MPRemoteCommandCenter` | VN / 剧本舞台配音 |
 | **仅** NativeAudio 出声 + 自带 Now Playing 卡 | 再挂 `@capgo/capacitor-media-session` |
+
+**会话生命周期（产品约定）**：Immersive 是 **App 级会话**，不绑在学习本页面卸载上。
+
+- App 内任意路由切换：未点 Immersive 关闭 → **音频继续**，Dialog 仍在根层
+- 长时间后台 / 冷启动：恢复到 `/expressions/:notebookId`，重新打开 Immersive UI；native 仍有资源则 `resume`，否则 `armSession` 暂停卡（不强制自动出声）
+- 用户点关闭 / 睡眠定时结束：清会话 + `clearSession`（清 Now Playing）
 
 **平台：iOS 优先。** `showNotification: true` 后 Android 通知可一并跟进，但本专项验收以 iOS 为准；Android 细节另开需求时再扩。
 
@@ -35,9 +41,10 @@
 
 1. **`configure({ showNotification: true, background: true, backgroundPlayback: true })`**：Capgo 写锁屏卡；音频 session 为可打断其它 App 的 `.playback`（音乐 / 播客类主音源）。
 2. **队列项必须带 `notificationMetadata`**（title / artist / album / artworkUrl），否则卡上元数据空洞。`artworkUrl` **只写可加载的 `file://` logo**（开播前 `warmupImmersiveArtwork` / `ensureArtworkUri`）；失败则省略，禁止 WebView/http 回退。
-3. **队列**：`NativeAudio.setQueue` **仅内容轨**；停顿静音 **bake 进内容 WAV**（`immersive-audio-pad.ts`），不再插独立 gap 轨。规则：单词→例句 **1s 拼在例句开头**；其余（含例句→下词、词→词、项间）**X=`pauseGapSeconds` 拼在上一段末尾**；后台 **0**。倍速时按 `silenceSec * rate` 采样，使墙钟等待仍约等于设定秒数。
+3. **队列**：内容轨 + **独立静音 gap 轨**（`immersive-silence.ts` → Cache WAV）。规则：单词→例句 **1s gap**；其余（例句→下词、词→词、项间）**X=`pauseGapSeconds` gap**。锁屏后台同样生效（真实音频，不靠 JS timer / WebView decode）。Capgo 对 `immersive:gap:*` **不改写 Now Playing**，条停在上一段 100% 直到 gap 播完。倍速时静音文件按 `silenceSec * rate` 加长，墙钟仍约等于设定秒数。
 4. **锁屏按钮**：**上一首 / 下一首（学习项）+ 拖进度**；Capgo patch **关掉 ±15 skip**（`skipForward/Backward.isEnabled = false`），**不**再引 MediaSession。
-5. **倍速**：设置 0.75 / 1 / 1.25 / 1.5 传到 `NativeAudio.setRate`；Now Playing 播中写**实际 rate** 并 quiet rebase（见 §4）。
+5. **倍速**：设置 0.75 / 1 / 1.25 / 1.5 传到 `NativeAudio.setRate`；Now Playing 由 `NowPlayingClock` 播中写**实际 rate** 并 visual tick（见 §4）。
+6. **队列播完**：未开 `loopQueue` → 回到 list 第 1 项并 `armSession` 暂停（不清 Now Playing）；开了 `loopQueue` → 从第 1 项继续播。
 
 ```mermaid
 flowchart LR
@@ -68,15 +75,15 @@ flowchart LR
 
 ## 3. 打开即出卡（Arm Session）
 
-产品约定：打开学习本 Immersive drawer **尚未点播放**时，锁屏 / 控制中心已出现 Now Playing 卡，状态为 **paused**，展示当前条目元数据；用户点卡上 play 或 UI 播放才出声。关窗后卡消失。
+产品约定：打开学习本 Immersive drawer **尚未点播放**时，锁屏 / 控制中心已出现 Now Playing 卡，状态为 **paused**，展示当前条目元数据；用户点卡上 play 或 UI 播放才出声。**显式关窗**后卡消失（路由切换不关窗）。
 
 | 步骤 | 行为 |
 |------|------|
-| Dialog `open=true` | Engine `armSession(currentItem)` |
+| Dialog `open=true` | 有可恢复 native 资源 → `resume`；否则 Engine `armSession(currentItem)` |
 | Transport | `configure(showNotification: true)` → 解析首段 `file://` → `setQueue({ items, startIndex: 0, autoPlay: false })` + 完整 `notificationMetadata` |
 | 系统卡 | **默认靠 native patch** 在 `setQueue` / arm 时写入 Now Playing（`playbackRate = 0`） |
 | 用户 play（UI 或锁屏） | `resume` / `play` 真正出声；写卡 `playbackRate = 1` |
-| Dialog close | `stop` + `clearQueue`，清卡 |
+| Dialog close / 睡眠结束 | Host `clearSession` + Engine `stop({ clearSession: true })` → `clearQueue`，清卡 |
 
 ### 3.1 默认方案：native-audio patch
 
@@ -93,31 +100,48 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 
 ---
 
-## 4. Now Playing 进度策略
+## 4. Now Playing 进度策略（单写时钟）
 
-其它播放器（Music / Spotify）的做法：
+**实现：** Capgo patch 内 `NowPlayingClock.swift`。`Plugin.swift` / `NativeAudio+Queue.swift` 只发意图，**禁止**直接写 `elapsed` / `playbackRate`。
 
-1. **播中**用 `elapsed + rate=实际倍速` 墙钟插值 → 条丝滑（1.0 即真实墙钟；非 1 时与 `setRate` 对齐）。
-2. **播中约每 0.1s** 把字典 `elapsed` **安静 rebase 到当前 visual**，`rate` 保持**当前倍速**（用户无感）。间隔过大时暂停仍会带着 `jumpFromSys≈npAge` 闪。
-3. **暂停**：字典落后时先 `pauseBridge`（同 pin、当前 rate）再同轮写 `rate=0`（依赖 0.1s rebase 把 jump 压小）。锁屏 play/pause **串行 + coalesce**（`remoteDesiredPlaying`），禁止在 settle 中叠第二次 freeze/arm。
+系统没有「把条绑到 AVAudioPlayer」的 API；进度只认字典 `elapsed + rate` 墙钟插值。多处异步写同一字典是闪回的根因——现已收敛为单一 `commit`。
 
-系统没有「把条绑到 AVAudioPlayer」的 API；Now Playing `playbackRate` 就是墙钟倍率。若整段只 arm 一次、播中永不改 elapsed，暂停时字典仍是旧基准、条已插值走远 → `jumpFromSys` 很大 → iOS 收 `rate=0` 时往回闪。这是反复修 pause 顺序仍闪的**根因**。
+### 状态机
 
-短句启动延迟会让 player 慢半拍——开播时**等 `currentTime` 离开 0 再 arm 当前 rate**。暂停冻 visual，并 seek player 到同一点，恢复也对齐。`setRate` 时同步改 NP rate 并按 visual rebase。
+| State | 含义 |
+|-------|------|
+| `idle` | 无卡 |
+| `armed` | 暂停态开卡（`setQueue` autoPlay:false） |
+| `holding` | 切轨后卡面已 @0（或保留上一段 ended），等 `play()` |
+| `playing` | rate=倍速；内部 0.1s tick rebase 到 **visual** |
+| `frozen` | 暂停，elapsed=pin |
+| `ended` | 完成，elapsed=**duration** |
 
-硬约定：
+### 意图
 
-1. **播中写实际 `playbackRate`**；JS progress **不得**写 NP（只服务 App 内 UI）。
-2. **play / 切轨**：先 metadata + `rate=0` @0；player 动了再 `publishPlaying.arm` → live elapsed + 实际 rate，并启动 quiet rebase。
-3. **播中允许 quiet rebase**：只把 `elapsed` 写成**当前 visual**（已显示位置），`rate` 保持实际倍速。**禁止**写成明显落后的 player（那才会闪回）。
-4. **暂停**：先可选 `pauseBridge`（同 pin、当前 rate 对齐字典），再 `rate=0` 冻 visual；`timeBeforePause` 同值；seek player 会合。验收：`jumpFromSys` 应在 **±0.05s** 量级。
-4b. **恢复**（seek 已到位后）：先写 NP `elapsed=pin, rate=实际倍速`，**再** `asset.resume()`（`publishResumeArmThenPlay`）。禁止先出声再 hold/arm——声会领先条 ~20ms，体感「点播放往前闪」。
-5. **轨尾**：永远不要强行写 100%（`leaveCard`）；交给下一首 `publishPlaying` 或 `clearQueue`。
-6. **禁止**在 `audioQueue` 里 `main.sync`（Capacitor 会死锁卡死）。
-7. **armSession** 只开窗一次；换项直接 `playQueue`。
-8. generation 丢弃过期 async 写；quiet rebase **不** bump generation（freeze/reset bump 后自动停）。
+| Intent | 行为 |
+|--------|------|
+| `showArmed` | → armed @ elapsed rate=0 |
+| `beginTrack(replaceAtZero)` | 仅需立刻亮出新卡 @0 时（少用） |
+| `beginTrack(keepEndedUntilArm)` | **队列开播默认**：不写 NP，保留上一内容 ended，直到 arm |
+| `armPlaying(@0)` | 开播同帧 playing@0；每段独立 duration，从 0 起 |
+| `armPlaying(resumePin)` | 仅 resume 路径：等 player ≥ pin 再 rate>0 |
+| `setRate` | 仅 `playing` 时 visual rebase + 新 rate；否则只改 AVAudioPlayer |
+| `pause` | 可选 bridge 后 rate=0；再 pause/seek player |
+| `resume` | pin+rate 后出声 |
+| `complete` | 钉 duration；keep playing glyph 若队列未空 |
+| `clear` | nil 卡 |
 
-目标：连贯如系统播放器；暂停不闪。
+### 硬约定
+
+1. **每段独立卡**：duration=本段；开播 `armPlaying.atZero`；gap 钉住上一段结尾。暂停钉 **visual/系统插值**，禁止短轨把条拽回 player（会闪）。
+2. Artwork 合并 **只改 artwork**，不改 elapsed/rate。
+3. JS progress **不得**写 NP；`setRate` 在 hold/ended 时不抢 arm。
+4. 锁屏 remote play/pause 仍 coalesce（`remoteDesiredPlaying`）。
+5. **禁止**在 `audioQueue` 里 `main.sync`。
+6. 日志统一：`native.np.commit reason=… from=… to=…`（tick / artworkOnly / cancelPending 亦走此前缀）。
+
+目标：连贯如系统播放器；暂停不闪；切轨不回闪。
 
 ---
 
@@ -126,14 +150,17 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 | 文件 | 职责 |
 |------|------|
 | `listening-queue.engine.ts` | 队列权威；`armSession`；remote → 直接驱动 Transport；跨学习项 next/prev；窗尾滑窗 |
-| `immersive-playback.service.ts` | Transport：`showNotification: true`、`setQueue` + metadata、状态点写 Now Playing（见 §4） |
+| `immersive-playback.service.ts` | Transport：`showNotification: true`、`setQueue` + metadata；NP 进度由 native `NowPlayingClock` 写（见 §4） |
 | `immersive-media-session.ts` | **目标删除**；迁移完成前仍是旧双插件写卡方，勿与新设计并存 |
-| `immersive-player-dialog.tsx` | UI；`open` 时 warmup artwork + arm；回前台若已 `playing` 则 skip 二次 resume |
-| `immersive-audio-pad.ts` | 内容音频尾部拼静音 → Cache WAV `file://`；倍速补偿采样 |
+| `immersive-session.store.ts` | 持久化会话：`notebookId` / `absoluteIndex` / `uiOpen` / `active` / `libraryTab` + 列表筛选 |
+| `immersive-session-host.tsx` | 根层 Host：playlist + Dialog；冷启动 navigate + `openAt`；关窗清会话 |
+| `immersive-notebook-playlist.ts` | 从 notebookId 构造 lean `fetchPage` / `fetchDetail` |
+| `immersive-player-dialog.tsx` | UI；`open` 时 warmup + `resume`（有资源）或 `arm`；回前台若已 `playing` 则 skip 二次 resume |
+| `immersive-audio-pad.ts` | `Filesystem.readFile` 解码 → 拼静音 → Cache WAV `file://`；倍速补偿采样 |
 | `immersive-silence.ts` | 纯静音 WAV 工具（pad 失败时 timer gap 仍可用其语义） |
-| `patches/@capgo__capacitor-native-audio@…` | arm 写卡；rate-aware NP；**关闭 ±15**；artwork 缓存合并 |
+| `patches/@capgo__capacitor-native-audio@…` | `NowPlayingClock` 单写；arm / queue / remote；**关闭 ±15**；artwork-only 合并 |
 
-入口：`expression-library-page` → `useLeanInsightPlaylist` → `ImmersivePlayerDialog`。
+入口：`expression-library-page` → `immersiveSession.startSession(...)` → `RootLayout` 内 `ImmersiveSessionHost` → `useLeanInsightPlaylist` + `ImmersivePlayerDialog`。
 
 ---
 
@@ -143,10 +170,10 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 2. 沉浸式 **`showNotification: true`**；队列项带 `notificationMetadata`。
 3. **禁止**在沉浸式路径再挂 `@capgo/capacitor-media-session`（双写 → 进度闪回 / 按键双触发）。
 4. Remote 与 UI 共用 Engine 驱动路径；禁止 remote「只 sync」再叠一层 resume/pause。
-5. Now Playing：播中实际 rate + visual quiet rebase、暂停 `rate=0`（见 §4）。
+5. Now Playing：`NowPlayingClock` 单写；播中实际 rate + visual tick；暂停 `rate=0`（见 §4）。
 6. **倍速解锁**：UI / Transport / Capgo NP 同一 `playbackRate`；改 rate 或 gap 时重建当前窗（尾静音依赖二者）。
 7. 锁屏 **仅上下曲（学习项）+ 拖进度**；±15 已在 Capgo patch 关闭。
-8. 后台禁止新 TTS；后台 **0** 尾静音（不 pad）。
+8. 后台禁止新 TTS；**锁屏后台仍 pad 词间/词句静音**（本地 bake，不依赖网络）。
 9. 关窗必须停播并 `clearQueue`（卡随之消失：关掉 Immersive 界面后锁屏不应再挂卡、不应再出声）。
 10. 改 native 插件 / patch 后必须 `cap sync ios` 再打真机包。
 11. 封面：原生路径只接受 `file://` logo；开播 / arm 前必须物化成功，否则省略 `artworkUrl`。
@@ -181,18 +208,18 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 ### R2 — elapsed 闪回 / 顿挫
 
 - **现象**：remote pause/play 或周期性写 elapsed 导致 scrubber 闪前再跳回、一顿一顿。
-- **修法**：落实 §4（播中实际 rate + visual quiet rebase；状态点更新）。禁止把落后的 player 当 elapsed 写回。  
-- **本阶段**：闪回 **不挡主路径**；验收要求「不严重闪回」，不要求零闪回。
+- **修法**：落实 §4（`NowPlayingClock` 单写；播中权威 = visual；状态点经意图更新）。禁止把落后的 player 当 elapsed 写回。  
+- **本阶段**：闪回应被单写时钟消灭；验收见 §9 + 下方单写时钟用例。
 
 ### R3 — ±15 vs 上一首 / 下一首
 
 - **现象**：Capgo 默认 skip ±15 占锁屏左右槽，与「切学习项」冲突。
 - **修法**：**已做** — Capgo patch 禁用 `skipForward` / `skipBackward`；保留 next/previous track。
 
-### R4 — 尾静音（原独立 gap 轨）
+### R4 — 停顿间隔（锁屏 X 秒）
 
-- **现象（旧）**：独立 gap 轨会让锁屏 duration/position 短暂切到静音轨。
-- **修法（现）**：去掉 gap 轨；`decodeAudioData` → 追加静音 → Cache WAV，内容轨自带尾静音。UI 仍按 segment 切文案。pad 失败时才 timer `waitGap`。
+- **现象（旧）**：bake 进内容依赖 WebView `decodeAudioData`，锁屏下常失败；失败又退回 JS `setTimeout`，后台被挂起 → **听不到 / 看不到停顿**。
+- **修法（现）**：独立静音 gap 轨（纯 PCM WAV，无需解码内容）；native `playQueueAsset` 对 `immersive:gap:*` **跳过 NP 写卡**，锁屏条停在上一段结尾满 X 秒。仅当静音文件物化失败才 timer fallback。
 
 ### R5 — 队列窗尾 / `setQueue` 换窗（必须修复）
 
@@ -220,11 +247,12 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 4. 暂停后卡仍在；**关窗后卡消失**、播放停止  
 5. 前台连播 ≥5 条；词间 / 词句停顿符合 1s / X 规则（锁屏不闪到独立 gap 轨）  
 6. 播放中锁屏 ≥1 分钟，**音频仍自动下一首**，系统卡可见  
-7. 锁屏 pause → play：**不严重闪回**；拖进度后音频与 scrubber 对齐  
+7. 锁屏 pause → play：**不闪回**；拖进度后音频与 scrubber 对齐  
 8. **窗尾连续下一首**：卡 title/进度与音频同一切换，**无空白卡**、不停播  
 9. 锁屏上一首 / 下一首切学习条目；**无 ±15**  
 10. 改倍速：进度不漂；词间等待墙钟仍约等于设定秒数  
 11. 封面稳定为 App logo（`file://`）  
+12. **单写时钟专项**（§10 用例 1–4）：短词 EOT、pause/resume、换项 setQueue、锁屏上下曲 — 日志仅 `native.np.commit`
 
 升级依赖或 patch 后：`cap sync ios`，再跑本清单。
 
@@ -252,24 +280,18 @@ Capgo 公开文档写的是 play 之后通知才出现。本项目 **默认不�
 
 ```
 js.engine.remote.pause
-→ native.remote.pause          # player / visual / deltaVP
-→ native.np.freeze             # pinSource / jumpFromSys / flashRisk
-→ native.clock.write reason=freezePause
+→ native.remote.pause
+→ native.np.commit reason=pause.bridge   # 可选
+→ native.np.commit reason=pause.freeze from=playing to=frozen
+→ native.np.freeze.playerPaused
 → (可选) native.np.freeze.seek
-```
-
-App 内点暂停：
-
-```
-js.engine.pause → js.transport.pause.enter
-→ native.pause → native.np.freeze → …
 ```
 
 恢复：
 
 ```
-… → native.np.resumeHold (rate=0)
-→ native.np.arm (rate=1, live player)   # 不应再出现立刻 rate=1 fromPause
+→ native.np.commit reason=resume from=frozen to=playing
+→ native.np.commit reason=tick …          # 播中 rebase
 ```
 
 ### 事件速查
@@ -278,8 +300,7 @@ js.engine.pause → js.transport.pause.enter
 |------|------|
 | `js.engine.*` / `js.transport.*` | Engine / Transport 意图 |
 | `native.remote.*` / `native.pause` / `native.resume` / `native.play.*` | 遥控与播控入口 |
-| `native.np.*` | Now Playing 写卡（`meta` / `arm` / `quietRebase` / `pauseBridge` / `freeze` / `resumeHold` / `clockReset`） |
-| `native.clock.write` | 本地双钟基准更新 |
+| `native.np.commit` | **唯一** Now Playing 进度写（intent / tick / artworkOnly） |
 | `native.queue.*` | setQueue / clear / next / playAsset |
 
 | 其它 | 用途 |
@@ -287,19 +308,31 @@ js.engine.pause → js.transport.pause.enter
 | `MANYU_AUDIO_DIAG` | 资源解析 URL 形态 |
 | 单元测试 | `pnpm --filter @manyu/frontend exec vitest run src/features/learning/components/immersive-player` |
 
-**已知根因与 patch 对策**（`patches/@capgo__capacitor-native-audio@8.5.4.patch`）：
+**已知根因与 patch 对策**（`patches/@capgo__capacitor-native-audio@8.5.4.patch` → `NowPlayingClock`）：
 
 | 现象 | 根因 | patch |
 |------|------|-------|
 | 点暂停还在播 | `ignorePlayBounce` / `elapsed<0.08` 吞掉真暂停 | **禁止**忽略 remotePause；一律真暂停 |
-| 每轨第一次暂停闪、之后好 | arm 用了过期 currentTime；封面异步写回把 elapsed 打回旧基准；暂停/恢复才校准 | arm 写卡时当场重采 currentTime；artwork merge 按 visual 续写 elapsed+rate |
-| 切轨后马上暂停大闪 | 上一首 `rate=1` 时钟未清，visual=旧基准+npAge，player 仍为 0 | 切轨 `npClock.reset`；pause 若 staleClock 则冻 player |
-| 快播完闪到 100% / 末尾卡死 | leaveCard 写 duration；`audioQueue→main.sync` 死锁 | 取消 leaveCard；NP 写只用 `main.async` |
-| 恢复后条先到 ~100%、声落后；下次 pause `deltaVP` 很大 | resume 立刻 `rate=1`，墙钟超前 player | `native.np.resumeHold` rate=0，等 player≥pin 再 arm |
-| 暂停向后闪进度 | 字典 elapsed 老化；同帧 bridge+rate0 被系统合并；或先 pause | **0.1s quiet rebase**；暂停 **bridge → yield → rate0（`freeze.rate0` 的 jumpFromSys≈0）→ pause** |
-| 已播新音频、卡还像上一首 | `playQueueAsset` 先 `play`，`updateNowPlayingInfo` 又晚一拍 async | 切轨前同步推新轨 metadata，`elapsed=0` / `rate=1` |
+| 多写竞态闪回 | arm / quietRebase / freeze / complete / artwork 各自写字典 | **唯一** `npClock.commit`；意图表见 §4 |
+| 切轨后马上暂停大闪 | 上一首 `rate>0` 时钟未清，visual 老化 | `beginTrack` → `holding`；pause 用 visual pin |
+| 快播完闪到 100% / 末尾卡死 | leaveCard 写 duration；`audioQueue→main.sync` 死锁 | `complete` → `ended` @duration；NP 写只用 `main.async` |
+| 播完闪回暂停点再切下一项 | complete 后仍 `rate>0`；多路径抢写 | `complete(duration)` rate=0；队列未空 keep playing glyph |
+| 短词播完闪开头 / 暂停点 | EOT 后 player≈0 被写成 elapsed | 播中权威 = visual；EOT 回绕进 `ended`，不写 player≈0 |
+| 恢复后条超前声 | resume 立刻 rate>0 而 player 未动 | `armPlaying` 等 liveElapsed 种子；可选 resumeHold |
+| 暂停向后闪进度 | 字典老化 + 多帧写 | `pause` 内同 pin：可选 bridge 再 freeze（仍只经 `commit`） |
+| artwork 偶发闪 | 异步 merge 顺带改写 elapsed/rate | `mergeArtwork` **只改 artwork key** |
+| 已播新音频、卡还像上一首 | play 早于换卡 | `beginTrack` 先于 play；再 `armPlaying` |
 
-改 patch 后：`pnpm i` → `pnpm --filter @manyu/frontend exec cap sync ios`，滤 `[MANYU_IMMERSIVE]` 对时序。
+### 单写时钟真机用例（本专项必过）
+
+1. 短词（&lt;1s）播完 → 例句：条停在 100%，再切到例句进度，**无**回闪到暂停点/开头。  
+2. 例句中途锁屏 pause/play 多次：`jumpFromSys` 稳定在 ±0.05s，无 seek 闪回。  
+3. 换学习项 `setQueue`：标题换卡 @0 一次，然后 arm，无二次回零。  
+4. 锁屏 next/prev：@0 hold ≈160ms 再出声，可接受短暂停顿，无「播完→闪回中间→再跳」。  
+
+日志只应出现 `native.np.commit reason=…`（含 from/to），**不应**再出现并行的 `quietRebase` / `pauseBridge` / `trackSwitch` / `completeFreeze` 各自写字典。
+
+改 patch 后：`pnpm i` → `pnpm --filter @manyu/frontend exec cap sync ios` → Xcode 真机重装，滤 `[MANYU_IMMERSIVE]` 对时序。
 
 排障入口（切歌断链 / 回前台丢声）：[听力与音频播放排障手册](./听力与音频播放排障手册.md) §E / §F，锁屏细节以本文为准。
 

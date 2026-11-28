@@ -36,7 +36,6 @@ describe('immersive-audio-pad', () => {
       computeLeadingSilenceSeconds({
         segment: example,
         prevSegment: main,
-        background: false,
       }),
     ).toBe(WORD_TO_EXAMPLE_GAP_SECONDS)
 
@@ -47,7 +46,6 @@ describe('immersive-audio-pad', () => {
         isLastInResolvedWindow: false,
         needTrailingGap: false,
         pauseGapSeconds: 2,
-        background: false,
       }),
     ).toBe(0)
 
@@ -58,17 +56,8 @@ describe('immersive-audio-pad', () => {
         isLastInResolvedWindow: true,
         needTrailingGap: true,
         pauseGapSeconds: 2,
-        background: false,
       }),
     ).toBe(2)
-
-    expect(
-      computeLeadingSilenceSeconds({
-        segment: example,
-        prevSegment: main,
-        background: true,
-      }),
-    ).toBe(0)
   })
 
   it('prepends and appends silence frames and encodes a valid WAV header', () => {

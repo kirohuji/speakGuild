@@ -233,14 +233,18 @@ export function ImmersivePlayerDialog({
     })
   }, [emitIndexChange, index, items, onLoadMore, open, playlistTotal, windowOffset])
 
-  // Arm paused Now Playing only when Immersive opens — NOT on every index change
+  // Arm paused Now Playing when Immersive opens — NOT on every index change
   // (re-arm mid-queue cleared the card and fought playFromCurrentItem).
-  // Prefetch file:// logo so the first NP write has artwork.
+  // Cold-start / soft-reload: resume native asset if still held, else arm paused card.
   useEffect(() => {
     const engine = engineRef.current
     if (!engine || !open) return
     void (async () => {
       await warmupImmersiveArtwork()
+      if (immersivePlaybackService.hasResumableAsset()) {
+        const resumed = await engine.resume()
+        if (resumed) return
+      }
       await engine.armSession()
     })()
   }, [open])
